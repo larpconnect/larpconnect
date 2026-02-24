@@ -4,7 +4,6 @@ plugins {
 
 dependencies {
     testImplementation(project(":api"))
-    testImplementation(platform(project(":bom")))
     testImplementation(project(":common"))
     testImplementation(project(":parent"))
     testImplementation(project(":proto"))

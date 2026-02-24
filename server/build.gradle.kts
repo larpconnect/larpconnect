@@ -7,5 +7,5 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.larpconnect.server.Main")
+    mainClass.set("com.larpconnect.njall.server.Main")
 }

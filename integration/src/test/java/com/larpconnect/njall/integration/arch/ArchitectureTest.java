@@ -1,17 +1,13 @@
-package com.larpconnect.arch;
+package com.larpconnect.njall.integration.arch;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import com.larpconnect.common.annotations.DefaultImplementation;
-import com.larpconnect.common.annotations.InstallInstead;
-import com.tngtech.archunit.base.DescribedPredicate;
+import com.larpconnect.njall.common.annotations.DefaultImplementation;
+import com.larpconnect.njall.common.annotations.InstallInstead;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaModifier;
-import com.tngtech.archunit.core.domain.properties.CanBeAnnotated;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
@@ -22,7 +18,7 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import org.slf4j.Logger;
 
 @AnalyzeClasses(
-    packages = "com.larpconnect",
+    packages = "com.larpconnect.njall",
     importOptions = {ImportOption.DoNotIncludeTests.class})
 final class ArchitectureTest {
 
@@ -109,31 +105,6 @@ final class ArchitectureTest {
                 @Override
                 public void check(JavaClass item, ConditionEvents events) {
                   String interfaceName = item.getSimpleName().substring("Default".length());
-                  // getInterfaces() returns JavaClassList in recent versions? No, JavaClass implements HasInterfaces which returns JavaClassList/Set<JavaClass>
-                  // But wait, the error said "variable i of type JavaType" which implies getInterfaces() might be returning JavaType?
-                  // ArchUnit 1.4.1: JavaClass.getInterfaces() returns JavaClassList.
-                  // Let's coerce to JavaClass if possible or check docs.
-                  // Actually, let's use getRawType() if it's a JavaType.
-                  // But let's check what getInterfaces() returns.
-
-                  // In ArchUnit, JavaClass.getInterfaces() returns JavaClassList, which is a List<JavaClass>.
-                  // JavaClass has getSimpleName() and isAnnotatedWith().
-                  // The error "variable i of type JavaType" is strange if it's JavaClass.
-                  // Ah, maybe I imported something wrong? No imports look standard.
-
-                  // Wait, looking at docs for 1.0.0+:
-                  // JavaClass.getInterfaces() returns JavaClassList.
-                  // However, let's look at the error again:
-                  // symbol: method getSimpleName() location: variable i of type JavaType
-
-                  // Maybe getInterfaces() returns JavaType in some context?
-                  // Ah, `getInterfaces()` vs `getDirectInterfaces()`?
-                  // Let's try `getAllInterfaces()` or cast.
-
-                  // Actually, let's just use `toErasure()` if it's a generic type issue, but JavaClass implements JavaType.
-                  // JavaType does NOT have getSimpleName(). JavaClass does.
-
-                  // Let's try `item.getAllInterfaces()` which returns `Set<JavaClass>`.
 
                   boolean implementsInterface =
                       item.getInterfaces().stream()
