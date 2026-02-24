@@ -18,7 +18,7 @@ protobufPlugin = "0.9.6"
 junit = "6.0.3"
 junit-platform = "1.11.0"
 assertj = "3.26.3"
-mockito = "5.11.0"
+mockito = "5.21.0"
 cucumber = "7.34.2"
 jacoco = "0.8.14"
 
