@@ -1,3 +1,4 @@
+import com.github.spotbugs.snom.SpotBugsTask
 import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
@@ -61,6 +62,16 @@ tasks.withType<JacocoCoverageVerification>().configureEach {
             }
         }
     }
+}
+
+tasks.withType<Checkstyle>().configureEach {
+    shouldRunAfter("spotlessApply")
+    shouldRunAfter("spotlessJava")
+}
+
+tasks.withType<SpotBugsTask>().configureEach {
+    shouldRunAfter("spotlessApply")
+    shouldRunAfter("spotlessJava")
 }
 
 tasks.named("check") {
