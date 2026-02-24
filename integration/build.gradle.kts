@@ -9,5 +9,5 @@ dependencies {
     testImplementation(project(":proto"))
     testImplementation(project(":server"))
     testImplementation(project(":test"))
-    testImplementation(getLibrary("archunit-junit5"))
+    testImplementation(libs.archunit.junit5)
 }
