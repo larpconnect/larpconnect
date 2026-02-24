@@ -45,9 +45,13 @@ Once these criteria are met then the code may be pushed. You do not need to conf
 ## Technical Configuration
 
  * Multi-Module Architecture: To ensure separation of concerns, the project is organized into distinct modules:
-   * `:parent` Contains the central dependencies. All modules within the system inherit `parent`.  Java library.
-   * `:api` The basic API for the REST service.
-   * `:proto` The wire protocol objects. Serialized with protobuf.
+   * `:parent` Contains the central dependencies. All modules within the system inherit `:parent`.  Java library.
+   * `:test` Contains the common test dependencies and some additional utilities for other modules to import.
+   * `:api` The basic API for the REST service. Library.
+   * `:proto` The wire protocol objects. Serialized with protobuf. Library.
+   * `:server` The server and main entry point. Application.
+   * `:init` Initialization code for the vert.x system and guice bindings. Library.
+   * `:integration` Contains archunit tests and also cucumber integration tests.
    * `:bom` Applies the java-platform plugin and pulls in all of the other modules and dependencies. 
 
 ## Workflow
