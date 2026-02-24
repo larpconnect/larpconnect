@@ -18,7 +18,7 @@ protobufPlugin = "0.9.6"
 junit = "6.0.3"
 assertj = "3.26.3"
 mockito = "5.11.0"
-cucumber = "7.18.0"
+cucumber = "7.34.2"
 
 [libraries]
 # Core
