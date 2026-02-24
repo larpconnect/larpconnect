@@ -2,19 +2,25 @@ package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.server.ServerModule;
+import com.larpconnect.njall.server.ServerVerticle;
 import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.vertx.core.Vertx;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,34 +30,36 @@ public class ServerStartupSteps {
   private VerticleService lifecycle;
   private Vertx vertx;
   private final AtomicBoolean deploymentSuccess = new AtomicBoolean(false);
+  private final VertxCaptor vertxCaptor = new VertxCaptor();
 
   @Given("the server is configured")
   public void the_server_is_configured() {
-    lifecycle = VerticleServices.create(Collections.emptyList());
+    lifecycle =
+        VerticleServices.create(
+            Arrays.asList(
+                new ServerModule(),
+                new AbstractModule() {
+                  @Override
+                  protected void configure() {
+                    bind(VertxCaptor.class).toInstance(vertxCaptor);
+                    requestInjection(vertxCaptor);
+                  }
+                }));
   }
 
   @When("I start the server")
   public void i_start_the_server() throws InterruptedException, TimeoutException {
     lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
-    vertx = lifecycle.getVertx();
+    vertx = vertxCaptor.getVertx();
+    lifecycle.deploy(ServerVerticle.class);
 
-    CountDownLatch latch = new CountDownLatch(1);
-    // Use string name since class is package-private
-    vertx
-        .deployVerticle("guice:com.larpconnect.njall.server.MainVerticle")
-        .onSuccess(
-            id -> {
-              deploymentSuccess.set(true);
-              latch.countDown();
-            })
-        .onFailure(
-            err -> {
-              logger.error("Deployment failed", err);
-              latch.countDown();
-            });
-
-    if (!latch.await(5, TimeUnit.SECONDS)) {
-      logger.error("Timed out waiting for verticle deployment");
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < 5000) {
+      if (vertx != null && !vertx.deploymentIDs().isEmpty()) {
+        deploymentSuccess.set(true);
+        break;
+      }
+      Thread.sleep(100);
     }
   }
 
@@ -74,7 +82,6 @@ public class ServerStartupSteps {
 
     Message msg = Message.newBuilder().setMessageType("Ping").build();
 
-    // Register a consumer to reply
     vertx
         .eventBus()
         .consumer(
@@ -109,6 +116,20 @@ public class ServerStartupSteps {
   public void tearDown() throws TimeoutException {
     if (lifecycle != null && lifecycle.isRunning()) {
       lifecycle.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
+    }
+  }
+
+  @Singleton
+  static class VertxCaptor {
+    private final AtomicReference<Vertx> ref = new AtomicReference<>();
+
+    @Inject
+    void setVertx(Vertx vertx) {
+      ref.set(vertx);
+    }
+
+    Vertx getVertx() {
+      return ref.get();
     }
   }
 }

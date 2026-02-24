@@ -2,7 +2,6 @@ package com.larpconnect.njall.server;
 
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
-import io.vertx.core.Vertx;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -21,7 +20,9 @@ final class Main {
   private void run() {
     logger.info("Starting Server...");
 
-    VerticleService lifecycle = VerticleServices.create(Collections.emptyList());
+    // Register ServerModule to bind ServerVerticle -> MainVerticle
+    VerticleService lifecycle =
+        VerticleServices.create(Collections.singletonList(new ServerModule()));
 
     Runtime.getRuntime()
         .addShutdownHook(
@@ -39,19 +40,7 @@ final class Main {
 
     try {
       lifecycle.startAsync().awaitRunning();
-
-      Vertx vertx = lifecycle.getVertx();
-
-      vertx
-          .deployVerticle("guice:" + MainVerticle.class.getName())
-          .onSuccess(id -> logger.info("MainVerticle deployed successfully with ID: {}", id))
-          .onFailure(
-              err -> {
-                logger.error("Failed to deploy MainVerticle", err);
-                lifecycle.stopAsync();
-                System.exit(1);
-              });
-
+      lifecycle.deploy(ServerVerticle.class);
     } catch (RuntimeException e) {
       logger.error("Failed to start server", e);
       System.exit(1);

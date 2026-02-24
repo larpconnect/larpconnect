@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.buffer.Buffer;
 import org.junit.jupiter.api.Test;
@@ -58,16 +57,10 @@ public class ProtoCodecRegistryTest {
 
     try {
       registry.decodeFromWire(0, buffer);
-    } catch (RuntimeException e) {
-      // Check if the cause is InvalidProtocolBufferException (wrapped)
-      if (e.getCause() instanceof InvalidProtocolBufferException) {
-        assertThat(e.getCause()).isInstanceOf(InvalidProtocolBufferException.class);
-      } else {
-        // Or if it's an index out of bounds from Vert.x buffer operations
-        // (though getBytes might throw IndexOutOfBoundsException directly,
-        //  but here we catch RuntimeException which covers it)
-        assertThat(e).isInstanceOf(IndexOutOfBoundsException.class);
-      }
+    } catch (IllegalArgumentException e) {
+      assertThat(e).hasMessageContaining("Failed to decode protobuf message");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected if buffer is too short
     }
   }
 }

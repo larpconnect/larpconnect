@@ -29,8 +29,8 @@ final class GuiceVerticleFactory implements VerticleFactory {
           try {
             Class<?> clazz = classLoader.loadClass(clazzName);
             return (Verticle) injector.getInstance(clazz);
-          } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Failed to load verticle class: " + clazzName, e);
+          } catch (ClassNotFoundException | ClassCastException e) {
+            throw new IllegalArgumentException("Failed to load verticle class: " + clazzName, e);
           }
         });
   }

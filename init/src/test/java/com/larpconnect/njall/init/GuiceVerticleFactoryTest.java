@@ -18,7 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(VertxExtension.class)
 public class GuiceVerticleFactoryTest {
 
-  public static class MyVerticle extends AbstractVerticle {}
+  public static class TestVerticle extends AbstractVerticle {}
 
   @Test
   public void createVerticle_validClass_success(VertxTestContext testContext) {
@@ -27,7 +27,7 @@ public class GuiceVerticleFactoryTest {
             new AbstractModule() {
               @Override
               protected void configure() {
-                bind(MyVerticle.class).in(Scopes.SINGLETON);
+                bind(TestVerticle.class).in(Scopes.SINGLETON);
               }
             });
 
@@ -36,7 +36,7 @@ public class GuiceVerticleFactoryTest {
 
     Promise<Callable<Verticle>> promise = Promise.promise();
     factory.createVerticle(
-        "guice:" + MyVerticle.class.getName(), getClass().getClassLoader(), promise);
+        "guice:" + TestVerticle.class.getName(), getClass().getClassLoader(), promise);
 
     promise
         .future()
@@ -45,7 +45,7 @@ public class GuiceVerticleFactoryTest {
                 callable -> {
                   try {
                     Verticle verticle = callable.call();
-                    assertThat(verticle).isInstanceOf(MyVerticle.class);
+                    assertThat(verticle).isInstanceOf(TestVerticle.class);
                     testContext.completeNow();
                   } catch (Exception e) { // Callable throws Exception
                     testContext.failNow(e);
@@ -68,10 +68,10 @@ public class GuiceVerticleFactoryTest {
                 callable -> {
                   try {
                     callable.call();
-                    testContext.failNow("Expected RuntimeException was not thrown");
-                  } catch (RuntimeException e) {
+                    testContext.failNow("Expected IllegalArgumentException was not thrown");
+                  } catch (IllegalArgumentException e) {
                     assertThat(e)
-                        .isInstanceOf(RuntimeException.class)
+                        .isInstanceOf(IllegalArgumentException.class)
                         .hasMessageContaining("Failed to load verticle class");
                     testContext.completeNow();
                   } catch (Exception e) {

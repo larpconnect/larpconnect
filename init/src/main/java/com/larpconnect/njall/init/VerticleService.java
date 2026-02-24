@@ -1,11 +1,8 @@
 package com.larpconnect.njall.init;
 
 import com.google.common.util.concurrent.Service;
-import com.google.inject.Injector;
-import io.vertx.core.Vertx;
+import io.vertx.core.Verticle;
 
 public interface VerticleService extends Service {
-  Injector getInjector();
-
-  Vertx getVertx();
+  void deploy(Class<? extends Verticle> verticleClass);
 }

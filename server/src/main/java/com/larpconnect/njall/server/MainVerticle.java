@@ -5,7 +5,7 @@ import io.vertx.core.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class MainVerticle extends AbstractVerticle {
+final class MainVerticle extends AbstractVerticle implements ServerVerticle {
   private final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
 
   MainVerticle() {}
