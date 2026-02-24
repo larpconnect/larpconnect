@@ -8,16 +8,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Specifies the "Source of Truth" public Guice module for this class.
- */
+/** Specifies the "Source of Truth" public Guice module for this class. */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface BuildWith {
-  /**
-   * The public Guice module for this class.
-   */
+  /** The public Guice module for this class. */
   Class<? extends Module> value();
 }

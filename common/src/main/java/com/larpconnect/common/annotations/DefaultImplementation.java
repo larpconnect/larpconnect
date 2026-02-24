@@ -7,16 +7,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Specifies the default implementation for the annotated interface.
- */
+/** Specifies the default implementation for the annotated interface. */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface DefaultImplementation {
-  /**
-   * The default implementation class.
-   */
+  /** The default implementation class. */
   Class<?> value();
 }

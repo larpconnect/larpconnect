@@ -8,16 +8,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * Signals a delegated module installation.
- */
+/** Signals a delegated module installation. */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface InstallInstead {
-  /**
-   * The target module class to install instead.
-   */
+  /** The target module class to install instead. */
   Class<? extends Module> value();
 }
