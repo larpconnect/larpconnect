@@ -12,18 +12,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class VerticleLifecycle extends AbstractIdleService implements VerticleService {
+  private static final long DEFAULT_SHUTDOWN_TIMEOUT_SECONDS = 120;
   private final Logger logger = LoggerFactory.getLogger(VerticleLifecycle.class);
 
   private final List<Module> modules;
+  private final Supplier<Vertx> vertxSupplier;
   private Injector injector;
   private Vertx vertx;
+  private long shutdownTimeoutSeconds = DEFAULT_SHUTDOWN_TIMEOUT_SECONDS;
 
   VerticleLifecycle(List<Module> modules) {
+    this(modules, Vertx::vertx);
+  }
+
+  // Visible for testing
+  VerticleLifecycle(List<Module> modules, Supplier<Vertx> vertxSupplier) {
     this.modules = new ArrayList<>(modules);
+    this.vertxSupplier = vertxSupplier;
+  }
+
+  // Visible for testing
+  void setShutdownTimeoutSeconds(long seconds) {
+    this.shutdownTimeoutSeconds = seconds;
   }
 
   @Override
@@ -31,7 +46,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     logger.info("Starting VerticleLifecycle...");
 
     // Create Vertx instance
-    vertx = Vertx.vertx();
+    vertx = vertxSupplier.get();
 
     // Add Vertx module to expose Vertx instance to Guice
     modules.add(
@@ -72,7 +87,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
                 }
                 latch.countDown();
               });
-      if (!latch.await(2, TimeUnit.MINUTES)) {
+      if (!latch.await(shutdownTimeoutSeconds, TimeUnit.SECONDS)) {
         logger.warn("Timed out waiting for Vert.x to close.");
       }
     }
