@@ -1,0 +1,6 @@
+<FindBugsFilter>
+    <Match>
+        <Class name="com.larpconnect.njall.server.Main" />
+        <Bug pattern="DM_EXIT" />
+    </Match>
+</FindBugsFilter>

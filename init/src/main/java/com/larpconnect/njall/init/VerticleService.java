@@ -6,5 +6,6 @@ import io.vertx.core.Vertx;
 
 public interface VerticleService extends Service {
   Injector getInjector();
+
   Vertx getVertx();
 }

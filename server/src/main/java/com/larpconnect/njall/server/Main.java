@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 final class Main {
   private final Logger logger = LoggerFactory.getLogger(Main.class);
 
+  Main() {}
+
   public static void main(String[] args) {
     new Main().run();
   }
@@ -21,31 +23,36 @@ final class Main {
 
     VerticleService lifecycle = VerticleServices.create(Collections.emptyList());
 
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      logger.info("Shutdown hook triggered...");
-      try {
-        lifecycle.stopAsync().awaitTerminated(2, TimeUnit.MINUTES);
-      } catch (TimeoutException e) {
-        logger.error("Shutdown timed out", e);
-      } catch (Exception e) {
-        logger.error("Error during shutdown", e);
-      }
-    }));
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  logger.info("Shutdown hook triggered...");
+                  try {
+                    lifecycle.stopAsync().awaitTerminated(2, TimeUnit.MINUTES);
+                  } catch (TimeoutException e) {
+                    logger.error("Shutdown timed out", e);
+                  } catch (RuntimeException e) {
+                    logger.error("Error during shutdown", e);
+                  }
+                }));
 
     try {
       lifecycle.startAsync().awaitRunning();
 
       Vertx vertx = lifecycle.getVertx();
 
-      vertx.deployVerticle("guice:" + MainVerticle.class.getName())
-        .onSuccess(id -> logger.info("MainVerticle deployed successfully with ID: {}", id))
-        .onFailure(err -> {
-           logger.error("Failed to deploy MainVerticle", err);
-           lifecycle.stopAsync();
-           System.exit(1);
-        });
+      vertx
+          .deployVerticle("guice:" + MainVerticle.class.getName())
+          .onSuccess(id -> logger.info("MainVerticle deployed successfully with ID: {}", id))
+          .onFailure(
+              err -> {
+                logger.error("Failed to deploy MainVerticle", err);
+                lifecycle.stopAsync();
+                System.exit(1);
+              });
 
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       logger.error("Failed to start server", e);
       System.exit(1);
     }

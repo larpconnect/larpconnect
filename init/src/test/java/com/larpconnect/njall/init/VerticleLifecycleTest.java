@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 public class VerticleLifecycleTest {
 
   @Test
-  public void testLifecycle() throws Exception {
+  public void startUp_validConfig_success() throws Exception {
     VerticleService lifecycle = VerticleServices.create(Collections.emptyList());
 
     lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);

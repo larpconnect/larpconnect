@@ -18,6 +18,10 @@ final class VerticleSetupService {
   void setup(Vertx vertx, Injector injector) {
     VerticleFactory guiceFactory = new GuiceVerticleFactory(injector);
     vertx.registerVerticleFactory(guiceFactory);
-    vertx.eventBus().registerDefaultCodec(com.larpconnect.njall.proto.Message.class, injector.getInstance(ProtoCodecRegistry.class));
+    vertx
+        .eventBus()
+        .registerDefaultCodec(
+            com.larpconnect.njall.proto.Message.class,
+            injector.getInstance(ProtoCodecRegistry.class));
   }
 }

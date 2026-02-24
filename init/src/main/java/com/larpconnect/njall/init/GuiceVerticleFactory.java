@@ -21,21 +21,17 @@ final class GuiceVerticleFactory implements VerticleFactory {
 
   @Override
   @SuppressWarnings("deprecation")
-  public void createVerticle(String verticleName, ClassLoader classLoader, Promise<Callable<Verticle>> promise) {
+  public void createVerticle(
+      String verticleName, ClassLoader classLoader, Promise<Callable<Verticle>> promise) {
     String clazzName = VerticleFactory.removePrefix(verticleName);
-    promise.complete(() -> {
-      try {
-        Class<?> clazz = classLoader.loadClass(clazzName);
-        return (Verticle) injector.getInstance(clazz);
-      } catch (ClassNotFoundException | ClassCastException e) {
-        throw new RuntimeException("Failed to load verticle class: " + clazzName, e);
-      } catch (Exception e) {
-        // Handle reflective operation exceptions or Guice instantiation errors
-        if (e instanceof ReflectiveOperationException) {
-           throw new RuntimeException("Reflective error instantiating verticle: " + clazzName, e);
-        }
-        throw new RuntimeException("Failed to instantiate verticle: " + clazzName, e);
-      }
-    });
+    promise.complete(
+        () -> {
+          try {
+            Class<?> clazz = classLoader.loadClass(clazzName);
+            return (Verticle) injector.getInstance(clazz);
+          } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Failed to load verticle class: " + clazzName, e);
+          }
+        });
   }
 }

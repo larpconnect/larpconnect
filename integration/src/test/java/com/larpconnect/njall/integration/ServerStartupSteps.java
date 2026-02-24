@@ -15,8 +15,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ServerStartupSteps {
+  private static final Logger logger = LoggerFactory.getLogger(ServerStartupSteps.class);
 
   private VerticleService lifecycle;
   private Vertx vertx;
@@ -34,17 +37,22 @@ public class ServerStartupSteps {
 
     CountDownLatch latch = new CountDownLatch(1);
     // Use string name since class is package-private
-    vertx.deployVerticle("guice:com.larpconnect.njall.server.MainVerticle")
-         .onSuccess(id -> {
-             deploymentSuccess.set(true);
-             latch.countDown();
-         })
-         .onFailure(err -> {
-             err.printStackTrace();
-             latch.countDown();
-         });
+    vertx
+        .deployVerticle("guice:com.larpconnect.njall.server.MainVerticle")
+        .onSuccess(
+            id -> {
+              deploymentSuccess.set(true);
+              latch.countDown();
+            })
+        .onFailure(
+            err -> {
+              logger.error("Deployment failed", err);
+              latch.countDown();
+            });
 
-    latch.await(5, TimeUnit.SECONDS);
+    if (!latch.await(5, TimeUnit.SECONDS)) {
+      logger.error("Timed out waiting for verticle deployment");
+    }
   }
 
   @Then("the server should be running")
@@ -55,36 +63,46 @@ public class ServerStartupSteps {
 
   @Then("the MainVerticle should be deployed")
   public void the_main_verticle_should_be_deployed() {
-     assertThat(deploymentSuccess.get()).isTrue();
-     assertThat(vertx.deploymentIDs()).isNotEmpty();
+    assertThat(deploymentSuccess.get()).isTrue();
+    assertThat(vertx.deploymentIDs()).isNotEmpty();
   }
 
   @Then("I should be able to send a Message on the event bus")
   public void i_should_be_able_to_send_a_message_on_the_event_bus() throws InterruptedException {
-     CountDownLatch latch = new CountDownLatch(1);
-     AtomicBoolean success = new AtomicBoolean(false);
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicBoolean success = new AtomicBoolean(false);
 
-     Message msg = Message.newBuilder().setMessageType("Ping").build();
+    Message msg = Message.newBuilder().setMessageType("Ping").build();
 
-     // Register a consumer to reply
-     vertx.eventBus().consumer("test-address", (io.vertx.core.eventbus.Message<Message> m) -> {
-         m.reply(m.body());
-     });
+    // Register a consumer to reply
+    vertx
+        .eventBus()
+        .consumer(
+            "test-address",
+            (io.vertx.core.eventbus.Message<Message> m) -> {
+              m.reply(m.body());
+            });
 
-     vertx.eventBus().request("test-address", msg)
-         .onSuccess(reply -> {
-             if (reply.body() instanceof Message) {
-                 success.set(true);
-             }
-             latch.countDown();
-         })
-         .onFailure(err -> {
-             err.printStackTrace();
-             latch.countDown();
-         });
+    vertx
+        .eventBus()
+        .request("test-address", msg)
+        .onSuccess(
+            reply -> {
+              if (reply.body() instanceof Message) {
+                success.set(true);
+              }
+              latch.countDown();
+            })
+        .onFailure(
+            err -> {
+              logger.error("Message send failed", err);
+              latch.countDown();
+            });
 
-     latch.await(5, TimeUnit.SECONDS);
-     assertThat(success.get()).isTrue();
+    if (!latch.await(5, TimeUnit.SECONDS)) {
+      logger.error("Timed out waiting for message reply");
+    }
+    assertThat(success.get()).isTrue();
   }
 
   @After

@@ -34,16 +34,17 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     vertx = Vertx.vertx();
 
     // Add Vertx module to expose Vertx instance to Guice
-    modules.add(new AbstractModule() {
-      @Override
-      protected void configure() {}
+    modules.add(
+        new AbstractModule() {
+          @Override
+          protected void configure() {}
 
-      @Provides
-      @Singleton
-      Vertx provideVertx() {
-        return vertx;
-      }
-    });
+          @Provides
+          @Singleton
+          Vertx provideVertx() {
+            return vertx;
+          }
+        });
 
     // Create Guice Injector
     injector = Guice.createInjector(modules);
@@ -60,27 +61,30 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     logger.info("Stopping VerticleLifecycle...");
     if (vertx != null) {
       CountDownLatch latch = new CountDownLatch(1);
-      vertx.close().onComplete(ar -> {
-        if (ar.succeeded()) {
-          logger.info("Vert.x closed successfully.");
-        } else {
-          logger.error("Failed to close Vert.x", ar.cause());
-        }
-        latch.countDown();
-      });
+      vertx
+          .close()
+          .onComplete(
+              ar -> {
+                if (ar.succeeded()) {
+                  logger.info("Vert.x closed successfully.");
+                } else {
+                  logger.error("Failed to close Vert.x", ar.cause());
+                }
+                latch.countDown();
+              });
       if (!latch.await(2, TimeUnit.MINUTES)) {
-         logger.warn("Timed out waiting for Vert.x to close.");
+        logger.warn("Timed out waiting for Vert.x to close.");
       }
     }
   }
 
   @Override
   public Injector getInjector() {
-      return injector;
+    return injector;
   }
 
   @Override
   public Vertx getVertx() {
-      return vertx;
+    return vertx;
   }
 }

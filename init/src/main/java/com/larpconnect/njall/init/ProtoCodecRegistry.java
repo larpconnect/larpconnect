@@ -7,7 +7,10 @@ import io.vertx.core.eventbus.MessageCodec;
 
 final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
   private static final short VERSION = 0x01;
+  private static final int INT_SIZE = 4;
   private static final String NAMESPACE = "com.larpconnect.njall.proto.";
+
+  ProtoCodecRegistry() {}
 
   @Override
   public void encodeToWire(Buffer buffer, Message message) {
@@ -25,7 +28,7 @@ final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
 
     // Read size (4 bytes)
     int size = buffer.getInt(currentPos);
-    currentPos += 4;
+    currentPos += INT_SIZE;
 
     // Read bytes
     byte[] bytes = buffer.getBytes(currentPos, currentPos + size);
@@ -45,12 +48,16 @@ final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
 
   @Override
   public Message transform(Message message) {
-    // If sent locally, we just return the object itself (or a copy if needed, but protobufs are immutable-ish)
-    // However, since the prompt specifies logic about modifying the message_type during deserialization,
+    // If sent locally, we just return the object itself (or a copy if needed, but protobufs are
+    // immutable-ish)
+    // However, since the prompt specifies logic about modifying the message_type during
+    // deserialization,
     // strict interpretation suggests this logic applies "over the wire".
-    // For local transport, transform is used. If we want to simulate the same behavior, we could apply it here too.
+    // For local transport, transform is used. If we want to simulate the same behavior, we could
+    // apply it here too.
     // But typically transform is identity for immutable objects.
-    // Let's stick to identity for local transport to be efficient, unless requirements say otherwise.
+    // Let's stick to identity for local transport to be efficient, unless requirements say
+    // otherwise.
     return message;
   }
 

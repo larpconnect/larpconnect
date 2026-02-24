@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 final class MainVerticle extends AbstractVerticle {
   private final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
 
+  MainVerticle() {}
+
   @Override
   public void start(Promise<Void> startPromise) {
     logger.info("MainVerticle starting...");
