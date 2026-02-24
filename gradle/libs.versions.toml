@@ -1,0 +1,50 @@
+[versions]
+java = "25"
+vertx = "5.0.8"
+slf4j = "2.0.17"
+logback = "1.5.32"
+guava = "33.3.0-jre"
+guice = "7.0.0"
+mug = "9.9.2"
+jsr305 = "3.0.2"
+errorprone = "2.36.0"
+checkstyle = "10.21.1"
+spotbugs = "6.0.26"
+spotless = "7.0.2" # Latest 7.x supports Java 25 better maybe? Or stick to 6.25.0
+junit = "5.11.0"
+assertj = "3.26.3"
+mockito = "5.11.0"
+cucumber = "7.18.0"
+protobuf = "4.28.2"
+
+[libraries]
+# Core
+vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+# Utilities
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+guice = { module = "com.google.inject:guice", version.ref = "guice" }
+mug = { module = "com.google.mug:mug", version.ref = "mug" }
+mug-errorprone = { module = "com.google.mug:mug-errorprone", version.ref = "mug" }
+jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
+errorprone-annotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "errorprone" }
+spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugs" }
+protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
+
+# Testing
+junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+junit-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+assertj-guava = { module = "org.assertj:assertj-guava", version.ref = "assertj" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber" }
+cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
+
+[plugins]
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs" }
+errorprone = { id = "net.ltgt.errorprone", version = "4.1.0" }
