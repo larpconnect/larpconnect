@@ -24,3 +24,14 @@ spotbugs {
     // Protobuf generated code often violates Spotbugs rules.
     ignoreFailures.set(true)
 }
+
+// Configure Jacoco to ignore generated files
+tasks.withType<JacocoReport>().configureEach {
+    classDirectories.setFrom(
+        classDirectories.files.map {
+            fileTree(it).matching {
+                exclude("**/MessageProto.java")
+            }
+        },
+    )
+}

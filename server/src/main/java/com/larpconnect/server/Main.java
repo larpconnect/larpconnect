@@ -1,6 +1,7 @@
 package com.larpconnect.server;
 
 import com.larpconnect.init.VerticleLifecycle;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,5 +21,16 @@ public final class Main {
     VerticleLifecycle lifecycle = VerticleLifecycle.create();
     lifecycle.startAsync().awaitRunning();
     lifecycle.deployVerticle("guice:" + MainVerticle.class.getName());
+
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  try {
+                    lifecycle.stopAsync().awaitTerminated(2, TimeUnit.MINUTES);
+                  } catch (java.util.concurrent.TimeoutException e) {
+                    logger.error("Lifecycle stop timed out", e);
+                  }
+                }));
   }
 }
