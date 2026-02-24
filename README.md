@@ -42,4 +42,10 @@ To compile the project and run the test suite:
 ./gradlew build
 ```
 
+## License
 
+Licensed under Apache 2.0
+
+See [LICENSE](./LICENSE) for more details. 
+
+Not affiliated with or endorsed by Google LLC in any way.
