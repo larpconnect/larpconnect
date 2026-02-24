@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    api(project(":parent"))
     api(libs.junit.api)
     api(libs.junit.params)
     api(libs.assertj.core)
