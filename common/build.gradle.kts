@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    api(libs.guice)
+    api(project(":parent"))
 }
