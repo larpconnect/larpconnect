@@ -34,7 +34,8 @@ spotless {
 }
 
 dependencies {
-    add("errorprone", getLibrary("errorprone-annotations"))
+    add("errorprone", getLibrary("errorprone-core"))
+    add("compileOnly", getLibrary("errorprone-annotations")) // Errorprone annotations for users
     add("compileOnly", getLibrary("jsr305"))
     add("compileOnly", getLibrary("spotbugs-annotations"))
 }

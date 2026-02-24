@@ -5,6 +5,12 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
+
 rootProject.name = "larpconnect"
 
 include("parent", "bom", "test", "server", "api", "proto", "integration")
