@@ -4,7 +4,6 @@ plugins {
 
 dependencies {
     api(platform(project(":bom")))
-    api(project(":common"))
 
     api(libs.vertx.core)
     api(libs.guava)
