@@ -6,10 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Main Verticle for the server application. */
-public class MainVerticle extends AbstractVerticle {
-  private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
+final class MainVerticle extends AbstractVerticle {
+  private final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
 
-  public MainVerticle() {}
+  MainVerticle() {}
 
   @Override
   public void start(Promise<Void> startPromise) {

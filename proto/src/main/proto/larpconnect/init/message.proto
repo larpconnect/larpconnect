@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package larpconnect.init;
+
+import "google/protobuf/any.proto";
+
+option java_package = "com.larpconnect.init";
+option java_outer_classname = "MessageProto";
+
+message Message {
+  bytes trace_id = 1;
+  string message_name = 2;
+  google.protobuf.Any payload = 3;
+}

@@ -17,8 +17,8 @@ public final class Main {
    */
   public static void main(String[] args) {
     logger.info("Starting server...");
-    VerticleLifecycle lifecycle = new VerticleLifecycle();
-    lifecycle.start();
+    VerticleLifecycle lifecycle = VerticleLifecycle.create();
+    lifecycle.startAsync().awaitRunning();
     lifecycle.deployVerticle("guice:" + MainVerticle.class.getName());
   }
 }

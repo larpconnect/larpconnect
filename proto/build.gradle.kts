@@ -6,10 +6,21 @@ plugins {
 dependencies {
     implementation(project(":parent"))
     api(libs.protobuf.java)
+    api(libs.spotbugs.annotations)
 }
 
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
     }
+}
+
+// Configure Checkstyle to ignore generated files
+tasks.withType<Checkstyle>().configureEach {
+    exclude("**/MessageProto.java")
+}
+
+spotbugs {
+    // Protobuf generated code often violates Spotbugs rules.
+    ignoreFailures.set(true)
 }

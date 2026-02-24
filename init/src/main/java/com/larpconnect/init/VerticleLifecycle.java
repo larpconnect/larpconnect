@@ -1,5 +1,6 @@
 package com.larpconnect.init;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -9,46 +10,58 @@ import io.vertx.core.Vertx;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Manages the lifecycle of the Vert.x application. */
-public class VerticleLifecycle {
+public final class VerticleLifecycle extends AbstractIdleService {
   private static final Logger logger = LoggerFactory.getLogger(VerticleLifecycle.class);
-  private Vertx vertx;
+  private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
+  private final Module[] modules;
+  private final Runtime runtime;
 
-  public VerticleLifecycle() {}
+  VerticleLifecycle(Runtime runtime, Module... modules) {
+    this.runtime = runtime;
+    this.modules = modules;
+  }
 
-  /**
-   * Starts the Vert.x application with the given Guice modules.
-   *
-   * @param modules the Guice modules to use
-   */
-  public void start(Module... modules) {
+  // Factory method for creating VerticleLifecycle
+  public static VerticleLifecycle create(Module... modules) {
+    return new VerticleLifecycle(Runtime.getRuntime(), modules);
+  }
+
+  @Override
+  protected void startUp() {
     logger.info("Starting Vert.x application");
-    vertx = Vertx.vertx();
-
-    // Create a module that binds the Vertx instance if needed, or other common bindings.
-    // For now we assume modules passed in cover dependencies or we rely on JIT bindings.
-    // However, GuiceVerticleFactory needs Injector.
-    // We can bind Injector in a module if needed, but Guice automatically injects Injector.
+    Vertx vertx = Vertx.vertx();
+    if (!vertxRef.compareAndSet(null, vertx)) {
+      vertx.close(); // Should not happen if startUp is called once
+      throw new IllegalStateException("Vertx already started");
+    }
 
     List<Module> allModules = new ArrayList<>(Arrays.asList(modules));
-    // Add a module to bind Vertx instance?
-    allModules.add(
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(Vertx.class).toInstance(vertx);
-          }
-        });
+    allModules.add(new InitModule(vertx));
 
     Injector injector = Guice.createInjector(Stage.PRODUCTION, allModules);
 
     VerticleSetupService setupService = injector.getInstance(VerticleSetupService.class);
     setupService.setup(vertx);
 
-    Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
+    // Register shutdown hook
+    runtime.addShutdownHook(new Thread(this::stopAsync));
+  }
+
+  @Override
+  protected void shutDown() {
+    Vertx vertx = vertxRef.getAndSet(null);
+    if (vertx != null) {
+      logger.info("Stopping Vert.x application");
+      vertx
+          .close()
+          .onSuccess(v -> logger.info("Vertx stopped successfully"))
+          .onFailure(err -> logger.error("Failed to stop Vertx", err));
+    }
   }
 
   /**
@@ -57,6 +70,7 @@ public class VerticleLifecycle {
    * @param name the name of the verticle to deploy
    */
   public void deployVerticle(String name) {
+    Vertx vertx = vertxRef.get();
     if (vertx == null) {
       throw new IllegalStateException("Vertx not started");
     }
@@ -67,15 +81,19 @@ public class VerticleLifecycle {
         .onFailure(err -> logger.error("Failed to deploy {}", name, err));
   }
 
-  /** Stops the Vert.x application. */
-  public void stop() {
-    if (vertx != null) {
-      logger.info("Stopping Vert.x application");
-      vertx
-          .close()
-          .onSuccess(v -> logger.info("Vertx stopped successfully"))
-          .onFailure(err -> logger.error("Failed to stop Vertx", err));
-      vertx = null;
+  /** Guice module for internal bindings. */
+  private static final class InitModule extends AbstractModule {
+    private final Vertx vertx;
+
+    InitModule(Vertx vertx) {
+      this.vertx = vertx;
+    }
+
+    @Override
+    protected void configure() {
+      bind(Vertx.class).toInstance(vertx);
+      bind(ProtoCodecRegistry.class).to(DefaultProtoCodecRegistry.class);
+      bind(VerticleSetupService.class).to(DefaultVerticleSetupService.class);
     }
   }
 }

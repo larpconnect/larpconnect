@@ -8,11 +8,11 @@ import io.vertx.core.spi.VerticleFactory;
 import java.util.concurrent.Callable;
 
 /** VerticleFactory that uses Guice for dependency injection. */
-public class GuiceVerticleFactory implements VerticleFactory {
+final class GuiceVerticleFactory implements VerticleFactory {
   private final Injector injector;
 
   @Inject
-  public GuiceVerticleFactory(Injector injector) {
+  GuiceVerticleFactory(Injector injector) {
     this.injector = injector;
   }
 
@@ -28,12 +28,7 @@ public class GuiceVerticleFactory implements VerticleFactory {
     String className = VerticleFactory.removePrefix(verticleName);
     try {
       Class<?> clazz = classLoader.loadClass(className);
-      // We assume the class implements Verticle, but we can't cast until we instantiate if we want
-      // to be safe.
-      // However, Guice getInstance usually returns the type of the class.
-      // But we need to return Callable<Verticle>.
-
-      promise.complete(() -> (Verticle) injector.getInstance(clazz));
+      promise.complete(() -> (Verticle) injector.getProvider(clazz).get());
     } catch (ReflectiveOperationException | RuntimeException e) {
       promise.fail(e);
     }
