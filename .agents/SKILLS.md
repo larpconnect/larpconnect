@@ -21,6 +21,7 @@ This document defines the specialized capabilities available to AI agents such a
 | **Data Handling**      | Any modifications to JSON or CSV files or work inside of `:proto` | `.jules/skills/data.md` |
 | **Markdown Documentation**  | Building documentation in markdown (`.md`)   | `.jules/skills/markdown.md` |
 | **Breakglass Documentation** | If you are "stuck" on a problem             | `.jules/skills/breakglass.md` |
+| **Vert.x Framework**         | Modification of any file using 'io.vertx' or implementing a Verticle | `.agents/skills/vertx.md` |
 
 ## 3. Delegation Protocol
 
