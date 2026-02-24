@@ -16,6 +16,7 @@ dependencies {
     testImplementation(getLibrary("cucumber-junit-platform-engine"))
 
     testRuntimeOnly(getLibrary("junit-engine"))
+    testRuntimeOnly(getLibrary("junit-platform-launcher"))
     testRuntimeOnly(getLibrary("logback-classic"))
 }
 

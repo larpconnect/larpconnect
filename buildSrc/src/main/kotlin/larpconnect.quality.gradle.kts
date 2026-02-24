@@ -2,6 +2,7 @@ import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
     checkstyle
+    jacoco
     id("com.github.spotbugs")
     id("com.diffplug.spotless")
     id("net.ltgt.errorprone")
@@ -31,6 +32,38 @@ spotless {
         target("*.gradle.kts")
         ktlint()
     }
+}
+
+jacoco {
+    toolVersion = getVersion("jacoco")
+}
+
+tasks.withType<JacocoReport>().configureEach {
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.withType<JacocoCoverageVerification>().configureEach {
+    violationRules {
+        rule {
+            limit {
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                minimum = "0.80".toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.90".toBigDecimal()
+            }
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn(tasks.withType<JacocoCoverageVerification>())
 }
 
 dependencies {
