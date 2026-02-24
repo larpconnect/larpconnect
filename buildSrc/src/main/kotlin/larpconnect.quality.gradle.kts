@@ -17,7 +17,7 @@ checkstyle {
 }
 
 spotbugs {
-    toolVersion.set(getVersion("spotbugs")) // This now refers to the 'spotbugs' version (4.8.6) in TOML
+    toolVersion.set(getVersion("spotbugs"))
     excludeFilter.set(rootConfigDir.file("spotbugs/exclude.xml").asFile)
     ignoreFailures.set(false)
 }
@@ -25,7 +25,7 @@ spotbugs {
 spotless {
     java {
         target("src/*/java/**/*.java")
-        googleJavaFormat()
+        googleJavaFormat("1.25.2") // Update to a version compatible with JDK 25
     }
     kotlinGradle {
         target("*.gradle.kts")
