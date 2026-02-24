@@ -100,8 +100,8 @@ final class ArchitectureTest {
           .areNotInterfaces()
           .should(
               new ArchCondition<JavaClass>(
-                  "implement an interface named after the class (minus 'Default') which is annotated"
-                      + " with @DefaultImplementation") {
+                  "implement an interface named after the class (minus 'Default') which is"
+                      + " annotated with @DefaultImplementation") {
                 @Override
                 public void check(JavaClass item, ConditionEvents events) {
                   String interfaceName = item.getSimpleName().substring("Default".length());
@@ -134,16 +134,6 @@ final class ArchitectureTest {
                                     interfaceOpt.get().getName())));
                       }
                     } else {
-                      // Maybe strict: if named DefaultFoo, must implement Foo?
-                      // The requirement says "Default<InterfaceName> should mean..."
-                      // I will assume if the class is named DefaultFoo, it is INTENDED to be the
-                      // default for Foo.
-                      // So Foo should probably exist and be annotated.
-                      // But purely from ArchUnit, we can only easily check loaded classes.
-                      // Let's stick to: If it implements an interface that matches the name
-                      // pattern, check annotation.
-                      // If it doesn't implement it, we might ignore or flag. Let's flag for now as
-                      // it's likely a violation of intent.
                       events.add(
                           SimpleConditionEvent.violated(
                               item,
