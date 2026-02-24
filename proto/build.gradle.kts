@@ -1,6 +1,6 @@
 plugins {
     id("larpconnect.library")
-    id("com.google.protobuf") version "4.28.2"
+    alias(libs.plugins.protobuf)
 }
 
 dependencies {
@@ -10,6 +10,6 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.28.2"
+        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
     }
 }
