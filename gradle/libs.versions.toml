@@ -21,6 +21,9 @@ assertj = "3.27.7"
 mockito = "5.21.0"
 cucumber = "7.34.2"
 jacoco = "0.8.14"
+beanutils = "1.11.0"
+log4j = "2.53.2"
+commons-lang3 = "3.18.0"
 
 [libraries]
 # Core
@@ -29,6 +32,9 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
 # Utilities
+commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "beanutils" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
 mug = { module = "com.google.mug:mug", version.ref = "mug" }
