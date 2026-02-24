@@ -46,6 +46,7 @@ tasks.withType<JacocoReport>().configureEach {
 }
 
 tasks.withType<JacocoCoverageVerification>().configureEach {
+    dependsOn(tasks.withType<Test>())
     violationRules {
         rule {
             limit {
