@@ -32,3 +32,17 @@ Generative AI agents are allowed in this project, but with some guiding principl
    This is an easy one to miss, but check for it the best you can.
 9. **Security and Privacy**: You **MUST NOT** include credentials, non-anonymized production data, or proprietary logic in prompts to AI agents for
    for contributions to this project.
+
+## A Note on Using AI in Pipeline Versus Process
+
+Generative AI tooling may **never** be integrated into the actual pipeline for this tool. This tool is about building and coordinating community
+spaces and games, _not_ about using AI agents for tasks.
+
+AI tools may be used to contribute source code, they may never be part of the core loop of this system.
+
+## Inspirations and Further Reading
+
+* [ACM Code of Ethics and Professional Conduct](https://www.acm.org/code-of-ethics)
+* [Linux Foundation Generative AI Principles](https://www.linuxfoundation.org/legal/generative-ai)
+* [IEEE Ethically Aligned Design](https://standards.ieee.org/wp-content/uploads/import/documents/other/ead_v2.pdf)
+
