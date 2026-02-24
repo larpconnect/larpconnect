@@ -1,5 +1,6 @@
 package com.larpconnect.server;
 
+import com.larpconnect.init.VerticleLifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,9 @@ public final class Main {
    * @param args Command line arguments.
    */
   public static void main(String[] args) {
-    logger.info("Hello World!");
+    logger.info("Starting server...");
+    VerticleLifecycle lifecycle = new VerticleLifecycle();
+    lifecycle.start();
+    lifecycle.deployVerticle("guice:" + MainVerticle.class.getName());
   }
 }

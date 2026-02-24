@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "larpconnect"
 
-include("parent", "bom", "test", "server", "api", "proto", "integration", "common")
+include("parent", "bom", "test", "server", "api", "proto", "integration", "common", "init")
