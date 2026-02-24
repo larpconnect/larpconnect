@@ -15,4 +15,15 @@ tasks.withType<JavaCompile>().configureEach {
 
 dependencies {
     api(getLibrary("slf4j-api"))
+    constraints {
+        implementation(getLibrary("commons-beanutils")) {
+            because("CVE-2025-48734")
+        }
+        implementation(getLibrary("log4j-core")) {
+            because("CVE-2025-68161")
+        }
+        implementation(getLibrary("commons-lang3")) {
+            because("CVE-2025-48924")
+        }
+    }
 }
