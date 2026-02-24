@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 class CalculatorTest {
 
   @Test
-  void testAdd() {
+  void should_addTwoNumbers() {
     Calculator calculator = new Calculator();
     assertEquals(5, calculator.add(2, 3));
   }

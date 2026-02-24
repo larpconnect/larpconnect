@@ -3,6 +3,9 @@ package com.larpconnect.njall.common;
 /** A simple calculator for testing purposes. */
 public final class Calculator {
 
+  /** Creates a new calculator. */
+  public Calculator() {}
+
   /**
    * Adds two integers.
    *
