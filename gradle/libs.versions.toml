@@ -28,6 +28,8 @@ commons-lang3 = "3.20.0"
 [libraries]
 # Core
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
+vertx-codegen = { module = "io.vertx:vertx-codegen", version.ref = "vertx" }
+vertx-junit5 = { module = "io.vertx:vertx-junit5", version.ref = "vertx" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 

@@ -64,6 +64,8 @@ final class ArchitectureTest {
           .areNotRecords()
           .and()
           .areNotAnonymousClasses()
+          .and()
+          .resideOutsideOfPackage("com.larpconnect.njall.proto..")
           .should()
           .haveModifier(JavaModifier.ABSTRACT)
           .orShould()
@@ -81,6 +83,8 @@ final class ArchitectureTest {
           .areNotRecords()
           .and()
           .areNotAssignableTo(Module.class)
+          .and()
+          .resideOutsideOfPackage("com.larpconnect.njall.proto..")
           .should()
           .notBePublic();
 

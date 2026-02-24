@@ -4,6 +4,10 @@ plugins {
 
 dependencies {
     implementation(project(":parent"))
+    implementation(project(":init"))
+    implementation(libs.vertx.core)
+    implementation(libs.guice)
+    compileOnly(libs.vertx.codegen)
 }
 
 application {
