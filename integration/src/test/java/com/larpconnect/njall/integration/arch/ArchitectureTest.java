@@ -157,4 +157,39 @@ final class ArchitectureTest {
           .should()
           .beAssignableTo(Module.class)
           .allowEmptyShould(true);
+
+  // 7. Dependencies must form a directed acyclic graph that mirrors the package layout.
+  // Classes in a package cannot depend on classes in any ancestor package.
+  @ArchTest
+  public static final ArchRule no_dependencies_on_parent_packages =
+      classes()
+          .that()
+          .resideInAPackage("com.larpconnect.njall..")
+          .should(
+              new ArchCondition<JavaClass>("not depend on parent packages") {
+                @Override
+                public void check(JavaClass item, ConditionEvents events) {
+                  item.getDirectDependenciesFromSelf().stream()
+                      .map(dependency -> dependency.getTargetClass())
+                      .filter(
+                          targetClass ->
+                              targetClass.getPackageName().startsWith("com.larpconnect.njall"))
+                      .forEach(
+                          targetClass -> {
+                            String currentPackage = item.getPackageName();
+                            String targetPackage = targetClass.getPackageName();
+
+                            // Check if target package is a parent of current package
+                            // Parent package logic: current starts with target + "."
+                            if (currentPackage.startsWith(targetPackage + ".")) {
+                              String message =
+                                  String.format(
+                                      "Class %s depends on %s which resides in a parent package %s",
+                                      item.getName(), targetClass.getName(), targetPackage);
+                              events.add(SimpleConditionEvent.violated(item, message));
+                            }
+                          });
+                }
+              })
+          .allowEmptyShould(true);
 }
