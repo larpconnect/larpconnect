@@ -17,7 +17,7 @@ checkstyle {
 }
 
 spotbugs {
-    toolVersion.set(getVersion("spotbugs"))
+    toolVersion.set(getVersion("spotbugs")) // This now refers to the 'spotbugs' version (4.8.6) in TOML
     excludeFilter.set(rootConfigDir.file("spotbugs/exclude.xml").asFile)
     ignoreFailures.set(false)
 }
@@ -35,7 +35,7 @@ spotless {
 
 dependencies {
     add("errorprone", getLibrary("errorprone-core"))
-    add("compileOnly", getLibrary("errorprone-annotations")) // Errorprone annotations for users
+    add("compileOnly", getLibrary("errorprone-annotations"))
     add("compileOnly", getLibrary("jsr305"))
     add("compileOnly", getLibrary("spotbugs-annotations"))
 }
