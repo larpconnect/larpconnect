@@ -56,6 +56,7 @@ mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber" }
 cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version = "1.4.1" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

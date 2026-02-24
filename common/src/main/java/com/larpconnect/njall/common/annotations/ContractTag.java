@@ -1,4 +1,4 @@
-package com.larpconnect.common.annotations;
+package com.larpconnect.njall.common.annotations;
 
 /** Advisory tags for {@link AiContract}. */
 public enum ContractTag {

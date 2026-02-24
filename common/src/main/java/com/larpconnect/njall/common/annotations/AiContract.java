@@ -1,4 +1,4 @@
-package com.larpconnect.common.annotations;
+package com.larpconnect.njall.common.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
