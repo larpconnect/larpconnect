@@ -1,8 +1,6 @@
 package com.larpconnect.njall.common;
 
-/**
- * A simple calculator for testing purposes.
- */
+/** A simple calculator for testing purposes. */
 public final class Calculator {
 
   /**
