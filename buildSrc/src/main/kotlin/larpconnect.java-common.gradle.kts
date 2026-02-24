@@ -1,7 +1,11 @@
+import org.gradle.accessors.dm.LibrariesForLibs
+
 plugins {
     `java-library`
     id("larpconnect.quality")
 }
+
+val libs = the<LibrariesForLibs>()
 
 java {
     toolchain {
@@ -14,15 +18,15 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 dependencies {
-    api(getLibrary("slf4j-api"))
+    api(libs.slf4j.api)
     constraints {
-        implementation(getLibrary("commons-beanutils")) {
+        implementation(libs.commons.beanutils) {
             because("CVE-2025-48734")
         }
-        implementation(getLibrary("log4j-core")) {
+        implementation(libs.log4j.core) {
             because("CVE-2025-68161")
         }
-        implementation(getLibrary("commons-lang3")) {
+        implementation(libs.commons.lang3) {
             because("CVE-2025-48924")
         }
     }

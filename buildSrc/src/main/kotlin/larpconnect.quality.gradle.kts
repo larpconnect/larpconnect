@@ -1,5 +1,6 @@
 import com.github.spotbugs.snom.SpotBugsTask
 import net.ltgt.gradle.errorprone.errorprone
+import org.gradle.accessors.dm.LibrariesForLibs
 
 plugins {
     checkstyle
@@ -9,17 +10,18 @@ plugins {
     id("net.ltgt.errorprone")
 }
 
+val libs = the<LibrariesForLibs>()
 val rootConfigDir = rootProject.layout.projectDirectory.dir("config")
 
 checkstyle {
-    toolVersion = getVersion("checkstyle")
+    toolVersion = libs.versions.checkstyle.get()
     configFile = rootConfigDir.file("checkstyle/checkstyle.xml").asFile
     isIgnoreFailures = false
     maxWarnings = 0
 }
 
 spotbugs {
-    toolVersion.set(getVersion("spotbugs"))
+    toolVersion.set(libs.versions.spotbugs.get())
     excludeFilter.set(rootConfigDir.file("spotbugs/exclude.xml").asFile)
     ignoreFailures.set(false)
 }
@@ -36,7 +38,7 @@ spotless {
 }
 
 jacoco {
-    toolVersion = getVersion("jacoco")
+    toolVersion = libs.versions.jacoco.get()
 }
 
 tasks.withType<JacocoReport>().configureEach {
@@ -79,10 +81,10 @@ tasks.named("check") {
 }
 
 dependencies {
-    add("errorprone", getLibrary("errorprone-core"))
-    add("compileOnly", getLibrary("errorprone-annotations"))
-    add("compileOnly", getLibrary("jsr305"))
-    add("compileOnly", getLibrary("spotbugs-annotations"))
+    add("errorprone", libs.errorprone.core)
+    add("compileOnly", libs.errorprone.annotations)
+    add("compileOnly", libs.jsr305)
+    add("compileOnly", libs.spotbugs.annotations)
 }
 
 tasks.withType<JavaCompile>().configureEach {

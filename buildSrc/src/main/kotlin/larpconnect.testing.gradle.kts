@@ -1,23 +1,27 @@
+import org.gradle.accessors.dm.LibrariesForLibs
+
 plugins {
     id("larpconnect.java-common")
 }
+
+val libs = the<LibrariesForLibs>()
 
 dependencies {
     if (project.name != "test") {
         testImplementation(project(":test"))
     }
-    testImplementation(getLibrary("junit-api"))
-    testImplementation(getLibrary("junit-params"))
-    testImplementation(getLibrary("assertj-core"))
-    testImplementation(getLibrary("assertj-guava"))
-    testImplementation(getLibrary("mockito-core"))
-    testImplementation(getLibrary("mockito-junit-jupiter"))
-    testImplementation(getLibrary("cucumber-java"))
-    testImplementation(getLibrary("cucumber-junit-platform-engine"))
+    testImplementation(libs.junit.api)
+    testImplementation(libs.junit.params)
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.assertj.guava)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.junit.jupiter)
+    testImplementation(libs.cucumber.java)
+    testImplementation(libs.cucumber.junit.platform.engine)
 
-    testRuntimeOnly(getLibrary("junit-engine"))
-    testRuntimeOnly(getLibrary("junit-platform-launcher"))
-    testRuntimeOnly(getLibrary("logback-classic"))
+    testRuntimeOnly(libs.junit.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.logback.classic)
 }
 
 tasks.withType<Test>().configureEach {
