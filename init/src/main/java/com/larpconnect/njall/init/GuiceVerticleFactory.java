@@ -1,6 +1,7 @@
 package com.larpconnect.njall.init;
 
 import com.google.inject.Injector;
+import io.vertx.core.Deployable;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.spi.VerticleFactory;
@@ -20,12 +21,10 @@ final class GuiceVerticleFactory implements VerticleFactory {
   }
 
   @Override
-  // createVerticle is deprecated in favor of createVerticle2 which supports Deployable.
-  // We are suppressing this warning as this factory specifically handles Verticles
-  // and has not been migrated to the new API yet.
-  @SuppressWarnings("deprecation")
-  public void createVerticle(
-      String verticleName, ClassLoader classLoader, Promise<Callable<Verticle>> promise) {
+  public void createVerticle2(
+      String verticleName,
+      ClassLoader classLoader,
+      Promise<Callable<? extends Deployable>> promise) {
     var clazzName = VerticleFactory.removePrefix(verticleName);
     promise.complete(
         () -> {
