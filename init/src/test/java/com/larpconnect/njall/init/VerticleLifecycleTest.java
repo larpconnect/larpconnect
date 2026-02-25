@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
-public class VerticleLifecycleTest {
+final class VerticleLifecycleTest {
 
   @Test
   public void startUp_validConfig_success() throws Exception {
@@ -112,5 +112,5 @@ public class VerticleLifecycleTest {
         .hasMessage("VerticleLifecycle not started");
   }
 
-  static class TestVerticle extends AbstractVerticle {}
+  static final class TestVerticle extends AbstractVerticle {}
 }

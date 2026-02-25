@@ -16,9 +16,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
-public class GuiceVerticleFactoryTest {
+final class GuiceVerticleFactoryTest {
 
-  public static class TestVerticle extends AbstractVerticle {}
+  static final class TestVerticle extends AbstractVerticle {}
 
   @Test
   public void createVerticle_validClass_success(VertxTestContext testContext) {
@@ -31,7 +31,7 @@ public class GuiceVerticleFactoryTest {
               }
             });
 
-    GuiceVerticleFactory factory = new GuiceVerticleFactory(injector);
+    var factory = new GuiceVerticleFactory(injector);
     assertThat(factory.prefix()).isEqualTo("guice");
 
     Promise<Callable<Verticle>> promise = Promise.promise();
@@ -56,7 +56,7 @@ public class GuiceVerticleFactoryTest {
   @Test
   public void createVerticle_missingClass_failure(VertxTestContext testContext) {
     Injector injector = Guice.createInjector();
-    GuiceVerticleFactory factory = new GuiceVerticleFactory(injector);
+    var factory = new GuiceVerticleFactory(injector);
 
     Promise<Callable<Verticle>> promise = Promise.promise();
     factory.createVerticle("guice:com.example.MissingClass", getClass().getClassLoader(), promise);

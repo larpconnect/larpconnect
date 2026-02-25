@@ -8,13 +8,13 @@ import java.lang.reflect.Proxy;
 import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 
-class MainTest {
+final class MainTest {
 
   @Test
   void main_startsAndStopsServerSuccessfully() {
-    Runtime runtime = Runtime.getRuntime();
-    Main main = new Main(runtime);
-    VerticleService service = main.run();
+    var runtime = Runtime.getRuntime();
+    var main = new Main(runtime);
+    var service = main.run();
 
     assertThat(service.state()).isEqualTo(State.RUNNING);
 
@@ -25,11 +25,11 @@ class MainTest {
 
   @Test
   void shutdown_handlesExceptions() {
-    Runtime runtime = Runtime.getRuntime();
-    Main main = new Main(runtime);
+    var runtime = Runtime.getRuntime();
+    var main = new Main(runtime);
 
     // Test TimeoutException
-    VerticleService timeoutService =
+    var timeoutService =
         (VerticleService)
             Proxy.newProxyInstance(
                 getClass().getClassLoader(),
@@ -47,7 +47,7 @@ class MainTest {
     main.shutdown(timeoutService);
 
     // Test RuntimeException
-    VerticleService runtimeService =
+    var runtimeService =
         (VerticleService)
             Proxy.newProxyInstance(
                 getClass().getClassLoader(),

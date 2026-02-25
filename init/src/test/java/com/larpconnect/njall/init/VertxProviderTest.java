@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class VertxProviderTest {
+final class VertxProviderTest {
 
   private Vertx mockVertx;
   private Supplier<Vertx> mockFactory;

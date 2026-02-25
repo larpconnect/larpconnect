@@ -15,7 +15,7 @@ import io.vertx.core.eventbus.EventBus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class VerticleSetupServiceTest {
+final class VerticleSetupServiceTest {
 
   private Vertx mockVertx;
   private EventBus mockEventBus;
@@ -50,7 +50,7 @@ class VerticleSetupServiceTest {
 
   @Test
   void deploy_failure_throwsRuntimeException() {
-    RuntimeException failure = new RuntimeException("fail");
+    var failure = new RuntimeException("fail");
     when(mockVertx.deployVerticle(anyString())).thenReturn(Future.failedFuture(failure));
 
     service.setup(mockVertx, null);
@@ -61,5 +61,5 @@ class VerticleSetupServiceTest {
         .hasCause(failure);
   }
 
-  static class TestVerticle extends AbstractVerticle {}
+  static final class TestVerticle extends AbstractVerticle {}
 }
