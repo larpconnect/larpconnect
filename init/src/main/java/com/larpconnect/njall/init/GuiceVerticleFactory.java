@@ -1,7 +1,6 @@
 package com.larpconnect.njall.init;
 
 import com.google.inject.Injector;
-import io.vertx.core.Deployable;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.spi.VerticleFactory;
@@ -21,10 +20,9 @@ final class GuiceVerticleFactory implements VerticleFactory {
   }
 
   @Override
-  public void createVerticle2(
-      String verticleName,
-      ClassLoader classLoader,
-      Promise<Callable<? extends Deployable>> promise) {
+  @SuppressWarnings("deprecation")
+  public void createVerticle(
+      String verticleName, ClassLoader classLoader, Promise<Callable<Verticle>> promise) {
     var clazzName = VerticleFactory.removePrefix(verticleName);
     promise.complete(
         () -> {

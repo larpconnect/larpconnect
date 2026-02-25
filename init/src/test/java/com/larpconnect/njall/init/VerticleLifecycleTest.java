@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.vertx.core.AbstractVerticle;
@@ -53,8 +52,10 @@ public class VerticleLifecycleTest {
     when(mockProvider.get()).thenReturn(null);
 
     var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
-    // Start up requires get() usually, but here we can just test shutdown on a not-fully-started-or-mocked state?
-    // Wait, startUp calls setupService.setup(provider.get()...). If get() returns null, setup might fail.
+    // Start up requires get() usually, but here we can just test shutdown on a
+    // not-fully-started-or-mocked state?
+    // Wait, startUp calls setupService.setup(provider.get()...). If get() returns null, setup might
+    // fail.
     // However, if we only test shutdown:
     // Lifecycle methods are protected. We can use the public stopAsync() if state is running.
     // Or we can subclass to expose it, or just use the public API.
@@ -68,7 +69,7 @@ public class VerticleLifecycleTest {
 
     when(mockProvider.get())
         .thenReturn(mockVertx) // First call in startUp
-        .thenReturn(null);     // Second call in shutDown
+        .thenReturn(null); // Second call in shutDown
 
     lifecycle.startAsync().awaitRunning();
     lifecycle.stopAsync().awaitTerminated();
