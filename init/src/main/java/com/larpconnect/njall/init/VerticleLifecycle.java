@@ -5,6 +5,8 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import io.vertx.core.Verticle;
+import io.vertx.core.Vertx;
+import jakarta.inject.Provider;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,9 +53,6 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   @Override
   protected void shutDown() {
     logger.info("Stopping VerticleLifecycle...");
-    // Just get the instance via the provider. If it was never initialized, this might initialize it
-    // just to close it, which is safe but perhaps slightly wasteful.
-    // However, given it's a Singleton provider, get() is idempotent.
     var vertx = vertxProvider.get();
     if (vertx != null) {
       var latch = new CountDownLatch(1);
