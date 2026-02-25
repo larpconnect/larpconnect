@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +43,45 @@ public class VerticleLifecycleTest {
     lifecycle.startAsync().awaitRunning();
     lifecycle.stopAsync().awaitTerminated();
 
-    verify(mockProvider).close();
+    verify(mockVertx).close();
+  }
+
+  @Test
+  public void shutDown_getReturnsNull_doesNothing() {
+    var mockProvider = mock(VertxProvider.class);
+    when(mockProvider.get()).thenReturn(null);
+
+    var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
+
+    var mockVertx = mock(Vertx.class);
+    var mockEventBus = mock(EventBus.class);
+    when(mockVertx.eventBus()).thenReturn(mockEventBus);
+
+    when(mockProvider.get())
+        .thenReturn(mockVertx) // First call in startUp
+        .thenReturn(null); // Second call in shutDown
+
+    lifecycle.startAsync().awaitRunning();
+    lifecycle.stopAsync().awaitTerminated();
+
+    verify(mockVertx, never()).close();
+  }
+
+  @Test
+  public void shutDown_closeFails_logsError() {
+    var mockVertx = mock(Vertx.class);
+    var mockEventBus = mock(EventBus.class);
+    when(mockVertx.eventBus()).thenReturn(mockEventBus);
+    when(mockVertx.close()).thenReturn(Future.failedFuture("failure"));
+
+    var mockProvider = mock(VertxProvider.class);
+    when(mockProvider.get()).thenReturn(mockVertx);
+
+    var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
+    lifecycle.startAsync().awaitRunning();
+    lifecycle.stopAsync().awaitTerminated();
+
+    verify(mockVertx).close();
   }
 
   @Test
@@ -52,6 +91,7 @@ public class VerticleLifecycleTest {
     when(mockVertx.eventBus()).thenReturn(mockEventBus);
     // Mock deployment success
     when(mockVertx.deployVerticle(anyString())).thenReturn(Future.succeededFuture("id"));
+    when(mockVertx.close()).thenReturn(Future.succeededFuture());
 
     var mockProvider = mock(VertxProvider.class);
     when(mockProvider.get()).thenReturn(mockVertx);

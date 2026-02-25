@@ -6,6 +6,7 @@ import com.google.inject.Guice;
 import com.google.inject.Module;
 import io.vertx.core.Verticle;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,27 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   @Override
   protected void shutDown() {
     logger.info("Stopping VerticleLifecycle...");
-    vertxProvider.close();
+    var vertx = vertxProvider.get();
+    if (vertx != null) {
+      var latch = new CountDownLatch(1);
+      vertx
+          .close()
+          .onComplete(
+              ar -> {
+                if (ar.succeeded()) {
+                  logger.info("Vert.x closed successfully.");
+                } else {
+                  logger.error("Failed to close Vert.x", ar.cause());
+                }
+                latch.countDown();
+              });
+      try {
+        latch.await();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("Interrupted while waiting for Vert.x to close.");
+      }
+    }
   }
 
   @Override
