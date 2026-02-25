@@ -28,14 +28,15 @@ final class VertxProvider implements Provider<Vertx> {
 
   @Override
   public Vertx get() {
-    return vertxRef.accumulateAndGet(
-        null,
-        (current, x) -> {
-          if (current != null) {
-            return current;
-          }
-          return vertxFactory.get();
-        });
+    var vertx = vertxRef.get();
+    if (vertx == null) {
+      vertx = vertxFactory.get();
+      if (!vertxRef.compareAndSet(null, vertx)) {
+        vertx.close();
+        return vertxRef.get();
+      }
+    }
+    return vertx;
   }
 
   Future<Void> close() {
