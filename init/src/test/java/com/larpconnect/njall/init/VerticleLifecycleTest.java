@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.vertx.core.AbstractVerticle;
@@ -60,7 +59,7 @@ public class VerticleLifecycleTest {
 
     when(mockProvider.get())
         .thenReturn(mockVertx) // First call in startUp
-        .thenReturn(null);     // Second call in shutDown
+        .thenReturn(null); // Second call in shutDown
 
     lifecycle.startAsync().awaitRunning();
     lifecycle.stopAsync().awaitTerminated();

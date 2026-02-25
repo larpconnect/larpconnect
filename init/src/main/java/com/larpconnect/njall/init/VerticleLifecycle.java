@@ -5,8 +5,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import io.vertx.core.Verticle;
-import io.vertx.core.Vertx;
-import jakarta.inject.Provider;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
