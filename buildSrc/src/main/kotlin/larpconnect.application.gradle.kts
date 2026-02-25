@@ -9,5 +9,5 @@ plugins {
 val libs = the<LibrariesForLibs>()
 
 dependencies {
-    implementation(libs.logback.classic)
+    runtimeOnly(libs.logback.classic)
 }
