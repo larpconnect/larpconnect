@@ -12,7 +12,8 @@ class MainTest {
 
   @Test
   void main_startsAndStopsServerSuccessfully() {
-    Main main = new Main();
+    Runtime runtime = Runtime.getRuntime();
+    Main main = new Main(runtime);
     VerticleService service = main.run();
 
     assertThat(service.state()).isEqualTo(State.RUNNING);
@@ -24,7 +25,8 @@ class MainTest {
 
   @Test
   void shutdown_handlesExceptions() {
-    Main main = new Main();
+    Runtime runtime = Runtime.getRuntime();
+    Main main = new Main(runtime);
 
     // Test TimeoutException
     VerticleService timeoutService =

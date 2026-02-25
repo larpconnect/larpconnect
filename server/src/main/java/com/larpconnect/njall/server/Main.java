@@ -2,6 +2,7 @@ package com.larpconnect.njall.server;
 
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -9,12 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class Main {
-  private final Logger logger = LoggerFactory.getLogger(Main.class);
+  private static final Logger logger = LoggerFactory.getLogger(Main.class);
+  private static final Duration SHUTDOWN_TIMEOUT = Duration.ofMinutes(2);
 
-  Main() {}
+  private final Runtime runtime;
+
+  Main(Runtime runtime) {
+    this.runtime = runtime;
+  }
 
   public static void main(String[] args) {
-    new Main().run();
+    new Main(Runtime.getRuntime()).run();
   }
 
   VerticleService run() {
@@ -23,7 +29,7 @@ final class Main {
     // Register ServerModule to bind ServerVerticle -> MainVerticle
     var lifecycle = VerticleServices.create(Collections.singletonList(new ServerModule()));
 
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(lifecycle)));
+    runtime.addShutdownHook(new Thread(() -> shutdown(lifecycle)));
 
     try {
       lifecycle.startAsync().awaitRunning();
@@ -39,7 +45,8 @@ final class Main {
   void shutdown(VerticleService lifecycle) {
     logger.info("Shutdown hook triggered...");
     try {
-      lifecycle.stopAsync().awaitTerminated(2, TimeUnit.MINUTES);
+      lifecycle.stopAsync().awaitTerminated(SHUTDOWN_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+      logger.info("Server shutdown successfully.");
     } catch (TimeoutException e) {
       logger.error("Shutdown timed out", e);
     } catch (RuntimeException e) {
