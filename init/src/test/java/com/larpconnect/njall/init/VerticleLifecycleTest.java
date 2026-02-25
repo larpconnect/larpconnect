@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.vertx.core.AbstractVerticle;
@@ -43,6 +45,35 @@ public class VerticleLifecycleTest {
     lifecycle.stopAsync().awaitTerminated();
 
     verify(mockVertx).close();
+  }
+
+  @Test
+  public void shutDown_getReturnsNull_doesNothing() {
+    var mockProvider = mock(VertxProvider.class);
+    when(mockProvider.get()).thenReturn(null);
+
+    var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
+    // Start up requires get() usually, but here we can just test shutdown on a not-fully-started-or-mocked state?
+    // Wait, startUp calls setupService.setup(provider.get()...). If get() returns null, setup might fail.
+    // However, if we only test shutdown:
+    // Lifecycle methods are protected. We can use the public stopAsync() if state is running.
+    // Or we can subclass to expose it, or just use the public API.
+    // If we rely on startAsync(), we need get() to work for startUp.
+    // So we need provider.get() to return valid vertx on startUp, but null on shutDown.
+    // This implies different calls.
+
+    var mockVertx = mock(Vertx.class);
+    var mockEventBus = mock(EventBus.class);
+    when(mockVertx.eventBus()).thenReturn(mockEventBus);
+
+    when(mockProvider.get())
+        .thenReturn(mockVertx) // First call in startUp
+        .thenReturn(null);     // Second call in shutDown
+
+    lifecycle.startAsync().awaitRunning();
+    lifecycle.stopAsync().awaitTerminated();
+
+    verify(mockVertx, never()).close();
   }
 
   @Test
