@@ -6,8 +6,8 @@ import com.google.inject.AbstractModule;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.server.MainVerticle;
 import com.larpconnect.njall.server.ServerModule;
-import com.larpconnect.njall.server.ServerVerticle;
 import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -51,7 +51,7 @@ public class ServerStartupSteps {
   public void i_start_the_server() throws InterruptedException, TimeoutException {
     lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
     vertx = vertxCaptor.getVertx();
-    lifecycle.deploy(ServerVerticle.class);
+    lifecycle.deploy(MainVerticle.class);
 
     var start = System.currentTimeMillis();
     while (System.currentTimeMillis() - start < 5000) {

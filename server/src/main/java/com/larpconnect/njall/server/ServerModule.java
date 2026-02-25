@@ -9,6 +9,6 @@ public final class ServerModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(ServerVerticle.class).to(MainVerticle.class).in(Scopes.SINGLETON);
+    bind(MainVerticle.class).to(DefaultMainVerticle.class).in(Scopes.SINGLETON);
   }
 }
