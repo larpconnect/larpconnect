@@ -1,5 +1,6 @@
 package com.larpconnect.njall.server;
 
+import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -16,25 +17,13 @@ final class Main {
     new Main().run();
   }
 
-  private void run() {
+  VerticleService run() {
     logger.info("Starting Server...");
 
     // Register ServerModule to bind ServerVerticle -> MainVerticle
     var lifecycle = VerticleServices.create(Collections.singletonList(new ServerModule()));
 
-    Runtime.getRuntime()
-        .addShutdownHook(
-            new Thread(
-                () -> {
-                  logger.info("Shutdown hook triggered...");
-                  try {
-                    lifecycle.stopAsync().awaitTerminated(2, TimeUnit.MINUTES);
-                  } catch (TimeoutException e) {
-                    logger.error("Shutdown timed out", e);
-                  } catch (RuntimeException e) {
-                    logger.error("Error during shutdown", e);
-                  }
-                }));
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(lifecycle)));
 
     try {
       lifecycle.startAsync().awaitRunning();
@@ -42,6 +31,19 @@ final class Main {
     } catch (RuntimeException e) {
       logger.error("Failed to start server", e);
       System.exit(1);
+      return null;
+    }
+    return lifecycle;
+  }
+
+  void shutdown(VerticleService lifecycle) {
+    logger.info("Shutdown hook triggered...");
+    try {
+      lifecycle.stopAsync().awaitTerminated(2, TimeUnit.MINUTES);
+    } catch (TimeoutException e) {
+      logger.error("Shutdown timed out", e);
+    } catch (RuntimeException e) {
+      logger.error("Error during shutdown", e);
     }
   }
 }
