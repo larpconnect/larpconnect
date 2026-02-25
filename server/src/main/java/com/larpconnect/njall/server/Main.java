@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class Main {
-  private static final Logger logger = LoggerFactory.getLogger(Main.class);
+  private final Logger logger = LoggerFactory.getLogger(Main.class);
   private static final Duration SHUTDOWN_TIMEOUT = Duration.ofMinutes(2);
 
   private final Runtime runtime;
