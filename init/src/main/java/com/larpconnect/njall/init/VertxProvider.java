@@ -34,8 +34,4 @@ final class VertxProvider implements Provider<Vertx> {
     }
     return vertx;
   }
-
-  Vertx release() {
-    return vertxRef.getAndSet(null);
-  }
 }

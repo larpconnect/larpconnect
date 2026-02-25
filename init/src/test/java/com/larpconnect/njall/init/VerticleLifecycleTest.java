@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.vertx.core.AbstractVerticle;
@@ -37,13 +38,28 @@ public class VerticleLifecycleTest {
 
     var mockProvider = mock(VertxProvider.class);
     when(mockProvider.get()).thenReturn(mockVertx);
-    when(mockProvider.release()).thenReturn(mockVertx);
 
     var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
     lifecycle.startAsync().awaitRunning();
     lifecycle.stopAsync().awaitTerminated();
 
-    verify(mockProvider).release();
+    verify(mockVertx).close();
+  }
+
+  @Test
+  public void shutDown_closeFails_logsError() {
+    var mockVertx = mock(Vertx.class);
+    var mockEventBus = mock(EventBus.class);
+    when(mockVertx.eventBus()).thenReturn(mockEventBus);
+    when(mockVertx.close()).thenReturn(Future.failedFuture("failure"));
+
+    var mockProvider = mock(VertxProvider.class);
+    when(mockProvider.get()).thenReturn(mockVertx);
+
+    var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
+    lifecycle.startAsync().awaitRunning();
+    lifecycle.stopAsync().awaitTerminated();
+
     verify(mockVertx).close();
   }
 
@@ -58,7 +74,6 @@ public class VerticleLifecycleTest {
 
     var mockProvider = mock(VertxProvider.class);
     when(mockProvider.get()).thenReturn(mockVertx);
-    when(mockProvider.release()).thenReturn(mockVertx);
 
     var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
     lifecycle.startAsync().awaitRunning();

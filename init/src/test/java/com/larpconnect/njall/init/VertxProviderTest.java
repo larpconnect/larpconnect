@@ -43,33 +43,4 @@ class VertxProviderTest {
 
     assertThat(count.get()).isEqualTo(1);
   }
-
-  @Test
-  void release_returnsInstanceAndClears() {
-    var instance1 = provider.get();
-    assertThat(instance1).isSameAs(mockVertx);
-
-    var released = provider.release();
-    assertThat(released).isSameAs(mockVertx);
-
-    // Second release should be null
-    assertThat(provider.release()).isNull();
-  }
-
-  @Test
-  void get_afterRelease_createsNewInstance() {
-    var count = new AtomicInteger(0);
-    Supplier<Vertx> countingFactory =
-        () -> {
-          count.incrementAndGet();
-          return mockVertx;
-        };
-    provider = new VertxProvider(countingFactory);
-
-    provider.get();
-    provider.release();
-    provider.get();
-
-    assertThat(count.get()).isEqualTo(2);
-  }
 }
