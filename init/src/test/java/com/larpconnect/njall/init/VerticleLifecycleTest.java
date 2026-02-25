@@ -1,0 +1,76 @@
+package com.larpconnect.njall.init;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.EventBus;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Test;
+
+public class VerticleLifecycleTest {
+
+  @Test
+  public void startUp_validConfig_success() throws Exception {
+    VerticleService lifecycle = VerticleServices.create(Collections.emptyList());
+
+    lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
+    assertThat(lifecycle.isRunning()).isTrue();
+
+    lifecycle.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
+    assertThat(lifecycle.isRunning()).isFalse();
+  }
+
+  @Test
+  public void shutDown_closesVertx() {
+    Vertx mockVertx = mock(Vertx.class);
+    EventBus mockEventBus = mock(EventBus.class);
+    when(mockVertx.eventBus()).thenReturn(mockEventBus);
+    when(mockVertx.close()).thenReturn(Future.succeededFuture());
+
+    VertxProvider mockProvider = mock(VertxProvider.class);
+    when(mockProvider.get()).thenReturn(mockVertx);
+
+    VerticleLifecycle lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
+    lifecycle.startAsync().awaitRunning();
+    lifecycle.stopAsync().awaitTerminated();
+
+    verify(mockProvider).close();
+  }
+
+  @Test
+  public void deploy_delegatesToService() {
+    Vertx mockVertx = mock(Vertx.class);
+    EventBus mockEventBus = mock(EventBus.class);
+    when(mockVertx.eventBus()).thenReturn(mockEventBus);
+    // Mock deployment success
+    when(mockVertx.deployVerticle(anyString())).thenReturn(Future.succeededFuture("id"));
+
+    VertxProvider mockProvider = mock(VertxProvider.class);
+    when(mockProvider.get()).thenReturn(mockVertx);
+
+    VerticleLifecycle lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
+    lifecycle.startAsync().awaitRunning();
+    lifecycle.deploy(TestVerticle.class);
+    lifecycle.stopAsync().awaitTerminated();
+
+    verify(mockVertx).deployVerticle("guice:" + TestVerticle.class.getName());
+  }
+
+  @Test
+  public void deploy_notStarted_throwsException() {
+    VerticleLifecycle lifecycle = new VerticleLifecycle(Collections.emptyList());
+    assertThatThrownBy(() -> lifecycle.deploy(TestVerticle.class))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("VerticleLifecycle not started");
+  }
+
+  static class TestVerticle extends AbstractVerticle {}
+}

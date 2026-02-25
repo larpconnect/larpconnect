@@ -28,6 +28,8 @@ commons-lang3 = "3.20.0"
 [libraries]
 # Core
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
+vertx-codegen = { module = "io.vertx:vertx-codegen", version.ref = "vertx" }
+vertx-junit5 = { module = "io.vertx:vertx-junit5", version.ref = "vertx" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
@@ -49,6 +51,7 @@ protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "p
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
+junit-platform-suite = { module = "org.junit.platform:junit-platform-suite", version.ref = "junit-platform" }
 junit-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 assertj-guava = { module = "org.assertj:assertj-guava", version.ref = "assertj" }

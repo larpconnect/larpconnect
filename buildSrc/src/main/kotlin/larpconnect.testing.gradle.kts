@@ -18,6 +18,7 @@ dependencies {
     testImplementation(libs.mockito.junit.jupiter)
     testImplementation(libs.cucumber.java)
     testImplementation(libs.cucumber.junit.platform.engine)
+    testImplementation(libs.junit.platform.suite)
 
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
