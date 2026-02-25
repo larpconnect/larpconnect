@@ -20,6 +20,9 @@ final class GuiceVerticleFactory implements VerticleFactory {
   }
 
   @Override
+  // createVerticle is deprecated in favor of createVerticle2 which supports Deployable.
+  // We are suppressing this warning as this factory specifically handles Verticles
+  // and has not been migrated to the new API yet.
   @SuppressWarnings("deprecation")
   public void createVerticle(
       String verticleName, ClassLoader classLoader, Promise<Callable<Verticle>> promise) {
