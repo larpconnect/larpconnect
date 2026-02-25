@@ -89,6 +89,5 @@ dependencies {
 
 tasks.withType<JavaCompile>().configureEach {
     options.errorprone.disableWarningsInGeneratedCode.set(true)
-    options.encoding = "UTF-8"
-    options.compilerArgs.addAll(listOf("-Werror", "-Xlint:all", "-Xlint:-processing", "-parameters"))
+    options.compilerArgs.addAll(listOf("-Werror", "-Xlint:all", "-Xlint:-processing"))
 }

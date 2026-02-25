@@ -15,6 +15,8 @@ java {
 
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(25)
+    options.encoding = "UTF-8"
+    options.compilerArgs.add("-parameters")
 }
 
 dependencies {
