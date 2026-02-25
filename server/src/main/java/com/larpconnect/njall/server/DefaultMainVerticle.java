@@ -24,12 +24,6 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
   @Override
   public void start(Promise<Void> startPromise) {
     logger.info("DefaultMainVerticle starting...");
-    if (verticles.isEmpty()) {
-      startPromise.complete();
-      logger.info("DefaultMainVerticle started (no additional verticles).");
-      return;
-    }
-
     List<Future<?>> futures = new ArrayList<>();
     for (Verticle verticle : verticles) {
       futures.add(vertx.deployVerticle(verticle).onSuccess(deploymentIds::add));
