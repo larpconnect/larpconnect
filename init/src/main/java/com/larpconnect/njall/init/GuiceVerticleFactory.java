@@ -23,11 +23,11 @@ final class GuiceVerticleFactory implements VerticleFactory {
   @SuppressWarnings("deprecation")
   public void createVerticle(
       String verticleName, ClassLoader classLoader, Promise<Callable<Verticle>> promise) {
-    String clazzName = VerticleFactory.removePrefix(verticleName);
+    var clazzName = VerticleFactory.removePrefix(verticleName);
     promise.complete(
         () -> {
           try {
-            Class<?> clazz = classLoader.loadClass(clazzName);
+            var clazz = classLoader.loadClass(clazzName);
             return (Verticle) injector.getInstance(clazz);
           } catch (ClassNotFoundException | ClassCastException e) {
             throw new IllegalArgumentException("Failed to load verticle class: " + clazzName, e);

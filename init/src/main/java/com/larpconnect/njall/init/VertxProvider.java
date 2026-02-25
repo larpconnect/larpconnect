@@ -1,8 +1,8 @@
 package com.larpconnect.njall.init;
 
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
 import io.vertx.core.Vertx;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,7 +35,7 @@ final class VertxProvider implements Provider<Vertx> {
 
   @Override
   public Vertx get() {
-    Vertx vertx = vertxRef.get();
+    var vertx = vertxRef.get();
     if (vertx == null) {
       vertx = vertxFactory.get();
       if (!vertxRef.compareAndSet(null, vertx)) {
@@ -47,9 +47,9 @@ final class VertxProvider implements Provider<Vertx> {
   }
 
   void close() {
-    Vertx vertx = vertxRef.getAndSet(null);
+    var vertx = vertxRef.getAndSet(null);
     if (vertx != null) {
-      CountDownLatch latch = new CountDownLatch(1);
+      var latch = new CountDownLatch(1);
       vertx
           .close()
           .onComplete(

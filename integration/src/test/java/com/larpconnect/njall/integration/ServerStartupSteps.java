@@ -3,8 +3,6 @@ package com.larpconnect.njall.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import com.larpconnect.njall.proto.Message;
@@ -15,6 +13,8 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.vertx.core.Vertx;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ServerStartupSteps {
-  private static final Logger logger = LoggerFactory.getLogger(ServerStartupSteps.class);
+  private final Logger logger = LoggerFactory.getLogger(ServerStartupSteps.class);
 
   private VerticleService lifecycle;
   private Vertx vertx;
@@ -53,7 +53,7 @@ public class ServerStartupSteps {
     vertx = vertxCaptor.getVertx();
     lifecycle.deploy(ServerVerticle.class);
 
-    long start = System.currentTimeMillis();
+    var start = System.currentTimeMillis();
     while (System.currentTimeMillis() - start < 5000) {
       if (vertx != null && !vertx.deploymentIDs().isEmpty()) {
         deploymentSuccess.set(true);
@@ -77,10 +77,10 @@ public class ServerStartupSteps {
 
   @Then("I should be able to send a Message on the event bus")
   public void i_should_be_able_to_send_a_message_on_the_event_bus() throws InterruptedException {
-    CountDownLatch latch = new CountDownLatch(1);
-    AtomicBoolean success = new AtomicBoolean(false);
+    var latch = new CountDownLatch(1);
+    var success = new AtomicBoolean(false);
 
-    Message msg = Message.newBuilder().setMessageType("Ping").build();
+    var msg = Message.newBuilder().setMessageType("Ping").build();
 
     vertx
         .eventBus()

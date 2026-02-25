@@ -3,7 +3,6 @@ package com.larpconnect.njall.init;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.vertx.core.Verticle;
 import java.util.List;
@@ -33,15 +32,15 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     logger.info("Starting VerticleLifecycle...");
 
     // Create a mutable list to add our internal module
-    ImmutableList.Builder<Module> builder = ImmutableList.builder();
+    var builder = ImmutableList.<Module>builder();
     builder.addAll(modules);
     builder.add(new VertxModule(vertxProvider));
 
     // Create Guice Injector
-    Injector injector = Guice.createInjector(builder.build());
+    var injector = Guice.createInjector(builder.build());
 
     // Setup Verticle Factory via VerticleSetupService
-    VerticleSetupService setupService = injector.getInstance(VerticleSetupService.class);
+    var setupService = injector.getInstance(VerticleSetupService.class);
     setupService.setup(vertxProvider.get(), injector);
     setupServiceRef.set(setupService);
 
@@ -56,7 +55,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
 
   @Override
   public void deploy(Class<? extends Verticle> verticleClass) {
-    VerticleSetupService service = setupServiceRef.get();
+    var service = setupServiceRef.get();
     if (service != null) {
       service.deploy(verticleClass);
     } else {
