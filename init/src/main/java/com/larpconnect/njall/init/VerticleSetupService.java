@@ -1,9 +1,10 @@
 package com.larpconnect.njall.init;
 
-import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.larpconnect.njall.proto.Message;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import jakarta.inject.Inject;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,14 +20,12 @@ final class VerticleSetupService {
 
   void setup(Vertx vertx, Injector injector) {
     vertx.registerVerticleFactory(new GuiceVerticleFactory(injector));
-    vertx
-        .eventBus()
-        .registerDefaultCodec(com.larpconnect.njall.proto.Message.class, new ProtoCodecRegistry());
+    vertx.eventBus().registerDefaultCodec(Message.class, new ProtoCodecRegistry());
     vertxRef.set(vertx);
   }
 
   void deploy(Class<? extends Verticle> verticleClass) {
-    Vertx vertx = vertxRef.get();
+    var vertx = vertxRef.get();
     if (vertx != null) {
       vertx
           .deployVerticle("guice:" + verticleClass.getName())

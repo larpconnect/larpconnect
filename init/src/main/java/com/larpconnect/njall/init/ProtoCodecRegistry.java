@@ -14,7 +14,7 @@ final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
 
   @Override
   public void encodeToWire(Buffer buffer, Message message) {
-    byte[] bytes = message.toByteArray();
+    var bytes = message.toByteArray();
     buffer.appendShort(VERSION);
     buffer.appendInt(bytes.length);
     buffer.appendBytes(bytes);
@@ -22,18 +22,18 @@ final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
 
   @Override
   public Message decodeFromWire(int pos, Buffer buffer) {
-    int currentPos = pos + 2;
+    var currentPos = pos + 2;
 
-    int size = buffer.getInt(currentPos);
+    var size = buffer.getInt(currentPos);
     currentPos += INT_SIZE;
 
-    byte[] bytes = buffer.getBytes(currentPos, currentPos + size);
+    var bytes = buffer.getBytes(currentPos, currentPos + size);
 
     try {
-      Message message = Message.parseFrom(bytes);
+      var message = Message.parseFrom(bytes);
 
-      String originalType = message.getMessageType();
-      String newType = NAMESPACE + originalType;
+      var originalType = message.getMessageType();
+      var newType = NAMESPACE + originalType;
 
       return message.toBuilder().setMessageType(newType).build();
     } catch (InvalidProtocolBufferException e) {

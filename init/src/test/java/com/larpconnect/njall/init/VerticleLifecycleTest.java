@@ -19,7 +19,7 @@ public class VerticleLifecycleTest {
 
   @Test
   public void startUp_validConfig_success() throws Exception {
-    VerticleService lifecycle = VerticleServices.create(Collections.emptyList());
+    var lifecycle = VerticleServices.create(Collections.emptyList());
 
     lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
     assertThat(lifecycle.isRunning()).isTrue();
@@ -30,15 +30,15 @@ public class VerticleLifecycleTest {
 
   @Test
   public void shutDown_closesVertx() {
-    Vertx mockVertx = mock(Vertx.class);
-    EventBus mockEventBus = mock(EventBus.class);
+    var mockVertx = mock(Vertx.class);
+    var mockEventBus = mock(EventBus.class);
     when(mockVertx.eventBus()).thenReturn(mockEventBus);
     when(mockVertx.close()).thenReturn(Future.succeededFuture());
 
-    VertxProvider mockProvider = mock(VertxProvider.class);
+    var mockProvider = mock(VertxProvider.class);
     when(mockProvider.get()).thenReturn(mockVertx);
 
-    VerticleLifecycle lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
+    var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
     lifecycle.startAsync().awaitRunning();
     lifecycle.stopAsync().awaitTerminated();
 
@@ -47,16 +47,16 @@ public class VerticleLifecycleTest {
 
   @Test
   public void deploy_delegatesToService() {
-    Vertx mockVertx = mock(Vertx.class);
-    EventBus mockEventBus = mock(EventBus.class);
+    var mockVertx = mock(Vertx.class);
+    var mockEventBus = mock(EventBus.class);
     when(mockVertx.eventBus()).thenReturn(mockEventBus);
     // Mock deployment success
     when(mockVertx.deployVerticle(anyString())).thenReturn(Future.succeededFuture("id"));
 
-    VertxProvider mockProvider = mock(VertxProvider.class);
+    var mockProvider = mock(VertxProvider.class);
     when(mockProvider.get()).thenReturn(mockVertx);
 
-    VerticleLifecycle lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
+    var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
     lifecycle.startAsync().awaitRunning();
     lifecycle.deploy(TestVerticle.class);
     lifecycle.stopAsync().awaitTerminated();
@@ -66,7 +66,7 @@ public class VerticleLifecycleTest {
 
   @Test
   public void deploy_notStarted_throwsException() {
-    VerticleLifecycle lifecycle = new VerticleLifecycle(Collections.emptyList());
+    var lifecycle = new VerticleLifecycle(Collections.emptyList());
     assertThatThrownBy(() -> lifecycle.deploy(TestVerticle.class))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("VerticleLifecycle not started");

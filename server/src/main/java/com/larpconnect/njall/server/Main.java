@@ -1,6 +1,5 @@
 package com.larpconnect.njall.server;
 
-import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -21,8 +20,7 @@ final class Main {
     logger.info("Starting Server...");
 
     // Register ServerModule to bind ServerVerticle -> MainVerticle
-    VerticleService lifecycle =
-        VerticleServices.create(Collections.singletonList(new ServerModule()));
+    var lifecycle = VerticleServices.create(Collections.singletonList(new ServerModule()));
 
     Runtime.getRuntime()
         .addShutdownHook(

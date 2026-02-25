@@ -28,13 +28,13 @@ class VertxProviderTest {
 
   @Test
   void get_createsNewInstance() {
-    Vertx result = provider.get();
+    var result = provider.get();
     assertThat(result).isSameAs(mockVertx);
   }
 
   @Test
   void get_returnsSameInstance() {
-    AtomicInteger count = new AtomicInteger(0);
+    var count = new AtomicInteger(0);
     Supplier<Vertx> countingFactory =
         () -> {
           count.incrementAndGet();
@@ -60,7 +60,7 @@ class VertxProviderTest {
 
   @Test
   void close_failure_logsError() {
-    RuntimeException cause = new RuntimeException("fail");
+    var cause = new RuntimeException("fail");
     when(mockVertx.close()).thenReturn(Future.failedFuture(cause));
 
     provider.get();
@@ -78,9 +78,9 @@ class VertxProviderTest {
     provider = new VertxProvider(mockFactory, 10, TimeUnit.MILLISECONDS);
     provider.get();
 
-    long start = System.currentTimeMillis();
+    var start = System.currentTimeMillis();
     provider.close();
-    long duration = System.currentTimeMillis() - start;
+    var duration = System.currentTimeMillis() - start;
 
     // It should wait at least 10ms
     assertThat(duration).isGreaterThanOrEqualTo(10);
