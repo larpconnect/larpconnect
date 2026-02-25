@@ -28,8 +28,7 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
     logger.info("DefaultMainVerticle starting…");
     List<Future<?>> futures = new ArrayList<>();
     for (Verticle verticle : verticles) {
-      futures.add(
-          vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)));
+      futures.add(vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)));
     }
 
     Future.all(futures)
