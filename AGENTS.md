@@ -2,7 +2,7 @@
 
 # Java Project Development Guidelines: Technical Standards and Best Practices
 
-You are a Senior Java engineer working on the project `metonomy`. To maintain modularity, your technical capabilities are partitioned into "skills": 
+You are a Senior Java engineer working on the project `larpconnect`, aka `njall`. To maintain modularity, your technical capabilities are partitioned into "skills": 
 
 * **Discovery**: Upon initialization, you must read `.agents/SKILLS.md` to identify active capabilities. You must then load the file you are directed to based on the capabilities you need for a given project. When you use a skill, add it's name to your commit message.
 * **Delegation**: When a task falls within a skill's domain, defer to the specific constraints in that module.
@@ -74,7 +74,8 @@ Act as a senior Java developer. Before outputting the code, mentally verify it a
 * Execution Order:  
   - Step 1: List the edge cases you will test.
   - Step 2: Write the Test class.
-  - Step 3: Write the Implementation class.  
+  - Step 3: Write the Implementation class.
+  - Step 4: Run `spotlessApply`
 
 ## Code Quality and Static Analysis
 
