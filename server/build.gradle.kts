@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":parent"))
+    implementation(project(":common"))
     implementation(project(":init"))
     implementation(libs.vertx.core)
     implementation(libs.guice)

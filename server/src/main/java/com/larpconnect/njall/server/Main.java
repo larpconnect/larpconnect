@@ -26,14 +26,14 @@ final class Main {
   VerticleService run() {
     logger.info("Starting Server...");
 
-    // Register ServerModule to bind ServerVerticle -> MainVerticle
+    // Register ServerModule to bind MainVerticle -> DefaultMainVerticle
     var lifecycle = VerticleServices.create(Collections.singletonList(new ServerModule()));
 
     runtime.addShutdownHook(new Thread(() -> shutdown(lifecycle)));
 
     try {
       lifecycle.startAsync().awaitRunning();
-      lifecycle.deploy(ServerVerticle.class);
+      lifecycle.deploy(MainVerticle.class);
     } catch (RuntimeException e) {
       logger.error("Failed to start server", e);
       System.exit(1);
