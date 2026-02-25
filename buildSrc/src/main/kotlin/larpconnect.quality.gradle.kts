@@ -29,7 +29,7 @@ spotbugs {
 spotless {
     java {
         target("src/*/java/**/*.java")
-        googleJavaFormat("1.34.1") // Update to a version compatible with JDK 25
+        googleJavaFormat(libs.versions.google.java.format.get()) // Update to a version compatible with JDK 25
     }
     kotlinGradle {
         target("*.gradle.kts")
