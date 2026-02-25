@@ -9,4 +9,4 @@ import org.junit.platform.suite.api.Suite;
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
 @ConfigurationParameter(key = "cucumber.glue", value = "com.larpconnect.njall.integration")
-public class RunCucumberTest {}
+final class RunCucumberTest {}

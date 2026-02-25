@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ServerStartupSteps {
+public final class ServerStartupSteps {
   private final Logger logger = LoggerFactory.getLogger(ServerStartupSteps.class);
 
   private VerticleService lifecycle;
@@ -120,7 +120,7 @@ public class ServerStartupSteps {
   }
 
   @Singleton
-  static class VertxCaptor {
+  static final class VertxCaptor {
     private final AtomicReference<Vertx> ref = new AtomicReference<>();
 
     @Inject
