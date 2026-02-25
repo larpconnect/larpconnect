@@ -1,5 +1,6 @@
 package com.larpconnect.njall.server;
 
+import com.google.common.collect.ImmutableSet;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -8,25 +9,27 @@ import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle {
   private final Logger logger = LoggerFactory.getLogger(DefaultMainVerticle.class);
-  private final Set<Verticle> verticles;
-  private final List<String> deploymentIds = new ArrayList<>();
+  private final ImmutableSet<Verticle> verticles;
+  private final ConcurrentHashMap<Verticle, String> deploymentIds = new ConcurrentHashMap<>();
 
   @Inject
   DefaultMainVerticle(Set<Verticle> verticles) {
-    this.verticles = verticles;
+    this.verticles = ImmutableSet.copyOf(verticles);
   }
 
   @Override
   public void start(Promise<Void> startPromise) {
-    logger.info("DefaultMainVerticle starting...");
+    logger.info("DefaultMainVerticle starting…");
     List<Future<?>> futures = new ArrayList<>();
     for (Verticle verticle : verticles) {
-      futures.add(vertx.deployVerticle(verticle).onSuccess(deploymentIds::add));
+      futures.add(
+          vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)));
     }
 
     Future.all(futures)
@@ -44,7 +47,7 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
 
   @Override
   public void stop(Promise<Void> stopPromise) {
-    logger.info("DefaultMainVerticle stopping...");
+    logger.info("DefaultMainVerticle stopping…");
     // Vert.x automatically undeploys child verticles when the parent is undeployed.
     deploymentIds.clear();
     stopPromise.complete();
