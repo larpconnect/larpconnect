@@ -37,6 +37,7 @@ public class VerticleLifecycleTest {
 
     var mockProvider = mock(VertxProvider.class);
     when(mockProvider.get()).thenReturn(mockVertx);
+    when(mockProvider.close()).thenReturn(Future.succeededFuture());
 
     var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
     lifecycle.startAsync().awaitRunning();
@@ -55,6 +56,7 @@ public class VerticleLifecycleTest {
 
     var mockProvider = mock(VertxProvider.class);
     when(mockProvider.get()).thenReturn(mockVertx);
+    when(mockProvider.close()).thenReturn(Future.succeededFuture());
 
     var lifecycle = new VerticleLifecycle(Collections.emptyList(), mockProvider);
     lifecycle.startAsync().awaitRunning();
