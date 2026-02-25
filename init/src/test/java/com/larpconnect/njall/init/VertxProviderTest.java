@@ -2,12 +2,8 @@ package com.larpconnect.njall.init;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,62 +45,31 @@ class VertxProviderTest {
   }
 
   @Test
-  void close_successful() {
-    when(mockVertx.close()).thenReturn(Future.succeededFuture());
+  void release_returnsInstanceAndClears() {
+    var instance1 = provider.get();
+    assertThat(instance1).isSameAs(mockVertx);
 
-    provider.get(); // Initialize
-    provider.close();
+    var released = provider.release();
+    assertThat(released).isSameAs(mockVertx);
 
-    verify(mockVertx).close();
+    // Second release should be null
+    assertThat(provider.release()).isNull();
   }
 
   @Test
-  void close_failure_logsError() {
-    var cause = new RuntimeException("fail");
-    when(mockVertx.close()).thenReturn(Future.failedFuture(cause));
+  void get_afterRelease_createsNewInstance() {
+    var count = new AtomicInteger(0);
+    Supplier<Vertx> countingFactory =
+        () -> {
+          count.incrementAndGet();
+          return mockVertx;
+        };
+    provider = new VertxProvider(countingFactory);
 
     provider.get();
-    provider.close();
-
-    verify(mockVertx).close();
-  }
-
-  @Test
-  void close_timeout() {
-    // Mock close() to never complete
-    when(mockVertx.close()).thenReturn(Future.future(p -> {}));
-
-    // Use short timeout
-    provider = new VertxProvider(mockFactory, 10, TimeUnit.MILLISECONDS);
+    provider.release();
     provider.get();
 
-    var start = System.currentTimeMillis();
-    provider.close();
-    var duration = System.currentTimeMillis() - start;
-
-    // It should wait at least 10ms
-    assertThat(duration).isGreaterThanOrEqualTo(10);
-  }
-
-  @Test
-  void close_interrupted() {
-    // Mock close() to never complete so it waits
-    when(mockVertx.close()).thenReturn(Future.future(p -> {}));
-
-    provider = new VertxProvider(mockFactory, 1, TimeUnit.SECONDS);
-    provider.get();
-
-    Thread.currentThread().interrupt();
-    provider.close();
-
-    // Verify interrupt status is restored
-    assertThat(Thread.interrupted()).isTrue();
-  }
-
-  @Test
-  void close_notInitialized_doesNothing() {
-    // Ensure no NPE or interaction if get() was never called
-    provider.close();
-    // No strict verification needed other than no exception
+    assertThat(count.get()).isEqualTo(2);
   }
 }
