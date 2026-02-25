@@ -1,8 +1,6 @@
 package com.larpconnect.njall.server;
 
-import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -11,25 +9,32 @@ import org.slf4j.LoggerFactory;
 
 final class Main {
   private final Logger logger = LoggerFactory.getLogger(Main.class);
-  private static final Duration SHUTDOWN_TIMEOUT = Duration.ofMinutes(2);
 
-  private final Runtime runtime;
-
-  Main(Runtime runtime) {
-    this.runtime = runtime;
-  }
+  Main() {}
 
   public static void main(String[] args) {
-    new Main(Runtime.getRuntime()).run();
+    new Main().run();
   }
 
-  VerticleService run() {
+  private void run() {
     logger.info("Starting Server...");
 
     // Register ServerModule to bind ServerVerticle -> MainVerticle
     var lifecycle = VerticleServices.create(Collections.singletonList(new ServerModule()));
 
-    runtime.addShutdownHook(new Thread(() -> shutdown(lifecycle)));
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  logger.info("Shutdown hook triggered...");
+                  try {
+                    lifecycle.stopAsync().awaitTerminated(2, TimeUnit.MINUTES);
+                  } catch (TimeoutException e) {
+                    logger.error("Shutdown timed out", e);
+                  } catch (RuntimeException e) {
+                    logger.error("Error during shutdown", e);
+                  }
+                }));
 
     try {
       lifecycle.startAsync().awaitRunning();
@@ -37,20 +42,6 @@ final class Main {
     } catch (RuntimeException e) {
       logger.error("Failed to start server", e);
       System.exit(1);
-      return null;
-    }
-    return lifecycle;
-  }
-
-  void shutdown(VerticleService lifecycle) {
-    logger.info("Shutdown hook triggered...");
-    try {
-      lifecycle.stopAsync().awaitTerminated(SHUTDOWN_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
-      logger.info("Server shutdown successfully.");
-    } catch (TimeoutException e) {
-      logger.error("Shutdown timed out", e);
-    } catch (RuntimeException e) {
-      logger.error("Error during shutdown", e);
     }
   }
 }

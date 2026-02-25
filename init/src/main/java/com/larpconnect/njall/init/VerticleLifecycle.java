@@ -50,7 +50,16 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   @Override
   protected void shutDown() throws Exception {
     logger.info("Stopping VerticleLifecycle...");
-    vertxProvider.close().toCompletionStage().toCompletableFuture().get();
+    var vertx = vertxProvider.release();
+    if (vertx != null) {
+      vertx
+          .close()
+          .onSuccess(v -> logger.info("Vert.x closed successfully."))
+          .onFailure(err -> logger.error("Failed to close Vert.x", err))
+          .toCompletionStage()
+          .toCompletableFuture()
+          .get();
+    }
   }
 
   @Override
