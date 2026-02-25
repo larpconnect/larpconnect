@@ -1,9 +1,8 @@
 package com.larpconnect.njall.init;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import io.vertx.core.Vertx;
+import jakarta.inject.Singleton;
 
 final class VertxModule extends AbstractModule {
   private final VertxProvider vertxProvider;
@@ -13,11 +12,7 @@ final class VertxModule extends AbstractModule {
   }
 
   @Override
-  protected void configure() {}
-
-  @Provides
-  @Singleton
-  Vertx provideVertx() {
-    return vertxProvider.get();
+  protected void configure() {
+    bind(Vertx.class).toProvider(vertxProvider).in(Singleton.class);
   }
 }
