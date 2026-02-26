@@ -15,7 +15,7 @@ Generative AI agents are allowed in this project, but with some guiding principl
    agents were used (e.g., jules/gemini 3, claud 4, GPT-5).
 2. **Forbidden Tools**: The following AI tools are forbidden for _any_ use in contributions. You **MUST** not use them in any way on this project. This list may change over time:
    * Grok/xAI
-   * Llama/Meta AI,
+   * Llama/Meta AI
    * Devin/Cognition AI
    * Perplexity AI
    * Stability AI (and in general we won't use any AI generated "art")
