@@ -1,5 +1,4 @@
 import com.google.protobuf.gradle.GenerateProtoTask
-import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
     id("larpconnect.library")
@@ -51,11 +50,11 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
 sourceSets {
     main {
         resources {
-            srcDir(layout.buildDirectory.dir("generated/sources/proto/main/openapi"))
+            srcDir(
+                tasks.generateProto.map {
+                    layout.buildDirectory.dir("generated/sources/proto/main/openapi").get()
+                },
+            )
         }
     }
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    options.errorprone.enabled.set(false)
 }
