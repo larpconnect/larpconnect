@@ -12,7 +12,7 @@ Generative AI agents are allowed in this project, but with some guiding principl
 1. **Mandatory Disclosure**: AI Contributions **MUST** be disclosed. The agent _MAY_ sign on as a co-contributor or you _MAY_ indicate
    such in the body of the commit, but either way it **MUST** be disclosed. The contribution **SHOULD** include information on _that_
    the contribution includes AI, the _extent_ of AI contribution in the PR (e.g., tests, scaffolding, all of it), **and** _which_ AI agent or
-   agents were used (e.g., jules, claud 4, GPT-5).
+   agents were used (e.g., jules/gemini, claud 4, GPT-5).
 2. **Forbidden Tools**: The following AI tools are forbidden for _any_ use in contributions. You **MUST** not use them in any way on this project. This list may change over time:
    * Grok/xAI
    * Llama/Meta AI,
