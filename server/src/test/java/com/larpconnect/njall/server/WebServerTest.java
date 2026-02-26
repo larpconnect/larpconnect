@@ -13,11 +13,37 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
 final class WebServerTest {
+
+  @Test
+  void defaultConstructor_usesDefaultPort() {
+    assertThat(new WebServerVerticle().actualPort()).isEqualTo(8080);
+  }
+
+  @Test
+  void start_invokesPortListener(Vertx vertx, VertxTestContext testContext) {
+    AtomicInteger capturedPort = new AtomicInteger();
+    var verticle =
+        new WebServerVerticle(0, "openapi.yaml", Optional.of(port -> capturedPort.set(port)));
+
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.succeeding(
+                id -> {
+                  testContext.verify(
+                      () -> {
+                        assertThat(capturedPort.get()).isGreaterThan(0);
+                        assertThat(capturedPort.get()).isEqualTo(verticle.actualPort());
+                        testContext.completeNow();
+                      });
+                }));
+  }
 
   @Test
   void getMessage_returnsGreeting(Vertx vertx, VertxTestContext testContext) {
