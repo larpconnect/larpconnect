@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -53,16 +54,9 @@ final class VerticleLifecycleTest {
             return null;
           }
         };
-    // Mock both runOnContext methods if applicable, usually it's on Context or Vertx
-    // ConfigRetriever uses vertx.getOrCreateContext().runOnContext(...)
-    io.vertx.core.impl.ContextInternal mockContextInternal =
-        mock(io.vertx.core.impl.ContextInternal.class);
-    // This is getting complicated because ConfigRetriever internals use internal context types
-    // often.
-    // However, basic ConfigRetriever uses vertx.getOrCreateContext() which returns Context.
 
-    when(mockContext.runOnContext(any())).thenAnswer(runOnContextAnswer);
-    when(mockVertx.runOnContext(any())).thenAnswer(runOnContextAnswer);
+    doAnswer(runOnContextAnswer).when(mockContext).runOnContext(any());
+    doAnswer(runOnContextAnswer).when(mockVertx).runOnContext(any());
   }
 
   @Test
@@ -90,17 +84,6 @@ final class VerticleLifecycleTest {
 
   @Test
   public void shutDown_getReturnsNull_doesNothing() {
-    // VerticleLifecycle startUp calls get(), assumes non-null for config retrieval
-    // If get() returns null, ConfigRetriever.create throws NPE.
-    // The original test probably relied on startUp succeeding even if vertx was null? No,
-    // VertxProvider handles creation.
-    // VerticleLifecycle uses vertxProvider.get() which ensures non-null unless configured
-    // otherwise?
-
-    // In this test case, we want to simulate:
-    // 1. startUp gets a vertx instance (mocked)
-    // 2. shutDown gets null (simulating it was already closed or released?)
-
     when(mockProvider.get())
         .thenReturn(mockVertx) // First call in startUp
         .thenReturn(null); // Second call in shutDown

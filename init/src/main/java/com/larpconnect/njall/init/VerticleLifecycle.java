@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class VerticleLifecycle extends AbstractIdleService implements VerticleService {
+  private static final int CONFIG_LOAD_TIMEOUT_SECONDS = 5;
   private final Logger logger = LoggerFactory.getLogger(VerticleLifecycle.class);
 
   private final ImmutableList<Module> modules;
@@ -71,7 +72,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     JsonObject config = defaultConfig;
     try {
       // Use a timeout to prevent indefinite hanging in tests if vertx context is not running
-      config = future.get(5, TimeUnit.SECONDS);
+      config = future.get(CONFIG_LOAD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       logger.warn("Interrupted while loading config, using defaults", e);
