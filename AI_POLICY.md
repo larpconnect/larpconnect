@@ -3,7 +3,7 @@
 Generative AI agents are allowed in this project, but with some guiding principles.  
 
 > [!IMPORTANT]
-> This policy has **ZERO TOLERANCE** around anything labeled **MUST**.
+> This policy has **ZERO TOLERANCE** around anything labeled **MUST**. Especially for wilful violation. 
 
 1. **Mandatory Disclosure**: AI Contributions **MUST** be disclosed. The agent _MAY_ sign on as a co-contributor or you _MAY_ indicate
    such in the body of the commit, but either way it **MUST** be disclosed. The contribution **SHOULD** include information on _that_
