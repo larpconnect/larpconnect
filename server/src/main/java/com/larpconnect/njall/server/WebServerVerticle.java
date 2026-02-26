@@ -2,50 +2,80 @@ package com.larpconnect.njall.server;
 
 import static com.google.common.io.Closeables.close;
 
+import com.google.inject.name.Named;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.openapi.contract.OpenAPIContract;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Web server verticle that serves OpenAPI specification. */
+@Singleton
 final class WebServerVerticle extends AbstractVerticle {
   private static final int DEFAULT_PORT = 8080;
+  private static final String DEFAULT_SPEC = "openapi.yaml";
   private final Logger logger = LoggerFactory.getLogger(WebServerVerticle.class);
   private final int port;
   private final String openApiSpec;
   private final Serializer serializer;
+  private final Optional<Consumer<Integer>> portListener;
+  private HttpServer server;
 
   interface Serializer {
     String print(Message message) throws IOException;
   }
 
   WebServerVerticle() {
-    this(DEFAULT_PORT, "openapi.yaml");
+    this(DEFAULT_PORT, DEFAULT_SPEC);
   }
 
   WebServerVerticle(String openApiSpec) {
     this(DEFAULT_PORT, openApiSpec);
   }
 
-  WebServerVerticle(int port, String openApiSpec) {
-    this(port, openApiSpec, m -> JsonFormat.printer().print(m));
+  @Inject
+  WebServerVerticle(
+      @Named("web.port") int port,
+      @Named("openapi.spec") String openApiSpec,
+      Optional<Consumer<Integer>> portListener) {
+    this(port, openApiSpec, m -> JsonFormat.printer().print(m), portListener);
   }
 
-  WebServerVerticle(int port, String openApiSpec, Serializer serializer) {
+  WebServerVerticle(int port, String openApiSpec) {
+    this(port, openApiSpec, m -> JsonFormat.printer().print(m), Optional.empty());
+  }
+
+  WebServerVerticle(
+      int port,
+      String openApiSpec,
+      Serializer serializer,
+      Optional<Consumer<Integer>> portListener) {
     this.port = port;
     this.openApiSpec = openApiSpec;
     this.serializer = serializer;
+    this.portListener = portListener;
+  }
+
+  public int actualPort() {
+    if (server != null) {
+      return server.actualPort();
+    }
+    return port;
   }
 
   @Override
@@ -86,7 +116,10 @@ final class WebServerVerticle extends AbstractVerticle {
                   .listen(port)
                   .onSuccess(
                       server -> {
-                        logger.info("HTTP server started on port {}", port);
+                        this.server = server;
+                        int actualPort = server.actualPort();
+                        portListener.ifPresent(listener -> listener.accept(actualPort));
+                        logger.info("HTTP server started on port {}", actualPort);
                         startPromise.complete();
                       })
                   .onFailure(startPromise::fail);

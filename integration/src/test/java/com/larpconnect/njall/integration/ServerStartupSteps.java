@@ -3,6 +3,9 @@ package com.larpconnect.njall.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import com.larpconnect.njall.proto.Message;
@@ -19,11 +22,14 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,19 +39,31 @@ public final class ServerStartupSteps {
   private VerticleService lifecycle;
   private Vertx vertx;
   private final AtomicBoolean deploymentSuccess = new AtomicBoolean(false);
-  private final VertxCaptor vertxCaptor = new VertxCaptor();
+  private final ServerCaptor serverCaptor = new ServerCaptor();
 
   @Given("the server is configured")
   public void the_server_is_configured() {
-    lifecycle =
-        VerticleServices.create(
-            Arrays.asList(
-                new ServerModule(),
+    var overrideModule =
+        Modules.override(new ServerModule())
+            .with(
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bind(VertxCaptor.class).toInstance(vertxCaptor);
-                    requestInjection(vertxCaptor);
+                    bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                    bind(new TypeLiteral<Optional<Consumer<Integer>>>() {})
+                        .toInstance(Optional.of(port -> serverCaptor.setPort(port)));
+                  }
+                });
+
+    lifecycle =
+        VerticleServices.create(
+            Arrays.asList(
+                overrideModule,
+                new AbstractModule() {
+                  @Override
+                  protected void configure() {
+                    bind(ServerCaptor.class).toInstance(serverCaptor);
+                    requestInjection(serverCaptor);
                   }
                 }));
   }
@@ -53,7 +71,7 @@ public final class ServerStartupSteps {
   @When("I start the server")
   public void i_start_the_server() throws InterruptedException, TimeoutException {
     lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
-    vertx = vertxCaptor.getVertx();
+    vertx = serverCaptor.getVertx();
     lifecycle.deploy(MainVerticle.class);
 
     var start = System.currentTimeMillis();
@@ -123,8 +141,10 @@ public final class ServerStartupSteps {
     var uri = URI.create(urlString);
 
     var client = WebClient.create(vertx);
+    // Use dynamic port
+    int port = serverCaptor.getPort();
     client
-        .get(uri.getPort(), uri.getHost(), uri.getPath())
+        .get(port, uri.getHost(), uri.getPath())
         .send()
         .onSuccess(
             response -> {
@@ -171,16 +191,25 @@ public final class ServerStartupSteps {
   }
 
   @Singleton
-  static final class VertxCaptor {
-    private final AtomicReference<Vertx> ref = new AtomicReference<>();
+  static final class ServerCaptor {
+    private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
+    private final AtomicInteger portRef = new AtomicInteger();
 
     @Inject
-    void setVertx(Vertx vertx) {
-      ref.set(vertx);
+    void init(Vertx vertx) {
+      vertxRef.set(vertx);
+    }
+
+    void setPort(int port) {
+      portRef.set(port);
     }
 
     Vertx getVertx() {
-      return ref.get();
+      return vertxRef.get();
+    }
+
+    int getPort() {
+      return portRef.get();
     }
   }
 }

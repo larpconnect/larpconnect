@@ -12,6 +12,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -20,12 +21,13 @@ final class WebServerTest {
 
   @Test
   void getMessage_returnsGreeting(Vertx vertx, VertxTestContext testContext) {
+    var verticle = new WebServerVerticle(0, "openapi.yaml");
     vertx
-        .deployVerticle(new WebServerVerticle())
+        .deployVerticle(verticle)
         .compose(
             id -> {
               WebClient client = WebClient.create(vertx);
-              return client.get(8080, "localhost", "/v1/message").send();
+              return client.get(verticle.actualPort(), "localhost", "/v1/message").send();
             })
         .onComplete(
             testContext.succeeding(
@@ -88,7 +90,8 @@ final class WebServerTest {
             "openapi.yaml",
             m -> {
               throw new IOException("Serialization failed");
-            });
+            },
+            Optional.empty());
 
     verticle.handleGetMessage(ctx);
 
@@ -106,7 +109,8 @@ final class WebServerTest {
             "openapi.yaml",
             m -> {
               throw new RuntimeException("Unexpected error");
-            });
+            },
+            Optional.empty());
 
     verticle.handleGetMessage(ctx);
 

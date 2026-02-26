@@ -1,6 +1,7 @@
 package com.larpconnect.njall.server;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Module;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import java.time.Duration;
@@ -14,9 +15,15 @@ final class Main {
   private static final Duration SHUTDOWN_TIMEOUT = Duration.ofMinutes(2);
 
   private final Runtime runtime;
+  private final Module serverModule;
 
   Main(Runtime runtime) {
+    this(runtime, new ServerModule());
+  }
+
+  Main(Runtime runtime, Module serverModule) {
     this.runtime = runtime;
+    this.serverModule = serverModule;
   }
 
   public static void main(String[] args) {
@@ -27,7 +34,7 @@ final class Main {
     logger.info("Starting Server...");
 
     // Register ServerModule to bind MainVerticle -> DefaultMainVerticle
-    var lifecycle = VerticleServices.create(ImmutableList.of(new ServerModule()));
+    var lifecycle = VerticleServices.create(ImmutableList.of(serverModule));
 
     runtime.addShutdownHook(new Thread(() -> shutdown(lifecycle)));
 
