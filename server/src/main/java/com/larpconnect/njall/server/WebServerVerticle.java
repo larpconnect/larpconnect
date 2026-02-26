@@ -22,6 +22,10 @@ final class WebServerVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
+    startGrpcServer(startPromise);
+  }
+
+  private void startGrpcServer(Promise<Void> startPromise) {
     int grpcPort = config().getInteger("grpc.port", DEFAULT_GRPC_PORT);
     var grpcServer =
         VertxServerBuilder.forAddress(vertx, "0.0.0.0", grpcPort)
@@ -49,12 +53,13 @@ final class WebServerVerticle extends AbstractVerticle {
     Buffer openApiBuffer;
     String openApiPath = config().getString("openapi.path", DEFAULT_OPENAPI_PATH);
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(openApiPath)) {
-      if (is != null) {
-        openApiBuffer = Buffer.buffer(is.readAllBytes());
-      } else {
-        openApiBuffer = null;
-        logger.warn("{} not found in classpath", openApiPath);
+      if (is == null) {
+        String message = String.format("%s not found in classpath", openApiPath);
+        logger.error(message);
+        startPromise.fail(message);
+        return;
       }
+      openApiBuffer = Buffer.buffer(is.readAllBytes());
     } catch (IOException e) {
       logger.error("Failed to read {}", openApiPath, e);
       startPromise.fail(e);
@@ -62,14 +67,12 @@ final class WebServerVerticle extends AbstractVerticle {
     }
 
     Router router = Router.router(vertx);
-    if (openApiBuffer != null) {
-      router
-          .get("/openapi.yaml")
-          .handler(
-              ctx -> {
-                ctx.response().putHeader("content-type", "text/yaml").end(openApiBuffer);
-              });
-    }
+    router
+        .get("/openapi.yaml")
+        .handler(
+            ctx -> {
+              ctx.response().putHeader("content-type", "text/yaml").end(openApiBuffer);
+            });
 
     int webPort = config().getInteger("web.port", DEFAULT_WEB_PORT);
     vertx

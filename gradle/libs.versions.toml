@@ -27,7 +27,7 @@ log4j = "2.53.2"
 commons-lang3 = "3.20.0"
 archunit = "1.4.1"
 google-common-protos = "2.53.0"
-grpc = "1.70.0"
+grpc = "1.79.0"
 
 [libraries]
 # Core

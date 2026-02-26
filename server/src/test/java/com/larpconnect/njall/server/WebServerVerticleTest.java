@@ -23,7 +23,7 @@ class WebServerVerticleTest {
     try (ServerSocket socket = new ServerSocket(0)) {
       return socket.getLocalPort();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new java.io.UncheckedIOException(e);
     }
   }
 
@@ -157,7 +157,7 @@ class WebServerVerticleTest {
   }
 
   @Test
-  void start_succeeds_whenOpenApiMissing(Vertx vertx, VertxTestContext testContext) {
+  void start_fails_whenOpenApiMissing(Vertx vertx, VertxTestContext testContext) {
     int grpcPort = getFreePort();
     int webPort = getFreePort();
     JsonObject config =
@@ -168,7 +168,7 @@ class WebServerVerticleTest {
 
     vertx
         .deployVerticle(new WebServerVerticle(), new DeploymentOptions().setConfig(config))
-        .onSuccess(id -> testContext.completeNow())
-        .onFailure(testContext::failNow);
+        .onSuccess(id -> testContext.failNow(new AssertionError("Should have failed to start")))
+        .onFailure(err -> testContext.completeNow());
   }
 }

@@ -67,6 +67,9 @@ tasks.named("processResources") {
 }
 
 // Suppress failures in generated code
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.remove("-Werror")
+}
 tasks.withType<Checkstyle>().configureEach {
     exclude("com/larpconnect/njall/proto/**")
 }
