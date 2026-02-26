@@ -4,9 +4,17 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Guice;
 import com.google.inject.Module;
+import io.vertx.config.ConfigRetriever;
+import io.vertx.config.ConfigRetrieverOptions;
+import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.Verticle;
+import io.vertx.core.json.JsonObject;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,17 +40,54 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   protected void startUp() {
     logger.info("Starting VerticleLifecycle...");
 
-    // Create a mutable list to add our internal module
+    var vertx = vertxProvider.get();
+
+    // Load default config
+    JsonObject defaultConfig = new JsonObject();
+    try (InputStream in = getClass().getClassLoader().getResourceAsStream("config.json")) {
+      if (in != null) {
+        defaultConfig =
+            new JsonObject(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+      }
+    } catch (IOException e) {
+      logger.warn("Failed to load default config", e);
+    }
+
+    // Configure ConfigRetriever
+    ConfigStoreOptions memoryStore =
+        new ConfigStoreOptions().setType("json").setConfig(defaultConfig);
+    ConfigStoreOptions sysStore = new ConfigStoreOptions().setType("sys");
+    ConfigStoreOptions envStore = new ConfigStoreOptions().setType("env");
+
+    ConfigRetrieverOptions options =
+        new ConfigRetrieverOptions().addStore(memoryStore).addStore(sysStore).addStore(envStore);
+
+    ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
+    CompletableFuture<JsonObject> future = new CompletableFuture<>();
+    retriever.getConfig().onSuccess(future::complete).onFailure(future::completeExceptionally);
+
+    JsonObject config;
+    try {
+      config = future.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while loading config", e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException("Failed to load config", e);
+    }
+
+    // Create a mutable list to add our internal modules
     var builder = ImmutableList.<Module>builder();
     builder.addAll(modules);
     builder.add(new VertxModule(vertxProvider));
+    builder.add(new ConfigModule(config));
 
     // Create Guice Injector
     var injector = Guice.createInjector(builder.build());
 
     // Setup Verticle Factory via VerticleSetupService
     var setupService = injector.getInstance(VerticleSetupService.class);
-    setupService.setup(vertxProvider.get(), injector);
+    setupService.setup(vertx, injector);
     setupServiceRef.set(setupService);
 
     logger.info("VerticleLifecycle started.");
