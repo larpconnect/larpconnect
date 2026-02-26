@@ -14,7 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 final class WebServerTest {
 
   @Test
-  void testGetMessage(Vertx vertx, VertxTestContext testContext) {
+  void getMessage_returnsGreeting(Vertx vertx, VertxTestContext testContext) {
     vertx
         .deployVerticle(new WebServerVerticle())
         .compose(
