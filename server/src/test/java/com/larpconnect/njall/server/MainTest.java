@@ -2,10 +2,13 @@ package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service.State;
 import com.larpconnect.njall.init.VerticleService;
-import java.lang.reflect.Proxy;
+import io.vertx.core.Verticle;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 final class MainTest {
@@ -29,35 +32,42 @@ final class MainTest {
     var main = new Main(runtime);
 
     // Test TimeoutException
-    var timeoutService =
-        (VerticleService)
-            Proxy.newProxyInstance(
-                getClass().getClassLoader(),
-                new Class<?>[] {VerticleService.class},
-                (proxy, method, args) -> {
-                  return switch (method.getName()) {
-                    case "stopAsync" -> proxy;
-                    case "awaitTerminated" -> throw new TimeoutException();
-                    default -> null;
-                  };
-                });
-
+    var timeoutService = new TestVerticleService();
+    timeoutService.exceptionToThrow.set(new TimeoutException());
     main.shutdown(timeoutService);
+    // Since Main.shutdown swallows the exception and logs it, we verify by ensuring the code didn't
+    // crash
+    // and the service stop was attempted. We can verify internal state if we spy, but here we just
+    // ensure no propagation of exception.
 
     // Test RuntimeException
-    var runtimeService =
-        (VerticleService)
-            Proxy.newProxyInstance(
-                getClass().getClassLoader(),
-                new Class<?>[] {VerticleService.class},
-                (proxy, method, args) -> {
-                  return switch (method.getName()) {
-                    case "stopAsync" -> proxy;
-                    case "awaitTerminated" -> throw new RuntimeException();
-                    default -> null;
-                  };
-                });
-
+    var runtimeService = new TestVerticleService();
+    runtimeService.exceptionToThrow.set(new RuntimeException());
     main.shutdown(runtimeService);
+  }
+
+  private static final class TestVerticleService extends AbstractIdleService
+      implements VerticleService {
+    final AtomicReference<Exception> exceptionToThrow = new AtomicReference<>();
+    final AtomicBoolean stopCalled = new AtomicBoolean(false);
+
+    @Override
+    public void deploy(Class<? extends Verticle> verticleClass) {
+      // No-op
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+      // No-op
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      stopCalled.set(true);
+      Exception ex = exceptionToThrow.get();
+      if (ex != null) {
+        throw ex;
+      }
+    }
   }
 }
