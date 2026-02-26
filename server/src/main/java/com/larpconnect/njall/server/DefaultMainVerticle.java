@@ -1,5 +1,7 @@
 package com.larpconnect.njall.server;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -8,7 +10,6 @@ import io.vertx.core.Verticle;
 import jakarta.inject.Inject;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,7 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
             .map(
                 verticle ->
                     vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)))
-            .collect(Collectors.toList());
+            .collect(toList());
 
     Future.all(futures)
         .onSuccess(

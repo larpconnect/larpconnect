@@ -1,6 +1,7 @@
 package com.larpconnect.njall.init;
 
-import com.google.common.base.Preconditions;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.inject.Injector;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.Verticle;
@@ -27,7 +28,7 @@ final class VerticleSetupService {
 
   void deploy(Class<? extends Verticle> verticleClass) {
     var vertx = vertxRef.get();
-    Preconditions.checkState(vertx != null, "Vertx not initialized");
+    checkState(vertx != null, "Vertx not initialized");
     vertx
         .deployVerticle("guice:" + verticleClass.getName())
         .onSuccess(
