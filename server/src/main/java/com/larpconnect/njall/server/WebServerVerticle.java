@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 
 final class WebServerVerticle extends AbstractVerticle {
   private static final Logger logger = LoggerFactory.getLogger(WebServerVerticle.class);
+  private static final int GRPC_PORT = 8080;
+  private static final int WEB_PORT = 8081;
 
   @Inject
   WebServerVerticle() {}
@@ -20,13 +22,13 @@ final class WebServerVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startPromise) {
     var grpcServer =
-        VertxServerBuilder.forAddress(vertx, "0.0.0.0", 8080)
-            .addService(new MessageServiceImpl())
+        VertxServerBuilder.forAddress(vertx, "0.0.0.0", GRPC_PORT)
+            .addService(new DefaultMessageService())
             .build();
 
     try {
       grpcServer.start();
-      logger.info("gRPC server started on port 8080");
+      logger.info("gRPC server started on port {}", GRPC_PORT);
       startWebServer(startPromise);
     } catch (IOException e) {
       logger.error("Failed to start gRPC server", e);
@@ -62,10 +64,10 @@ final class WebServerVerticle extends AbstractVerticle {
     vertx
         .createHttpServer()
         .requestHandler(router)
-        .listen(8081)
+        .listen(WEB_PORT)
         .onSuccess(
             http -> {
-              logger.info("Web server started on port 8081");
+              logger.info("Web server started on port {}", WEB_PORT);
               startPromise.complete();
             })
         .onFailure(

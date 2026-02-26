@@ -5,8 +5,8 @@ import com.larpconnect.njall.proto.Message;
 import com.larpconnect.njall.proto.MessageServiceGrpc;
 import io.grpc.stub.StreamObserver;
 
-final class MessageServiceImpl extends MessageServiceGrpc.MessageServiceImplBase {
-  MessageServiceImpl() {}
+final class DefaultMessageService extends MessageServiceGrpc.MessageServiceImplBase {
+  DefaultMessageService() {}
 
   @Override
   public void getMessage(Empty request, StreamObserver<Message> responseObserver) {
