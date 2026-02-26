@@ -1,5 +1,7 @@
 package com.larpconnect.njall.server;
 
+import static com.google.common.io.Closeables.close;
+
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.AbstractVerticle;
@@ -64,9 +66,9 @@ final class WebServerVerticle extends AbstractVerticle {
       return;
     } finally {
       try {
-        com.google.common.io.Closeables.close(in, true);
+        close(in, true);
       } catch (IOException e) {
-        logger.warn("Failed to close stream", e);
+        // Should not happen as swallowIOException is true
       }
     }
 
