@@ -44,8 +44,13 @@ To compile the project and run the test suite:
 
 ## License
 
-Licensed under Apache 2.0
+All source code and comments licensed under Apache 2.0
 
 See [LICENSE](./LICENSE) for more details. 
 
 Not affiliated with or endorsed by Google LLC in any way.
+
+Exceptions are as follows:
+
+* Use of Generative AI in Contributions is licensed under Creative Commons Attribution-ShareAlike 4.0 International. To view a copy of this license, visit https://creativecommons.org/licenses/by-sa/4.0/
+* The contents of the `docs/` folder is licensed under Creative Commons Attribution 4.0 International. To view a copy of this license, visit https://creativecommons.org/licenses/by/4.0/.
