@@ -2,9 +2,9 @@ package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.protobuf.Empty;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
-import com.google.protobuf.Empty;
 import com.larpconnect.njall.proto.VertxMessageServiceGrpc;
 import com.larpconnect.njall.server.MainVerticle;
 import com.larpconnect.njall.server.ServerModule;
