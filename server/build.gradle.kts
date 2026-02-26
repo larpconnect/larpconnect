@@ -9,6 +9,8 @@ dependencies {
     implementation(libs.vertx.core)
     implementation(libs.guice)
     compileOnly(libs.vertx.codegen)
+    testCompileOnly(libs.vertx.codegen)
+    testImplementation(libs.vertx.junit5)
 }
 
 application {
