@@ -30,7 +30,7 @@ Generative AI agents are allowed in this project, but with some guiding principl
    but many of the elements have seemed easier for humans than AI agents). They **SHOULD** follow the guidance in `AGENTS.md` and `.agents/SKILLS.md`.
 7. **Isolation of Concerns**:
    * Agent contributions **SHOULD NOT** modify the code quality system unless _directly_ requested to do so. 
-   * Agent contributions **MUST NOT** mix code quality changes with functional changes.
+   * Agent contributions **SHOULD NOT** mix code quality changes with functional changes.
 8. **Branch Naming and Grouping**: Agent contributions **SHOULD** as a best effort name their branches as `<agent name>/<branch name>`, e.g., `jules/my-feature-change`.
    This is an easy one to miss, but check for it the best you can.
 9. **Security and Privacy**: You **MUST NOT** include credentials, non-anonymized production data, or proprietary logic in prompts to AI agents for
