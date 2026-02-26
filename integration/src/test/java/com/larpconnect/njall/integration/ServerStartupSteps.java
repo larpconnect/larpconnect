@@ -31,6 +31,7 @@ public final class ServerStartupSteps {
   private Vertx vertx;
   private final AtomicBoolean deploymentSuccess = new AtomicBoolean(false);
   private final VertxCaptor vertxCaptor = new VertxCaptor();
+  private Message receivedMessage;
 
   @Given("the server is configured")
   public void the_server_is_configured() {
@@ -110,6 +111,43 @@ public final class ServerStartupSteps {
       logger.error("Timed out waiting for message reply");
     }
     assertThat(success.get()).isTrue();
+  }
+
+  @When("I call the GetMessage RPC with an empty request")
+  public void i_call_the_get_message_rpc_with_an_empty_request() throws InterruptedException {
+    var channel =
+        io.vertx.grpc.VertxChannelBuilder.forAddress(vertx, "localhost", 9090)
+            .usePlaintext()
+            .build();
+    var stub = com.larpconnect.njall.proto.VertxMessageServiceGrpc.newVertxStub(channel);
+    var latch = new CountDownLatch(1);
+
+    stub.getMessage(com.google.protobuf.Empty.getDefaultInstance())
+        .onSuccess(
+            msg -> {
+              receivedMessage = msg;
+              latch.countDown();
+            })
+        .onFailure(
+            err -> {
+              logger.error("RPC failed", err);
+              latch.countDown();
+            });
+
+    if (!latch.await(5, TimeUnit.SECONDS)) {
+      logger.error("Timed out waiting for RPC response");
+    }
+  }
+
+  @Then("I should receive a Message with {string} type and {string} content")
+  public void i_should_receive_a_message_with_type_and_content(String type, String content)
+      throws Exception {
+    assertThat(receivedMessage).isNotNull();
+    assertThat(receivedMessage.getMessageType()).isEqualTo(type);
+
+    var any = receivedMessage.getMessage();
+    var stringValue = any.unpack(com.google.protobuf.StringValue.class);
+    assertThat(stringValue.getValue()).isEqualTo(content);
   }
 
   @After

@@ -8,7 +8,12 @@ plugins {
 dependencies {
     implementation(project(":parent"))
     api(libs.protobuf.java)
+    api(libs.grpc.stub)
+    implementation(libs.grpc.protobuf)
     implementation(libs.google.common.protos)
+    implementation(libs.vertx.grpc)
+    compileOnly(libs.javax.annotation)
+    compileOnly(libs.vertx.codegen)
 }
 
 val goBinDir = layout.buildDirectory.dir("go-bin")
@@ -28,12 +33,20 @@ protobuf {
         create("openapi") {
             path = openApiPluginPath.get()
         }
+        create("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
+        }
+        create("vertx") {
+            artifact = "io.vertx:vertx-grpc-protoc-plugin:${libs.versions.vertx.get()}"
+        }
     }
     generateProtoTasks {
         all().forEach { task ->
             task.dependsOn(installProtocGenOpenApi)
             task.plugins {
                 create("openapi") { }
+                create("grpc") { }
+                create("vertx") { }
             }
         }
     }
