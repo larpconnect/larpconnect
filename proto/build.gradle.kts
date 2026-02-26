@@ -9,6 +9,9 @@ dependencies {
     implementation(project(":parent"))
     api(libs.protobuf.java)
     implementation(libs.google.common.protos)
+    api(libs.grpc.protobuf)
+    api(libs.grpc.stub)
+    compileOnly(libs.tomcat.annotations.api)
 }
 
 val goBinDir = layout.buildDirectory.dir("go-bin")
@@ -25,6 +28,9 @@ protobuf {
         artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
     }
     plugins {
+        create("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
+        }
         create("openapi") {
             path = openApiPluginPath.get()
         }
@@ -33,10 +39,23 @@ protobuf {
         all().forEach { task ->
             task.dependsOn(installProtocGenOpenApi)
             task.plugins {
+                create("grpc") { }
                 create("openapi") { }
             }
         }
     }
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDir(layout.buildDirectory.dir("generated/sources/proto/main/openapi"))
+        }
+    }
+}
+
+tasks.named("processResources") {
+    dependsOn("generateProto")
 }
 
 // Suppress failures in generated code
