@@ -10,12 +10,13 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public final class ServerModule extends AbstractModule {
+  private static final int DEFAULT_PORT = 8080;
 
   public ServerModule() {}
 
   @Override
   protected void configure() {
-    bindConstant().annotatedWith(Names.named("web.port")).to(8080);
+    bindConstant().annotatedWith(Names.named("web.port")).to(DEFAULT_PORT);
     bindConstant().annotatedWith(Names.named("openapi.spec")).to("openapi.yaml");
     bind(new TypeLiteral<Optional<Consumer<Integer>>>() {}).toInstance(Optional.empty());
 
