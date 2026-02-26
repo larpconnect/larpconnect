@@ -1,5 +1,6 @@
 package com.larpconnect.njall.server;
 
+import com.google.common.io.Closeables;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
@@ -16,9 +17,12 @@ final class WebServerVerticle extends AbstractVerticle {
   private static final int DEFAULT_GRPC_PORT = 8080;
   private static final int DEFAULT_WEB_PORT = 8081;
   private static final String DEFAULT_OPENAPI_PATH = "openapi.yaml";
+  private final ResourceLoader resourceLoader;
 
   @Inject
-  WebServerVerticle() {}
+  WebServerVerticle(ResourceLoader resourceLoader) {
+    this.resourceLoader = resourceLoader;
+  }
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -32,27 +36,24 @@ final class WebServerVerticle extends AbstractVerticle {
             .addService(new GrpcMessageService())
             .build();
 
-    try {
-      grpcServer.start(
-          (v, err) -> {
-            if (err == null) {
-              logger.info("gRPC server started on port {}", grpcPort);
-              startWebServer(startPromise);
-            } else {
-              logger.error("Failed to start gRPC server", err);
-              startPromise.fail(err);
-            }
-          });
-    } catch (RuntimeException e) {
-      logger.error("Failed to start gRPC server", e);
-      startPromise.fail(e);
-    }
+    grpcServer.start(
+        (v, err) -> {
+          if (err == null) {
+            logger.info("gRPC server started on port {}", grpcPort);
+            startWebServer(startPromise);
+          } else {
+            logger.error("Failed to start gRPC server", err);
+            startPromise.fail(err);
+          }
+        });
   }
 
   private void startWebServer(Promise<Void> startPromise) {
-    Buffer openApiBuffer;
     String openApiPath = config().getString("openapi.path", DEFAULT_OPENAPI_PATH);
-    try (InputStream is = getClass().getClassLoader().getResourceAsStream(openApiPath)) {
+    Buffer openApiBuffer;
+    InputStream is = null;
+    try {
+      is = resourceLoader.getResource(openApiPath);
       if (is == null) {
         String message = String.format("%s not found in classpath", openApiPath);
         logger.error(message);
@@ -64,14 +65,25 @@ final class WebServerVerticle extends AbstractVerticle {
       logger.error("Failed to read {}", openApiPath, e);
       startPromise.fail(e);
       return;
+    } finally {
+      if (is != null) {
+        try {
+          Closeables.close(is, true);
+        } catch (IOException e) {
+          // Should not happen as swallowIOException is true
+          logger.warn("Failed to close input stream for {}", openApiPath, e);
+        }
+      }
     }
 
     Router router = Router.router(vertx);
+    // Captured variable must be effectively final, so we use the local variable which is set once.
+    Buffer finalOpenApiBuffer = openApiBuffer;
     router
         .get("/openapi.yaml")
         .handler(
             ctx -> {
-              ctx.response().putHeader("content-type", "text/yaml").end(openApiBuffer);
+              ctx.response().putHeader("content-type", "text/yaml").end(finalOpenApiBuffer);
             });
 
     int webPort = config().getInteger("web.port", DEFAULT_WEB_PORT);

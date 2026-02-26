@@ -12,6 +12,8 @@ public final class ServerModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(MainVerticle.class).to(DefaultMainVerticle.class).in(Scopes.SINGLETON);
+    bind(ResourceLoader.class)
+        .toInstance(path -> getClass().getClassLoader().getResourceAsStream(path));
     Multibinder.newSetBinder(binder(), Verticle.class).addBinding().to(WebServerVerticle.class);
   }
 }

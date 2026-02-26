@@ -2,6 +2,7 @@ package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.io.Closeables;
 import com.larpconnect.njall.proto.MessageServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -12,12 +13,16 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
 class WebServerVerticleTest {
+
+  private final ResourceLoader defaultLoader =
+      path -> getClass().getClassLoader().getResourceAsStream(path);
 
   private static int getFreePort() {
     try (ServerSocket socket = new ServerSocket(0)) {
@@ -33,7 +38,8 @@ class WebServerVerticleTest {
     int webPort = getFreePort();
     JsonObject config = new JsonObject().put("grpc.port", grpcPort).put("web.port", webPort);
     vertx
-        .deployVerticle(new WebServerVerticle(), new DeploymentOptions().setConfig(config))
+        .deployVerticle(
+            new WebServerVerticle(defaultLoader), new DeploymentOptions().setConfig(config))
         .onSuccess(id -> testContext.completeNow())
         .onFailure(testContext::failNow);
   }
@@ -44,7 +50,8 @@ class WebServerVerticleTest {
     int webPort = getFreePort();
     JsonObject config = new JsonObject().put("grpc.port", grpcPort).put("web.port", webPort);
     vertx
-        .deployVerticle(new WebServerVerticle(), new DeploymentOptions().setConfig(config))
+        .deployVerticle(
+            new WebServerVerticle(defaultLoader), new DeploymentOptions().setConfig(config))
         .compose(id -> WebClient.create(vertx).get(webPort, "localhost", "/openapi.yaml").send())
         .onSuccess(
             response -> {
@@ -65,7 +72,8 @@ class WebServerVerticleTest {
     int webPort = getFreePort();
     JsonObject config = new JsonObject().put("grpc.port", grpcPort).put("web.port", webPort);
     vertx
-        .deployVerticle(new WebServerVerticle(), new DeploymentOptions().setConfig(config))
+        .deployVerticle(
+            new WebServerVerticle(defaultLoader), new DeploymentOptions().setConfig(config))
         .onSuccess(
             id -> {
               ManagedChannel channel =
@@ -104,11 +112,12 @@ class WebServerVerticleTest {
 
     JsonObject config = new JsonObject().put("grpc.port", grpcPort).put("web.port", webPort);
     vertx
-        .deployVerticle(new WebServerVerticle(), new DeploymentOptions().setConfig(config))
+        .deployVerticle(
+            new WebServerVerticle(defaultLoader), new DeploymentOptions().setConfig(config))
         .onSuccess(
             id -> {
               try {
-                serverSocket.close();
+                Closeables.close(serverSocket, true);
               } catch (IOException e) {
                 // ignore
               }
@@ -118,7 +127,7 @@ class WebServerVerticleTest {
         .onFailure(
             err -> {
               try {
-                serverSocket.close();
+                Closeables.close(serverSocket, true);
               } catch (IOException e) {
                 // ignore
               }
@@ -134,11 +143,12 @@ class WebServerVerticleTest {
 
     JsonObject config = new JsonObject().put("grpc.port", grpcPort).put("web.port", webPort);
     vertx
-        .deployVerticle(new WebServerVerticle(), new DeploymentOptions().setConfig(config))
+        .deployVerticle(
+            new WebServerVerticle(defaultLoader), new DeploymentOptions().setConfig(config))
         .onSuccess(
             id -> {
               try {
-                serverSocket.close();
+                Closeables.close(serverSocket, true);
               } catch (IOException e) {
                 // ignore
               }
@@ -148,7 +158,7 @@ class WebServerVerticleTest {
         .onFailure(
             err -> {
               try {
-                serverSocket.close();
+                Closeables.close(serverSocket, true);
               } catch (IOException e) {
                 // ignore
               }
@@ -167,8 +177,37 @@ class WebServerVerticleTest {
             .put("openapi.path", "nonexistent.yaml");
 
     vertx
-        .deployVerticle(new WebServerVerticle(), new DeploymentOptions().setConfig(config))
+        .deployVerticle(
+            new WebServerVerticle(defaultLoader), new DeploymentOptions().setConfig(config))
         .onSuccess(id -> testContext.failNow(new AssertionError("Should have failed to start")))
         .onFailure(err -> testContext.completeNow());
   }
+
+  @Test
+  void start_fails_whenOpenApiReadFails(Vertx vertx, VertxTestContext testContext) {
+    int grpcPort = getFreePort();
+    int webPort = getFreePort();
+    JsonObject config = new JsonObject().put("grpc.port", grpcPort).put("web.port", webPort);
+
+    ResourceLoader throwingLoader =
+        path ->
+            new InputStream() {
+              @Override
+              public int read() throws IOException {
+                throw new IOException("Read failure");
+              }
+
+              @Override
+              public int read(byte[] b, int off, int len) throws IOException {
+                throw new IOException("Read failure");
+              }
+            };
+
+    vertx
+        .deployVerticle(
+            new WebServerVerticle(throwingLoader), new DeploymentOptions().setConfig(config))
+        .onSuccess(id -> testContext.failNow(new AssertionError("Should have failed to start")))
+        .onFailure(err -> testContext.completeNow());
+  }
+
 }
