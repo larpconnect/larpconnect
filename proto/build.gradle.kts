@@ -1,4 +1,5 @@
 import com.google.protobuf.gradle.GenerateProtoTask
+import net.ltgt.gradle.errorprone.errorprone
 
 plugins {
     id("larpconnect.library")
@@ -55,6 +56,6 @@ sourceSets {
     }
 }
 
-tasks.processResources {
-    dependsOn(tasks.generateProto)
+tasks.withType<JavaCompile>().configureEach {
+    options.errorprone.enabled.set(false)
 }
