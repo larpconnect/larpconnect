@@ -53,3 +53,6 @@ AI tools may be used to contribute source code, they may never be part of the co
 * [Linux Foundation Generative AI Principles](https://www.linuxfoundation.org/legal/generative-ai)
 * [IEEE Ethically Aligned Design](https://standards.ieee.org/wp-content/uploads/import/documents/other/ead_v2.pdf)
 
+----
+
+Use of Generative AI in Contributions © 2026 by Devorah H. Clements is licensed under Creative Commons Attribution-ShareAlike 4.0 International. To view a copy of this license, visit https://creativecommons.org/licenses/by-sa/4.0/
