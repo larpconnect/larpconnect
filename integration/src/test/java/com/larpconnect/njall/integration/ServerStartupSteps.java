@@ -45,7 +45,7 @@ public class ServerStartupSteps {
     service = VerticleServices.create(Collections.singletonList(new ServerModule()));
     service.startAsync().awaitRunning();
     service.deploy(MainVerticle.class);
-    Thread.sleep(2000); // Give Verticles time to deploy and bind ports
+    Thread.sleep(5000); // Give Verticles time to deploy and bind ports
   }
 
   @Then("the server should be running")
