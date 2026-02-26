@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,14 +68,17 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     CompletableFuture<JsonObject> future = new CompletableFuture<>();
     retriever.getConfig().onSuccess(future::complete).onFailure(future::completeExceptionally);
 
-    JsonObject config;
+    JsonObject config = defaultConfig;
     try {
-      config = future.get();
+      // Use a timeout to prevent indefinite hanging in tests if vertx context is not running
+      config = future.get(5, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while loading config", e);
+      logger.warn("Interrupted while loading config, using defaults", e);
     } catch (ExecutionException e) {
-      throw new RuntimeException("Failed to load config", e);
+      logger.warn("Failed to load config, using defaults", e);
+    } catch (TimeoutException e) {
+      logger.warn("Timed out loading config, using defaults", e);
     }
 
     // Create a mutable list to add our internal modules

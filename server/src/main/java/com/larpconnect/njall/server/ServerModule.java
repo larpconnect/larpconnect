@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public final class ServerModule extends AbstractModule {
+  private static final int DEFAULT_PORT = 8080;
 
   public ServerModule() {}
 
@@ -29,7 +30,7 @@ public final class ServerModule extends AbstractModule {
   @Singleton
   @Named("web.port")
   int provideWebPort(JsonObject config) {
-    return config.getInteger("web.port", 8080);
+    return config.getInteger("web.port", DEFAULT_PORT);
   }
 
   @Provides
