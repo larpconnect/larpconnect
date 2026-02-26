@@ -13,8 +13,11 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.WebClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -108,6 +111,54 @@ public final class ServerStartupSteps {
 
     if (!latch.await(5, TimeUnit.SECONDS)) {
       logger.error("Timed out waiting for message reply");
+    }
+    assertThat(success.get()).isTrue();
+  }
+
+  @Then("I should receive a response from {string} containing:")
+  public void i_should_receive_a_response_from_containing(String urlString, String expectedJson)
+      throws InterruptedException {
+    var latch = new CountDownLatch(1);
+    var success = new AtomicBoolean(false);
+    var uri = URI.create(urlString);
+
+    var client = WebClient.create(vertx);
+    client
+        .get(uri.getPort(), uri.getHost(), uri.getPath())
+        .send()
+        .onSuccess(
+            response -> {
+              try {
+                if (response.statusCode() == 200) {
+                  var actual = response.bodyAsJsonObject();
+                  var expected = new JsonObject(expectedJson);
+                  // Verify expected fields exist in actual
+                  for (String key : expected.fieldNames()) {
+                    if (!actual.containsKey(key)
+                        || !actual.getValue(key).equals(expected.getValue(key))) {
+                      logger.error(
+                          "Mismatch. Expected: {} but got: {}", expectedJson, actual.encode());
+                      return;
+                    }
+                  }
+                  success.set(true);
+                } else {
+                  logger.error("Unexpected status code: {}", response.statusCode());
+                }
+              } catch (Exception e) {
+                logger.error("Failed to verify response", e);
+              } finally {
+                latch.countDown();
+              }
+            })
+        .onFailure(
+            err -> {
+              logger.error("HTTP Request failed", err);
+              latch.countDown();
+            });
+
+    if (!latch.await(5, TimeUnit.SECONDS)) {
+      logger.error("Timed out waiting for HTTP response");
     }
     assertThat(success.get()).isTrue();
   }

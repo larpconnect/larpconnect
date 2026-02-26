@@ -6,11 +6,17 @@ dependencies {
     implementation(project(":parent"))
     implementation(project(":common"))
     implementation(project(":init"))
+    implementation(project(":proto"))
     implementation(libs.vertx.core)
+    implementation(libs.vertx.web)
+    implementation(libs.vertx.openapi)
+    implementation(libs.vertx.web.openapi.router)
+    implementation(libs.protobuf.java.util)
     implementation(libs.guice)
     compileOnly(libs.vertx.codegen)
     testCompileOnly(libs.vertx.codegen)
     testImplementation(libs.vertx.junit5)
+    testImplementation(libs.vertx.web.client)
 }
 
 application {
