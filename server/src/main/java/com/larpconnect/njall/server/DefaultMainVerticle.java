@@ -1,6 +1,6 @@
 package com.larpconnect.njall.server;
 
-import static java.util.stream.Collectors.toList;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.AbstractVerticle;
@@ -31,7 +31,7 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
             .map(
                 verticle ->
                     vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)))
-            .collect(toList());
+            .collect(toImmutableList());
 
     Future.all(futures)
         .onSuccess(

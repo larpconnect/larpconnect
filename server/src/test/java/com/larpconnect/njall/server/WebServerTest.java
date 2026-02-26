@@ -12,6 +12,8 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -19,13 +21,39 @@ import org.junit.jupiter.api.extension.ExtendWith;
 final class WebServerTest {
 
   @Test
-  void getMessage_returnsGreeting(Vertx vertx, VertxTestContext testContext) {
+  void defaultConstructor_usesDefaultPort() {
+    assertThat(new WebServerVerticle().actualPort()).isEqualTo(8080);
+  }
+
+  @Test
+  void start_invokesPortListener(Vertx vertx, VertxTestContext testContext) {
+    AtomicInteger capturedPort = new AtomicInteger();
+    var verticle =
+        new WebServerVerticle(0, "openapi.yaml", Optional.of(port -> capturedPort.set(port)));
+
     vertx
-        .deployVerticle(new WebServerVerticle())
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.succeeding(
+                id -> {
+                  testContext.verify(
+                      () -> {
+                        assertThat(capturedPort.get()).isGreaterThan(0);
+                        assertThat(capturedPort.get()).isEqualTo(verticle.actualPort());
+                        testContext.completeNow();
+                      });
+                }));
+  }
+
+  @Test
+  void getMessage_returnsGreeting(Vertx vertx, VertxTestContext testContext) {
+    var verticle = new WebServerVerticle(0, "openapi.yaml");
+    vertx
+        .deployVerticle(verticle)
         .compose(
             id -> {
               WebClient client = WebClient.create(vertx);
-              return client.get(8080, "localhost", "/v1/message").send();
+              return client.get(verticle.actualPort(), "localhost", "/v1/message").send();
             })
         .onComplete(
             testContext.succeeding(
@@ -88,7 +116,8 @@ final class WebServerTest {
             "openapi.yaml",
             m -> {
               throw new IOException("Serialization failed");
-            });
+            },
+            Optional.empty());
 
     verticle.handleGetMessage(ctx);
 
@@ -106,7 +135,8 @@ final class WebServerTest {
             "openapi.yaml",
             m -> {
               throw new RuntimeException("Unexpected error");
-            });
+            },
+            Optional.empty());
 
     verticle.handleGetMessage(ctx);
 

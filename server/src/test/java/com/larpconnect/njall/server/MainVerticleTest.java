@@ -6,6 +6,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -39,7 +41,14 @@ class MainVerticleTest {
 
     Injector injector =
         Guice.createInjector(
-            new ServerModule(),
+            Modules.override(new ServerModule())
+                .with(
+                    new AbstractModule() {
+                      @Override
+                      protected void configure() {
+                        bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                      }
+                    }),
             new AbstractModule() {
               @Override
               protected void configure() {
@@ -72,7 +81,14 @@ class MainVerticleTest {
   void mainVerticle_failsIfChildFails(Vertx vertx, VertxTestContext testContext) {
     Injector injector =
         Guice.createInjector(
-            new ServerModule(),
+            Modules.override(new ServerModule())
+                .with(
+                    new AbstractModule() {
+                      @Override
+                      protected void configure() {
+                        bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                      }
+                    }),
             new AbstractModule() {
               @Override
               protected void configure() {
