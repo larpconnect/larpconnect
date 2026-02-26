@@ -28,7 +28,8 @@ final class GrpcVerticleTest {
     }
 
     var options =
-        new io.vertx.core.DeploymentOptions().setConfig(new JsonObject().put("grpc.port", port));
+        new io.vertx.core.DeploymentOptions()
+            .setConfig(new JsonObject().put("grpc.port", port));
 
     vertx
         .deployVerticle(verticle, options)
@@ -43,7 +44,8 @@ final class GrpcVerticleTest {
       var verticle = new GrpcVerticle(service);
 
       var options =
-          new io.vertx.core.DeploymentOptions().setConfig(new JsonObject().put("grpc.port", port));
+          new io.vertx.core.DeploymentOptions()
+              .setConfig(new JsonObject().put("grpc.port", port));
 
       vertx
           .deployVerticle(verticle, options)
