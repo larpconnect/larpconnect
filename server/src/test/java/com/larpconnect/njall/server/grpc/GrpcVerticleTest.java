@@ -20,7 +20,6 @@ final class GrpcVerticleTest {
     var verticle = new GrpcVerticle(service);
 
     int port;
-    // Use a random port to avoid conflicts, but rely on Vertx to bind it
     try (var serverSocket = new ServerSocket(0)) {
       port = serverSocket.getLocalPort();
     } catch (IOException e) {
@@ -29,7 +28,8 @@ final class GrpcVerticleTest {
     }
 
     var options =
-        new io.vertx.core.DeploymentOptions().setConfig(new JsonObject().put("grpc.port", port));
+        new io.vertx.core.DeploymentOptions()
+            .setConfig(new JsonObject().put("grpc.port", port));
 
     vertx
         .deployVerticle(verticle, options)
@@ -44,7 +44,8 @@ final class GrpcVerticleTest {
       var verticle = new GrpcVerticle(service);
 
       var options =
-          new io.vertx.core.DeploymentOptions().setConfig(new JsonObject().put("grpc.port", port));
+          new io.vertx.core.DeploymentOptions()
+              .setConfig(new JsonObject().put("grpc.port", port));
 
       vertx
           .deployVerticle(verticle, options)
