@@ -67,4 +67,32 @@ class MainVerticleTest {
                               }));
                 }));
   }
+
+  @Test
+  void mainVerticle_failsIfChildFails(Vertx vertx, VertxTestContext testContext) {
+    Injector injector =
+        Guice.createInjector(
+            new ServerModule(),
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                var binder = Multibinder.newSetBinder(binder(), Verticle.class);
+                binder
+                    .addBinding()
+                    .toInstance(
+                        new AbstractVerticle() {
+                          @Override
+                          public void start() {
+                            throw new RuntimeException("Fail");
+                          }
+                        });
+              }
+            });
+
+    MainVerticle mainVerticle = injector.getInstance(MainVerticle.class);
+
+    vertx
+        .deployVerticle(mainVerticle)
+        .onComplete(testContext.failing(err -> testContext.completeNow()));
+  }
 }

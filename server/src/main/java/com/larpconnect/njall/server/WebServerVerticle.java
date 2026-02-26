@@ -18,19 +18,42 @@ import org.slf4j.LoggerFactory;
 
 /** Web server verticle that serves OpenAPI specification. */
 final class WebServerVerticle extends AbstractVerticle {
+  private static final int DEFAULT_PORT = 8080;
   private final Logger logger = LoggerFactory.getLogger(WebServerVerticle.class);
-  private static final int PORT = 8080;
+  private final int port;
+  private final String openApiSpec;
+  private final Serializer serializer;
+
+  interface Serializer {
+    String print(Message message) throws IOException;
+  }
 
   WebServerVerticle() {
-    // Default constructor
+    this(DEFAULT_PORT, "openapi.yaml");
+  }
+
+  WebServerVerticle(String openApiSpec) {
+    this(DEFAULT_PORT, openApiSpec);
+  }
+
+  WebServerVerticle(int port, String openApiSpec) {
+    this(port, openApiSpec, m -> JsonFormat.printer().print(m));
+  }
+
+  WebServerVerticle(int port, String openApiSpec, Serializer serializer) {
+    this.port = port;
+    this.openApiSpec = openApiSpec;
+    this.serializer = serializer;
   }
 
   @Override
   public void start(Promise<Void> startPromise) {
     Path tempFile;
-    try (InputStream in = getClass().getClassLoader().getResourceAsStream("openapi.yaml")) {
+    InputStream in = null;
+    try {
+      in = getClass().getClassLoader().getResourceAsStream(openApiSpec);
       if (in == null) {
-        startPromise.fail("openapi.yaml not found on classpath");
+        startPromise.fail(openApiSpec + " not found on classpath");
         return;
       }
       tempFile = Files.createTempFile("openapi", ".yaml");
@@ -39,6 +62,12 @@ final class WebServerVerticle extends AbstractVerticle {
     } catch (IOException e) {
       startPromise.fail(e);
       return;
+    } finally {
+      try {
+        com.google.common.io.Closeables.close(in, true);
+      } catch (IOException e) {
+        logger.warn("Failed to close stream", e);
+      }
     }
 
     OpenAPIContract.from(vertx, tempFile.toAbsolutePath().toString())
@@ -46,34 +75,34 @@ final class WebServerVerticle extends AbstractVerticle {
         .onSuccess(
             contract -> {
               RouterBuilder builder = RouterBuilder.create(vertx, contract);
-              builder
-                  .getRoute("MessageService_GetMessage")
-                  .addHandler(
-                      ctx -> {
-                        Message message = Message.newBuilder().setMessageType("Greeting").build();
-                        try {
-                          String json = JsonFormat.printer().print(message);
-                          ctx.json(new JsonObject(json));
-                        } catch (RuntimeException e) {
-                          logger.error("Failed to convert message to JSON", e);
-                          ctx.fail(e);
-                        } catch (java.io.IOException e) {
-                          logger.error("Failed to convert message to JSON", e);
-                          ctx.fail(e);
-                        }
-                      });
+              builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
 
               Router router = builder.createRouter();
               vertx
                   .createHttpServer()
                   .requestHandler(router)
-                  .listen(PORT)
+                  .listen(port)
                   .onSuccess(
                       server -> {
-                        logger.info("HTTP server started on port {}", PORT);
+                        logger.info("HTTP server started on port {}", port);
                         startPromise.complete();
                       })
                   .onFailure(startPromise::fail);
             });
+  }
+
+  // Package-private for testing
+  void handleGetMessage(io.vertx.ext.web.RoutingContext ctx) {
+    Message message = Message.newBuilder().setMessageType("Greeting").build();
+    try {
+      String json = serializer.print(message);
+      ctx.json(new JsonObject(json));
+    } catch (RuntimeException e) {
+      logger.error("Failed to convert message to JSON", e);
+      ctx.fail(e);
+    } catch (IOException e) {
+      logger.error("Failed to convert message to JSON", e);
+      ctx.fail(e);
+    }
   }
 }
