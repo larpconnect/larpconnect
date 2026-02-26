@@ -1,9 +1,13 @@
 # Use of Generative AI in Contributions
 
-Generative AI agents are allowed in this project, but with some guiding principles.  
-
 > [!IMPORTANT]
 > This policy has **ZERO TOLERANCE** around anything labeled **MUST**. Especially for wilful violation. 
+
+Summary position: 
+
+> We use AI to help us build the world, but AI will not run the world.
+
+Generative AI agents are allowed in this project, but with some guiding principles. 
 
 1. **Mandatory Disclosure**: AI Contributions **MUST** be disclosed. The agent _MAY_ sign on as a co-contributor or you _MAY_ indicate
    such in the body of the commit, but either way it **MUST** be disclosed. The contribution **SHOULD** include information on _that_
@@ -14,7 +18,7 @@ Generative AI agents are allowed in this project, but with some guiding principl
    * Llama/Meta AI,
    * Devin/Cognition AI
    * Perplexity AI
-   * Stability AI
+   * Stability AI (and in general we won't use any AI generated "art")
 3. **Principal Authorship**: A human (_you_) **MUST** be listed as the primary author.
 4. **Accountability**: A human (_you_) are responsible for any contributions put under your name, regardless of if they use an AI. You
    **MUST** ensure that the terms and conditions of the generative AI tool do not place any contractual restrictions
