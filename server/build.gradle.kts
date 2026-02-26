@@ -14,6 +14,9 @@ dependencies {
     compileOnly(libs.vertx.codegen)
     testCompileOnly(libs.vertx.codegen)
     testImplementation(libs.vertx.junit5)
+    testImplementation(libs.vertx.web.client)
+    testImplementation(libs.grpc.netty.shaded)
+    testImplementation(libs.grpc.stub)
 }
 
 application {

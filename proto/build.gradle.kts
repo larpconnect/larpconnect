@@ -11,6 +11,10 @@ dependencies {
     implementation(libs.google.common.protos)
     api(libs.grpc.protobuf)
     api(libs.grpc.stub)
+    api(libs.vertx.grpc.common)
+    api(libs.vertx.grpc)
+    compileOnly(libs.vertx.core)
+    compileOnly(libs.vertx.codegen)
     compileOnly(libs.tomcat.annotations.api)
 }
 
@@ -31,6 +35,9 @@ protobuf {
         create("grpc") {
             artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
         }
+        create("vertx") {
+            artifact = "io.vertx:vertx-grpc-protoc-plugin:${libs.versions.vertx.get()}"
+        }
         create("openapi") {
             path = openApiPluginPath.get()
         }
@@ -40,6 +47,7 @@ protobuf {
             task.dependsOn(installProtocGenOpenApi)
             task.plugins {
                 create("grpc") { }
+                create("vertx") { }
                 create("openapi") { }
             }
         }

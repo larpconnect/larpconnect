@@ -12,25 +12,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class WebServerVerticle extends AbstractVerticle {
-  private static final Logger logger = LoggerFactory.getLogger(WebServerVerticle.class);
-  private static final int GRPC_PORT = 8080;
-  private static final int WEB_PORT = 8081;
+  private final Logger logger = LoggerFactory.getLogger(WebServerVerticle.class);
+  private static final int DEFAULT_GRPC_PORT = 8080;
+  private static final int DEFAULT_WEB_PORT = 8081;
+  private static final String DEFAULT_OPENAPI_PATH = "openapi.yaml";
 
   @Inject
   WebServerVerticle() {}
 
   @Override
   public void start(Promise<Void> startPromise) {
+    int grpcPort = config().getInteger("grpc.port", DEFAULT_GRPC_PORT);
     var grpcServer =
-        VertxServerBuilder.forAddress(vertx, "0.0.0.0", GRPC_PORT)
-            .addService(new DefaultMessageService())
+        VertxServerBuilder.forAddress(vertx, "0.0.0.0", grpcPort)
+            .addService(new GrpcMessageService())
             .build();
 
     try {
-      grpcServer.start();
-      logger.info("gRPC server started on port {}", GRPC_PORT);
-      startWebServer(startPromise);
-    } catch (IOException e) {
+      grpcServer.start(
+          (v, err) -> {
+            if (err == null) {
+              logger.info("gRPC server started on port {}", grpcPort);
+              startWebServer(startPromise);
+            } else {
+              logger.error("Failed to start gRPC server", err);
+              startPromise.fail(err);
+            }
+          });
+    } catch (RuntimeException e) {
       logger.error("Failed to start gRPC server", e);
       startPromise.fail(e);
     }
@@ -38,15 +47,16 @@ final class WebServerVerticle extends AbstractVerticle {
 
   private void startWebServer(Promise<Void> startPromise) {
     Buffer openApiBuffer;
-    try (InputStream is = getClass().getClassLoader().getResourceAsStream("openapi.yaml")) {
+    String openApiPath = config().getString("openapi.path", DEFAULT_OPENAPI_PATH);
+    try (InputStream is = getClass().getClassLoader().getResourceAsStream(openApiPath)) {
       if (is != null) {
         openApiBuffer = Buffer.buffer(is.readAllBytes());
       } else {
         openApiBuffer = null;
-        logger.warn("openapi.yaml not found in classpath");
+        logger.warn("{} not found in classpath", openApiPath);
       }
     } catch (IOException e) {
-      logger.error("Failed to read openapi.yaml", e);
+      logger.error("Failed to read {}", openApiPath, e);
       startPromise.fail(e);
       return;
     }
@@ -61,13 +71,14 @@ final class WebServerVerticle extends AbstractVerticle {
               });
     }
 
+    int webPort = config().getInteger("web.port", DEFAULT_WEB_PORT);
     vertx
         .createHttpServer()
         .requestHandler(router)
-        .listen(WEB_PORT)
+        .listen(webPort)
         .onSuccess(
             http -> {
-              logger.info("Web server started on port {}", WEB_PORT);
+              logger.info("Web server started on port {}", webPort);
               startPromise.complete();
             })
         .onFailure(

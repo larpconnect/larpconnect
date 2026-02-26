@@ -35,6 +35,7 @@ vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
 vertx-codegen = { module = "io.vertx:vertx-codegen", version.ref = "vertx" }
 vertx-grpc = { module = "io.vertx:vertx-grpc", version.ref = "vertx" }
 vertx-web = { module = "io.vertx:vertx-web", version.ref = "vertx" }
+vertx-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx" }
 vertx-junit5 = { module = "io.vertx:vertx-junit5", version.ref = "vertx" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
@@ -60,6 +61,8 @@ grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 grpc-api = { module = "io.grpc:grpc-api", version.ref = "grpc" }
 grpc-netty-shaded = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc" }
 protoc-gen-grpc-java = { module = "io.grpc:protoc-gen-grpc-java", version.ref = "grpc" }
+protoc-gen-grpc-vertx = { module = "io.vertx:vertx-grpc-protoc-plugin", version.ref = "vertx" }
+vertx-grpc-common = { module = "io.vertx:vertx-grpc-common", version.ref = "vertx" }
 tomcat-annotations-api = { module = "org.apache.tomcat:annotations-api", version = "6.0.53" }
 
 # Testing
