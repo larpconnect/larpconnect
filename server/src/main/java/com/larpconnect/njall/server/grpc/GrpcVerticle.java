@@ -5,10 +5,12 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.grpc.VertxServerBuilder;
 import jakarta.inject.Inject;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class GrpcVerticle extends AbstractVerticle {
+  private static final int DEFAULT_PORT = 9090;
   private final Logger logger = LoggerFactory.getLogger(GrpcVerticle.class);
   private final GrpcMessageService grpcMessageService;
   private Server server;
@@ -20,7 +22,7 @@ final class GrpcVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
-    int port = config().getInteger("grpc.port", 9090);
+    int port = config().getInteger("grpc.port", DEFAULT_PORT);
     logger.info("Starting gRPC server on port {}", port);
 
     try {
@@ -30,7 +32,7 @@ final class GrpcVerticle extends AbstractVerticle {
               .build()
               .start();
       startPromise.complete();
-    } catch (Exception e) {
+    } catch (IOException e) {
       startPromise.fail(e);
     }
   }
