@@ -46,3 +46,15 @@ tasks.withType<Checkstyle>().configureEach {
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
     excludeFilter.set(file("config/spotbugs/exclude-generated.xml"))
 }
+
+sourceSets {
+    main {
+        resources {
+            srcDir(layout.buildDirectory.dir("generated/sources/proto/main/openapi"))
+        }
+    }
+}
+
+tasks.processResources {
+    dependsOn(tasks.generateProto)
+}
