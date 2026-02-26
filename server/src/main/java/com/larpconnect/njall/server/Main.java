@@ -1,9 +1,9 @@
 package com.larpconnect.njall.server;
 
+import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ final class Main {
     logger.info("Starting Server...");
 
     // Register ServerModule to bind MainVerticle -> DefaultMainVerticle
-    var lifecycle = VerticleServices.create(Collections.singletonList(new ServerModule()));
+    var lifecycle = VerticleServices.create(ImmutableList.of(new ServerModule()));
 
     runtime.addShutdownHook(new Thread(() -> shutdown(lifecycle)));
 

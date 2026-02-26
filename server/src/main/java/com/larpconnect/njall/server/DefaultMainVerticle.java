@@ -6,10 +6,9 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import jakarta.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,10 +25,12 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
   @Override
   public void start(Promise<Void> startPromise) {
     logger.info("DefaultMainVerticle starting…");
-    List<Future<?>> futures = new ArrayList<>();
-    for (Verticle verticle : verticles) {
-      futures.add(vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)));
-    }
+    var futures =
+        verticles.stream()
+            .map(
+                verticle ->
+                    vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)))
+            .collect(Collectors.toList());
 
     Future.all(futures)
         .onSuccess(

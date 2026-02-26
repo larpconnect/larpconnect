@@ -1,5 +1,6 @@
 package com.larpconnect.njall.init;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Injector;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.Verticle;
@@ -26,21 +27,18 @@ final class VerticleSetupService {
 
   void deploy(Class<? extends Verticle> verticleClass) {
     var vertx = vertxRef.get();
-    if (vertx != null) {
-      vertx
-          .deployVerticle("guice:" + verticleClass.getName())
-          .onSuccess(
-              id ->
-                  logger.info(
-                      "{} deployed successfully with ID: {}", verticleClass.getSimpleName(), id))
-          .onFailure(
-              err -> {
-                logger.error("Failed to deploy verticle", err);
-                throw new RuntimeException(
-                    "Failed to deploy verticle " + verticleClass.getName(), err);
-              });
-    } else {
-      throw new IllegalStateException("Vertx not initialized");
-    }
+    Preconditions.checkState(vertx != null, "Vertx not initialized");
+    vertx
+        .deployVerticle("guice:" + verticleClass.getName())
+        .onSuccess(
+            id ->
+                logger.info(
+                    "{} deployed successfully with ID: {}", verticleClass.getSimpleName(), id))
+        .onFailure(
+            err -> {
+              logger.error("Failed to deploy verticle", err);
+              throw new RuntimeException(
+                  "Failed to deploy verticle " + verticleClass.getName(), err);
+            });
   }
 }
