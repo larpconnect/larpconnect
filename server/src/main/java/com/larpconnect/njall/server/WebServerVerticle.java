@@ -5,7 +5,7 @@ import com.larpconnect.njall.proto.Message;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.openapi.contract.OpenAPIContract;
 import java.io.IOException;
@@ -74,10 +74,10 @@ final class WebServerVerticle extends AbstractVerticle {
         .onFailure(startPromise::fail)
         .onSuccess(
             contract -> {
-              RouterBuilder builder = RouterBuilder.create(vertx, contract);
+              var builder = RouterBuilder.create(vertx, contract);
               builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
 
-              Router router = builder.createRouter();
+              var router = builder.createRouter();
               vertx
                   .createHttpServer()
                   .requestHandler(router)
@@ -92,10 +92,10 @@ final class WebServerVerticle extends AbstractVerticle {
   }
 
   // Package-private for testing
-  void handleGetMessage(io.vertx.ext.web.RoutingContext ctx) {
-    Message message = Message.newBuilder().setMessageType("Greeting").build();
+  void handleGetMessage(RoutingContext ctx) {
+    var message = Message.newBuilder().setMessageType("Greeting").build();
     try {
-      String json = serializer.print(message);
+      var json = serializer.print(message);
       ctx.json(new JsonObject(json));
     } catch (RuntimeException e) {
       logger.error("Failed to convert message to JSON", e);

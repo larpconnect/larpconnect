@@ -1,13 +1,13 @@
 package com.larpconnect.njall.server;
 
+import static java.util.stream.Collectors.toList;
+
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import jakarta.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -26,10 +26,12 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
   @Override
   public void start(Promise<Void> startPromise) {
     logger.info("DefaultMainVerticle starting…");
-    List<Future<?>> futures = new ArrayList<>();
-    for (Verticle verticle : verticles) {
-      futures.add(vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)));
-    }
+    var futures =
+        verticles.stream()
+            .map(
+                verticle ->
+                    vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)))
+            .collect(toList());
 
     Future.all(futures)
         .onSuccess(

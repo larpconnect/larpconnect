@@ -35,13 +35,11 @@ final class MainTest {
                 getClass().getClassLoader(),
                 new Class<?>[] {VerticleService.class},
                 (proxy, method, args) -> {
-                  if (method.getName().equals("stopAsync")) {
-                    return proxy;
-                  }
-                  if (method.getName().equals("awaitTerminated")) {
-                    throw new TimeoutException();
-                  }
-                  return null;
+                  return switch (method.getName()) {
+                    case "stopAsync" -> proxy;
+                    case "awaitTerminated" -> throw new TimeoutException();
+                    default -> null;
+                  };
                 });
 
     main.shutdown(timeoutService);
@@ -53,13 +51,11 @@ final class MainTest {
                 getClass().getClassLoader(),
                 new Class<?>[] {VerticleService.class},
                 (proxy, method, args) -> {
-                  if (method.getName().equals("stopAsync")) {
-                    return proxy;
-                  }
-                  if (method.getName().equals("awaitTerminated")) {
-                    throw new RuntimeException();
-                  }
-                  return null;
+                  return switch (method.getName()) {
+                    case "stopAsync" -> proxy;
+                    case "awaitTerminated" -> throw new RuntimeException();
+                    default -> null;
+                  };
                 });
 
     main.shutdown(runtimeService);
