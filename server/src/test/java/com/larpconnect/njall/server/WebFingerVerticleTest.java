@@ -38,4 +38,25 @@ final class WebFingerVerticleTest {
                       });
                 }));
   }
+
+  @Test
+  void start_handlesMessageWithoutResource(Vertx vertx, VertxTestContext testContext) {
+    int port = 9090;
+    WebFingerVerticle verticle = new WebFingerVerticle(port);
+
+    vertx
+        .deployVerticle(verticle)
+        .compose(id -> vertx.eventBus().<JsonObject>request("webfinger.service", new JsonObject()))
+        .onComplete(
+            testContext.succeeding(
+                reply -> {
+                  testContext.verify(
+                      () -> {
+                        JsonObject body = reply.body();
+                        assertThat(body.getInteger("port")).isEqualTo(port);
+                        assertThat(body.getJsonArray("resources")).isEqualTo(new JsonArray());
+                        testContext.completeNow();
+                      });
+                }));
+  }
 }
