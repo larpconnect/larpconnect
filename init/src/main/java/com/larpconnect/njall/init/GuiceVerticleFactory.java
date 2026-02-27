@@ -1,5 +1,7 @@
 package com.larpconnect.njall.init;
 
+import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
+
 import com.google.inject.Injector;
 import com.larpconnect.njall.common.annotations.AiContract;
 import io.vertx.core.Promise;
@@ -16,6 +18,7 @@ final class GuiceVerticleFactory implements VerticleFactory {
   }
 
   @Override
+  @AiContract(ensure = "$res \\equiv \"guice\"", tags = PURE)
   public String prefix() {
     return "guice";
   }
