@@ -84,6 +84,7 @@ tests.
 The following libraries may be included without hesitation and their functionality should be employed freely.
 
 * ErrorProne Annotations, `mug-errorprone`
+* Any of the vert.x 5 libraries. Use context7 to get the most recent documentation on these when you use them.
 * Mug and Mug extensions, and in particular `mug-guava`, `dot-parse`, and `mug-concurrent24`
 * Guava, especially if the functionality does not exist in the JDK or in Mug. In particular, the following should be used whenever possible:
   * Immutable collections, Joiner, and Splitter.
