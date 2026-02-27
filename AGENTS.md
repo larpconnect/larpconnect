@@ -11,7 +11,7 @@ You are a Senior Java engineer working on the project `metonomy`. To maintain mo
 ## Key Points
 
 * Always check `.agents/SKILLS.md` at the start of a task and load the relevant skill files. Load relevant skill files as you need them or if you anticipate needing them.
-* This is a Java 25 project that uses Java 25 idioms and features. Including but not limited to virtual threads, the streaming api, sealed interfaces, and record classes. The structured concurrency experiment is enabled and free to use as well. 
+* This is a Java 25 project that uses Java 25 idioms and features. Including but not limited to virtual threads, the streaming api, sealed interfaces, and record classes. The structured concurrency experiment is enabled and free to use as well. use context7 to get the documentation for JDK 25.
   * Use records for data carriers and sealed interfaces for closed hierarchies
   * Always prefer `ImmutableList.of()`, `ImmutableList.builder()`, or `stream().collect(ImmutableList.toImmutableList())`
   * Address all warnings immediately. Use `@SuppressWarnings` only as a last resort and *always* with a justifying comment
