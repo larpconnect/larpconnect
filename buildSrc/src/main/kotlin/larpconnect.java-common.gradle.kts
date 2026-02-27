@@ -16,7 +16,7 @@ java {
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(25)
     options.encoding = "UTF-8"
-    options.compilerArgs.add("-parameters")
+    options.compilerArgs.addAll(listOf("-parameters", "-Werror", "-Xlint:all", "-Xlint:-processing"))
 }
 
 dependencies {
