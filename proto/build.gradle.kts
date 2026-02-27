@@ -39,22 +39,22 @@ protobuf {
     }
 }
 
+val updateOpenApi by tasks.registering(Copy::class) {
+    dependsOn("generateProto")
+    group = "build"
+    description = "Copies generated OpenAPI specification to resources"
+
+    val generatedDir = layout.buildDirectory.dir("generated/sources/proto/main/openapi")
+    from(generatedDir) {
+        include("openapi.yaml")
+    }
+    into(layout.projectDirectory.dir("src/main/resources"))
+}
+
 // Suppress failures in generated code
 tasks.withType<Checkstyle>().configureEach {
     exclude("com/larpconnect/njall/proto/**")
 }
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
     excludeFilter.set(file("config/spotbugs/exclude-generated.xml"))
-}
-
-sourceSets {
-    main {
-        resources {
-            srcDir(
-                tasks.generateProto.map {
-                    layout.buildDirectory.dir("generated/sources/proto/main/openapi").get()
-                },
-            )
-        }
-    }
 }
