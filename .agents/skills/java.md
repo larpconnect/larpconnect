@@ -19,7 +19,7 @@ This skill handles working in the modern Java 25 environment.
 
 ### Guava
 
-Guava utilities are explicitly allowed in the system and preferred to Apache Commons utilities where available.
+Guava utilities are explicitly allowed in the system and preferred to Apache Commons utilities where available. Use context7 to get the latest documentation.
 
 * Use Guava when there is not a similar piece of functionality in the JDK (e.g., use the JDK `Optional`, not the Guava equivalent). Exceptions include: Joiner, `io`, and immutable collections, which should always be used in preference to similar tools elsewhere.
 * Do not use `@Deprecated` components unless absolutely necessary and document why they are necessary if they must be used.
