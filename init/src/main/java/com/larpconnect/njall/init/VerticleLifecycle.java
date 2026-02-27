@@ -44,7 +44,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
 
   @Override
   @AiContract(
-      ensure = {"setupServiceRef \neq \bot", "vertxProvider.get() \neq \bot"},
+      ensure = {"setupServiceRef \\neq \\bot", "vertxProvider.get() \\neq \\bot"},
       implementationHint =
           "Loads configuration, initializes Guice injector, and registers Vert.x factories.")
   protected void startUp() {
@@ -137,8 +137,8 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
 
   @Override
   @AiContract(
-      require = "verticleClass \neq \bot",
-      ensure = "verticleClass \text{ is deployed via setupService}",
+      require = "verticleClass \\neq \\bot",
+      ensure = "verticleClass \\text{ is deployed via setupService}",
       implementationHint = "Delegates deployment to the setup service.")
   public void deploy(Class<? extends Verticle> verticleClass) {
     var service = setupServiceRef.get();

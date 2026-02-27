@@ -22,11 +22,11 @@ final class VerticleSetupService {
   }
 
   @AiContract(
-      require = {"vertx \neq \bot", "injector \neq \bot"},
+      require = {"vertx \\neq \\bot", "injector \\neq \\bot"},
       ensure = {
-        "vertxRef \neq \bot",
-        "guice: \text{ factory is registered}",
-        "protobuf \text{ codec is registered}"
+        "vertxRef \\neq \\bot",
+        "guice: \\text{ factory is registered}",
+        "protobuf \\text{ codec is registered}"
       },
       implementationHint = "Registers Guice verticle factory and Proto codec.")
   void setup(Vertx vertx, Injector injector) {
@@ -36,8 +36,8 @@ final class VerticleSetupService {
   }
 
   @AiContract(
-      require = {"verticleClass \neq \bot", "vertxRef \neq \bot"},
-      ensure = "verticleClass \text{ is deployed}",
+      require = {"verticleClass \\neq \\bot", "vertxRef \\neq \\bot"},
+      ensure = "verticleClass \\text{ is deployed}",
       implementationHint = "Deploys the verticle using the guice prefix.")
   void deploy(Class<? extends Verticle> verticleClass) {
     var vertx = vertxRef.get();
