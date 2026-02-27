@@ -24,6 +24,7 @@ public final class ServerModule extends AbstractModule {
     bind(MainVerticle.class).to(DefaultMainVerticle.class).in(Scopes.SINGLETON);
     var verticles = Multibinder.newSetBinder(binder(), Verticle.class);
     verticles.addBinding().to(WebServerVerticle.class);
+    verticles.addBinding().to(WebFingerVerticle.class);
   }
 
   @Provides

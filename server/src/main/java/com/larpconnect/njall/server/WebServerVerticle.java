@@ -110,6 +110,8 @@ final class WebServerVerticle extends AbstractVerticle {
               builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
 
               var router = builder.createRouter();
+              router.get("/.well-known/webfinger").handler(this::handleWebFinger);
+
               vertx
                   .createHttpServer()
                   .requestHandler(router)
@@ -139,5 +141,24 @@ final class WebServerVerticle extends AbstractVerticle {
       logger.error("Failed to convert message to JSON", e);
       ctx.fail(e);
     }
+  }
+
+  // Package-private for testing
+  void handleWebFinger(RoutingContext ctx) {
+    String resource = ctx.request().getParam("resource");
+    JsonObject message = new JsonObject();
+    if (resource != null) {
+      message.put("resource", resource);
+    }
+
+    vertx
+        .eventBus()
+        .<JsonObject>request("webfinger.service", message)
+        .onSuccess(
+            reply ->
+                ctx.response()
+                    .putHeader("content-type", "application/jrd+json")
+                    .end(reply.body().encode()))
+        .onFailure(ctx::fail);
   }
 }

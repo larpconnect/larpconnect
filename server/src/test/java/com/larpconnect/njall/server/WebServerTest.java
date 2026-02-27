@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
@@ -142,5 +143,56 @@ final class WebServerTest {
 
     verify(ctx).fail(any(RuntimeException.class));
     testContext.completeNow();
+  }
+
+  @Test
+  void webFinger_returnsPortAndResources(Vertx vertx, VertxTestContext testContext) {
+    AtomicInteger capturedPort = new AtomicInteger();
+    var serverVerticle =
+        new WebServerVerticle(0, "openapi.yaml", Optional.of(port -> capturedPort.set(port)));
+    // Note: WebServerVerticle receives port 0, but WebFingerVerticle will receive the bound port
+    // However, WebFingerVerticle is deployed separately. For this test to work end-to-end
+    // efficiently, we need to know the port.
+    // In this test, we can pass the captured port to the WebFingerVerticle, but we must
+    // deploy WebServerVerticle first.
+    // Actually, WebFingerVerticle just needs *a* port to report, it doesn't need to bind.
+    // So we can pass 0 or any number for the test's sake, as long as we verify it's returned.
+
+    // BUT: The WebServerVerticle will fail to start if the OpenAPI spec is valid (which it is),
+    // and it will bind.
+    // Then we deploy WebFingerVerticle.
+
+    // Correct approach:
+    // 1. Deploy WebServerVerticle (binds to ephemeral port)
+    // 2. Capture that port.
+    // 3. Deploy WebFingerVerticle with that captured port (or any port, really, but consistency is
+    // nice)
+    // 4. Make request.
+
+    vertx
+        .deployVerticle(serverVerticle)
+        .compose(id -> vertx.deployVerticle(new WebFingerVerticle(capturedPort.get())))
+        .compose(
+            id -> {
+              WebClient client = WebClient.create(vertx);
+              return client
+                  .get(capturedPort.get(), "localhost", "/.well-known/webfinger")
+                  .addQueryParam("resource", "acct:user@host")
+                  .send();
+            })
+        .onComplete(
+            testContext.succeeding(
+                response -> {
+                  testContext.verify(
+                      () -> {
+                        assertThat(response.statusCode()).isEqualTo(200);
+                        assertThat(response.getHeader("content-type"))
+                            .isEqualTo("application/jrd+json");
+                        JsonObject body = response.bodyAsJsonObject();
+                        assertThat(body.getInteger("port")).isEqualTo(capturedPort.get());
+                        assertThat(body.getJsonArray("resources")).isEqualTo(new JsonArray());
+                        testContext.completeNow();
+                      });
+                }));
   }
 }
