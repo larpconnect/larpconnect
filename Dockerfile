@@ -1,7 +1,7 @@
 FROM ghcr.io/rblaine95/eclipse-temurin:25 AS builder
 WORKDIR /app
 COPY . .
-RUN ./gradlew :server:shadowJar --no-daemon
+RUN ./gradlew :server:shadowJar --no-daemon --stacktrace
 
 FROM ghcr.io/rblaine95/eclipse-temurin:25
 WORKDIR /app
