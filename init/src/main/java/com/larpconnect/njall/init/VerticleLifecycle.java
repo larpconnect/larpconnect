@@ -48,7 +48,8 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     // Load default config
     JsonObject defaultConfig;
     try {
-      var url = Resources.getResource("config.json");
+      var configResource = System.getProperty("njall.config.resource", "config.json");
+      var url = Resources.getResource(configResource);
       defaultConfig = new JsonObject(Resources.toString(url, StandardCharsets.UTF_8));
     } catch (IllegalArgumentException | IOException e) {
       throw new RuntimeException("Failed to load default config", e);

@@ -1,4 +1,6 @@
 {
-  "web.port": 8080,
-  "openapi.spec": "openapi.yaml"
+  "larpconnect": {
+    "web.port": 8080,
+    "openapi.spec": "openapi.yaml"
+  }
 }
