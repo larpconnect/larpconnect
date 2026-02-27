@@ -1,7 +1,6 @@
 package com.larpconnect.njall.server;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -27,14 +26,12 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
   @Override
   public void start(Promise<Void> startPromise) {
     logger.info("DefaultMainVerticle starting…");
-    var futures =
-        verticles.stream()
-            .map(
-                verticle ->
-                    vertx
-                        .deployVerticle(verticle)
-                        .onSuccess(id -> onDeploymentSuccess(verticle, id)))
-            .collect(toImmutableList());
+    ImmutableList.Builder<Future<String>> builder = ImmutableList.builder();
+    for (Verticle verticle : verticles) {
+      builder.add(
+          vertx.deployVerticle(verticle).onSuccess(id -> onDeploymentSuccess(verticle, id)));
+    }
+    var futures = builder.build();
 
     Future.all(futures)
         .onSuccess(

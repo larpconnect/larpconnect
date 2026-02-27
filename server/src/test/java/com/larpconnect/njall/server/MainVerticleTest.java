@@ -114,7 +114,8 @@ class MainVerticleTest {
   @Test
   void mainVerticle_successPathMocked(Vertx vertx, VertxTestContext testContext) {
     // Mock Vertx to return a known Future for deployVerticle
-    // This allows us to verify the DefaultMainVerticle callbacks without actually deploying anything
+    // This allows us to verify the DefaultMainVerticle callbacks without actually deploying
+    // anything
     Vertx mockVertx = mock(Vertx.class);
     when(mockVertx.deployVerticle(any(Verticle.class)))
         .thenReturn(Future.succeededFuture("mock-id"));

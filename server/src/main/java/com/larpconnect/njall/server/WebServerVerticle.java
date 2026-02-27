@@ -1,5 +1,7 @@
 package com.larpconnect.njall.server;
 
+import static com.google.common.io.Closeables.close;
+
 import com.google.inject.name.Named;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.proto.Message;
@@ -110,7 +112,8 @@ final class WebServerVerticle extends AbstractVerticle {
       Serializer serializer,
       Optional<Consumer<Integer>> portListener,
       ContractLoader contractLoader) {
-    this(port, openApiSpec, serializer, portListener, contractLoader, new DefaultFileSystemHelper());
+    this(
+        port, openApiSpec, serializer, portListener, contractLoader, new DefaultFileSystemHelper());
   }
 
   WebServerVerticle(
@@ -138,7 +141,9 @@ final class WebServerVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startPromise) {
     Path tempFile;
-    try (var in = getClass().getClassLoader().getResourceAsStream(openApiSpec)) {
+    InputStream in = null;
+    try {
+      in = getClass().getClassLoader().getResourceAsStream(openApiSpec);
       if (in == null) {
         startPromise.fail(openApiSpec + " not found on classpath");
         return;
@@ -149,6 +154,12 @@ final class WebServerVerticle extends AbstractVerticle {
     } catch (IOException e) {
       startPromise.fail(e);
       return;
+    } finally {
+      try {
+        close(in, true);
+      } catch (IOException e) {
+        // Should not happen as swallowIOException is true
+      }
     }
 
     contractLoader

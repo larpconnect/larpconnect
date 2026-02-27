@@ -14,10 +14,8 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.openapi.contract.OpenAPIContract;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -235,10 +233,7 @@ final class WebServerTest {
     // Test the extracted callback logic explicitly
     AtomicInteger captured = new AtomicInteger();
     WebServerVerticle verticle =
-        new WebServerVerticle(
-            8080,
-            "openapi.yaml",
-            Optional.of(captured::set));
+        new WebServerVerticle(8080, "openapi.yaml", Optional.of(captured::set));
 
     HttpServer mockServer = mock(HttpServer.class);
     when(mockServer.actualPort()).thenReturn(9999);
