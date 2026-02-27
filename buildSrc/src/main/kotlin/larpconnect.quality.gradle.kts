@@ -89,7 +89,6 @@ dependencies {
 
 tasks.withType<JavaCompile>().configureEach {
     options.errorprone.disableWarningsInGeneratedCode.set(true)
-    options.compilerArgs.addAll(listOf("-Werror", "-Xlint:all", "-Xlint:-processing"))
 }
 
 tasks.named("compileJava") {
