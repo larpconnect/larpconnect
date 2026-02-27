@@ -20,20 +20,25 @@ val installProtocGenOpenApi by tasks.registering(Exec::class) {
     environment("GOBIN", goBinDir.get().asFile.absolutePath)
 }
 
+val isUpdateOpenApi = gradle.startParameter.taskNames.contains("updateOpenApi")
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
     }
-    plugins {
-        create("openapi") {
-            path = openApiPluginPath.get()
+    if (isUpdateOpenApi) {
+        plugins {
+            create("openapi") {
+                path = openApiPluginPath.get()
+            }
         }
     }
     generateProtoTasks {
         all().forEach { task ->
-            task.dependsOn(installProtocGenOpenApi)
-            task.plugins {
-                create("openapi") { }
+            if (isUpdateOpenApi) {
+                task.dependsOn(installProtocGenOpenApi)
+                task.plugins {
+                    create("openapi") { }
+                }
             }
         }
     }
