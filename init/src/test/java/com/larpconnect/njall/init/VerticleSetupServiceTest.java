@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.inject.Injector;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -19,12 +20,14 @@ final class VerticleSetupServiceTest {
 
   private Vertx mockVertx;
   private EventBus mockEventBus;
+  private Injector mockInjector;
   private VerticleSetupService service;
 
   @BeforeEach
   void setUp() {
     mockVertx = mock(Vertx.class);
     mockEventBus = mock(EventBus.class);
+    mockInjector = mock(Injector.class);
     when(mockVertx.eventBus()).thenReturn(mockEventBus);
     when(mockEventBus.registerDefaultCodec(any(), any())).thenReturn(mockEventBus);
     service = new VerticleSetupService(new ProtoCodecRegistry());
@@ -41,7 +44,7 @@ final class VerticleSetupServiceTest {
   void deploy_success_logsInfo() {
     when(mockVertx.deployVerticle(anyString())).thenReturn(Future.succeededFuture("id"));
 
-    service.setup(mockVertx, null);
+    service.setup(mockVertx, mockInjector);
     service.deploy(TestVerticle.class);
 
     verify(mockVertx).deployVerticle("guice:" + TestVerticle.class.getName());
@@ -53,7 +56,7 @@ final class VerticleSetupServiceTest {
     var failure = new RuntimeException("fail");
     when(mockVertx.deployVerticle(anyString())).thenReturn(Future.failedFuture(failure));
 
-    service.setup(mockVertx, null);
+    service.setup(mockVertx, mockInjector);
 
     assertThatThrownBy(() -> service.deploy(TestVerticle.class))
         .isInstanceOf(RuntimeException.class)

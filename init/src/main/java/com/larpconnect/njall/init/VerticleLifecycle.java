@@ -5,6 +5,7 @@ import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Guice;
 import com.google.inject.Module;
+import com.larpconnect.njall.common.annotations.AiContract;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -42,6 +43,10 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   }
 
   @Override
+  @AiContract(
+      ensure = {"setupServiceRef \neq \bot", "vertxProvider.get() \neq \bot"},
+      implementationHint =
+          "Loads configuration, initializes Guice injector, and registers Vert.x factories.")
   protected void startUp() {
     logger.info("Starting VerticleLifecycle...");
 
@@ -104,6 +109,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   }
 
   @Override
+  @AiContract(implementationHint = "Gracefully shuts down the Vert.x instance.")
   protected void shutDown() {
     logger.info("Stopping VerticleLifecycle...");
     var vertx = vertxProvider.get();
@@ -130,6 +136,10 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   }
 
   @Override
+  @AiContract(
+      require = "verticleClass \neq \bot",
+      ensure = "verticleClass \text{ is deployed via setupService}",
+      implementationHint = "Delegates deployment to the setup service.")
   public void deploy(Class<? extends Verticle> verticleClass) {
     var service = setupServiceRef.get();
     if (service != null) {
