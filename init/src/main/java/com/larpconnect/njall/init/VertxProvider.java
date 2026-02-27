@@ -1,6 +1,7 @@
 package com.larpconnect.njall.init;
 
 import com.google.errorprone.annotations.ThreadSafe;
+import com.larpconnect.njall.common.annotations.AiContract;
 import io.vertx.core.Vertx;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -23,6 +24,10 @@ final class VertxProvider implements Provider<Vertx> {
   }
 
   @Override
+  @AiContract(
+      ensure = {"$res \\neq \\bot$", "$res \\equiv vertxRef.get()$"},
+      invariants = {"vertxRef \\text{ is initialized exactly once}"},
+      implementationHint = "Lazily initializes and returns the singleton Vertx instance.")
   public Vertx get() {
     var vertx = vertxRef.get();
     if (vertx == null) {
