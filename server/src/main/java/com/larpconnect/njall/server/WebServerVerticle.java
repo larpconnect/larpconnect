@@ -4,6 +4,7 @@ import static com.google.common.io.Closeables.close;
 
 import com.google.inject.name.Named;
 import com.google.protobuf.util.JsonFormat;
+import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -79,6 +80,13 @@ final class WebServerVerticle extends AbstractVerticle {
   }
 
   @Override
+  @AiContract(
+      ensure = {
+        "startPromise \\text{ is completed}",
+        "startPromise \\text{ succeeded } \\implies server \\neq \\bot",
+        "startPromise \\text{ succeeded } \\implies portListener \\text{ was invoked}"
+      },
+      implementationHint = "Loads OpenAPI spec, configures RouterBuilder, and starts HttpServer")
   public void start(Promise<Void> startPromise) {
     Path tempFile;
     InputStream in = null;
@@ -127,6 +135,9 @@ final class WebServerVerticle extends AbstractVerticle {
   }
 
   // Package-private for testing
+  @AiContract(
+      ensure = "ctx.response() \\text{ contains JSON Greeting}",
+      implementationHint = "Serializes a Greeting message to JSON and writes it to the response")
   void handleGetMessage(RoutingContext ctx) {
     var message = Message.newBuilder().setMessageType("Greeting").build();
     try {
