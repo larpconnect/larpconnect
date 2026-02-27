@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.vertx.web)
     implementation(libs.vertx.openapi)
     implementation(libs.vertx.web.openapi.router)
+    implementation(libs.vertx.web.templ.freemarker)
     implementation(libs.protobuf.java.util)
     implementation(libs.guice)
     compileOnly(libs.vertx.codegen)

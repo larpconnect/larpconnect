@@ -9,8 +9,10 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.openapi.router.RouterBuilder;
+import io.vertx.ext.web.templ.freemarker.FreeMarkerTemplateEngine;
 import io.vertx.openapi.contract.OpenAPIContract;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -35,6 +37,7 @@ final class WebServerVerticle extends AbstractVerticle {
   private final Serializer serializer;
   private final Optional<Consumer<Integer>> portListener;
   private HttpServer server;
+  private FreeMarkerTemplateEngine engine;
 
   interface Serializer {
     String print(Message message) throws IOException;
@@ -80,6 +83,8 @@ final class WebServerVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> startPromise) {
+    engine = FreeMarkerTemplateEngine.create(vertx);
+
     Path tempFile;
     InputStream in = null;
     try {
@@ -106,10 +111,13 @@ final class WebServerVerticle extends AbstractVerticle {
         .onFailure(startPromise::fail)
         .onSuccess(
             contract -> {
-              var builder = RouterBuilder.create(vertx, contract);
+              RouterBuilder builder = RouterBuilder.create(vertx, contract);
               builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
 
-              var router = builder.createRouter();
+              Router router = builder.createRouter();
+
+              router.get("/.well-known/webfinger").handler(this::handleWebFinger);
+
               vertx
                   .createHttpServer()
                   .requestHandler(router)
@@ -139,5 +147,27 @@ final class WebServerVerticle extends AbstractVerticle {
       logger.error("Failed to convert message to JSON", e);
       ctx.fail(e);
     }
+  }
+
+  private void handleWebFinger(RoutingContext ctx) {
+    String resource = ctx.request().getParam("resource");
+    JsonObject request = new JsonObject().put("resource", resource);
+
+    vertx
+        .eventBus()
+        .<JsonObject>request(WebFingerVerticle.ADDRESS, request)
+        .onSuccess(
+            reply -> {
+              JsonObject body = reply.body();
+              engine
+                  .render(body, "templates/webfinger.ftl")
+                  .onSuccess(
+                      buffer -> {
+                        ctx.response().putHeader("content-type", "application/jrd+json");
+                        ctx.response().end(buffer);
+                      })
+                  .onFailure(ctx::fail);
+            })
+        .onFailure(ctx::fail);
   }
 }
