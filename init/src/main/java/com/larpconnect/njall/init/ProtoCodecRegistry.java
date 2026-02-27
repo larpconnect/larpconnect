@@ -4,7 +4,6 @@ import static com.larpconnect.njall.common.annotations.ContractTag.IDEMPOTENT;
 import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 
 import com.google.errorprone.annotations.Immutable;
-import com.google.errorprone.annotations.ThreadSafe;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.proto.Message;
@@ -12,7 +11,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
 @Immutable
-@ThreadSafe
 final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
   private static final short VERSION = 0x01;
   private static final int INT_SIZE = 4;
