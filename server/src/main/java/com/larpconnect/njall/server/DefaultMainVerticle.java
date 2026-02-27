@@ -16,7 +16,8 @@ import org.slf4j.LoggerFactory;
 final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle {
   private final Logger logger = LoggerFactory.getLogger(DefaultMainVerticle.class);
   private final ImmutableSet<Verticle> verticles;
-  private final ConcurrentHashMap<Verticle, String> deploymentIds = new ConcurrentHashMap<>();
+  // Visible for testing
+  final ConcurrentHashMap<Verticle, String> deploymentIds = new ConcurrentHashMap<>();
 
   @Inject
   DefaultMainVerticle(Set<Verticle> verticles) {
@@ -30,7 +31,9 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
         verticles.stream()
             .map(
                 verticle ->
-                    vertx.deployVerticle(verticle).onSuccess(id -> deploymentIds.put(verticle, id)))
+                    vertx
+                        .deployVerticle(verticle)
+                        .onSuccess(id -> onDeploymentSuccess(verticle, id)))
             .collect(toImmutableList());
 
     Future.all(futures)
@@ -44,6 +47,11 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
               logger.error("Failed to deploy verticles", err);
               startPromise.fail(err);
             });
+  }
+
+  // Visible for testing
+  void onDeploymentSuccess(Verticle verticle, String id) {
+    deploymentIds.put(verticle, id);
   }
 
   @Override

@@ -7,6 +7,7 @@ import com.larpconnect.njall.init.VerticleServices;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,14 +17,21 @@ final class Main {
 
   private final Runtime runtime;
   private final Module serverModule;
+  private final Consumer<Integer> exitHandler;
 
   Main(Runtime runtime) {
-    this(runtime, new ServerModule());
+    this(runtime, new ServerModule(), System::exit);
   }
 
   Main(Runtime runtime, Module serverModule) {
+    this(runtime, serverModule, System::exit);
+  }
+
+  // Visible for testing
+  Main(Runtime runtime, Module serverModule, Consumer<Integer> exitHandler) {
     this.runtime = runtime;
     this.serverModule = serverModule;
+    this.exitHandler = exitHandler;
   }
 
   public static void main(String[] args) {
@@ -43,7 +51,7 @@ final class Main {
       lifecycle.deploy(MainVerticle.class);
     } catch (RuntimeException e) {
       logger.error("Failed to start server", e);
-      System.exit(1);
+      exitHandler.accept(1);
       return null;
     }
     return lifecycle;

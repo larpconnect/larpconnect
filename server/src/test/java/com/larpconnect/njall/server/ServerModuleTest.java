@@ -39,6 +39,18 @@ class ServerModuleTest {
   }
 
   @Test
+  void provideWebPort_usesRootConfig_whenLarpconnectPresentButEmpty() {
+    var config = new JsonObject().put("larpconnect", new JsonObject()).put("web.port", 7070);
+
+    Injector injector =
+        Guice.createInjector(
+            new ServerModule(), binder -> binder.bind(JsonObject.class).toInstance(config));
+
+    Integer port = injector.getInstance(Key.get(Integer.class, Names.named("web.port")));
+    assertThat(port).isEqualTo(7070);
+  }
+
+  @Test
   void provideOpenApiSpec_usesLarpconnectConfig_whenPresent() {
     var config =
         new JsonObject()
@@ -56,6 +68,19 @@ class ServerModuleTest {
   @Test
   void provideOpenApiSpec_usesRootConfig_whenLarpconnectMissing() {
     var config = new JsonObject().put("openapi.spec", "root.yaml");
+
+    Injector injector =
+        Guice.createInjector(
+            new ServerModule(), binder -> binder.bind(JsonObject.class).toInstance(config));
+
+    String spec = injector.getInstance(Key.get(String.class, Names.named("openapi.spec")));
+    assertThat(spec).isEqualTo("root.yaml");
+  }
+
+  @Test
+  void provideOpenApiSpec_usesRootConfig_whenLarpconnectPresentButEmpty() {
+    var config =
+        new JsonObject().put("larpconnect", new JsonObject()).put("openapi.spec", "root.yaml");
 
     Injector injector =
         Guice.createInjector(

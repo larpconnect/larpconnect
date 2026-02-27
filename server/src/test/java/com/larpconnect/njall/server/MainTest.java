@@ -11,6 +11,7 @@ import com.larpconnect.njall.init.VerticleService;
 import io.vertx.core.Verticle;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
@@ -39,6 +40,35 @@ final class MainTest {
   }
 
   @Test
+  void run_exitsOnFailure() {
+    var runtime = Runtime.getRuntime();
+    // A module that throws exception during configuration will cause injector creation to fail
+    var brokenModule =
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            throw new RuntimeException("Intentional failure");
+          }
+        };
+
+    AtomicInteger exitCode = new AtomicInteger(0);
+    var main = new Main(runtime, brokenModule, exitCode::set);
+
+    var service = main.run();
+
+    assertThat(service).isNull();
+    assertThat(exitCode.get()).isEqualTo(1);
+  }
+
+  @Test
+  void main_defaultConstructor() {
+    // Just verifying that the default constructor can be called without exception
+    // This covers the constructor chaining logic
+    var main = new Main(Runtime.getRuntime());
+    assertThat(main).isNotNull();
+  }
+
+  @Test
   void shutdown_handlesExceptions() {
     var runtime = Runtime.getRuntime();
     var overrideModule =
@@ -53,9 +83,9 @@ final class MainTest {
     var main = new Main(runtime, overrideModule);
 
     // Test TimeoutException
-    var timeoutService = new TestVerticleService();
-    timeoutService.exceptionToThrow.set(new TimeoutException());
-    main.shutdown(timeoutService);
+    var manualTimeoutService = new TestVerticleService();
+    manualTimeoutService.exceptionToThrow.set(new TimeoutException());
+    main.shutdown(manualTimeoutService);
     /*
      * Since Main.shutdown swallows the exception and logs it, we verify by ensuring the code didn't
      * crash and the service stop was attempted. We can verify internal state if we spy, but here we

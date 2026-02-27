@@ -4,7 +4,9 @@ import com.google.inject.name.Named;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -13,6 +15,7 @@ import io.vertx.openapi.contract.OpenAPIContract;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -31,10 +34,41 @@ final class WebServerVerticle extends AbstractVerticle {
   private final String openApiSpec;
   private final Serializer serializer;
   private final Optional<Consumer<Integer>> portListener;
+  private final ContractLoader contractLoader;
+  private final FileSystemHelper fileSystemHelper;
   private HttpServer server;
 
   interface Serializer {
     String print(Message message) throws IOException;
+  }
+
+  interface ContractLoader {
+    Future<OpenAPIContract> load(Vertx vertx, String path);
+  }
+
+  interface FileSystemHelper {
+    Path createTempFile(String prefix, String suffix) throws IOException;
+
+    void copy(InputStream in, Path target) throws IOException;
+
+    void deleteOnExit(Path path);
+  }
+
+  static class DefaultFileSystemHelper implements FileSystemHelper {
+    @Override
+    public Path createTempFile(String prefix, String suffix) throws IOException {
+      return Files.createTempFile(prefix, suffix);
+    }
+
+    @Override
+    public void copy(InputStream in, Path target) throws IOException {
+      Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Override
+    public void deleteOnExit(Path path) {
+      path.toFile().deleteOnExit();
+    }
   }
 
   WebServerVerticle() {
@@ -50,22 +84,48 @@ final class WebServerVerticle extends AbstractVerticle {
       @Named("web.port") int port,
       @Named("openapi.spec") String openApiSpec,
       Optional<Consumer<Integer>> portListener) {
-    this(port, openApiSpec, m -> JsonFormat.printer().print(m), portListener);
+    this(
+        port,
+        openApiSpec,
+        m -> JsonFormat.printer().print(m),
+        portListener,
+        (vx, p) -> OpenAPIContract.from(vx, p),
+        new DefaultFileSystemHelper());
   }
 
   WebServerVerticle(int port, String openApiSpec) {
-    this(port, openApiSpec, m -> JsonFormat.printer().print(m), Optional.empty());
+    this(
+        port,
+        openApiSpec,
+        m -> JsonFormat.printer().print(m),
+        Optional.empty(),
+        (vx, p) -> OpenAPIContract.from(vx, p),
+        new DefaultFileSystemHelper());
+  }
+
+  // Constructor for testing
+  WebServerVerticle(
+      int port,
+      String openApiSpec,
+      Serializer serializer,
+      Optional<Consumer<Integer>> portListener,
+      ContractLoader contractLoader) {
+    this(port, openApiSpec, serializer, portListener, contractLoader, new DefaultFileSystemHelper());
   }
 
   WebServerVerticle(
       int port,
       String openApiSpec,
       Serializer serializer,
-      Optional<Consumer<Integer>> portListener) {
+      Optional<Consumer<Integer>> portListener,
+      ContractLoader contractLoader,
+      FileSystemHelper fileSystemHelper) {
     this.port = port;
     this.openApiSpec = openApiSpec;
     this.serializer = serializer;
     this.portListener = portListener;
+    this.contractLoader = contractLoader;
+    this.fileSystemHelper = fileSystemHelper;
   }
 
   public int actualPort() {
@@ -83,36 +143,41 @@ final class WebServerVerticle extends AbstractVerticle {
         startPromise.fail(openApiSpec + " not found on classpath");
         return;
       }
-      tempFile = Files.createTempFile("openapi", ".yaml");
-      Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
-      tempFile.toFile().deleteOnExit();
+      tempFile = fileSystemHelper.createTempFile("openapi", ".yaml");
+      fileSystemHelper.copy(in, tempFile);
+      fileSystemHelper.deleteOnExit(tempFile);
     } catch (IOException e) {
       startPromise.fail(e);
       return;
     }
 
-    OpenAPIContract.from(vertx, tempFile.toAbsolutePath().toString())
+    contractLoader
+        .load(vertx, tempFile.toAbsolutePath().toString())
         .onFailure(startPromise::fail)
-        .onSuccess(
-            contract -> {
-              var builder = RouterBuilder.create(vertx, contract);
-              builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
+        .onSuccess(contract -> onContractLoaded(contract, startPromise));
+  }
 
-              var router = builder.createRouter();
-              vertx
-                  .createHttpServer()
-                  .requestHandler(router)
-                  .listen(port)
-                  .onSuccess(
-                      server -> {
-                        this.server = server;
-                        var actualPort = server.actualPort();
-                        portListener.ifPresent(listener -> listener.accept(actualPort));
-                        logger.info("HTTP server started on port {}", actualPort);
-                        startPromise.complete();
-                      })
-                  .onFailure(startPromise::fail);
-            });
+  // Visible for testing
+  void onContractLoaded(OpenAPIContract contract, Promise<Void> startPromise) {
+    var builder = RouterBuilder.create(vertx, contract);
+    builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
+
+    var router = builder.createRouter();
+    vertx
+        .createHttpServer()
+        .requestHandler(router)
+        .listen(port)
+        .onSuccess(server -> onServerStarted(server, startPromise))
+        .onFailure(startPromise::fail);
+  }
+
+  // Visible for testing
+  void onServerStarted(HttpServer server, Promise<Void> startPromise) {
+    this.server = server;
+    var actualPort = server.actualPort();
+    portListener.ifPresent(listener -> listener.accept(actualPort));
+    logger.info("HTTP server started on port {}", actualPort);
+    startPromise.complete();
   }
 
   // Package-private for testing

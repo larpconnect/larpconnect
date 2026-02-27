@@ -2,18 +2,26 @@ package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import io.vertx.openapi.contract.OpenAPIContract;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -40,6 +48,23 @@ final class WebServerTest {
                       () -> {
                         assertThat(capturedPort.get()).isGreaterThan(0);
                         assertThat(capturedPort.get()).isEqualTo(verticle.actualPort());
+                        testContext.completeNow();
+                      });
+                }));
+  }
+
+  @Test
+  void start_worksWithoutPortListener(Vertx vertx, VertxTestContext testContext) {
+    var verticle = new WebServerVerticle(0, "openapi.yaml", Optional.empty());
+
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.succeeding(
+                id -> {
+                  testContext.verify(
+                      () -> {
+                        assertThat(verticle.actualPort()).isGreaterThan(0);
                         testContext.completeNow();
                       });
                 }));
@@ -107,8 +132,63 @@ final class WebServerTest {
   }
 
   @Test
+  void start_fails_whenContractLoaderFails(Vertx vertx, VertxTestContext testContext) {
+    WebServerVerticle.ContractLoader failingLoader =
+        (vx, p) -> Future.failedFuture("Contract loading failed");
+
+    WebServerVerticle verticle =
+        new WebServerVerticle(
+            0, "openapi.yaml", m -> "{}", Optional.<Consumer<Integer>>empty(), failingLoader);
+
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.failing(
+                err -> {
+                  testContext.verify(
+                      () -> {
+                        assertThat(err.getMessage()).isEqualTo("Contract loading failed");
+                        testContext.completeNow();
+                      });
+                }));
+  }
+
+  @Test
+  void start_fails_whenFileSystemFails(Vertx vertx, VertxTestContext testContext)
+      throws IOException {
+    WebServerVerticle.FileSystemHelper fsHelper = mock(WebServerVerticle.FileSystemHelper.class);
+    when(fsHelper.createTempFile(anyString(), anyString())).thenThrow(new IOException("Disk full"));
+
+    WebServerVerticle verticle =
+        new WebServerVerticle(
+            0,
+            "openapi.yaml",
+            m -> "{}",
+            Optional.<Consumer<Integer>>empty(),
+            (vx, p) -> Future.succeededFuture(),
+            fsHelper);
+
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.failing(
+                err -> {
+                  testContext.verify(
+                      () -> {
+                        assertThat(err).isInstanceOf(IOException.class);
+                        assertThat(err.getMessage()).isEqualTo("Disk full");
+                        testContext.completeNow();
+                      });
+                }));
+  }
+
+  @Test
   void handleGetMessage_handlesSerializationFailure(Vertx vertx, VertxTestContext testContext) {
     RoutingContext ctx = mock(RoutingContext.class);
+
+    // Explicitly type the Optional to avoid ambiguity
+    Optional<Consumer<Integer>> noListener = Optional.empty();
+    WebServerVerticle.ContractLoader noLoader = (vx, p) -> Future.succeededFuture();
 
     WebServerVerticle verticle =
         new WebServerVerticle(
@@ -117,7 +197,8 @@ final class WebServerTest {
             m -> {
               throw new IOException("Serialization failed");
             },
-            Optional.empty());
+            noListener,
+            noLoader);
 
     verticle.handleGetMessage(ctx);
 
@@ -129,6 +210,10 @@ final class WebServerTest {
   void handleGetMessage_handlesRuntimeException(Vertx vertx, VertxTestContext testContext) {
     RoutingContext ctx = mock(RoutingContext.class);
 
+    // Explicitly type the Optional to avoid ambiguity
+    Optional<Consumer<Integer>> noListener = Optional.empty();
+    WebServerVerticle.ContractLoader noLoader = (vx, p) -> Future.succeededFuture();
+
     WebServerVerticle verticle =
         new WebServerVerticle(
             8080,
@@ -136,11 +221,33 @@ final class WebServerTest {
             m -> {
               throw new RuntimeException("Unexpected error");
             },
-            Optional.empty());
+            noListener,
+            noLoader);
 
     verticle.handleGetMessage(ctx);
 
     verify(ctx).fail(any(RuntimeException.class));
+    testContext.completeNow();
+  }
+
+  @Test
+  void onServerStarted_invokesListener(Vertx vertx, VertxTestContext testContext) {
+    // Test the extracted callback logic explicitly
+    AtomicInteger captured = new AtomicInteger();
+    WebServerVerticle verticle =
+        new WebServerVerticle(
+            8080,
+            "openapi.yaml",
+            Optional.of(captured::set));
+
+    HttpServer mockServer = mock(HttpServer.class);
+    when(mockServer.actualPort()).thenReturn(9999);
+
+    Promise<Void> promise = Promise.promise();
+    verticle.onServerStarted(mockServer, promise);
+
+    assertThat(captured.get()).isEqualTo(9999);
+    assertThat(promise.future().succeeded()).isTrue();
     testContext.completeNow();
   }
 }
