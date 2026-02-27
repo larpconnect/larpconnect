@@ -27,6 +27,7 @@ log4j = "2.53.2"
 commons-lang3 = "3.20.0"
 archunit = "1.4.1"
 google-common-protos = "2.66.0"
+shadow = "9.3.1"
 
 [libraries]
 # Core
@@ -70,9 +71,11 @@ mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.
 cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber" }
 cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+shadow-gradle-plugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugsPlugin" }
 errorprone = { id = "net.ltgt.errorprone", version.ref = "errorprone-plugin" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
