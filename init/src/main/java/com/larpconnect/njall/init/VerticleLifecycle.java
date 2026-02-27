@@ -11,8 +11,6 @@ import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -45,26 +43,25 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   protected void startUp() {
     logger.info("Starting VerticleLifecycle...");
 
-    // Load default config
-    JsonObject defaultConfig;
-    try {
-      var url = Resources.getResource("config.json");
-      defaultConfig = new JsonObject(Resources.toString(url, StandardCharsets.UTF_8));
-    } catch (IllegalArgumentException | IOException e) {
-      throw new RuntimeException("Failed to load default config", e);
-    }
-
     // Create temp Vertx for config loading
     var tempVertx = Vertx.vertx();
     JsonObject config;
     try {
-      ConfigStoreOptions memoryStore =
-          new ConfigStoreOptions().setType("json").setConfig(defaultConfig);
+      var url = Resources.getResource("config.json");
+      var tempFile = java.nio.file.Files.createTempFile("config", ".json");
+      tempFile.toFile().deleteOnExit();
+      try (var is = url.openStream()) {
+        java.nio.file.Files.copy(is, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+      }
+      String path = tempFile.toAbsolutePath().toString();
+
+      ConfigStoreOptions fileStore =
+          new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", path));
       ConfigStoreOptions sysStore = new ConfigStoreOptions().setType("sys");
       ConfigStoreOptions envStore = new ConfigStoreOptions().setType("env");
 
       ConfigRetrieverOptions options =
-          new ConfigRetrieverOptions().addStore(memoryStore).addStore(sysStore).addStore(envStore);
+          new ConfigRetrieverOptions().addStore(fileStore).addStore(sysStore).addStore(envStore);
 
       ConfigRetriever retriever = ConfigRetriever.create(tempVertx, options);
       CompletableFuture<JsonObject> future = new CompletableFuture<>();
@@ -79,6 +76,8 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
       throw new RuntimeException("Failed to load config", e);
     } catch (TimeoutException e) {
       throw new RuntimeException("Timed out loading config", e);
+    } catch (java.io.IOException e) {
+      throw new RuntimeException("Failed to load config file", e);
     } finally {
       tempVertx.close();
     }
