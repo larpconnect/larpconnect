@@ -59,6 +59,8 @@ final class WebServerVerticle extends AbstractVerticle {
   }
 
   static final class DefaultFileSystemHelper implements FileSystemHelper {
+    DefaultFileSystemHelper() {}
+
     @Override
     public Path createTempFile(String prefix, String suffix) throws IOException {
       return Files.createTempFile(prefix, suffix);
