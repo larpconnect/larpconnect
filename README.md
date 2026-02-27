@@ -38,6 +38,17 @@ The project is a multi-module Gradle build designed for high performance and typ
 ### Build Instructions
 To compile the project and run the test suite:
 
+```bash
+./gradlew build
+```
+
+### Updating OpenAPI Specs
+To regenerate the OpenAPI specification (`openapi.yaml`) from Protobuf definitions and copy it to `src/main/resources` where it should be checked into version control, run:
+
+```bash
+./gradlew :proto:updateOpenApi
+```
+
 ### Running Locally
 
 To run the server directly via Gradle:
@@ -78,10 +89,6 @@ To verify the service is running:
 
 ```bash
 curl -v http://localhost:8080/v1/message
-```
-
-```bash
-./gradlew build
 ```
 
 ## License
