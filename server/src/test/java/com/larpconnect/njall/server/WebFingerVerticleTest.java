@@ -23,7 +23,7 @@ class WebFingerVerticleTest {
   }
 
   @Test
-  void testHandleWebFingerRequest(Vertx vertx, VertxTestContext testContext) {
+  void handleWebFingerRequest_success(Vertx vertx, VertxTestContext testContext) {
     JsonObject request = new JsonObject().put("resource", "acct:user@example.com");
 
     vertx
