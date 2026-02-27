@@ -19,7 +19,6 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.file.FileSystem;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -58,23 +57,6 @@ final class VerticleLifecycleTest {
 
     doAnswer(runOnContextAnswer).when(mockContext).runOnContext(any());
     doAnswer(runOnContextAnswer).when(mockVertx).runOnContext(any());
-  }
-
-  @AfterEach
-  void tearDown() {
-    System.clearProperty("njall.config.resource");
-  }
-
-  @Test
-  public void startUp_missingConfigSection_success() throws Exception {
-    System.setProperty("njall.config.resource", "config-empty.json");
-    var lifecycle = VerticleServices.create(Collections.emptyList());
-
-    lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
-    assertThat(lifecycle.isRunning()).isTrue();
-
-    lifecycle.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
-    assertThat(lifecycle.isRunning()).isFalse();
   }
 
   @Test

@@ -90,12 +90,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     var builder = ImmutableList.<Module>builder();
     builder.addAll(modules);
     builder.add(new VertxModule(vertxProvider));
-    var appConfig = config.getJsonObject("larpconnect");
-    if (appConfig == null) {
-      logger.warn("No 'larpconnect' configuration section found, using empty config.");
-      appConfig = new JsonObject();
-    }
-    builder.add(new ConfigModule(appConfig));
+    builder.add(new ConfigModule(config));
 
     // Create Guice Injector
     var injector = Guice.createInjector(builder.build());
