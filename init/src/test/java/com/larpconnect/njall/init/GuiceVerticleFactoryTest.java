@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -22,7 +21,7 @@ final class GuiceVerticleFactoryTest {
 
   @Test
   public void createVerticle_validClass_success(VertxTestContext testContext) {
-    Injector injector =
+    var injector =
         Guice.createInjector(
             new AbstractModule() {
               @Override
@@ -44,7 +43,7 @@ final class GuiceVerticleFactoryTest {
             testContext.succeeding(
                 callable -> {
                   try {
-                    Verticle verticle = callable.call();
+                    var verticle = callable.call();
                     assertThat(verticle).isInstanceOf(TestVerticle.class);
                     testContext.completeNow();
                   } catch (Exception e) { // Callable throws Exception
@@ -55,7 +54,7 @@ final class GuiceVerticleFactoryTest {
 
   @Test
   public void createVerticle_missingClass_failure(VertxTestContext testContext) {
-    Injector injector = Guice.createInjector();
+    var injector = Guice.createInjector();
     var factory = new GuiceVerticleFactory(injector);
 
     Promise<Callable<Verticle>> promise = Promise.promise();

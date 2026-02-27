@@ -1,7 +1,5 @@
 package com.larpconnect.njall.server;
 
-import static com.google.common.io.Closeables.close;
-
 import com.google.inject.name.Named;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.proto.Message;
@@ -15,7 +13,6 @@ import io.vertx.openapi.contract.OpenAPIContract;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -81,9 +78,7 @@ final class WebServerVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startPromise) {
     Path tempFile;
-    InputStream in = null;
-    try {
-      in = getClass().getClassLoader().getResourceAsStream(openApiSpec);
+    try (var in = getClass().getClassLoader().getResourceAsStream(openApiSpec)) {
       if (in == null) {
         startPromise.fail(openApiSpec + " not found on classpath");
         return;
@@ -94,12 +89,6 @@ final class WebServerVerticle extends AbstractVerticle {
     } catch (IOException e) {
       startPromise.fail(e);
       return;
-    } finally {
-      try {
-        close(in, true);
-      } catch (IOException e) {
-        // Should not happen as swallowIOException is true
-      }
     }
 
     OpenAPIContract.from(vertx, tempFile.toAbsolutePath().toString())
@@ -117,7 +106,7 @@ final class WebServerVerticle extends AbstractVerticle {
                   .onSuccess(
                       server -> {
                         this.server = server;
-                        int actualPort = server.actualPort();
+                        var actualPort = server.actualPort();
                         portListener.ifPresent(listener -> listener.accept(actualPort));
                         logger.info("HTTP server started on port {}", actualPort);
                         startPromise.complete();
@@ -132,10 +121,7 @@ final class WebServerVerticle extends AbstractVerticle {
     try {
       var json = serializer.print(message);
       ctx.json(new JsonObject(json));
-    } catch (RuntimeException e) {
-      logger.error("Failed to convert message to JSON", e);
-      ctx.fail(e);
-    } catch (IOException e) {
+    } catch (RuntimeException | IOException e) {
       logger.error("Failed to convert message to JSON", e);
       ctx.fail(e);
     }

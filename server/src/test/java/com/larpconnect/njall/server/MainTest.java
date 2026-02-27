@@ -56,10 +56,11 @@ final class MainTest {
     var timeoutService = new TestVerticleService();
     timeoutService.exceptionToThrow.set(new TimeoutException());
     main.shutdown(timeoutService);
-    // Since Main.shutdown swallows the exception and logs it, we verify by ensuring the code didn't
-    // crash
-    // and the service stop was attempted. We can verify internal state if we spy, but here we just
-    // ensure no propagation of exception.
+    /*
+     * Since Main.shutdown swallows the exception and logs it, we verify by ensuring the code didn't
+     * crash and the service stop was attempted. We can verify internal state if we spy, but here we
+     * just ensure no propagation of exception.
+     */
 
     // Test RuntimeException
     var runtimeService = new TestVerticleService();

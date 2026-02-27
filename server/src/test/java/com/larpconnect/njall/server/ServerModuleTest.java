@@ -2,49 +2,66 @@ package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 
-final class ServerModuleTest {
+class ServerModuleTest {
 
   @Test
   void provideWebPort_usesLarpconnectConfig_whenPresent() {
-    var module = new ServerModule();
-    var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
+    var config =
+        new JsonObject()
+            .put("larpconnect", new JsonObject().put("web.port", 9090))
+            .put("web.port", 8080);
 
-    var port = module.provideWebPort(config);
+    Injector injector =
+        Guice.createInjector(
+            new ServerModule(), binder -> binder.bind(JsonObject.class).toInstance(config));
 
-    assertThat(port).isEqualTo(1234);
+    Integer port = injector.getInstance(Key.get(Integer.class, Names.named("web.port")));
+    assertThat(port).isEqualTo(9090);
   }
 
   @Test
   void provideWebPort_usesRootConfig_whenLarpconnectMissing() {
-    var module = new ServerModule();
-    var config = new JsonObject().put("web.port", 5678);
+    var config = new JsonObject().put("web.port", 7070);
 
-    var port = module.provideWebPort(config);
+    Injector injector =
+        Guice.createInjector(
+            new ServerModule(), binder -> binder.bind(JsonObject.class).toInstance(config));
 
-    assertThat(port).isEqualTo(5678);
+    Integer port = injector.getInstance(Key.get(Integer.class, Names.named("web.port")));
+    assertThat(port).isEqualTo(7070);
   }
 
   @Test
   void provideOpenApiSpec_usesLarpconnectConfig_whenPresent() {
-    var module = new ServerModule();
     var config =
-        new JsonObject().put("larpconnect", new JsonObject().put("openapi.spec", "spec.yaml"));
+        new JsonObject()
+            .put("larpconnect", new JsonObject().put("openapi.spec", "custom.yaml"))
+            .put("openapi.spec", "default.yaml");
 
-    var spec = module.provideOpenApiSpec(config);
+    Injector injector =
+        Guice.createInjector(
+            new ServerModule(), binder -> binder.bind(JsonObject.class).toInstance(config));
 
-    assertThat(spec).isEqualTo("spec.yaml");
+    String spec = injector.getInstance(Key.get(String.class, Names.named("openapi.spec")));
+    assertThat(spec).isEqualTo("custom.yaml");
   }
 
   @Test
   void provideOpenApiSpec_usesRootConfig_whenLarpconnectMissing() {
-    var module = new ServerModule();
-    var config = new JsonObject().put("openapi.spec", "root-spec.yaml");
+    var config = new JsonObject().put("openapi.spec", "root.yaml");
 
-    var spec = module.provideOpenApiSpec(config);
+    Injector injector =
+        Guice.createInjector(
+            new ServerModule(), binder -> binder.bind(JsonObject.class).toInstance(config));
 
-    assertThat(spec).isEqualTo("root-spec.yaml");
+    String spec = injector.getInstance(Key.get(String.class, Names.named("openapi.spec")));
+    assertThat(spec).isEqualTo("root.yaml");
   }
 }
