@@ -2,7 +2,6 @@ package com.larpconnect.njall.server;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.larpconnect.njall.common.annotations.AiContract;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -25,20 +24,6 @@ final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle
   }
 
   @Override
-  @AiContract(
-      ensure = {
-        """
-        startPromise \\text{ is completed}
-        """,
-        """
-        startPromise \\text{ succeeded } \\implies \\forall v \\in verticles, v \\text{ is deployed}
-        """,
-        """
-        startPromise \\text{ succeeded } \\implies deploymentIds \\neq \\bot
-        """
-      },
-      invariants = "verticles \\text{ is immutable}",
-      implementationHint = "Deploys all injected verticles in parallel")
   public void start(Promise<Void> startPromise) {
     logger.info("DefaultMainVerticle starting…");
     ImmutableList.Builder<Future<String>> builder = ImmutableList.builder();
