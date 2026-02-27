@@ -4,6 +4,9 @@
 > **DEVELOPMENT STATUS: PRE-ALPHA**
 > This project is **not** ready for production traffic. **DO NOT USE IT IN PRODUCTION.** Core security, stability, and data integrity features are still under active development.
 
+
+[![Build](https://github.com/larpconnect/larpconnect/actions/workflows/build.yml/badge.svg)](https://github.com/larpconnect/larpconnect/actions/workflows/build.yml)
+
 ---
 
 ## Project Overview
