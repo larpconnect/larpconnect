@@ -6,6 +6,7 @@ import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import io.vertx.core.Verticle;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Singleton;
@@ -19,7 +20,9 @@ public final class ServerModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(new TypeLiteral<Optional<Consumer<Integer>>>() {}).toInstance(Optional.empty());
+    bind(new TypeLiteral<Optional<Consumer<Integer>>>() {})
+        .annotatedWith(Names.named("web.portListener"))
+        .toInstance(Optional.empty());
 
     bind(MainVerticle.class).to(DefaultMainVerticle.class).in(Scopes.SINGLETON);
     var verticles = Multibinder.newSetBinder(binder(), Verticle.class);

@@ -51,6 +51,7 @@ public final class ServerStartupSteps {
                   protected void configure() {
                     bindConstant().annotatedWith(Names.named("web.port")).to(0);
                     bind(new TypeLiteral<Optional<Consumer<Integer>>>() {})
+                        .annotatedWith(Names.named("web.portListener"))
                         .toInstance(Optional.of(port -> serverCaptor.setPort(port)));
                   }
                 });
@@ -139,6 +140,17 @@ public final class ServerStartupSteps {
     var latch = new CountDownLatch(1);
     var success = new AtomicBoolean(false);
     var uri = URI.create(urlString);
+
+    // Wait for port to be captured
+    long start = System.currentTimeMillis();
+    while (serverCaptor.getPort() == 0 && System.currentTimeMillis() - start < 5000) {
+      Thread.sleep(100);
+    }
+    if (serverCaptor.getPort() == 0) {
+      logger.error("Port was not captured (still 0)");
+      assertThat(false).as("Port should be captured").isTrue();
+      return;
+    }
 
     var client = WebClient.create(vertx);
     // Use dynamic port

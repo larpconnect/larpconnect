@@ -52,7 +52,7 @@ final class WebServerVerticle extends AbstractVerticle {
   WebServerVerticle(
       @Named("web.port") int port,
       @Named("openapi.spec") String openApiSpec,
-      Optional<Consumer<Integer>> portListener) {
+      @Named("web.portListener") Optional<Consumer<Integer>> portListener) {
     this(port, openApiSpec, m -> JsonFormat.printer().print(m), portListener);
   }
 
