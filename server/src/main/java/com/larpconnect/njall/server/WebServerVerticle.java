@@ -4,6 +4,7 @@ import static com.google.common.io.Closeables.close;
 
 import com.google.inject.name.Named;
 import com.google.protobuf.util.JsonFormat;
+import com.larpconnect.njall.common.annotations.DefaultImplementation;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -48,6 +49,7 @@ final class WebServerVerticle extends AbstractVerticle {
     Future<OpenAPIContract> load(Vertx vertx, String path);
   }
 
+  @DefaultImplementation(DefaultFileSystemHelper.class)
   interface FileSystemHelper {
     Path createTempFile(String prefix, String suffix) throws IOException;
 
@@ -56,7 +58,7 @@ final class WebServerVerticle extends AbstractVerticle {
     void deleteOnExit(Path path);
   }
 
-  static class DefaultFileSystemHelper implements FileSystemHelper {
+  static final class DefaultFileSystemHelper implements FileSystemHelper {
     @Override
     public Path createTempFile(String prefix, String suffix) throws IOException {
       return Files.createTempFile(prefix, suffix);
