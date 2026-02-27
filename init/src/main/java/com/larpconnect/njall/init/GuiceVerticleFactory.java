@@ -1,6 +1,7 @@
 package com.larpconnect.njall.init;
 
 import com.google.inject.Injector;
+import com.larpconnect.njall.common.annotations.AiContract;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.spi.VerticleFactory;
@@ -21,6 +22,11 @@ final class GuiceVerticleFactory implements VerticleFactory {
 
   @Override
   @SuppressWarnings("deprecation")
+  @AiContract(
+      require = {"verticleName \\neq \\bot", "classLoader \\neq \\bot", "promise \\neq \\bot"},
+      ensure = "promise \\text{ is completed with a Verticle factory}",
+      implementationHint =
+          "Resolves and instantiates the Verticle using the Guice injector by class name.")
   public void createVerticle(
       String verticleName, ClassLoader classLoader, Promise<Callable<Verticle>> promise) {
     var clazzName = VerticleFactory.removePrefix(verticleName);
