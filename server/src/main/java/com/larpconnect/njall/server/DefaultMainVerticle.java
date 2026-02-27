@@ -4,6 +4,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableSet;
 import com.larpconnect.njall.common.annotations.AiContract;
+import com.larpconnect.njall.common.annotations.BuildWith;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@BuildWith(ServerModule.class)
 final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle {
   private final Logger logger = LoggerFactory.getLogger(DefaultMainVerticle.class);
   private final ImmutableSet<Verticle> verticles;
