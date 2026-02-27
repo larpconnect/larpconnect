@@ -38,6 +38,48 @@ The project is a multi-module Gradle build designed for high performance and typ
 ### Build Instructions
 To compile the project and run the test suite:
 
+### Running Locally
+
+To run the server directly via Gradle:
+
+```bash
+./gradlew :server:run
+```
+
+### Creating a Fatjar
+
+To create a standalone executable jar (fatjar):
+
+```bash
+./gradlew :server:shadowJar
+```
+
+To run the resulting fatjar:
+
+```bash
+java -jar server/build/libs/larpconnect.jar
+```
+
+### Running with Docker
+
+To build the Docker image:
+
+```bash
+docker build -t larpconnect-server .
+```
+
+To run the container:
+
+```bash
+docker run -d -p 8080:8080 --name larpconnect larpconnect-server
+```
+
+To verify the service is running:
+
+```bash
+curl -v http://localhost:8080/v1/message
+```
+
 ```bash
 ./gradlew build
 ```

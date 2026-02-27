@@ -1,5 +1,5 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/java:25",
+  "image": "mcr.microsoft.com/devcontainers/java:21",
   "customizations": {
     "vscode": {
       "extensions": [
