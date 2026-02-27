@@ -2,6 +2,7 @@ package com.larpconnect.njall.server;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Module;
+import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import java.time.Duration;
@@ -26,10 +27,14 @@ final class Main {
     this.serverModule = serverModule;
   }
 
+  @AiContract(implementationHint = "Entry point")
   public static void main(String[] args) {
     new Main(Runtime.getRuntime()).run();
   }
 
+  @AiContract(
+      ensure = {"$ \\neq \\bot"},
+      implementationHint = "Bootstraps Guice and deploys MainVerticle")
   VerticleService run() {
     logger.info("Starting Server...");
 
@@ -49,6 +54,9 @@ final class Main {
     return lifecycle;
   }
 
+  @AiContract(
+      require = {"lifecycle \\neq \\bot"},
+      implementationHint = "Gracefully stops the verticle lifecycle")
   void shutdown(VerticleService lifecycle) {
     logger.info("Shutdown hook triggered...");
     try {

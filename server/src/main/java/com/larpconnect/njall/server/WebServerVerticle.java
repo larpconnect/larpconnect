@@ -1,10 +1,13 @@
 package com.larpconnect.njall.server;
 
 import static com.google.common.io.Closeables.close;
+import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 
+import com.google.errorprone.annotations.Var;
 import com.google.inject.name.Named;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.AiContract;
+import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -27,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 /** Web server verticle that serves OpenAPI specification. */
 @Singleton
+@BuildWith(ServerModule.class)
 final class WebServerVerticle extends AbstractVerticle {
   private static final int DEFAULT_PORT = 8080;
   private static final String DEFAULT_SPEC = "openapi.yaml";
@@ -37,6 +41,9 @@ final class WebServerVerticle extends AbstractVerticle {
   private final Optional<Consumer<Integer>> portListener;
   private HttpServer server;
 
+  @AiContract(
+      ensure = "returns JSON representation of message",
+      tags = {PURE})
   interface Serializer {
     String print(Message message) throws IOException;
   }
@@ -88,8 +95,8 @@ final class WebServerVerticle extends AbstractVerticle {
       },
       implementationHint = "Loads OpenAPI spec, configures RouterBuilder, and starts HttpServer")
   public void start(Promise<Void> startPromise) {
-    Path tempFile;
-    InputStream in = null;
+    @Var Path tempFile;
+    @Var InputStream in = null;
     try {
       in = getClass().getClassLoader().getResourceAsStream(openApiSpec);
       if (in == null) {
