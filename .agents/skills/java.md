@@ -1,4 +1,4 @@
-# Skill: Phonological Data Processing
+# Skill: Modern Java (JDK 25)
 
 ## Domain Context
 This skill handles working in the modern Java 25 environment.
