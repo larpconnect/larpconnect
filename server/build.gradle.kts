@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":init"))
     implementation(project(":proto"))
     implementation(libs.vertx.core)
+    implementation(libs.vertx.config)
     implementation(libs.vertx.web)
     implementation(libs.vertx.openapi)
     implementation(libs.vertx.web.openapi.router)
