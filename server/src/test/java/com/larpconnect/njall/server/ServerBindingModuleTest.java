@@ -3,9 +3,42 @@ package com.larpconnect.njall.server;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.vertx.core.json.JsonObject;
+import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 
-final class ServerModuleTest {
+final class ServerBindingModuleTest {
+  @Test
+  void provideWebPort_usesPortEnvVar_whenPresentAndValid() {
+    Function<String, String> envProvider = name -> "PORT".equals(name) ? "9999" : null;
+    var module = new ServerBindingModule(envProvider);
+    var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
+
+    var port = module.provideWebPort(config);
+
+    assertThat(port).isEqualTo(9999);
+  }
+
+  @Test
+  void provideWebPort_fallsBackToConfig_whenPortEnvVarInvalid() {
+    Function<String, String> envProvider = name -> "PORT".equals(name) ? "invalid" : null;
+    var module = new ServerBindingModule(envProvider);
+    var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
+
+    var port = module.provideWebPort(config);
+
+    assertThat(port).isEqualTo(1234);
+  }
+
+  @Test
+  void provideWebPort_fallsBackToConfig_whenPortEnvVarNull() {
+    Function<String, String> envProvider = name -> null;
+    var module = new ServerBindingModule(envProvider);
+    var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
+
+    var port = module.provideWebPort(config);
+
+    assertThat(port).isEqualTo(1234);
+  }
 
   @Test
   void provideWebPort_usesLarpconnectConfig_whenPresent() {

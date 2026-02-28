@@ -1,4 +1,4 @@
-package com.larpconnect.njall.init;
+package com.larpconnect.njall.common.codec;
 
 import static com.larpconnect.njall.common.annotations.ContractTag.IDEMPOTENT;
 import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
@@ -11,12 +11,12 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
 @Immutable
-final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
+public final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
   private static final short VERSION = 0x01;
   private static final int INT_SIZE = 4;
   private static final String NAMESPACE = "com.larpconnect.njall.proto.";
 
-  ProtoCodecRegistry() {}
+  public ProtoCodecRegistry() {}
 
   @Override
   @AiContract(

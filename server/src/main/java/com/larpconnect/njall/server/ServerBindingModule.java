@@ -11,12 +11,20 @@ import io.vertx.core.json.JsonObject;
 import jakarta.inject.Singleton;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 final class ServerBindingModule extends AbstractModule {
+  private final Function<String, String> getenv;
   private static final int DEFAULT_PORT = 8080;
 
   /** Constructs a new ServerBindingModule. */
-  public ServerBindingModule() {}
+  public ServerBindingModule() {
+    this(System::getenv);
+  }
+
+  ServerBindingModule(Function<String, String> getenv) {
+    this.getenv = getenv;
+  }
 
   @Override
   protected void configure() {
@@ -31,6 +39,14 @@ final class ServerBindingModule extends AbstractModule {
   @Singleton
   @Named("web.port")
   int provideWebPort(JsonObject config) {
+    String envPort = getenv.apply("PORT");
+    if (envPort != null) {
+      try {
+        return Integer.parseInt(envPort);
+      } catch (NumberFormatException ignored) {
+        // Fall back to config if env var is not a valid integer
+      }
+    }
     var appConfig = config.getJsonObject("larpconnect");
     if (appConfig != null) {
       return appConfig.getInteger("web.port", DEFAULT_PORT);
