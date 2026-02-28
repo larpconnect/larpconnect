@@ -37,10 +37,41 @@ components:
         Message:
             type: object
             properties:
+                traceparent:
+                    $ref: '#/components/schemas/Observability'
+                proto:
+                    $ref: '#/components/schemas/ProtoDef'
+                mime:
+                    $ref: '#/components/schemas/MimeType'
+        MimeType:
+            type: object
+            properties:
+                type:
+                    type: string
+                subtype:
+                    type: string
+                content:
+                    type: string
+                    format: bytes
+        Observability:
+            type: object
+            properties:
+                version:
+                    type: integer
+                    format: uint32
                 traceId:
                     type: string
                     format: bytes
-                messageType:
+                spanId:
+                    type: string
+                    format: bytes
+                flags:
+                    type: integer
+                    format: uint32
+        ProtoDef:
+            type: object
+            properties:
+                protobufName:
                     type: string
                 message:
                     $ref: '#/components/schemas/GoogleProtobufAny'

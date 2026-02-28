@@ -146,7 +146,13 @@ final class WebServerVerticle extends AbstractVerticle {
       ensure = "ctx.response() \\text{ contains JSON Greeting}",
       implementationHint = "Serializes a Greeting message to JSON and writes it to the response")
   void handleGetMessage(RoutingContext ctx) {
-    var message = Message.newBuilder().setMessageType("Greeting").build();
+    var message =
+        Message.newBuilder()
+            .setProto(
+                com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                    .setProtobufName("Greeting")
+                    .build())
+            .build();
     try {
       var json = serializer.print(message);
       ctx.json(new JsonObject(json));

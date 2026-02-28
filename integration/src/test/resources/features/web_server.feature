@@ -6,6 +6,6 @@ Feature: Web Server
     Then I should receive a response from "http://localhost:8080/v1/message" containing:
       """
       {
-        "messageType": "Greeting"
+        "proto": {"protobufName": "Greeting"}
       }
       """
