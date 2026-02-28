@@ -2,7 +2,7 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%marker] %logger{36} - %msg%n%ex</pattern>
+            <pattern>%-5level %d{yyyy-MM-dd HH:mm:ss.SSS} [%marker] [trace_id=%X{trace_id}, parent_span_id=%X{parent_span_id}, span_id=%X{span_id}] %logger{36} - %msg%n%ex</pattern>
         </encoder>
     </appender>
 

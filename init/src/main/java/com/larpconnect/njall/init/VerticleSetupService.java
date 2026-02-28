@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.inject.Injector;
 import com.larpconnect.njall.common.annotations.AiContract;
+import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
