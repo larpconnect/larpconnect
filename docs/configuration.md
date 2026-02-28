@@ -16,6 +16,20 @@ then extracts the settings from the `larpconnect` namespace. If a setting is not
 namespace, the application will attempt to fall back to the root level of the configuration file,
 though placing settings in the namespace is strongly recommended.
 
+### Specifying the Configuration File
+
+By default, LarpConnect attempts to load the configuration from a file named `config.json` on the
+classpath. You can override this default behavior and specify a custom configuration file location
+by setting the `njall.config.resource` system property when starting the application.
+
+For example, to load a configuration file named `custom-config.json`:
+
+```bash
+java -Dnjall.config.resource=custom-config.json -jar server/build/libs/larpconnect.jar
+```
+
+The specified resource must be available on the classpath.
+
 ## Supported Properties
 
 Currently, LarpConnect supports the following configuration properties:
