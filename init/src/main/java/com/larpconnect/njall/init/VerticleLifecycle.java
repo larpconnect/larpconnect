@@ -99,7 +99,6 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     setupService.setup(vertx, injector);
     setupServiceRef.set(setupService);
 
-    // Start TimeService if bound
     try {
       var timeService = injector.getInstance(TimeService.class);
       timeService.startAsync().awaitRunning();
