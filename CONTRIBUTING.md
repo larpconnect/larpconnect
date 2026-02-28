@@ -1,14 +1,16 @@
 # Contributing to LarpConnect
 
-First off, thank you for considering contributing to LarpConnect! 
+First off, thank you for considering contributing to LarpConnect!
 
-LarpConnect is partly an experiment to see what the limits of AI are for programming complex tasks while maintaining strict code
-quality standards and rules. But it is, at its core, first and foremost, an online distributed application that is designed to run on the internet.
-So we welcome contributions _so long as they adhere to the guidelines and checks put into place_.
+LarpConnect is partly an experiment to see what the limits of AI are for
+programming complex tasks while maintaining strict code quality standards and
+rules. But it is, at its core, first and foremost, an online distributed
+application that is designed to run on the internet. So we welcome contributions
+_so long as they adhere to the guidelines and checks put into place_.
 
-> [!IMPORTANT]]
-> AI Policy: Purely AI-generated contributions without human oversight are not permitted.
-> Contributors must review and take full responsibility for their code. See [AI_POLICY.md](./AI_POLICY.md) for details
+> [!IMPORTANT]] AI Policy: Purely AI-generated contributions without human
+> oversight are not permitted. Contributors must review and take full
+> responsibility for their code. See [AI_POLICY.md](./AI_POLICY.md) for details
 
 ## Table of Contents
 
@@ -23,41 +25,55 @@ So we welcome contributions _so long as they adhere to the guidelines and checks
 
 ## Ground Rules
 
-LarpConnect is a high-complexity project that values correctness, testing, and adherence to rigid coding standards.
+LarpConnect is a high-complexity project that values correctness, testing, and
+adherence to rigid coding standards.
 
-- **Quality first:** All contributions must pass the full suite of automated checks, including tests, static analysis (Checkstyle, SpotBugs, ErrorProne), and formatting (Spotless).
-- **Communication:** For major changes or enhancements, please create an issue first to discuss your proposal.
-- **Respect the architecture:** Adhere to the multi-module structure and dependency management rules.
-- **Linear History:** We maintain a linear commit history. Rebasing on the main branch is required.
-- **You Are Not an AI:** You aren't expected to write like an AI or engage with the `@AiContract` blocks at all. We have tools that will follow
-  along and hopefully clean these up accurately. 
+- **Quality first:** All contributions must pass the full suite of automated
+  checks, including tests, static analysis (Checkstyle, SpotBugs, ErrorProne),
+  and formatting (Spotless).
+- **Communication:** For major changes or enhancements, please create an issue
+  first to discuss your proposal.
+- **Respect the architecture:** Adhere to the multi-module structure and
+  dependency management rules.
+- **Linear History:** We maintain a linear commit history. Rebasing on the main
+  branch is required.
+- **You Are Not an AI:** You aren't expected to write like an AI or engage with
+  the `@AiContract` blocks at all. We have tools that will follow along and
+  hopefully clean these up accurately.
 
 ## Your First Contribution
 
 Unsure where to begin? Look for issues labeled "beginner" or "help wanted".
 
 If you're new to open source, here are some helpful resources:
+
 - [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github)
 - [First Timers Only](http://www.firsttimersonly.com/)
 
 ## Getting Started
 
 1.  **Fork the repository** and create your branch from `main`.
-2.  **Branch naming:** Feature branches created by AIs must prefixed with `<ai name>/`, e.g., `jules/`. This does not apply to humans.
+2.  **Branch naming:** Feature branches created by AIs must prefixed with
+    `<ai name>/`, e.g., `jules/`. This does not apply to humans.
 3.  **Set up your environment:** Ensure you have Java 25 installed.
 4.  **Make your changes.**
 5.  **Format your code:** Run `./gradlew spotlessApply` before committing.
-6.  **Verify your changes:** Run `./gradlew check` to execute tests and static analysis.
+6.  **Verify your changes:** Run `./gradlew check` to execute tests and static
+    analysis.
 7.  **At least once before submitting:** Run `./gradlew build`.
 8.  **Submit a Pull Request.**
 
 ## How to Report a Bug
 
 ### Security Disclosures
-If you find a security vulnerability, do NOT open an issue. Please contact the maintainers directly.
+
+If you find a security vulnerability, do NOT open an issue. Please contact the
+maintainers directly.
 
 ### Filing a Bug Report
+
 When filing an issue, please include:
+
 - A clear, descriptive title.
 - Steps to reproduce the issue.
 - Expected behavior vs. actual behavior.
@@ -74,17 +90,22 @@ If you have a feature idea:
 ## Code Review Process
 
 - All pull requests will be reviewed by the core team.
-- Feedback will be provided on code quality, architectural alignment, and adherence to standards.
+- Feedback will be provided on code quality, architectural alignment, and
+  adherence to standards.
 - You may be asked to rebase your branch or update your tests.
 
 ## Coding Standards and Technical Requirements
 
-Detailed technical standards are maintained in [AGENTS.md](AGENTS.md). Key highlights include:
+Detailed technical standards are maintained in [AGENTS.md](AGENTS.md). Key
+highlights include:
 
-- **Java 25:** Use modern features like Records, Sealed Classes, and Pattern Matching.
-- **Null Safety:** Use `Optional<T>` for potentially absent values. No direct `.get()`.
+- **Java 25:** Use modern features like Records, Sealed Classes, and Pattern
+  Matching.
+- **Null Safety:** Use `Optional<T>` for potentially absent values. No direct
+  `.get()`.
 - **Dependency Injection:** Use Guice with constructor injection.
-- **Testing:** JUnit 5, AssertJ, and Mockito. Follow the naming pattern: `<method>_<what is being tested>_<expected outcome>`.
+- **Testing:** JUnit 5, AssertJ, and Mockito. Follow the naming pattern:
+  `<method>_<what is being tested>_<expected outcome>`.
 - **Immutability:** Prefer immutable collections and final variables.
 - **Logging:** Use SLF4J.
 
@@ -96,4 +117,5 @@ Detailed technical standards are maintained in [AGENTS.md](AGENTS.md). Key highl
 
 ---
 
-For more details, please refer to the [README.md](README.md) and [AGENTS.md](AGENTS.md).
+For more details, please refer to the [README.md](README.md) and
+[AGENTS.md](AGENTS.md).
