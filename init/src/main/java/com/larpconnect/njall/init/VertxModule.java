@@ -5,14 +5,10 @@ import io.vertx.core.Vertx;
 import jakarta.inject.Singleton;
 
 final class VertxModule extends AbstractModule {
-  private final VertxProvider vertxProvider;
-
-  VertxModule(VertxProvider vertxProvider) {
-    this.vertxProvider = vertxProvider;
-  }
+  VertxModule() {}
 
   @Override
   protected void configure() {
-    bind(Vertx.class).toProvider(vertxProvider).in(Singleton.class);
+    bind(Vertx.class).toProvider(VertxProvider.class).in(Singleton.class);
   }
 }

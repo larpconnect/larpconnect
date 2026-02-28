@@ -29,22 +29,16 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   private final Logger logger = LoggerFactory.getLogger(VerticleLifecycle.class);
 
   private final ImmutableList<Module> modules;
-  private final VertxProvider vertxProvider;
   private final AtomicReference<VerticleSetupService> setupServiceRef = new AtomicReference<>();
+  private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
 
   VerticleLifecycle(List<Module> modules) {
-    this(modules, new VertxProvider());
-  }
-
-  // Visible for testing
-  VerticleLifecycle(List<Module> modules, VertxProvider vertxProvider) {
     this.modules = ImmutableList.copyOf(modules);
-    this.vertxProvider = vertxProvider;
   }
 
   @Override
   @AiContract(
-      ensure = {"setupServiceRef \\neq \\bot", "vertxProvider.get() \\neq \\bot"},
+      ensure = {"setupServiceRef \\neq \\bot", "vertxRef.get() \\neq \\bot"},
       implementationHint =
           "Loads configuration, initializes Guice injector, and registers Vert.x factories.")
   protected void startUp() {
@@ -87,16 +81,17 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
       tempVertx.close();
     }
 
-    var vertx = vertxProvider.get();
-
     // Create a mutable list to add our internal modules
     var builder = ImmutableList.<Module>builder();
     builder.addAll(modules);
-    builder.add(new VertxModule(vertxProvider));
+    builder.add(new VertxModule());
     builder.add(new ConfigModule(config));
 
     // Create Guice Injector
     var injector = Guice.createInjector(builder.build());
+
+    var vertx = injector.getInstance(Vertx.class);
+    vertxRef.set(vertx);
 
     // Setup Verticle Factory via VerticleSetupService
     var setupService = injector.getInstance(VerticleSetupService.class);
@@ -110,7 +105,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   @AiContract(implementationHint = "Gracefully shuts down the Vert.x instance.")
   protected void shutDown() {
     logger.info("Stopping VerticleLifecycle...");
-    var vertx = vertxProvider.get();
+    var vertx = vertxRef.get();
     if (vertx != null) {
       var latch = new CountDownLatch(1);
       vertx

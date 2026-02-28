@@ -3,6 +3,9 @@ package com.larpconnect.njall.init;
 import com.google.errorprone.annotations.ThreadSafe;
 import com.larpconnect.njall.common.annotations.AiContract;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonObject;
+import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,8 +17,9 @@ final class VertxProvider implements Provider<Vertx> {
   private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
   private final Supplier<Vertx> vertxFactory;
 
-  VertxProvider() {
-    this(Vertx::vertx);
+  @Inject
+  VertxProvider(JsonObject config) {
+    this(() -> Vertx.vertx(new VertxOptions(config)));
   }
 
   // Visible for testing
