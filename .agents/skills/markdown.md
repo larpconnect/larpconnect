@@ -15,6 +15,8 @@ This skill handles the creation of markdown documents to document the system.
 
 ## Specific Guidance
 
+* Load documentation from the GitHub Flavored Markdown Spec on context7.
 * Prefer that pseudocode be written in mathematical pseudocode. If that is not possible, then use Java.
-* Use mermaid.js for diagrams.
+* Use mermaid.js for diagrams. Load the mermaid.js documentation from context7.
 * Files should always be UTF-8
+* Try to break up large amounts of text with bullet points, code snippets, multiple sections, or diagrams.
