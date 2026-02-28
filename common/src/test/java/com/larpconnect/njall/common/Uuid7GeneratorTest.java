@@ -24,20 +24,39 @@ class Uuid7GeneratorTest {
   @Test
   void generates_uuid_correctly() {
     // Arrange
-    Uuid7Generator.RandomIntProvider randomIntProvider =
-        (origin, bound) -> {
-          if (origin == 1 && bound == INITIAL_COUNTER_MAX) {
-            return EXPECTED_INITIAL_COUNTER;
+    TimeProvider timeProvider =
+        new TimeProvider() {
+          @Override
+          public long currentTimeMillis() {
+            return START_MILLIS;
           }
-          if (origin == COUNTER_MIN_INCREMENT && bound == COUNTER_MAX_INCREMENT) {
-            return EXPECTED_INCREMENT;
+
+          @Override
+          public long nanoTime() {
+            return START_NANOS;
           }
-          return 0;
         };
 
-    Uuid7Generator generator =
-        new Uuid7Generator(
-            () -> START_MILLIS, () -> START_NANOS, () -> RANDOM_BITS, randomIntProvider);
+    RandomProvider randomProvider =
+        new RandomProvider() {
+          @Override
+          public long nextLong() {
+            return RANDOM_BITS;
+          }
+
+          @Override
+          public int nextInt(int origin, int bound) {
+            if (origin == 1 && bound == INITIAL_COUNTER_MAX) {
+              return EXPECTED_INITIAL_COUNTER;
+            }
+            if (origin == COUNTER_MIN_INCREMENT && bound == COUNTER_MAX_INCREMENT) {
+              return EXPECTED_INCREMENT;
+            }
+            return 0;
+          }
+        };
+
+    Uuid7Generator generator = new Uuid7Generator(timeProvider, randomProvider);
 
     // Act
     UUID uuid1 = generator.generate();
@@ -58,24 +77,42 @@ class Uuid7GeneratorTest {
   @Test
   void generates_uuid_withElapsedTime() {
     // Arrange
-    Uuid7Generator.RandomIntProvider randomIntProvider =
-        (origin, bound) -> {
-          if (origin == 1 && bound == INITIAL_COUNTER_MAX) return EXPECTED_INITIAL_COUNTER;
-          if (origin == COUNTER_MIN_INCREMENT && bound == COUNTER_MAX_INCREMENT) {
-            return EXPECTED_INCREMENT;
-          }
-          return 0;
-        };
-
     long[] nanos = {1000000000L, 2000000000L, 2500000000L}; // Starts at 1s, then 2s, then 2.5s
     int[] nanosIndex = {0};
 
-    Uuid7Generator generator =
-        new Uuid7Generator(
-            () -> START_MILLIS,
-            () -> nanos[nanosIndex[0]++], // Return next nanoTime
-            () -> RANDOM_BITS,
-            randomIntProvider);
+    TimeProvider timeProvider =
+        new TimeProvider() {
+          @Override
+          public long currentTimeMillis() {
+            return START_MILLIS;
+          }
+
+          @Override
+          public long nanoTime() {
+            return nanos[nanosIndex[0]++];
+          }
+        };
+
+    RandomProvider randomProvider =
+        new RandomProvider() {
+          @Override
+          public long nextLong() {
+            return RANDOM_BITS;
+          }
+
+          @Override
+          public int nextInt(int origin, int bound) {
+            if (origin == 1 && bound == INITIAL_COUNTER_MAX) {
+              return EXPECTED_INITIAL_COUNTER;
+            }
+            if (origin == COUNTER_MIN_INCREMENT && bound == COUNTER_MAX_INCREMENT) {
+              return EXPECTED_INCREMENT;
+            }
+            return 0;
+          }
+        };
+
+    Uuid7Generator generator = new Uuid7Generator(timeProvider, randomProvider);
 
     // First generation, elapsed is (2000000000 - 1000000000) = 1,000,000,000 ns = 1000 ms
     UUID uuid1 = generator.generate();

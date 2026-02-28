@@ -4,7 +4,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.LongSupplier;
 
 /** Generates UUIDv7 identifiers. */
 @Singleton
@@ -22,36 +21,26 @@ final class Uuid7Generator implements UuidGenerator {
   private static final long RANDOM_MASK = 0x3FFFFFFFFFFFFFFFL;
   private static final int VARIANT_SHIFT = 62;
 
-  private final LongSupplier nanoTimeProvider;
-  private final LongSupplier randomLongProvider;
-  private final RandomIntProvider randomIntProvider;
+  private final TimeProvider timeProvider;
+  private final RandomProvider randomProvider;
 
   private final long startMillis;
   private final long startNanos;
   private final AtomicInteger counter;
 
-  public interface RandomIntProvider {
-    int nextInt(int origin, int bound);
-  }
-
   @Inject
-  public Uuid7Generator(
-      LongSupplier currentTimeMillisProvider,
-      LongSupplier nanoTimeProvider,
-      LongSupplier randomLongProvider,
-      RandomIntProvider randomIntProvider) {
-    this.nanoTimeProvider = nanoTimeProvider;
-    this.randomLongProvider = randomLongProvider;
-    this.randomIntProvider = randomIntProvider;
+  Uuid7Generator(TimeProvider timeProvider, RandomProvider randomProvider) {
+    this.timeProvider = timeProvider;
+    this.randomProvider = randomProvider;
 
-    this.startMillis = currentTimeMillisProvider.getAsLong();
-    this.startNanos = nanoTimeProvider.getAsLong();
-    this.counter = new AtomicInteger(randomIntProvider.nextInt(1, INITIAL_COUNTER_MAX));
+    this.startMillis = timeProvider.currentTimeMillis();
+    this.startNanos = timeProvider.nanoTime();
+    this.counter = new AtomicInteger(randomProvider.nextInt(1, INITIAL_COUNTER_MAX));
   }
 
   @Override
   public UUID generate() {
-    long currentNanos = nanoTimeProvider.getAsLong();
+    long currentNanos = timeProvider.nanoTime();
     long elapsedMillis = (currentNanos - startNanos) / NANOS_PER_MILLIS;
     long timestamp = startMillis + elapsedMillis;
 
@@ -62,13 +51,13 @@ final class Uuid7Generator implements UuidGenerator {
     msb |= (VERSION_7 << VERSION_SHIFT);
 
     // 12 bits of counter
-    int increment = randomIntProvider.nextInt(COUNTER_MIN_INCREMENT, COUNTER_MAX_INCREMENT);
+    int increment = randomProvider.nextInt(COUNTER_MIN_INCREMENT, COUNTER_MAX_INCREMENT);
     int counterValue = counter.getAndAdd(increment) & COUNTER_MASK;
     msb |= counterValue;
 
     // 2 bits of variant (10 for RFC 4122)
     // 62 bits of random data
-    long randomBits = randomLongProvider.getAsLong() & RANDOM_MASK;
+    long randomBits = randomProvider.nextLong() & RANDOM_MASK;
     long lsb = (2L << VARIANT_SHIFT) | randomBits;
 
     return new UUID(msb, lsb);
