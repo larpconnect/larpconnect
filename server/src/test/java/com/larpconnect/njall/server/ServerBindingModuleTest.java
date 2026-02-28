@@ -9,7 +9,7 @@ final class ServerModuleTest {
 
   @Test
   void provideWebPort_usesLarpconnectConfig_whenPresent() {
-    var module = new ServerProvidesModule();
+    var module = new ServerBindingModule();
     var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
 
     var port = module.provideWebPort(config);
@@ -19,7 +19,7 @@ final class ServerModuleTest {
 
   @Test
   void provideWebPort_usesRootConfig_whenLarpconnectMissing() {
-    var module = new ServerProvidesModule();
+    var module = new ServerBindingModule();
     var config = new JsonObject().put("web.port", 5678);
 
     var port = module.provideWebPort(config);
@@ -29,7 +29,7 @@ final class ServerModuleTest {
 
   @Test
   void provideOpenApiSpec_usesLarpconnectConfig_whenPresent() {
-    var module = new ServerProvidesModule();
+    var module = new ServerBindingModule();
     var config =
         new JsonObject().put("larpconnect", new JsonObject().put("openapi.spec", "spec.yaml"));
 
@@ -40,7 +40,7 @@ final class ServerModuleTest {
 
   @Test
   void provideOpenApiSpec_usesRootConfig_whenLarpconnectMissing() {
-    var module = new ServerProvidesModule();
+    var module = new ServerBindingModule();
     var config = new JsonObject().put("openapi.spec", "root-spec.yaml");
 
     var spec = module.provideOpenApiSpec(config);

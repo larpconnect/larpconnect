@@ -15,8 +15,6 @@ class CommonModuleTest {
     TimeService timeService = injector.getInstance(TimeService.class);
 
     assertThat(timeService).isNotNull();
-    // It should be bound as a Singleton (using MonotonicTimeServiceProvider which creates new, but
-    // Guice should cache it if we use in(Singleton.class), wait! The provider is a Singleton, but
     // does that make the provided value a singleton? No, we should use .in(Singleton.class) on the
     // binding!)
     TimeService secondInstance = injector.getInstance(TimeService.class);
