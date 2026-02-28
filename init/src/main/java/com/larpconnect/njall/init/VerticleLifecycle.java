@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.larpconnect.njall.common.annotations.AiContract;
+import com.larpconnect.njall.common.time.TimeService;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -97,6 +98,14 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     var setupService = injector.getInstance(VerticleSetupService.class);
     setupService.setup(vertx, injector);
     setupServiceRef.set(setupService);
+
+    // Start TimeService if bound
+    try {
+      var timeService = injector.getInstance(TimeService.class);
+      timeService.startAsync().awaitRunning();
+    } catch (com.google.inject.ConfigurationException e) {
+      logger.debug("TimeService not bound, skipping start.");
+    }
 
     logger.info("VerticleLifecycle started.");
   }
