@@ -33,7 +33,7 @@ final class Main {
   }
 
   @AiContract(
-      ensure = {"$res \\neq \\bot"},
+      ensure = {"$res \\neq \\bot$"},
       implementationHint = "Bootstraps Guice and deploys MainVerticle")
   VerticleService run() {
     logger.info("Starting Server...");
