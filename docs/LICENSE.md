@@ -1,2 +1,3 @@
-This folder (and only this folder) os licensed under Creative Commons Attribution 4.0 International.
-To view a copy of this license, visit https://creativecommons.org/licenses/by/4.0/
+This folder (and only this folder) os licensed under Creative Commons
+Attribution 4.0 International. To view a copy of this license, visit
+https://creativecommons.org/licenses/by/4.0/
