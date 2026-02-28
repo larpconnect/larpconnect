@@ -1,7 +1,10 @@
 package com.larpconnect.njall.common;
 
+import com.larpconnect.njall.common.annotations.DefaultImplementation;
+
 /** Provides access to system time. */
-public interface TimeProvider {
+@DefaultImplementation(DefaultClock.class)
+public interface Clock {
 
   /** Returns the current time in milliseconds. */
   long currentTimeMillis();

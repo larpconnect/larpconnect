@@ -1,9 +1,11 @@
 package com.larpconnect.njall.common;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.random.RandomGenerator;
 
 /** Generates UUIDv7 identifiers. */
 @Singleton
@@ -21,26 +23,26 @@ final class Uuid7Generator implements UuidGenerator {
   private static final long RANDOM_MASK = 0x3FFFFFFFFFFFFFFFL;
   private static final int VARIANT_SHIFT = 62;
 
-  private final TimeProvider timeProvider;
-  private final RandomProvider randomProvider;
+  private final Clock clock;
+  private final Provider<RandomGenerator> randomProvider;
 
   private final long startMillis;
   private final long startNanos;
   private final AtomicInteger counter;
 
   @Inject
-  Uuid7Generator(TimeProvider timeProvider, RandomProvider randomProvider) {
-    this.timeProvider = timeProvider;
+  Uuid7Generator(Clock clock, Provider<RandomGenerator> randomProvider) {
+    this.clock = clock;
     this.randomProvider = randomProvider;
 
-    this.startMillis = timeProvider.currentTimeMillis();
-    this.startNanos = timeProvider.nanoTime();
-    this.counter = new AtomicInteger(randomProvider.nextInt(1, INITIAL_COUNTER_MAX));
+    this.startMillis = clock.currentTimeMillis();
+    this.startNanos = clock.nanoTime();
+    this.counter = new AtomicInteger(randomProvider.get().nextInt(1, INITIAL_COUNTER_MAX));
   }
 
   @Override
   public UUID generate() {
-    long currentNanos = timeProvider.nanoTime();
+    long currentNanos = clock.nanoTime();
     long elapsedMillis = (currentNanos - startNanos) / NANOS_PER_MILLIS;
     long timestamp = startMillis + elapsedMillis;
 
@@ -51,13 +53,13 @@ final class Uuid7Generator implements UuidGenerator {
     msb |= (VERSION_7 << VERSION_SHIFT);
 
     // 12 bits of counter
-    int increment = randomProvider.nextInt(COUNTER_MIN_INCREMENT, COUNTER_MAX_INCREMENT);
+    int increment = randomProvider.get().nextInt(COUNTER_MIN_INCREMENT, COUNTER_MAX_INCREMENT);
     int counterValue = counter.getAndAdd(increment) & COUNTER_MASK;
     msb |= counterValue;
 
     // 2 bits of variant (10 for RFC 4122)
     // 62 bits of random data
-    long randomBits = randomProvider.nextLong() & RANDOM_MASK;
+    long randomBits = randomProvider.get().nextLong() & RANDOM_MASK;
     long lsb = (2L << VARIANT_SHIFT) | randomBits;
 
     return new UUID(msb, lsb);

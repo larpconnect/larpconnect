@@ -2,7 +2,9 @@ package com.larpconnect.njall.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import jakarta.inject.Provider;
 import java.util.UUID;
+import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.Test;
 
 class Uuid7GeneratorTest {
@@ -24,8 +26,8 @@ class Uuid7GeneratorTest {
   @Test
   void generates_uuid_correctly() {
     // Arrange
-    TimeProvider timeProvider =
-        new TimeProvider() {
+    Clock clock =
+        new Clock() {
           @Override
           public long currentTimeMillis() {
             return START_MILLIS;
@@ -37,8 +39,8 @@ class Uuid7GeneratorTest {
           }
         };
 
-    RandomProvider randomProvider =
-        new RandomProvider() {
+    RandomGenerator randomGenerator =
+        new RandomGenerator() {
           @Override
           public long nextLong() {
             return RANDOM_BITS;
@@ -56,7 +58,9 @@ class Uuid7GeneratorTest {
           }
         };
 
-    Uuid7Generator generator = new Uuid7Generator(timeProvider, randomProvider);
+    Provider<RandomGenerator> randomProvider = () -> randomGenerator;
+
+    Uuid7Generator generator = new Uuid7Generator(clock, randomProvider);
 
     // Act
     UUID uuid1 = generator.generate();
@@ -80,8 +84,8 @@ class Uuid7GeneratorTest {
     long[] nanos = {1000000000L, 2000000000L, 2500000000L}; // Starts at 1s, then 2s, then 2.5s
     int[] nanosIndex = {0};
 
-    TimeProvider timeProvider =
-        new TimeProvider() {
+    Clock clock =
+        new Clock() {
           @Override
           public long currentTimeMillis() {
             return START_MILLIS;
@@ -93,8 +97,8 @@ class Uuid7GeneratorTest {
           }
         };
 
-    RandomProvider randomProvider =
-        new RandomProvider() {
+    RandomGenerator randomGenerator =
+        new RandomGenerator() {
           @Override
           public long nextLong() {
             return RANDOM_BITS;
@@ -112,7 +116,9 @@ class Uuid7GeneratorTest {
           }
         };
 
-    Uuid7Generator generator = new Uuid7Generator(timeProvider, randomProvider);
+    Provider<RandomGenerator> randomProvider = () -> randomGenerator;
+
+    Uuid7Generator generator = new Uuid7Generator(clock, randomProvider);
 
     // First generation, elapsed is (2000000000 - 1000000000) = 1,000,000,000 ns = 1000 ms
     UUID uuid1 = generator.generate();
