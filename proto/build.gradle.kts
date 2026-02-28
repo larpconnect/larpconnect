@@ -14,13 +14,15 @@ dependencies {
 val goBinDir = layout.buildDirectory.dir("go-bin")
 val openApiPluginPath = goBinDir.map { it.file("protoc-gen-openapi").asFile.absolutePath }
 
+val isUpdateOpenApi = gradle.startParameter.taskNames.any { it.contains("updateOpenApi") }
+
 val installProtocGenOpenApi by tasks.registering(Exec::class) {
     outputs.file(openApiPluginPath)
     commandLine("go", "install", "github.com/google/gnostic/cmd/protoc-gen-openapi@latest")
     environment("GOBIN", goBinDir.get().asFile.absolutePath)
+    onlyIf { isUpdateOpenApi }
 }
 
-val isUpdateOpenApi = gradle.startParameter.taskNames.contains("updateOpenApi")
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
