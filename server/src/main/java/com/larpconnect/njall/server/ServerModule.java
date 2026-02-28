@@ -10,6 +10,5 @@ public final class ServerModule extends AbstractModule {
   protected void configure() {
     install(new com.larpconnect.njall.common.CommonModule());
     install(new ServerBindingModule());
-    install(new ServerProvidesModule());
   }
 }
