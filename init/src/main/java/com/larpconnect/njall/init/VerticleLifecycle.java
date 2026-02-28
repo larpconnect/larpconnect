@@ -98,13 +98,6 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     setupService.setup(vertx, injector);
     setupServiceRef.set(setupService);
 
-    try {
-      var timeService = injector.getInstance(com.larpconnect.njall.common.time.TimeService.class);
-      timeService.startAsync().awaitRunning();
-    } catch (com.google.inject.ConfigurationException e) {
-      logger.debug("TimeService binding not found, skipping startup.");
-    }
-
     logger.info("VerticleLifecycle started.");
   }
 
