@@ -1,6 +1,7 @@
 # Use of Generative AI in Contributions
 
-> [!IMPORTANT] This policy has **ZERO TOLERANCE** around anything labeled
+> [!IMPORTANT]
+> This policy has **ZERO TOLERANCE** around anything labeled
 > **MUST**. Especially for wilful violation.
 
 Summary position:
