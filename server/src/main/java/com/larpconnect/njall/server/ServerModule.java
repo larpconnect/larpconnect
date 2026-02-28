@@ -30,7 +30,7 @@ public final class ServerModule extends AbstractModule {
   @Singleton
   @Named("web.port")
   int provideWebPort(JsonObject config) {
-    JsonObject appConfig = config.getJsonObject("larpconnect");
+    var appConfig = config.getJsonObject("larpconnect");
     if (appConfig != null) {
       return appConfig.getInteger("web.port", DEFAULT_PORT);
     }
@@ -41,7 +41,7 @@ public final class ServerModule extends AbstractModule {
   @Singleton
   @Named("openapi.spec")
   String provideOpenApiSpec(JsonObject config) {
-    JsonObject appConfig = config.getJsonObject("larpconnect");
+    var appConfig = config.getJsonObject("larpconnect");
     if (appConfig != null) {
       return appConfig.getString("openapi.spec", "openapi.yaml");
     }

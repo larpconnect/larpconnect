@@ -6,7 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
@@ -61,7 +60,7 @@ final class WebServerTest {
                   testContext.verify(
                       () -> {
                         assertThat(response.statusCode()).isEqualTo(200);
-                        JsonObject body = response.bodyAsJsonObject();
+                        var body = response.bodyAsJsonObject();
                         assertThat(body.getString("messageType")).isEqualTo("Greeting");
                         testContext.completeNow();
                       });
