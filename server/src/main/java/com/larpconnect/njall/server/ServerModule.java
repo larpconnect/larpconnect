@@ -19,6 +19,7 @@ public final class ServerModule extends AbstractModule {
 
   @Override
   protected void configure() {
+
     bind(new TypeLiteral<Optional<Consumer<Integer>>>() {}).toInstance(Optional.empty());
 
     bind(MainVerticle.class).to(DefaultMainVerticle.class).in(Scopes.SINGLETON);

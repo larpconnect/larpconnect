@@ -39,7 +39,9 @@ final class Main {
     logger.info("Starting Server...");
 
     // Register ServerModule to bind MainVerticle -> DefaultMainVerticle
-    var lifecycle = VerticleServices.create(ImmutableList.of(serverModule));
+    var lifecycle =
+        VerticleServices.create(
+            ImmutableList.of(serverModule, new com.larpconnect.njall.common.CommonModule()));
 
     runtime.addShutdownHook(new Thread(() -> shutdown(lifecycle)));
 
