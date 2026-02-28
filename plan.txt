@@ -1,4 +1,0 @@
-1. In `VertxProvider.java`, modify the constructor to accept a `JsonObject` config.
-2. In `VerticleLifecycle.java`, update the instantiation of `VertxProvider` to use the loaded `config`.
-3. In `VertxModule.java`, modify the constructor to not take `VertxProvider` and update `configure()` to bind `Vertx.class` using `.toProvider(VertxProvider.class)` instead of `.toProvider(vertxProvider)`.
-4. Run `spotlessApply` and build the project to verify changes.
