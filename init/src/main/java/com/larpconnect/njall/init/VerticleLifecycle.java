@@ -64,16 +64,14 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     var tempVertx = Vertx.vertx();
     JsonObject config;
     try {
-      ConfigStoreOptions memoryStore =
-          new ConfigStoreOptions().setType("json").setConfig(defaultConfig);
-      ConfigStoreOptions sysStore = new ConfigStoreOptions().setType("sys");
-      ConfigStoreOptions envStore = new ConfigStoreOptions().setType("env");
+      var memoryStore = new ConfigStoreOptions().setType("json").setConfig(defaultConfig);
+      var sysStore = new ConfigStoreOptions().setType("sys");
+      var envStore = new ConfigStoreOptions().setType("env");
 
-      ConfigRetrieverOptions options =
+      var options =
           new ConfigRetrieverOptions().addStore(memoryStore).addStore(sysStore).addStore(envStore);
-
-      ConfigRetriever retriever = ConfigRetriever.create(tempVertx, options);
-      CompletableFuture<JsonObject> future = new CompletableFuture<>();
+      var retriever = ConfigRetriever.create(tempVertx, options);
+      var future = new CompletableFuture<JsonObject>();
       retriever.getConfig().onSuccess(future::complete).onFailure(future::completeExceptionally);
 
       // Use a timeout to prevent indefinite hanging in tests if vertx context is not running
