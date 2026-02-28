@@ -1,13 +1,16 @@
 package com.larpconnect.njall.common.verticle;
 
 import com.google.common.io.BaseEncoding;
+import com.google.common.io.Closer;
 import com.google.errorprone.annotations.Var;
 import com.larpconnect.njall.proto.Message;
 import com.larpconnect.njall.proto.Observability;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
-import java.security.SecureRandom;
-import java.util.function.Consumer;
+import jakarta.inject.Provider;
+import java.io.IOException;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.random.RandomGenerator;
 import org.slf4j.MDC;
 
 abstract class AbstractLcVerticle extends AbstractVerticle {
@@ -15,21 +18,15 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
   private static final int SPAN_ID_BYTES = 8;
 
   private final String channel;
-  private final Consumer<byte[]> randomBytesGenerator;
-
-  private static final SecureRandom RANDOM = new SecureRandom();
+  private final Provider<RandomGenerator> randomProvider;
 
   protected AbstractLcVerticle(String channel) {
-    this(
-        channel,
-        bytes -> {
-          RANDOM.nextBytes(bytes);
-        });
+    this(channel, ThreadLocalRandom::current);
   }
 
-  protected AbstractLcVerticle(String channel, Consumer<byte[]> randomBytesGenerator) {
+  protected AbstractLcVerticle(String channel, Provider<RandomGenerator> randomProvider) {
     this.channel = channel;
-    this.randomBytesGenerator = randomBytesGenerator;
+    this.randomProvider = randomProvider;
   }
 
   @Override
@@ -42,7 +39,7 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
               Message message = msg.body();
 
               byte[] newSpanId = new byte[SPAN_ID_BYTES];
-              randomBytesGenerator.accept(newSpanId);
+              randomProvider.get().nextBytes(newSpanId);
 
               @Var String traceIdStr = null;
               @Var String parentSpanIdStr = null;
@@ -59,25 +56,26 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
 
               String spanIdStr = HEX.encode(newSpanId);
 
-              if (traceIdStr != null) {
-                MDC.put("trace_id", traceIdStr);
-              }
-              if (parentSpanIdStr != null) {
-                MDC.put("parent_span_id", parentSpanIdStr);
-              }
-              MDC.put("span_id", spanIdStr);
+              try (Closer closer = Closer.create()) {
+                if (traceIdStr != null) {
+                  closer.register(MDC.putCloseable("trace_id", traceIdStr));
+                }
+                if (parentSpanIdStr != null) {
+                  closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
+                }
+                closer.register(MDC.putCloseable("span_id", spanIdStr));
 
-              try {
-                handleMessage(newSpanId, message);
-              } finally {
-                MDC.remove("trace_id");
-                MDC.remove("parent_span_id");
-                MDC.remove("span_id");
+                MessageResponse response = handleMessage(newSpanId, message);
+                if (response == BasicResponse.SHUTDOWN) {
+                  vertx.eventBus().consumer(channel).unregister();
+                }
+              } catch (IOException e) {
+                // Closer does not throw IOException in this context
               }
             });
 
     startPromise.complete();
   }
 
-  protected abstract void handleMessage(byte[] spanId, Message message);
+  protected abstract MessageResponse handleMessage(byte[] spanId, Message message);
 }

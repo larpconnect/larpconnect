@@ -3,14 +3,16 @@ package com.larpconnect.njall.common.verticle;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.ByteString;
+import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
 import com.larpconnect.njall.proto.Message;
 import com.larpconnect.njall.proto.Observability;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import jakarta.inject.Provider;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,34 +29,7 @@ final class AbstractLcVerticleTest {
   @BeforeEach
   void setUp(VertxTestContext testContext) {
     vertx = Vertx.vertx();
-    vertx
-        .eventBus()
-        .registerDefaultCodec(
-            Message.class,
-            new io.vertx.core.eventbus.MessageCodec<Message, Message>() {
-              @Override
-              public void encodeToWire(io.vertx.core.buffer.Buffer buffer, Message s) {}
-
-              @Override
-              public Message decodeFromWire(int pos, io.vertx.core.buffer.Buffer buffer) {
-                return null;
-              }
-
-              @Override
-              public Message transform(Message s) {
-                return s;
-              }
-
-              @Override
-              public String name() {
-                return "test-codec";
-              }
-
-              @Override
-              public byte systemCodecID() {
-                return -1;
-              }
-            });
+    vertx.eventBus().registerDefaultCodec(Message.class, new ProtoCodecRegistry());
     testContext.completeNow();
   }
 
@@ -72,18 +47,30 @@ final class AbstractLcVerticleTest {
     AtomicReference<String> mdcSpanId = new AtomicReference<>();
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
-    Consumer<byte[]> mockRandom =
-        bytes -> System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {
+                System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+              }
+            };
 
     AbstractLcVerticle verticle =
         new AbstractLcVerticle(CHANNEL, mockRandom) {
           @Override
-          protected void handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
             receivedSpanId.set(spanId);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
+            return BasicResponse.CONTINUE;
           }
         };
 
@@ -103,14 +90,7 @@ final class AbstractLcVerticleTest {
 
                   Message message = Message.newBuilder().setTraceparent(obs).build();
 
-                  vertx
-                      .eventBus()
-                      .<Message>request(CHANNEL, message)
-                      .onComplete(
-                          ar -> {
-                            // request will timeout because we don't reply, but handleMessage is
-                            // still called
-                          });
+                  vertx.eventBus().<Message>request(CHANNEL, message).onComplete(ar -> {});
 
                   vertx.setTimer(
                       100,
@@ -139,13 +119,24 @@ final class AbstractLcVerticleTest {
     AtomicBoolean handled = new AtomicBoolean(false);
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
-    Consumer<byte[]> mockRandom =
-        bytes -> System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {
+                System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+              }
+            };
 
     AbstractLcVerticle verticle =
         new AbstractLcVerticle(CHANNEL, mockRandom) {
           @Override
-          protected void handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
             throw new RuntimeException("Test exception");
           }
@@ -158,7 +149,6 @@ final class AbstractLcVerticleTest {
                 id -> {
                   Message message = Message.newBuilder().build();
 
-                  // Send will not return anything. The failure happens in the handler.
                   vertx.eventBus().send(CHANNEL, message);
 
                   vertx.setTimer(
@@ -171,7 +161,6 @@ final class AbstractLcVerticleTest {
                               assertThat(MDC.get("trace_id")).isNull();
                               assertThat(MDC.get("parent_span_id")).isNull();
                               assertThat(MDC.get("span_id")).isNull();
-
                               testContext.completeNow();
                             });
                       });
@@ -183,14 +172,26 @@ final class AbstractLcVerticleTest {
     AtomicBoolean handled = new AtomicBoolean(false);
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
-    Consumer<byte[]> mockRandom =
-        bytes -> System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {
+                System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+              }
+            };
 
     AbstractLcVerticle verticle =
         new AbstractLcVerticle(CHANNEL, mockRandom) {
           @Override
-          protected void handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
+            return BasicResponse.CONTINUE;
           }
         };
 
@@ -201,7 +202,7 @@ final class AbstractLcVerticleTest {
                 id -> {
                   Message message = Message.newBuilder().build(); // No traceparent
 
-                  vertx.eventBus().<Message>request(CHANNEL, message).onComplete(ar -> {});
+                  vertx.eventBus().send(CHANNEL, message);
 
                   vertx.setTimer(
                       100,
@@ -220,14 +221,26 @@ final class AbstractLcVerticleTest {
     AtomicBoolean handled = new AtomicBoolean(false);
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
-    Consumer<byte[]> mockRandom =
-        bytes -> System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {
+                System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+              }
+            };
 
     AbstractLcVerticle verticle =
         new AbstractLcVerticle(CHANNEL, mockRandom) {
           @Override
-          protected void handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
+            return BasicResponse.CONTINUE;
           }
         };
 
@@ -240,7 +253,56 @@ final class AbstractLcVerticleTest {
                       Observability.newBuilder().build(); // Empty traceId and spanId
                   Message message = Message.newBuilder().setTraceparent(obs).build();
 
-                  vertx.eventBus().<Message>request(CHANNEL, message).onComplete(ar -> {});
+                  vertx.eventBus().send(CHANNEL, message);
+
+                  vertx.setTimer(
+                      100,
+                      t -> {
+                        testContext.verify(
+                            () -> {
+                              assertThat(handled.get()).isTrue();
+                              testContext.completeNow();
+                            });
+                      });
+                }));
+  }
+
+  @Test
+  void handleMessage_successWithShutdown(VertxTestContext testContext) {
+    AtomicBoolean handled = new AtomicBoolean(false);
+
+    byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {
+                System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+              }
+            };
+
+    AbstractLcVerticle verticle =
+        new AbstractLcVerticle(CHANNEL, mockRandom) {
+          @Override
+          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+            handled.set(true);
+            return BasicResponse.SHUTDOWN;
+          }
+        };
+
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.succeeding(
+                id -> {
+                  Message message = Message.newBuilder().build(); // No traceparent
+
+                  vertx.eventBus().send(CHANNEL, message);
 
                   vertx.setTimer(
                       100,
