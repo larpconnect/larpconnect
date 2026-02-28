@@ -10,10 +10,31 @@ option java_multiple_files = true;
 option java_package = "com.larpconnect.njall.proto";
 option go_package = "com.larpconnect.njall.proto";
 
+message Observability {
+  uint32 version = 1;
+  bytes trace_id = 2; // 16 bytes
+  bytes span_id = 3; // 8 bytes
+  uint32 flags = 4; // 1 byte
+}
+
+message ProtoDef {
+  string protobuf_name = 1;
+  google.protobuf.Any message = 2;
+}
+
+message MimeType {
+  string type = 1;
+  string subtype = 2;
+  bytes content = 3;
+}
+
 message Message {
-  bytes trace_id = 1;
-  string message_type = 2;
-  google.protobuf.Any message = 3;
+  Observability traceparent = 1;
+
+  oneof payload {
+    ProtoDef proto = 2;
+    MimeType mime = 3;
+  }
 }
 
 service MessageService {

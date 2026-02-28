@@ -101,7 +101,11 @@ public final class ServerStartupSteps {
     var latch = new CountDownLatch(1);
     var success = new AtomicBoolean(false);
 
-    var msg = Message.newBuilder().setMessageType("Ping").build();
+    var msg =
+        Message.newBuilder()
+            .setProto(
+                com.larpconnect.njall.proto.ProtoDef.newBuilder().setProtobufName("Ping").build())
+            .build();
 
     vertx
         .eventBus()

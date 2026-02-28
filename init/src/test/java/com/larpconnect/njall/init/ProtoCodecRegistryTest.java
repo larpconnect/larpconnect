@@ -3,7 +3,6 @@ package com.larpconnect.njall.init;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.buffer.Buffer;
@@ -19,9 +18,12 @@ final class ProtoCodecRegistryTest {
     var registry = new ProtoCodecRegistry();
     var original =
         Message.newBuilder()
-            .setTraceId(ByteString.copyFromUtf8("trace-123"))
-            .setMessageType("MyType")
-            .setMessage(Any.pack(Message.getDefaultInstance()))
+            .setTraceparent(
+                com.larpconnect.njall.proto.Observability.newBuilder()
+                    .setTraceId(ByteString.copyFromUtf8("trace-123456789012"))
+                    .build())
+            .setProto(
+                com.larpconnect.njall.proto.ProtoDef.newBuilder().setProtobufName("MyType").build())
             .build();
 
     var buffer = Buffer.buffer();
@@ -35,16 +37,46 @@ final class ProtoCodecRegistryTest {
 
     // We can decode it back to verify correctness
     var decoded = registry.decodeFromWire(0, buffer);
-    assertThat(decoded.getTraceId()).isEqualTo(original.getTraceId());
+    assertThat(decoded.getTraceparent().getTraceId())
+        .isEqualTo(original.getTraceparent().getTraceId());
     // The namespace is prepended during decode
-    assertThat(decoded.getMessageType()).isEqualTo("com.larpconnect.njall.proto.MyType");
-    assertThat(decoded.getMessage()).isEqualTo(original.getMessage());
+    assertThat(decoded.getProto().getProtobufName())
+        .isEqualTo("com.larpconnect.njall.proto.MyType");
+  }
+
+  @Test
+  void decodeFromWire_withoutProtoDef() {
+    var registry = new ProtoCodecRegistry();
+    var original =
+        Message.newBuilder()
+            .setMime(com.larpconnect.njall.proto.MimeType.newBuilder().setType("text").build())
+            .build();
+
+    var buffer = Buffer.buffer();
+    registry.encodeToWire(buffer, original);
+
+    var decoded = registry.decodeFromWire(0, buffer);
+    assertThat(decoded.getMime().getType()).isEqualTo("text");
   }
 
   @Test
   void transform_anyMessage_identity() {
     var registry = new ProtoCodecRegistry();
-    var original = Message.newBuilder().setMessageType("foo").build();
+    var original =
+        Message.newBuilder()
+            .setProto(
+                com.larpconnect.njall.proto.ProtoDef.newBuilder().setProtobufName("foo").build())
+            .build();
+    assertThat(registry.transform(original)).isSameAs(original);
+  }
+
+  @Test
+  void transform_anyMessageWithoutProtoDef_identity() {
+    var registry = new ProtoCodecRegistry();
+    var original =
+        Message.newBuilder()
+            .setMime(com.larpconnect.njall.proto.MimeType.newBuilder().setType("text").build())
+            .build();
     assertThat(registry.transform(original)).isSameAs(original);
   }
 
@@ -62,6 +94,20 @@ final class ProtoCodecRegistryTest {
   }
 
   @Test
+  void decodeFromWire_withInvalidProto() {
+    var registry = new ProtoCodecRegistry();
+    var buffer = Buffer.buffer();
+    buffer.appendShort((short) 0x01);
+    buffer.appendInt(10);
+    // Add 10 bytes of garbage
+    buffer.appendBytes(new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+
+    assertThatThrownBy(() -> registry.decodeFromWire(0, buffer))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Failed to decode protobuf message");
+  }
+
+  @Test
   void name_returnsProtobuf() {
     assertThat(new ProtoCodecRegistry().name()).isEqualTo("protobuf");
   }
@@ -69,5 +115,15 @@ final class ProtoCodecRegistryTest {
   @Test
   void systemCodecID_returnsNegativeOne() {
     assertThat(new ProtoCodecRegistry().systemCodecID()).isEqualTo((byte) -1);
+  }
+
+  @Test
+  void transform_anyMessageWithEmptyProtoDef_identity() {
+    var registry = new ProtoCodecRegistry();
+    var original =
+        Message.newBuilder()
+            .setProto(com.larpconnect.njall.proto.ProtoDef.newBuilder().build())
+            .build();
+    assertThat(registry.transform(original)).isSameAs(original);
   }
 }

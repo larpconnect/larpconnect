@@ -61,7 +61,8 @@ final class WebServerTest {
                       () -> {
                         assertThat(response.statusCode()).isEqualTo(200);
                         var body = response.bodyAsJsonObject();
-                        assertThat(body.getString("messageType")).isEqualTo("Greeting");
+                        assertThat(body.getJsonObject("proto").getString("protobufName"))
+                            .isEqualTo("Greeting");
                         testContext.completeNow();
                       });
                 }));

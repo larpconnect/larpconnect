@@ -31,8 +31,9 @@ final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
 
   @Override
   @AiContract(
-      ensure = "$res.messageType \\text{ starts with } NAMESPACE",
-      implementationHint = "Reads size, parses message, and updates message type.")
+      ensure = "!$res.hasProto() || $res.proto.protobufName \\text{ starts with } NAMESPACE",
+      implementationHint =
+          "Reads size, parses message, and updates message type if using proto payload.")
   public Message decodeFromWire(int pos, Buffer buffer) {
     var currentPos = pos + 2;
 
@@ -44,10 +45,14 @@ final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
     try {
       var message = Message.parseFrom(bytes);
 
-      var originalType = message.getMessageType();
-      var newType = NAMESPACE + originalType;
-
-      return message.toBuilder().setMessageType(newType).build();
+      if (message.hasProto()) {
+        var originalType = message.getProto().getProtobufName();
+        var newType = NAMESPACE + originalType;
+        return message.toBuilder()
+            .setProto(message.getProto().toBuilder().setProtobufName(newType))
+            .build();
+      }
+      return message;
     } catch (InvalidProtocolBufferException e) {
       throw new IllegalArgumentException("Failed to decode protobuf message", e);
     }
