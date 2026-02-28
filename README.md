@@ -60,6 +60,12 @@ To run the server directly via Gradle:
 ./gradlew :server:run
 ```
 
+### Configuration
+
+LarpConnect's configuration can be modified through `config.json`. For detailed information on
+configuration settings, namespacing, and specifying custom configuration files, please refer to the
+[Configuration Guide](docs/configuration.md).
+
 ### Creating a Fatjar
 
 To create a standalone executable jar (fatjar):
