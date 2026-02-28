@@ -6,7 +6,7 @@ spotless {
     format("markdown") {
         target("**/*.md")
         targetExclude("**/build/**")
-        prettier().config(mapOf("parser" to "markdown", "proseWrap" to "always"))
+        prettier().config(mapOf("parser" to "markdown", "proseWrap" to "preserve"))
     }
 }
 
