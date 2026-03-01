@@ -11,6 +11,17 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The deterministic entry point for the LarpConnect application.
+ *
+ * <p>Because LarpConnect relies heavily on the integration of two independent frameworks—Vert.x for
+ * its asynchronous event loop and Guice for its dependency injection—a rigid, coordinated
+ * initialization phase is required to prevent race conditions. This class acts as the bridge
+ * between the standard Java runtime and the asynchronous environment. By isolating the
+ * instantiation of the {@link VerticleService} here, the system ensures that configuration,
+ * bindings, and lifecycle hooks are fully established before any components attempt to deploy or
+ * accept traffic.
+ */
 final class Main {
   private final Logger logger = LoggerFactory.getLogger(Main.class);
   private static final Duration SHUTDOWN_TIMEOUT = Duration.ofMinutes(2);

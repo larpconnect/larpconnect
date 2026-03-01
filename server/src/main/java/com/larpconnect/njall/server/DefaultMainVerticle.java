@@ -15,6 +15,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The root container component responsible for establishing the application's runtime topology.
+ *
+ * <p>In a distributed or heavily asynchronous system like LarpConnect, deploying numerous
+ * independent services (such as HTTP servers and event bus handlers) simultaneously can lead to
+ * partial startup failures that are difficult to diagnose. By forcing all top-level {@link
+ * Verticle} instances to be deployed through this single, centralized parent, the application can
+ * guarantee an "all-or-nothing" startup phase. If any subsystem fails to deploy, this root verticle
+ * fails, cascading the error up and preventing the system from entering a degraded or unpredictable
+ * state.
+ */
 @BuildWith(ServerModule.class)
 final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle {
   private final Logger logger = LoggerFactory.getLogger(DefaultMainVerticle.class);
