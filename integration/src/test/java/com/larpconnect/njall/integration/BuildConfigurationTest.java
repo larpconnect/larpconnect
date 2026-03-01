@@ -7,7 +7,7 @@ import java.lang.reflect.Parameter;
 import org.junit.jupiter.api.Test;
 
 /** Tests to verify that the build configuration is correct. */
-class BuildConfigurationTest {
+final class BuildConfigurationTest {
 
   @Test
   void verifyCompilation_parametersFlagEnabled_preservesParameterNames() throws Exception {
