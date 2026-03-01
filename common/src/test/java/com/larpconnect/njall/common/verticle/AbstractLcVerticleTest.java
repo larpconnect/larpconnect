@@ -40,11 +40,11 @@ final class AbstractLcVerticleTest {
 
   @Test
   void handleMessage_success(VertxTestContext testContext) {
-    AtomicBoolean handled = new AtomicBoolean(false);
-    AtomicReference<byte[]> receivedSpanId = new AtomicReference<>();
-    AtomicReference<String> mdcTraceId = new AtomicReference<>();
-    AtomicReference<String> mdcParentSpanId = new AtomicReference<>();
-    AtomicReference<String> mdcSpanId = new AtomicReference<>();
+    var handled = new AtomicBoolean(false);
+    var receivedSpanId = new AtomicReference<byte[]>();
+    var mdcTraceId = new AtomicReference<String>();
+    var mdcParentSpanId = new AtomicReference<String>();
+    var mdcSpanId = new AtomicReference<String>();
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
     Provider<RandomGenerator> mockRandom =
@@ -116,7 +116,7 @@ final class AbstractLcVerticleTest {
 
   @Test
   void handleMessage_successWithException(VertxTestContext testContext) {
-    AtomicBoolean handled = new AtomicBoolean(false);
+    var handled = new AtomicBoolean(false);
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
     Provider<RandomGenerator> mockRandom =
@@ -169,7 +169,7 @@ final class AbstractLcVerticleTest {
 
   @Test
   void handleMessage_successWithoutTraceparent(VertxTestContext testContext) {
-    AtomicBoolean handled = new AtomicBoolean(false);
+    var handled = new AtomicBoolean(false);
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
     Provider<RandomGenerator> mockRandom =
@@ -218,7 +218,7 @@ final class AbstractLcVerticleTest {
 
   @Test
   void handleMessage_successWithEmptyObservability(VertxTestContext testContext) {
-    AtomicBoolean handled = new AtomicBoolean(false);
+    var handled = new AtomicBoolean(false);
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
     Provider<RandomGenerator> mockRandom =
@@ -269,7 +269,7 @@ final class AbstractLcVerticleTest {
 
   @Test
   void handleMessage_successWithShutdown(VertxTestContext testContext) {
-    AtomicBoolean handled = new AtomicBoolean(false);
+    var handled = new AtomicBoolean(false);
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
     Provider<RandomGenerator> mockRandom =

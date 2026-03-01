@@ -52,8 +52,8 @@ final class MonotonicTimeServiceTest {
 
   @Test
   void startUp_setsBaseTimeAndStartsStopwatch_success() throws Exception {
-    FakeClock clock = new FakeClock(Instant.ofEpochMilli(1000));
-    FakeTicker ticker = new FakeTicker();
+    var clock = new FakeClock(Instant.ofEpochMilli(1000));
+    var ticker = new FakeTicker();
 
     MonotonicTimeService service =
         new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
@@ -67,8 +67,8 @@ final class MonotonicTimeServiceTest {
 
   @Test
   void monotonicNowMillis_notStarted_throwsException() {
-    FakeClock clock = new FakeClock(Instant.ofEpochMilli(1000));
-    FakeTicker ticker = new FakeTicker();
+    var clock = new FakeClock(Instant.ofEpochMilli(1000));
+    var ticker = new FakeTicker();
     MonotonicTimeService service =
         new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
 
@@ -79,8 +79,8 @@ final class MonotonicTimeServiceTest {
 
   @Test
   void shutDown_stopsStopwatch_success() throws Exception {
-    FakeClock clock = new FakeClock(Instant.ofEpochMilli(1000));
-    FakeTicker ticker = new FakeTicker();
+    var clock = new FakeClock(Instant.ofEpochMilli(1000));
+    var ticker = new FakeTicker();
     MonotonicTimeService service =
         new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
     service.startUp();

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
-class MainVerticleTest {
+final class MainVerticleTest {
 
   static final class TestVerticle extends AbstractVerticle {
     final AtomicBoolean started = new AtomicBoolean(false);
