@@ -129,6 +129,8 @@ final class WebServerVerticle extends AbstractVerticle {
               builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
 
               var router = builder.createRouter();
+              router.get("/.well-known/webfinger").handler(this::handleWebfinger);
+
               // Health checks
               HealthChecks hc = HealthChecks.create(vertx);
               hc.register(
@@ -136,6 +138,7 @@ final class WebServerVerticle extends AbstractVerticle {
                   HEALTH_CHECK_TIMEOUT_MS,
                   promise -> promise.complete(Status.OK()));
               router.get("/healthz").handler(HealthCheckHandler.createWithHealthChecks(hc));
+
               vertx
                   .createHttpServer()
                   .requestHandler(router)
@@ -150,6 +153,13 @@ final class WebServerVerticle extends AbstractVerticle {
                       })
                   .onFailure(startPromise::fail);
             });
+  }
+
+  @AiContract(
+      ensure = "ctx.response() \\text{ contains webfinger info}",
+      implementationHint = "Handles webfinger requests")
+  void handleWebfinger(RoutingContext ctx) {
+    ctx.response().end("{}");
   }
 
   // Package-private for testing
