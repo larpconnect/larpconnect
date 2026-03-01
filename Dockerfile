@@ -6,6 +6,9 @@ COPY . .
 RUN ./gradlew :server:shadowJar --no-daemon --stacktrace
 
 FROM ghcr.io/rblaine95/eclipse-temurin:25
+# For most mortals
+EXPOSE 8080
+
 # For Render
 EXPOSE 10000
 WORKDIR /app
