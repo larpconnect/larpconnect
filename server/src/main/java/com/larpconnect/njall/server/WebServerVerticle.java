@@ -14,6 +14,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.openapi.contract.OpenAPIContract;
 import jakarta.inject.Inject;
@@ -125,6 +126,8 @@ final class WebServerVerticle extends AbstractVerticle {
               builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
 
               var router = builder.createRouter();
+              var hc = HealthCheckHandler.create(vertx);
+              router.get("/healthz").handler(hc);
               router.get("/.well-known/webfinger").handler(this::handleWebfinger);
               vertx
                   .createHttpServer()
