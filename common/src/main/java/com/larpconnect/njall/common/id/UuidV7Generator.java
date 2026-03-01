@@ -1,5 +1,6 @@
 package com.larpconnect.njall.common.id;
 
+import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.common.time.TimeService;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -9,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGenerator;
 
 @Singleton
+@BuildWith(IdModule.class)
 final class UuidV7Generator implements IdGenerator {
 
   private static final long MIN_COUNTER = 3L;
