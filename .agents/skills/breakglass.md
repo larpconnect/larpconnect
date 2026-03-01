@@ -36,15 +36,15 @@ Strategies:
   blocks you end up with:
 
   ```
-    public void method() {
-      if (fooCondition) {
-        fooLogic();
-      } else if (barCondition) {
-        barLogic();
-      } else {
-        bazLogic();
-      }
-    }
+  public void method() {
+  if (fooCondition) {
+    fooLogic();
+  } else if (barCondition) {
+    barLogic();
+  } else {
+    bazLogic();
+  }
+  }
   ```
 
   Each of `fooLogic()`, `barLogic()`, and `bazLogic()` may have their own
@@ -56,19 +56,20 @@ Strategies:
   that are impossible to reach. Confirm that they are impossible to reach via
   `./gradlew check` and by mentally reasoning through the function, but if they
   are impossible to reach you may just be able to remove them as dead code.
+
 - **Law of Demeter**: Also called the "one dot rule." If a method is calling
   functions on things that it got from functions of other things, that's a
   strong signal that you need multiple methods. Even something as simple as:
 
   ```
     public void method() {
-      var tmp = foo.fetchValue();
-      var bar = processFoo(tmp);
-      // etc
+    var tmp = foo.fetchValue();
+    var bar = processFoo(tmp);
+    // etc
     }
 
     private Bar processFoo(Foo tmp) {
-      return tmp.bar();
+    return tmp.bar();
     }
   ```
 

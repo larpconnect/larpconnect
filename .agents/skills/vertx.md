@@ -106,8 +106,8 @@ The following ecosystem libraries should be used for their respective domains:
 
 ## Antipatterns
 
-| Instead of                              | Do this                                  | Justification                                               |
-| --------------------------------------- | ---------------------------------------- | ----------------------------------------------------------- |
+|               Instead of                |                 Do this                  |                        Justification                        |
+|-----------------------------------------|------------------------------------------|-------------------------------------------------------------|
 | `Thread.sleep(...)`                     | `vertx.setTimer(..., handler)`           | `Thread.sleep` blocks the Event Loop, halting the system.   |
 | Nested Callbacks (`handler(res -> {})`) | `Future.compose()` or Virtual Threads    | Prevents callback hell and maintains code maintainability.  |
 | Standard JDBC drivers                   | Vert.x Reactive SQL Clients              | Reactive clients do not block threads while awaiting I/O.   |

@@ -3,19 +3,19 @@ plugins {
 }
 
 spotless {
-    format("markdown") {
+    flexmark {
         target("**/*.md")
         targetExclude("**/build/**")
-        prettier().config(mapOf("parser" to "markdown", "proseWrap" to "preserve"))
+        flexmark().emulationProfile("GITHUB_DOC")
     }
 }
 
 tasks.withType<com.diffplug.gradle.spotless.SpotlessTask>().configureEach {
-    if (name.contains("Markdown") && name.contains("Check")) {
+    if ((name.contains("Markdown") || name.contains("Flexmark")) && name.contains("Check")) {
         enabled = false
     }
 }
 
 tasks.named("spotlessCheck") {
-    dependsOn(tasks.matching { it.name.contains("Markdown") && it.name.contains("Check") }.map { it.apply { enabled = false } })
+    dependsOn(tasks.matching { (it.name.contains("Markdown") || it.name.contains("Flexmark")) && it.name.contains("Check") }.map { it.apply { enabled = false } })
 }

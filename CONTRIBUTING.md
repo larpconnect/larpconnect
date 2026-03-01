@@ -52,16 +52,16 @@ If you're new to open source, here are some helpful resources:
 
 ## Getting Started
 
-1.  **Fork the repository** and create your branch from `main`.
-2.  **Branch naming:** Feature branches created by AIs must prefixed with
-    `<ai name>/`, e.g., `jules/`. This does not apply to humans.
-3.  **Set up your environment:** Ensure you have Java 25 installed.
-4.  **Make your changes.**
-5.  **Format your code:** Run `./gradlew spotlessApply` before committing.
-6.  **Verify your changes:** Run `./gradlew check` to execute tests and static
-    analysis.
-7.  **At least once before submitting:** Run `./gradlew build`.
-8.  **Submit a Pull Request.**
+1. **Fork the repository** and create your branch from `main`.
+2. **Branch naming:** Feature branches created by AIs must prefixed with
+   `<ai name>/`, e.g., `jules/`. This does not apply to humans.
+3. **Set up your environment:** Ensure you have Java 25 installed.
+4. **Make your changes.**
+5. **Format your code:** Run `./gradlew spotlessApply` before committing.
+6. **Verify your changes:** Run `./gradlew check` to execute tests and static
+   analysis.
+7. **At least once before submitting:** Run `./gradlew build`.
+8. **Submit a Pull Request.**
 
 ## How to Report a Bug
 
@@ -83,9 +83,9 @@ When filing an issue, please include:
 
 If you have a feature idea:
 
-1.  Open an issue describing the feature.
-2.  Explain why it's needed and how it should work.
-3.  Discuss the proposed implementation with the maintainers.
+1. Open an issue describing the feature.
+2. Explain why it's needed and how it should work.
+3. Discuss the proposed implementation with the maintainers.
 
 ## Code Review Process
 
@@ -111,9 +111,9 @@ highlights include:
 
 ## Commit Message Conventions
 
-1.  **First line:** 74 characters or less, plain text.
-2.  **Body:** Separated by a blank line, written in Markdown.
-3.  **Descriptive:** Clearly explain what was done.
+1. **First line:** 74 characters or less, plain text.
+2. **Body:** Separated by a blank line, written in Markdown.
+3. **Descriptive:** Clearly explain what was done.
 
 ---
 
