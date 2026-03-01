@@ -37,7 +37,7 @@ spotless {
     }
     flexmark {
         target("**/*.md")
-        flexmark().emulationProfile("GITHUB_DOC")
+        flexmark().emulationProfile("GITHUB_DOC").extensions("YamlFrontMatter")
     }
 }
 
