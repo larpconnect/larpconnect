@@ -112,6 +112,21 @@ To verify the service is running:
 curl -v http://localhost:8080/v1/message
 ```
 
+## Inators
+
+To maintain code health this project uses a series of automatic agents that run periodically. These are:
+
+1. Pentiousinator: A build improvement agent that helps improve the gradle system.
+2. Nifftyinator: A cleanup agent that has a detailed list of things to do based on common problems in AI contributions.
+3. Zhongliinator: A contract agent that focuses on keeping the `AiContract` and annotative elements up to date.
+4. Nihiluxinator: A documentation agent tasked with improving and updating the documentation for the project.
+
+These obey the same [AI Policy Restrictions](./AI_POLICY.md) as other agents in this system: everything they do is human reviewed, etc.
+
+They mostly exist to handle the aspects that _other agents_ find difficult. For example, Nifftyinator was built because a lot of 
+older java patterns kept showing up and policing them (or getting agents to respect them) was getting exhausting. So Nifftyinator
+goes and formulaicly applies these, reducing the load a bit on reviewers.
+
 ## License
 
 All source code and comments licensed under Apache 2.0
