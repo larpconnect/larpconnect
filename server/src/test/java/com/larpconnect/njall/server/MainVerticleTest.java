@@ -6,7 +6,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Verticle;
@@ -46,7 +45,9 @@ final class MainVerticleTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                        bindConstant()
+                            .annotatedWith(com.larpconnect.njall.server.annotations.WebPort.class)
+                            .to(0);
                       }
                     }),
             new AbstractModule() {
@@ -86,7 +87,9 @@ final class MainVerticleTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                        bindConstant()
+                            .annotatedWith(com.larpconnect.njall.server.annotations.WebPort.class)
+                            .to(0);
                       }
                     }),
             new AbstractModule() {

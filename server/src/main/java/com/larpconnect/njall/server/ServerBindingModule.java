@@ -5,7 +5,8 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
+import com.larpconnect.njall.server.annotations.OpenApiSpec;
+import com.larpconnect.njall.server.annotations.WebPort;
 import io.vertx.core.Verticle;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Singleton;
@@ -36,7 +37,7 @@ final class ServerBindingModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named("web.port")
+  @WebPort
   int provideWebPort(JsonObject config) {
     String envPort = getenv.apply("PORT");
     if (envPort != null) {
@@ -55,7 +56,7 @@ final class ServerBindingModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named("openapi.spec")
+  @OpenApiSpec
   String provideOpenApiSpec(JsonObject config) {
     var appConfig = config.getJsonObject("larpconnect");
     if (appConfig != null) {
