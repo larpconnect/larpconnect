@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.vertx.core)
     implementation(libs.vertx.config)
     implementation(libs.vertx.web)
+    implementation(libs.vertx.health.check)
     implementation(libs.vertx.openapi)
     implementation(libs.vertx.web.openapi.router)
     implementation(libs.protobuf.java.util)

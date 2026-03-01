@@ -13,7 +13,10 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.healthchecks.HealthChecks;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.openapi.contract.OpenAPIContract;
 import jakarta.inject.Inject;
@@ -34,6 +37,7 @@ import org.slf4j.LoggerFactory;
 final class WebServerVerticle extends AbstractVerticle {
   private static final int DEFAULT_PORT = 8080;
   private static final String DEFAULT_SPEC = "openapi.yaml";
+  private static final int HEALTH_CHECK_TIMEOUT_MS = 1000;
   private final Logger logger = LoggerFactory.getLogger(WebServerVerticle.class);
   private final int port;
   private final String openApiSpec;
@@ -125,6 +129,13 @@ final class WebServerVerticle extends AbstractVerticle {
               builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
 
               var router = builder.createRouter();
+              // Health checks
+              HealthChecks hc = HealthChecks.create(vertx);
+              hc.register(
+                  "server-online",
+                  HEALTH_CHECK_TIMEOUT_MS,
+                  promise -> promise.complete(Status.OK()));
+              router.get("/healthz").handler(HealthCheckHandler.createWithHealthChecks(hc));
               vertx
                   .createHttpServer()
                   .requestHandler(router)
