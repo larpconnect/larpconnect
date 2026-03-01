@@ -3,10 +3,10 @@ plugins {
 }
 
 spotless {
-    format("markdown") {
+    flexmark {
         target("**/*.md")
         targetExclude("**/build/**")
-        prettier().config(mapOf("parser" to "markdown", "proseWrap" to "preserve"))
+        flexmark().emulationProfile("GITHUB_DOC")
     }
 }
 

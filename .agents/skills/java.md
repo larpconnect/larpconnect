@@ -9,9 +9,9 @@ This skill handles working in the modern Java 25 environment.
 1. The system is in Java 25 LTS. It uses gradle with the kotlin DSL. Use Java 25
    features and avoid legacy constructions such as anonymous inner classes. Use
    the stream API, lambdas, and a functional style.
-1. This project has the experimental features enabled. This should be used for
+2. This project has the experimental features enabled. This should be used for
    the structured concurrency features in Java 25.
-1. Primary code must be written in Java 21+. Build files must be written in
+3. Primary code must be written in Java 21+. Build files must be written in
    kotlin. Integration tests may be written in gherkin.
 
 ## Specific Guidance
@@ -182,8 +182,8 @@ functionality should be employed freely.
 This table contans a list of patterns to avoid, as well as the alternative to
 prefer instead:
 
-| Instead of                              | Do this                              | Justification                                |
-| --------------------------------------- | ------------------------------------ | -------------------------------------------- |
+|               Instead of                |               Do this                |                Justification                 |
+|-----------------------------------------|--------------------------------------|----------------------------------------------|
 | `Optional.get()`                        | `Optional.orElseThrow(Supplier)`     | Throw a customized exception from a supplier |
 | `synchronized`                          | `ReentrantLock`                      | Avoid pinning for virtual threads            |
 | `new ArrayList<T>()`                    | `ImmutableList.builder()`            | End result is immutable                      |
