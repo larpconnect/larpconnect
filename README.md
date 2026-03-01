@@ -1,7 +1,7 @@
 # LARPConnect: Connecting LARP Communities
 
 > [!CAUTION]
-> > **DEVELOPMENT STATUS: PRE-ALPHA** This project is **not** ready
+> **DEVELOPMENT STATUS: PRE-ALPHA** This project is **not** ready
 > for production traffic. **DO NOT USE IT IN PRODUCTION.** Core security,
 > stability, and data integrity features are still under active development.
 
