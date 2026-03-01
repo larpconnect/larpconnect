@@ -189,7 +189,7 @@ final class WebServerVerticleTest {
                 response ->
                     testContext.verify(
                         () -> {
-                          assertThat(response.statusCode()).isEqualTo(200);
+                          assertThat(response.statusCode()).isEqualTo(204);
                           testContext.completeNow();
                         })));
   }
