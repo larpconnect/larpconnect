@@ -52,7 +52,7 @@ final class VerticleSetupService {
         .onFailure(
             err -> {
               logger.error("Failed to deploy verticle", err);
-              throw new RuntimeException(
+              throw new IllegalStateException(
                   "Failed to deploy verticle " + verticleClass.getName(), err);
             });
   }
