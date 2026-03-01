@@ -20,6 +20,9 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 dependencies {
+    if (project.name != "parent") {
+        api(project(":parent"))
+    }
     api(libs.slf4j.api)
     constraints {
         implementation(libs.commons.beanutils) {

@@ -10,18 +10,6 @@ dependencies {
     if (project.name != "test") {
         testImplementation(project(":test"))
     }
-    testImplementation(libs.junit.api)
-    testImplementation(libs.junit.params)
-    testImplementation(libs.assertj.core)
-    testImplementation(libs.assertj.guava)
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.junit.jupiter)
-    testImplementation(libs.cucumber.java)
-    testImplementation(libs.cucumber.junit.platform.engine)
-    testImplementation(libs.junit.platform.suite)
-
-    testRuntimeOnly(libs.junit.engine)
-    testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.logback.classic)
 }
 

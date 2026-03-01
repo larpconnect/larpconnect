@@ -6,7 +6,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":parent"))
     api(libs.protobuf.java)
     implementation(libs.google.common.protos)
 }
