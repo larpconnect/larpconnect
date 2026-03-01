@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.ByteString;
 import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
+import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.Message;
 import com.larpconnect.njall.proto.Observability;
 import io.vertx.core.Vertx;
@@ -37,6 +38,113 @@ final class AbstractLcVerticleTest {
   @AfterEach
   void tearDown(VertxTestContext testContext) {
     vertx.close().onComplete(testContext.succeedingThenComplete());
+  }
+
+  @Test
+  void handleMessage_successWithOnlyTraceId(VertxTestContext testContext) {
+    var handled = new AtomicBoolean(false);
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {}
+            };
+    AbstractLcVerticle verticle =
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
+          @Override
+          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+            handled.set(true);
+            return BasicResponse.CONTINUE;
+          }
+        };
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.succeeding(
+                id -> {
+                  Observability obs =
+                      Observability.newBuilder()
+                          .setTraceId(
+                              com.google.protobuf.ByteString.copyFrom(
+                                  new byte[] {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}))
+                          .build();
+                  Message message = Message.newBuilder().setTraceparent(obs).build();
+                  vertx.eventBus().send(CHANNEL, message);
+                  vertx.setTimer(
+                      100,
+                      t ->
+                          testContext.verify(
+                              () -> {
+                                assertThat(handled.get()).isTrue();
+                                testContext.completeNow();
+                              }));
+                }));
+  }
+
+  @Test
+  void handleMessage_successWithOnlySpanId(VertxTestContext testContext) {
+    var handled = new AtomicBoolean(false);
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {}
+            };
+    AbstractLcVerticle verticle =
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
+          @Override
+          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+            handled.set(true);
+            return BasicResponse.CONTINUE;
+          }
+        };
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.succeeding(
+                id -> {
+                  Observability obs =
+                      Observability.newBuilder()
+                          .setSpanId(
+                              com.google.protobuf.ByteString.copyFrom(
+                                  new byte[] {2, 2, 2, 2, 2, 2, 2, 2}))
+                          .build();
+                  Message message = Message.newBuilder().setTraceparent(obs).build();
+                  vertx.eventBus().send(CHANNEL, message);
+                  vertx.setTimer(
+                      100,
+                      t ->
+                          testContext.verify(
+                              () -> {
+                                assertThat(handled.get()).isTrue();
+                                testContext.completeNow();
+                              }));
+                }));
+  }
+
+  @Test
+  void constructor_twoArgs_compilesAndWorks() {
+    IdGenerator mockIdGenerator = () -> UUID.fromString("12345678-1234-1234-1234-123456789abc");
+    AbstractLcVerticle verticle =
+        new AbstractLcVerticle("test-channel", mockIdGenerator) {
+          @Override
+          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+            return BasicResponse.CONTINUE;
+          }
+        };
+    assertThat(verticle).isNotNull();
   }
 
   @Test

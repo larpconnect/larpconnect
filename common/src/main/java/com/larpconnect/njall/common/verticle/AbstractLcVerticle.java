@@ -57,12 +57,8 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
               String spanIdStr = HEX.encode(newSpanId);
 
               try (Closer closer = Closer.create()) {
-                if (traceIdStr != null) {
-                  closer.register(MDC.putCloseable("trace_id", traceIdStr));
-                }
-                if (parentSpanIdStr != null) {
-                  closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
-                }
+                closer.register(MDC.putCloseable("trace_id", traceIdStr));
+                closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
                 closer.register(MDC.putCloseable("span_id", spanIdStr));
 
                 MessageResponse response = handleMessage(newSpanId, finalMessage);
