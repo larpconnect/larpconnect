@@ -2,7 +2,6 @@ package com.larpconnect.njall.common.verticle;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closer;
-import com.google.errorprone.annotations.Var;
 import com.google.protobuf.ByteString;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.Message;
@@ -20,6 +19,8 @@ import org.slf4j.MDC;
 abstract class AbstractLcVerticle extends AbstractVerticle {
   private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
   private static final int SPAN_ID_BYTES = 8;
+  private static final int TRACE_ID_BYTES = 16;
+  private static final byte DEFAULT_SPAN_ID_BYTE = 0x11;
 
   private final String channel;
   private final Provider<RandomGenerator> randomProvider;
@@ -48,51 +49,12 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
               byte[] newSpanId = new byte[SPAN_ID_BYTES];
               randomProvider.get().nextBytes(newSpanId);
 
-              @Var String traceIdStr = null;
-              @Var String parentSpanIdStr = null;
-
-              if (message.hasTraceparent()) {
-                Observability obs = message.getTraceparent();
-                if (!obs.getTraceId().isEmpty()) {
-                  traceIdStr = HEX.encode(obs.getTraceId().toByteArray());
-                }
-                if (!obs.getSpanId().isEmpty()) {
-                  parentSpanIdStr = HEX.encode(obs.getSpanId().toByteArray());
-                }
-              }
-
-              byte[] finalTraceIdBytes = null;
-              byte[] finalParentSpanIdBytes = null;
-
-              if (traceIdStr == null) {
-                UUID uuid = idGenerator.generate();
-                finalTraceIdBytes = new byte[16];
-                ByteBuffer bb = ByteBuffer.wrap(finalTraceIdBytes);
-                bb.putLong(uuid.getMostSignificantBits());
-                bb.putLong(uuid.getLeastSignificantBits());
-                traceIdStr = HEX.encode(finalTraceIdBytes);
-              } else {
-                finalTraceIdBytes = message.getTraceparent().getTraceId().toByteArray();
-              }
-
-              if (parentSpanIdStr == null) {
-                finalParentSpanIdBytes =
-                    new byte[] {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11};
-                parentSpanIdStr = "1111111111111111";
-              } else {
-                finalParentSpanIdBytes = message.getTraceparent().getSpanId().toByteArray();
-              }
-
+              Message finalMessage = ensureObservability(message);
+              String traceIdStr =
+                  HEX.encode(finalMessage.getTraceparent().getTraceId().toByteArray());
+              String parentSpanIdStr =
+                  HEX.encode(finalMessage.getTraceparent().getSpanId().toByteArray());
               String spanIdStr = HEX.encode(newSpanId);
-
-              Observability.Builder obsBuilder =
-                  message.hasTraceparent()
-                      ? message.getTraceparent().toBuilder()
-                      : Observability.newBuilder();
-              obsBuilder.setTraceId(ByteString.copyFrom(finalTraceIdBytes));
-              obsBuilder.setSpanId(ByteString.copyFrom(finalParentSpanIdBytes));
-
-              Message finalMessage = message.toBuilder().setTraceparent(obsBuilder.build()).build();
 
               try (Closer closer = Closer.create()) {
                 if (traceIdStr != null) {
@@ -113,6 +75,33 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
             });
 
     startPromise.complete();
+  }
+
+  private Message ensureObservability(Message message) {
+    Observability.Builder obsBuilder =
+        message.hasTraceparent()
+            ? message.getTraceparent().toBuilder()
+            : Observability.newBuilder();
+
+    if (obsBuilder.getTraceId().isEmpty()) {
+      UUID uuid = idGenerator.generate();
+      byte[] finalTraceIdBytes = new byte[TRACE_ID_BYTES];
+      ByteBuffer bb = ByteBuffer.wrap(finalTraceIdBytes);
+      bb.putLong(uuid.getMostSignificantBits());
+      bb.putLong(uuid.getLeastSignificantBits());
+      obsBuilder.setTraceId(ByteString.copyFrom(finalTraceIdBytes));
+    }
+
+    if (obsBuilder.getSpanId().isEmpty()) {
+      byte[] finalParentSpanIdBytes =
+          new byte[] {
+            DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE,
+            DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE
+          };
+      obsBuilder.setSpanId(ByteString.copyFrom(finalParentSpanIdBytes));
+    }
+
+    return message.toBuilder().setTraceparent(obsBuilder.build()).build();
   }
 
   protected abstract MessageResponse handleMessage(byte[] spanId, Message message);
