@@ -136,6 +136,7 @@ final class WebServerVerticle extends AbstractVerticle {
                   HEALTH_CHECK_TIMEOUT_MS,
                   promise -> promise.complete(Status.OK()));
               router.get("/healthz").handler(HealthCheckHandler.createWithHealthChecks(hc));
+              router.get("/.well-known/webfinger").handler(this::handleWebfinger);
               vertx
                   .createHttpServer()
                   .requestHandler(router)
@@ -174,5 +175,13 @@ final class WebServerVerticle extends AbstractVerticle {
       logger.error("Failed to convert message to JSON", e);
       ctx.fail(e);
     }
+  }
+
+  @AiContract(
+      ensure = "ctx.response() \\text{ contains JSON Webfinger response}",
+      implementationHint = "Returns a valid JSON response for a webfinger query")
+  void handleWebfinger(RoutingContext ctx) {
+    var response = new JsonObject().put("subject", "acct:system@localhost");
+    ctx.json(response);
   }
 }
