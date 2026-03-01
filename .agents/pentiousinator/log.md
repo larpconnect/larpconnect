@@ -11,12 +11,6 @@ lower Java versions.
 
 ## 2026-03-01 - Build Logic Organization
 
-**Learning:** The project uses a set of custom convention plugins in `buildSrc`
-(`larpconnect.java-common`, `larpconnect.quality`, etc.) to enforce standards.
-However, `larpconnect.quality` contained core compiler options (`encoding`,
-`-parameters`) mixed with linting options (`-Werror`, `-Xlint`), which violates
-separation of concerns.
-
 **Action:** Consolidate core compiler options (encoding, parameters) into the
 base Java plugin (`larpconnect.java-common`) and keep `larpconnect.quality`
 focused on linting and analysis tools.
