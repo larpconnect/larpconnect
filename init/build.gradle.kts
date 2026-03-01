@@ -3,13 +3,9 @@ plugins {
 }
 
 dependencies {
-    api(project(":parent"))
     implementation(project(":proto"))
     implementation(project(":common"))
-    implementation(libs.vertx.core)
     implementation(libs.vertx.config)
-    implementation(libs.guice)
-    implementation(libs.guava)
     implementation(libs.protobuf.java)
 
     compileOnly(libs.vertx.codegen)
