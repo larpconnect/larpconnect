@@ -178,4 +178,19 @@ final class WebServerVerticleTest {
     assertThat(unstarted.actualPort()).isEqualTo(8080); // default
     testContext.completeNow();
   }
+
+  @Test
+  void healthcheckEndpoint_succeeds(VertxTestContext testContext) {
+    webClient
+        .get("/healthz")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(204);
+                          testContext.completeNow();
+                        })));
+  }
 }

@@ -39,6 +39,7 @@ vertx-openapi = { module = "io.vertx:vertx-openapi", version.ref = "vertx" }
 vertx-web-openapi-router = { module = "io.vertx:vertx-web-openapi-router", version.ref = "vertx" }
 vertx-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx" }
 vertx-config = { module = "io.vertx:vertx-config", version.ref = "vertx" }
+vertx-healthcheck = { module = "io.vertx:vertx-health-check", version.ref = "vertx" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
