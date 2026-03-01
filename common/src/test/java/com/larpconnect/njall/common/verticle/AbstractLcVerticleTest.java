@@ -10,6 +10,7 @@ import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import jakarta.inject.Provider;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGenerator;
@@ -62,7 +63,8 @@ final class AbstractLcVerticleTest {
             };
 
     AbstractLcVerticle verticle =
-        new AbstractLcVerticle(CHANNEL, mockRandom) {
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
@@ -134,7 +136,8 @@ final class AbstractLcVerticleTest {
             };
 
     AbstractLcVerticle verticle =
-        new AbstractLcVerticle(CHANNEL, mockRandom) {
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
@@ -186,11 +189,19 @@ final class AbstractLcVerticleTest {
               }
             };
 
+    var mdcTraceId = new AtomicReference<String>();
+    var mdcParentSpanId = new AtomicReference<String>();
+    var mdcSpanId = new AtomicReference<String>();
+
     AbstractLcVerticle verticle =
-        new AbstractLcVerticle(CHANNEL, mockRandom) {
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
+            mdcTraceId.set(MDC.get("trace_id"));
+            mdcParentSpanId.set(MDC.get("parent_span_id"));
+            mdcSpanId.set(MDC.get("span_id"));
             return BasicResponse.CONTINUE;
           }
         };
@@ -210,6 +221,13 @@ final class AbstractLcVerticleTest {
                         testContext.verify(
                             () -> {
                               assertThat(handled.get()).isTrue();
+                              assertThat(mdcTraceId.get())
+                                  .isEqualTo("12345678123412341234123456789abc");
+                              assertThat(mdcParentSpanId.get()).isEqualTo("1111111111111111");
+                              assertThat(mdcSpanId.get()).isEqualTo("0102030405060708");
+                              assertThat(MDC.get("trace_id")).isNull();
+                              assertThat(MDC.get("parent_span_id")).isNull();
+                              assertThat(MDC.get("span_id")).isNull();
                               testContext.completeNow();
                             });
                       });
@@ -235,11 +253,19 @@ final class AbstractLcVerticleTest {
               }
             };
 
+    var mdcTraceId = new AtomicReference<String>();
+    var mdcParentSpanId = new AtomicReference<String>();
+    var mdcSpanId = new AtomicReference<String>();
+
     AbstractLcVerticle verticle =
-        new AbstractLcVerticle(CHANNEL, mockRandom) {
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
+            mdcTraceId.set(MDC.get("trace_id"));
+            mdcParentSpanId.set(MDC.get("parent_span_id"));
+            mdcSpanId.set(MDC.get("span_id"));
             return BasicResponse.CONTINUE;
           }
         };
@@ -261,6 +287,13 @@ final class AbstractLcVerticleTest {
                         testContext.verify(
                             () -> {
                               assertThat(handled.get()).isTrue();
+                              assertThat(mdcTraceId.get())
+                                  .isEqualTo("12345678123412341234123456789abc");
+                              assertThat(mdcParentSpanId.get()).isEqualTo("1111111111111111");
+                              assertThat(mdcSpanId.get()).isEqualTo("0102030405060708");
+                              assertThat(MDC.get("trace_id")).isNull();
+                              assertThat(MDC.get("parent_span_id")).isNull();
+                              assertThat(MDC.get("span_id")).isNull();
                               testContext.completeNow();
                             });
                       });
@@ -286,11 +319,19 @@ final class AbstractLcVerticleTest {
               }
             };
 
+    var mdcTraceId = new AtomicReference<String>();
+    var mdcParentSpanId = new AtomicReference<String>();
+    var mdcSpanId = new AtomicReference<String>();
+
     AbstractLcVerticle verticle =
-        new AbstractLcVerticle(CHANNEL, mockRandom) {
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
+            mdcTraceId.set(MDC.get("trace_id"));
+            mdcParentSpanId.set(MDC.get("parent_span_id"));
+            mdcSpanId.set(MDC.get("span_id"));
             return BasicResponse.SHUTDOWN;
           }
         };
@@ -310,6 +351,13 @@ final class AbstractLcVerticleTest {
                         testContext.verify(
                             () -> {
                               assertThat(handled.get()).isTrue();
+                              assertThat(mdcTraceId.get())
+                                  .isEqualTo("12345678123412341234123456789abc");
+                              assertThat(mdcParentSpanId.get()).isEqualTo("1111111111111111");
+                              assertThat(mdcSpanId.get()).isEqualTo("0102030405060708");
+                              assertThat(MDC.get("trace_id")).isNull();
+                              assertThat(MDC.get("parent_span_id")).isNull();
+                              assertThat(MDC.get("span_id")).isNull();
                               testContext.completeNow();
                             });
                       });
