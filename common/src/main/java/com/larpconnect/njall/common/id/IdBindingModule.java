@@ -3,7 +3,7 @@ package com.larpconnect.njall.common.id;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.larpconnect.njall.common.annotations.InstallInstead;
-import java.security.SecureRandom;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
 
 @InstallInstead(IdModule.class)
@@ -16,8 +16,7 @@ final class IdBindingModule extends AbstractModule {
   }
 
   @Provides
-  @jakarta.inject.Singleton
   RandomGenerator provideRandomGenerator() {
-    return new SecureRandom();
+    return ThreadLocalRandom.current();
   }
 }
