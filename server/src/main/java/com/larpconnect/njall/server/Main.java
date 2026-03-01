@@ -12,14 +12,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The main entry point for the LarpConnect application.
+ * The deterministic entry point for the LarpConnect application.
  *
- * <p>This class is responsible for bootstrapping the application by initializing the Vert.x and
- * Guice dependency injection frameworks. It constructs the primary component tree by creating a
- * {@link VerticleService} configured with the application's root Guice modules, then relies on that
- * service to manage the lifecycle and deployment of the root {@link MainVerticle}. It also attaches
- * shutdown hooks to gracefully stop the Vert.x instance and any deployed verticles when the Java
- * process receives a termination signal.
+ * <p>Because LarpConnect relies heavily on the integration of two independent frameworks—Vert.x for
+ * its asynchronous event loop and Guice for its dependency injection—a rigid, coordinated
+ * initialization phase is required to prevent race conditions. This class acts as the bridge
+ * between the standard Java runtime and the asynchronous environment. By isolating the
+ * instantiation of the {@link VerticleService} here, the system ensures that configuration,
+ * bindings, and lifecycle hooks are fully established before any components attempt to deploy or
+ * accept traffic.
  */
 final class Main {
   private final Logger logger = LoggerFactory.getLogger(Main.class);

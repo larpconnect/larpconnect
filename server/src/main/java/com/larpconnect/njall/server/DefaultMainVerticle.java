@@ -16,14 +16,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The primary container component that oversees the deployment of all other Vert.x verticles within
- * the application.
+ * The root container component responsible for establishing the application's runtime topology.
  *
- * <p>This class receives a pre-constructed set of {@link Verticle} instances from the Guice
- * dependency injection framework. During its startup phase, it asynchronously deploys each of these
- * child verticles to the Vert.x instance in parallel, tracking their individual deployment IDs. The
- * deployment is considered successful only when all child verticles have been fully initialized and
- * deployed.
+ * <p>In a distributed or heavily asynchronous system like LarpConnect, deploying numerous
+ * independent services (such as HTTP servers and event bus handlers) simultaneously can lead to
+ * partial startup failures that are difficult to diagnose. By forcing all top-level {@link
+ * Verticle} instances to be deployed through this single, centralized parent, the application can
+ * guarantee an "all-or-nothing" startup phase. If any subsystem fails to deploy, this root verticle
+ * fails, cascading the error up and preventing the system from entering a degraded or unpredictable
+ * state.
  */
 @BuildWith(ServerModule.class)
 final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle {
