@@ -15,6 +15,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The primary container component that oversees the deployment of all other Vert.x verticles within
+ * the application.
+ *
+ * <p>This class receives a pre-constructed set of {@link Verticle} instances from the Guice
+ * dependency injection framework. During its startup phase, it asynchronously deploys each of these
+ * child verticles to the Vert.x instance in parallel, tracking their individual deployment IDs. The
+ * deployment is considered successful only when all child verticles have been fully initialized and
+ * deployed.
+ */
 @BuildWith(ServerModule.class)
 final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle {
   private final Logger logger = LoggerFactory.getLogger(DefaultMainVerticle.class);

@@ -11,6 +11,16 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The main entry point for the LarpConnect application.
+ *
+ * <p>This class is responsible for bootstrapping the application by initializing the Vert.x and
+ * Guice dependency injection frameworks. It constructs the primary component tree by creating a
+ * {@link VerticleService} configured with the application's root Guice modules, then relies on that
+ * service to manage the lifecycle and deployment of the root {@link MainVerticle}. It also attaches
+ * shutdown hooks to gracefully stop the Vert.x instance and any deployed verticles when the Java
+ * process receives a termination signal.
+ */
 final class Main {
   private final Logger logger = LoggerFactory.getLogger(Main.class);
   private static final Duration SHUTDOWN_TIMEOUT = Duration.ofMinutes(2);
