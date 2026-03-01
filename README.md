@@ -125,7 +125,7 @@ To maintain code health this project uses a series of automatic agents that run 
 
 These obey the same [AI Policy Restrictions](./AI_POLICY.md) as other agents in this system: everything they do is human reviewed, etc.
 
-They mostly exist to handle the aspects that _other agents_ find difficult. For example, Nifftyinator was built because a lot of 
+They mostly exist to handle the aspects that _other agents_ find difficult. For example, Nifftyinator was built because a lot of
 older java patterns kept showing up and policing them (or getting agents to respect them) was getting exhausting. So Nifftyinator
 goes and formulaicly applies these, reducing the load a bit on reviewers.
 
