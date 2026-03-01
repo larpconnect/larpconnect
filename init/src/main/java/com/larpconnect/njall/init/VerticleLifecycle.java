@@ -14,6 +14,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -51,8 +52,10 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
       var configResource = System.getProperty("njall.config.resource", "config.json");
       var url = Resources.getResource(configResource);
       defaultConfig = new JsonObject(Resources.toString(url, StandardCharsets.UTF_8));
-    } catch (IllegalArgumentException | IOException e) {
-      throw new RuntimeException("Failed to load default config", e);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Failed to load default config", e);
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to load default config", e);
     }
 
     // Create temp Vertx for config loading
@@ -73,11 +76,11 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
       config = future.get(CONFIG_LOAD_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new RuntimeException("Interrupted while loading config", e);
+      throw new IllegalStateException("Interrupted while loading config", e);
     } catch (ExecutionException e) {
-      throw new RuntimeException("Failed to load config", e);
+      throw new IllegalStateException("Failed to load config", e);
     } catch (TimeoutException e) {
-      throw new RuntimeException("Timed out loading config", e);
+      throw new IllegalStateException("Timed out loading config", e);
     } finally {
       tempVertx.close();
     }
