@@ -74,7 +74,8 @@ To run the server directly via Gradle:
 ### Configuration
 
 LarpConnect's configuration can be modified through `config.json`. For detailed
-information on configuration settings, namespacing, and specifying custom
+information on configuration settings, environment variables (like `PORT`),
+namespacing, and specifying custom
 configuration files, please refer to the
 [Configuration Guide](docs/configuration.md).
 
