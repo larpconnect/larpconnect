@@ -47,6 +47,11 @@ Currently, LarpConnect supports the following configuration properties:
   change this if port 8080 is already in use by another application on your
   system.
 
+  > [!NOTE]
+  > The `PORT` environment variable takes precedence over the `web.port` setting
+  > in `config.json`. This is commonly used in cloud deployments. If `PORT` is
+  > not set or not a valid integer, the application falls back to `web.port`.
+
 ### `openapi.spec`
 
 - **Type:** String
