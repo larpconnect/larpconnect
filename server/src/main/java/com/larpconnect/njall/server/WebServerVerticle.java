@@ -4,11 +4,12 @@ import static com.google.common.io.Closeables.close;
 import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 
 import com.google.errorprone.annotations.Var;
-import com.google.inject.name.Named;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.server.annotations.OpenApiSpec;
+import com.larpconnect.njall.server.annotations.WebPort;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
@@ -59,8 +60,8 @@ final class WebServerVerticle extends AbstractVerticle {
 
   @Inject
   WebServerVerticle(
-      @Named("web.port") int port,
-      @Named("openapi.spec") String openApiSpec,
+      @WebPort int port,
+      @OpenApiSpec String openApiSpec,
       Optional<Consumer<Integer>> portListener) {
     this(port, openApiSpec, m -> JsonFormat.printer().print(m), portListener);
   }
