@@ -38,6 +38,11 @@ The protocol variation here is an implementation of some ideas I had earlier for
 and we'll see how those play out in practice. This design is not supposed to be backwards compatible with AP as it
 is used today, but more looking forward to what else can be done in this space.
 
+
+## Features
+
+(TBD)
+
 ## General Architecture
 
 The system is designed to be split into **Verticles**. Each verticle is designed to work a bit like an actor
@@ -58,11 +63,72 @@ be allowed for with strict ActivityPub implementations. Still, I believe that th
 build compatibility with for other AP systems should they wish to do so, it is just that it is not our goal to be able
 to receive messages from other services that don't conform to our limited structure.
 
+### Architecture Notes
+
+For this the primary design involves four core pieces:
+
+1. The server (written in Java and based on Vert.x)
+2. The database (PGSQL, though other databases can be used in test)
+3. The queue (RabbitMQ, though other queues can be used in test)
+4. The API specification, which is OpenAPI + Protobuf.
+
+We'll use some sort of ORM layer here, but what that looks like is TBD.
+
 ### Testing
 
 Changes MUST be thoroughly tested. API features SHOULD have integration tests written in cucumber, but everything must
 have some combination of unit and integration tests.
 
 The project, to this end, enforces extremely aggressive testing requirements: 80% instruction, 90% branch coverage. This
-means that, as you write code, you need to have tests go in on the same commit.
+means that, as you write code, you need to have tests go in on the same commit. 
+
+### Code Quality
+
+Code quality is enforced via several mechanisms.
+
+#### Spotless + Google Java Standards
+
+This ensures that all of the code that is submitted follows a (relatively) consistent set of standards. This is not 
+sufficient, but it cleans up a lot of little things like whitespace and imports. 
+
+#### Checkstyle
+
+Checkstyle enforces a lot of basic things around visibility and some small things that AIs tend to be _very_ bad about
+doing that I don't want for the sake of consistency.
+
+#### SpotBugs
+
+Catches a lot of standard bug patterns. 
+
+#### ArchUnit
+
+This enforces some of the heavier weight requirements that, again, AIs have trouble following. Often things around
+visibility or the "out or down" dependency requirements. 
+
+### Context Engineering
+
+This project is in some ways an experiment in context engineering. Specifically, it uses a series of annotations in order to direct
+AI agents as to where to look for information, because event driven architectures are honestly hell for agents to navigate
+successfully in a lot of ways.
+
+#### Annotations
+
+To do this we use a few different annotations:
+
+* `@AiContract` is the core annotation. It defines the "contract" by which a method does things. Think of it as telling the AI
+  "these are the invariants, the guarantees, that we expect here." Basically ersatz design by contract.
+* `@InstallInstead` since this is a _multimodule_ system we need the ability to prompt it "yes, I know this is bound in module Foo, but
+  you really need to install module Bar. I promise."
+* `@BuildWith` says "yes this class has a private constructor, I want you to go over here and install this module in order to
+  actually do anything."
+* `@DefaultImplementation` says "I only expect there to be one type for this interface, and it is here." We still prefer the explicit
+  _bindings_ to be in modules (hence why we don't use `@ImplementedBy`), but this acts as a hint to agents as to where to go.
+
+That said: _contributors_ are not expected to worry about these. We have agents and humans to help keep them up to date, and the most that
+we expect you to do is delete the annotation if you change the situation that lead to it in the first place. 
+
+#### Skills
+
+We define multiple skills in `.agents/skills/` in the form of markdown files. These are to provide specialized context to agents and let
+them "opt in" to the degree of specialization that they need. 
 
