@@ -41,7 +41,12 @@ public final class ProtoCodecRegistry implements MessageCodec<Message, Message> 
     currentPos += INT_SIZE;
 
     try {
-      var message = Message.parseFrom(io.vertx.core.buffer.impl.BufferImpl.class.cast(buffer).byteBuf().nioBuffer(currentPos, size));
+      var message =
+          Message.parseFrom(
+              io.vertx.core.buffer.impl.BufferImpl.class
+                  .cast(buffer)
+                  .byteBuf()
+                  .nioBuffer(currentPos, size));
 
       if (message.hasProto()) {
         var originalType = message.getProto().getProtobufName();
