@@ -97,52 +97,57 @@ final class WebServerVerticle extends AbstractVerticle {
       },
       implementationHint = "Loads OpenAPI spec, configures RouterBuilder, and starts HttpServer")
   public void start(Promise<Void> startPromise) {
-    @Var Path tempFile;
-    @Var InputStream in = null;
-    try {
-      in = getClass().getClassLoader().getResourceAsStream(openApiSpec);
-      if (in == null) {
-        startPromise.fail(openApiSpec + " not found on classpath");
-        return;
-      }
-      tempFile = Files.createTempFile("openapi", ".yaml");
-      Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
-      tempFile.toFile().deleteOnExit();
-    } catch (IOException e) {
-      startPromise.fail(e);
-      return;
-    } finally {
-      try {
-        close(in, true);
-      } catch (IOException e) {
-        // Should not happen as swallowIOException is true
-      }
-    }
-
-    OpenAPIContract.from(vertx, tempFile.toAbsolutePath().toString())
+    vertx
+        .<String>executeBlocking(
+            () -> {
+              @Var InputStream in = null;
+              try {
+                in = getClass().getClassLoader().getResourceAsStream(openApiSpec);
+                if (in == null) {
+                  throw new IOException(openApiSpec + " not found on classpath");
+                }
+                Path tempFile = Files.createTempFile("openapi", ".yaml");
+                Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                tempFile.toFile().deleteOnExit();
+                return tempFile.toAbsolutePath().toString();
+              } finally {
+                try {
+                  close(in, true);
+                } catch (IOException e) {
+                  // Should not happen as swallowIOException is true
+                }
+              }
+            })
         .onFailure(startPromise::fail)
         .onSuccess(
-            contract -> {
-              var builder = RouterBuilder.create(vertx, contract);
-              builder.getRoute("MessageService_GetMessage").addHandler(this::handleGetMessage);
-
-              var router = builder.createRouter();
-              var hc = HealthCheckHandler.create(vertx);
-              router.get("/healthz").handler(hc);
-              router.get("/.well-known/webfinger").handler(this::handleWebfinger);
-              vertx
-                  .createHttpServer()
-                  .requestHandler(router)
-                  .listen(port)
+            tempFilePath -> {
+              OpenAPIContract.from(vertx, tempFilePath)
+                  .onFailure(startPromise::fail)
                   .onSuccess(
-                      server -> {
-                        this.server = server;
-                        int actualPort = server.actualPort();
-                        portListener.ifPresent(listener -> listener.accept(actualPort));
-                        logger.info("HTTP server started on port {}", actualPort);
-                        startPromise.complete();
-                      })
-                  .onFailure(startPromise::fail);
+                      contract -> {
+                        var builder = RouterBuilder.create(vertx, contract);
+                        builder
+                            .getRoute("MessageService_GetMessage")
+                            .addHandler(this::handleGetMessage);
+
+                        var router = builder.createRouter();
+                        var hc = HealthCheckHandler.create(vertx);
+                        router.get("/healthz").handler(hc);
+                        router.get("/.well-known/webfinger").handler(this::handleWebfinger);
+                        vertx
+                            .createHttpServer()
+                            .requestHandler(router)
+                            .listen(port)
+                            .onSuccess(
+                                server -> {
+                                  this.server = server;
+                                  int actualPort = server.actualPort();
+                                  portListener.ifPresent(listener -> listener.accept(actualPort));
+                                  logger.info("HTTP server started on port {}", actualPort);
+                                  startPromise.complete();
+                                })
+                            .onFailure(startPromise::fail);
+                      });
             });
   }
 
