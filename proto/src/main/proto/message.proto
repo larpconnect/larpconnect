@@ -28,8 +28,24 @@ message MimeType {
   bytes content = 3;
 }
 
+enum AuthStatus {
+  SUCCEEDED = 0;
+  FAILED = 1;
+}
+
+message Authentication {
+  string username = 1;
+  AuthStatus status = 2;
+}
+
+message Header {
+  repeated string accept = 1;
+}
+
 message Message {
   Observability traceparent = 1;
+  Authentication authentication = 4;
+  Header header = 5;
 
   oneof payload {
     ProtoDef proto = 2;
