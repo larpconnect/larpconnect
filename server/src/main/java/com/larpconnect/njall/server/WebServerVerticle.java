@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 final class WebServerVerticle extends AbstractVerticle {
   private static final int DEFAULT_PORT = 8080;
   private static final String DEFAULT_SPEC = "openapi.yaml";
+  private static final JsonFormat.Printer PRINTER = JsonFormat.printer();
   private final Logger logger = LoggerFactory.getLogger(WebServerVerticle.class);
   private final int port;
   private final String openApiSpec;
@@ -63,11 +64,11 @@ final class WebServerVerticle extends AbstractVerticle {
       @WebPort int port,
       @OpenApiSpec String openApiSpec,
       Optional<Consumer<Integer>> portListener) {
-    this(port, openApiSpec, m -> JsonFormat.printer().print(m), portListener);
+    this(port, openApiSpec, m -> PRINTER.print(m), portListener);
   }
 
   WebServerVerticle(int port, String openApiSpec) {
-    this(port, openApiSpec, m -> JsonFormat.printer().print(m), Optional.empty());
+    this(port, openApiSpec, m -> PRINTER.print(m), Optional.empty());
   }
 
   WebServerVerticle(
