@@ -38,7 +38,6 @@ The protocol variation here is an implementation of some ideas I had earlier for
 and we'll see how those play out in practice. This design is not supposed to be backwards compatible with AP as it
 is used today, but more looking forward to what else can be done in this space.
 
-
 ## Features
 
 (TBD)
@@ -80,7 +79,7 @@ Changes MUST be thoroughly tested. API features SHOULD have integration tests wr
 have some combination of unit and integration tests.
 
 The project, to this end, enforces extremely aggressive testing requirements: 80% instruction, 90% branch coverage. This
-means that, as you write code, you need to have tests go in on the same commit. 
+means that, as you write code, you need to have tests go in on the same commit.
 
 ### Code Quality
 
@@ -88,8 +87,8 @@ Code quality is enforced via several mechanisms.
 
 #### Spotless + Google Java Standards
 
-This ensures that all of the code that is submitted follows a (relatively) consistent set of standards. This is not 
-sufficient, but it cleans up a lot of little things like whitespace and imports. 
+This ensures that all of the code that is submitted follows a (relatively) consistent set of standards. This is not
+sufficient, but it cleans up a lot of little things like whitespace and imports.
 
 #### Checkstyle
 
@@ -98,12 +97,12 @@ doing that I don't want for the sake of consistency.
 
 #### SpotBugs
 
-Catches a lot of standard bug patterns. 
+Catches a lot of standard bug patterns.
 
 #### ArchUnit
 
 This enforces some of the heavier weight requirements that, again, AIs have trouble following. Often things around
-visibility or the "out or down" dependency requirements. 
+visibility or the "out or down" dependency requirements.
 
 ### Context Engineering
 
@@ -125,10 +124,10 @@ To do this we use a few different annotations:
   _bindings_ to be in modules (hence why we don't use `@ImplementedBy`), but this acts as a hint to agents as to where to go.
 
 That said: _contributors_ are not expected to worry about these. We have agents and humans to help keep them up to date, and the most that
-we expect you to do is delete the annotation if you change the situation that lead to it in the first place. 
+we expect you to do is delete the annotation if you change the situation that lead to it in the first place.
 
 #### Skills
 
 We define multiple skills in `.agents/skills/` in the form of markdown files. These are to provide specialized context to agents and let
-them "opt in" to the degree of specialization that they need. 
+them "opt in" to the degree of specialization that they need.
 

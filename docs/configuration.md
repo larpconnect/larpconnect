@@ -48,9 +48,10 @@ Currently, LarpConnect supports the following configuration properties:
   system.
 
   > [!NOTE]
-  > The `PORT` environment variable takes precedence over the `web.port` setting
-  > in `config.json`. This is commonly used in cloud deployments. If `PORT` is
-  > not set or not a valid integer, the application falls back to `web.port`.
+  > The standard `PORT` environment variable takes precedence over the `web.port` setting
+  > configured in `config.json`. This is implemented in `ServerBindingModule.java` and serves
+  > as a common pattern for cloud deployments (such as Render or Heroku). If `PORT` is not set
+  > or is not a valid integer, the application falls back to the `web.port` setting.
 
 ### `openapi.spec`
 
