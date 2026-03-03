@@ -25,8 +25,3 @@ application {
 tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
     excludeFilter.set(file("config/spotbugs/exclude.xml"))
 }
-
-tasks.register<JavaExec>("benchmark") {
-    mainClass.set("com.larpconnect.njall.server.WebServerVerticleBenchmark")
-    classpath = sourceSets["test"].runtimeClasspath
-}
