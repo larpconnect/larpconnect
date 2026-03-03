@@ -21,6 +21,12 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
   private static final int SPAN_ID_BYTES = 8;
   private static final int TRACE_ID_BYTES = 16;
   private static final byte DEFAULT_SPAN_ID_BYTE = 0x11;
+  private static final ByteString DEFAULT_SPAN_ID =
+      ByteString.copyFrom(
+          new byte[] {
+            DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE,
+            DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE
+          });
 
   private final String channel;
   private final Provider<RandomGenerator> randomProvider;
@@ -89,12 +95,7 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
     }
 
     if (obsBuilder.getSpanId().isEmpty()) {
-      byte[] finalParentSpanIdBytes =
-          new byte[] {
-            DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE,
-            DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE
-          };
-      obsBuilder.setSpanId(ByteString.copyFrom(finalParentSpanIdBytes));
+      obsBuilder.setSpanId(DEFAULT_SPAN_ID);
     }
 
     return message.toBuilder().setTraceparent(obsBuilder.build()).build();
