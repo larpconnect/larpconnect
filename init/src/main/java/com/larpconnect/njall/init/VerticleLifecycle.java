@@ -34,6 +34,11 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   private final AtomicReference<VerticleSetupService> setupServiceRef = new AtomicReference<>();
   private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
 
+  VerticleLifecycle(Vertx vertx, io.vertx.core.spi.VerticleFactory verticleFactory) {
+    this.modules = ImmutableList.of();
+    this.vertxRef.set(vertx);
+  }
+
   VerticleLifecycle(List<Module> modules) {
     this.modules = ImmutableList.copyOf(modules);
   }
