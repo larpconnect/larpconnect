@@ -85,11 +85,13 @@ final class VerticleLifecycleTest {
     vertxRef.set(mockVertx);
 
     Thread.currentThread().interrupt();
-    lifecycle.shutDown();
-
-    assertThat(Thread.currentThread().isInterrupted()).isTrue();
-    // Clear interrupt status for other tests
-    Thread.interrupted();
+    try {
+      lifecycle.shutDown();
+      assertThat(Thread.currentThread().isInterrupted()).isTrue();
+    } finally {
+      // Clear interrupt status for other tests
+      Thread.interrupted();
+    }
   }
 
   static final class TestVerticle extends AbstractVerticle {}
