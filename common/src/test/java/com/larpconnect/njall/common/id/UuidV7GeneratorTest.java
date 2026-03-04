@@ -181,9 +181,11 @@ final class UuidV7GeneratorTest {
     fakeRandom.nextBoundedLongVal = 0xBCDL; // counter
     fakeRandom.nextLongVal = 0xAAAAAAAAAAAAAAAAL; // 101010... pattern
 
-    // UUIDv7 bits:
-    // MSB: 48 bit timestamp + 4 bit version + 12 bit counter/random
-    // LSB: 2 bit variant + 62 bit random
+    /*
+     * UUIDv7 bits:
+     * MSB: 48 bit timestamp + 4 bit version + 12 bit counter/random
+     * LSB: 2 bit variant + 62 bit random
+     */
     UUID id = generator.generate();
 
     long msb = id.getMostSignificantBits();
