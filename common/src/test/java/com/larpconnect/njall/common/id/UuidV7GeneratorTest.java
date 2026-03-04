@@ -62,7 +62,7 @@ final class UuidV7GeneratorTest {
   void generate_validId_success() {
     // Check initial generator state: time = 1000, counter = 10.
     // Call generate: time is still 1000, so counter increments by 7 to 17.
-    UUID id = generator.generate();
+    var id = generator.generate();
 
     assertThat(id.version()).isEqualTo(7);
     assertThat(id.variant()).isEqualTo(2);
@@ -79,9 +79,9 @@ final class UuidV7GeneratorTest {
 
   @Test
   void generate_sameTime_incrementsCounter() {
-    UUID id1 = generator.generate(); // time = 1000, counter = 17
-    UUID id2 = generator.generate(); // time = 1000, counter = 24
-    UUID id3 = generator.generate(); // time = 1000, counter = 31
+    var id1 = generator.generate(); // time = 1000, counter = 17
+    var id2 = generator.generate(); // time = 1000, counter = 24
+    var id3 = generator.generate(); // time = 1000, counter = 31
 
     assertThat(id1.getMostSignificantBits() & 0xFFF).isEqualTo(17L);
     assertThat(id2.getMostSignificantBits() & 0xFFF).isEqualTo(24L);
@@ -93,7 +93,7 @@ final class UuidV7GeneratorTest {
     // Generate until we wrap 4096
     long lastCounter = 0;
     for (int i = 0; i < 600; i++) {
-      UUID id = generator.generate();
+      var id = generator.generate();
       long counter = id.getMostSignificantBits() & 0xFFF;
       if (i > 0) {
         assertThat(counter).isEqualTo((lastCounter + 7) & 0xFFF);
@@ -105,7 +105,7 @@ final class UuidV7GeneratorTest {
   @Test
   void generate_timeIncreases_reinitializesCounter() {
     // First generation (time = 1000, counter = 17)
-    UUID id1 = generator.generate();
+    var id1 = generator.generate();
     assertThat(id1.getMostSignificantBits() & 0xFFF).isEqualTo(17L);
 
     // Advance time
@@ -113,19 +113,19 @@ final class UuidV7GeneratorTest {
     fakeRandom.nextBoundedLongVal = 50L;
 
     // Time has increased, counter should be re-initialized from random (50L)
-    UUID id2 = generator.generate();
+    var id2 = generator.generate();
     assertThat(id2.getMostSignificantBits() >>> 16).isEqualTo(1001L);
     assertThat(id2.getMostSignificantBits() & 0xFFF).isEqualTo(50L);
 
     // Same time, increment by 7
-    UUID id3 = generator.generate();
+    var id3 = generator.generate();
     assertThat(id3.getMostSignificantBits() >>> 16).isEqualTo(1001L);
     assertThat(id3.getMostSignificantBits() & 0xFFF).isEqualTo(57L);
   }
 
   @Test
   void generate_timeGoesBackwards_usesLastTime() {
-    UUID id1 = generator.generate(); // time = 1000, counter = 17
+    var id1 = generator.generate(); // time = 1000, counter = 17
     assertThat(id1.getMostSignificantBits() >>> 16).isEqualTo(1000L);
     assertThat(id1.getMostSignificantBits() & 0xFFF).isEqualTo(17L);
 
@@ -133,7 +133,7 @@ final class UuidV7GeneratorTest {
     fakeTimeService.timeMs = 999L;
 
     // Should use previous time and increment counter
-    UUID id2 = generator.generate();
+    var id2 = generator.generate();
     assertThat(id2.getMostSignificantBits() >>> 16).isEqualTo(1000L); // Time preserved
     assertThat(id2.getMostSignificantBits() & 0xFFF).isEqualTo(24L); // Counter incremented
   }
@@ -147,8 +147,8 @@ final class UuidV7GeneratorTest {
     int numThreads = 10;
     int numIdsPerThread = 1000;
 
-    CountDownLatch latch = new CountDownLatch(1);
-    CountDownLatch doneLatch = new CountDownLatch(numThreads);
+    var latch = new CountDownLatch(1);
+    var doneLatch = new CountDownLatch(numThreads);
     var ids = ConcurrentHashMap.<UUID>newKeySet();
 
     for (int i = 0; i < numThreads; i++) {
@@ -186,7 +186,7 @@ final class UuidV7GeneratorTest {
      * MSB: 48 bit timestamp + 4 bit version + 12 bit counter/random
      * LSB: 2 bit variant + 62 bit random
      */
-    UUID id = generator.generate();
+    var id = generator.generate();
 
     long msb = id.getMostSignificantBits();
     long lsb = id.getLeastSignificantBits();

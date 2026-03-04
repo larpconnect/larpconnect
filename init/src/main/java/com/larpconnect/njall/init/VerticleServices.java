@@ -4,7 +4,7 @@ import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 
 import com.google.inject.Module;
 import com.larpconnect.njall.common.annotations.AiContract;
-import java.util.List;
+import com.google.common.collect.ImmutableList;
 
 public interface VerticleServices {
   @AiContract(
@@ -12,7 +12,7 @@ public interface VerticleServices {
       ensure = {"$res \\neq \\bot", "$res \\text{ is a new VerticleLifecycle}"},
       tags = PURE,
       implementationHint = "Creates a new VerticleService instance with the provided modules.")
-  static VerticleService create(List<Module> modules) {
+  static VerticleService create(ImmutableList<Module> modules) {
     return new VerticleLifecycle(modules);
   }
 }
