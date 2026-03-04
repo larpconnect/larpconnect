@@ -28,6 +28,9 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
             DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE, DEFAULT_SPAN_ID_BYTE
           });
 
+  private static final ThreadLocal<ByteBuffer> TRACE_ID_BUFFER =
+      ThreadLocal.withInitial(() -> ByteBuffer.allocate(TRACE_ID_BYTES));
+
   private final String channel;
   private final Provider<RandomGenerator> randomProvider;
   private final IdGenerator idGenerator;
@@ -87,11 +90,13 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
 
     if (obsBuilder.getTraceId().isEmpty()) {
       UUID uuid = idGenerator.generate();
-      byte[] finalTraceIdBytes = new byte[TRACE_ID_BYTES];
-      ByteBuffer bb = ByteBuffer.wrap(finalTraceIdBytes);
+      ByteBuffer bb = TRACE_ID_BUFFER.get();
+      bb.clear();
+
       bb.putLong(uuid.getMostSignificantBits());
       bb.putLong(uuid.getLeastSignificantBits());
-      obsBuilder.setTraceId(ByteString.copyFrom(finalTraceIdBytes));
+      bb.flip();
+      obsBuilder.setTraceId(ByteString.copyFrom(bb));
     }
 
     if (obsBuilder.getSpanId().isEmpty()) {
