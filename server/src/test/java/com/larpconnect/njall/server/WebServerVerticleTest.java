@@ -139,7 +139,7 @@ final class WebServerVerticleTest {
   void serializationRuntimeException_returns500(Vertx vertx, VertxTestContext testContext) {
     WebServerVerticle.Serializer badSerializer =
         m -> {
-          throw new RuntimeException("test runtime exception");
+          throw new IllegalStateException("test runtime exception");
         };
     AtomicInteger actualPort = new AtomicInteger();
     WebServerVerticle badVerticle =

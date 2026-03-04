@@ -33,7 +33,7 @@ final class DefaultMainVerticleTest {
   static final class FailingVerticle extends AbstractVerticle {
     @Override
     public void start(Promise<Void> startPromise) {
-      startPromise.fail(new RuntimeException("Fail"));
+      startPromise.fail(new IllegalStateException("Fail"));
     }
   }
 

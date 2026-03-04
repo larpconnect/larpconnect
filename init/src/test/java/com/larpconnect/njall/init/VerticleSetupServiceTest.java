@@ -54,7 +54,7 @@ final class VerticleSetupServiceTest {
 
   @Test
   void deploy_failure_throwsRuntimeException() {
-    var failure = new RuntimeException("fail");
+    var failure = new IllegalStateException("fail");
     when(mockVertx.deployVerticle(anyString())).thenReturn(Future.failedFuture(failure));
 
     service.setup(mockVertx, mockInjector);

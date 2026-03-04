@@ -1,5 +1,5 @@
-## 2026-03-04 - Server Main Verticle Exception Cleanup
+## 2025-01-01 - Be Careful With Cruft
 
-**Learning:** When cleaning up WebServerVerticle's start block, changing the `try finally` block with `close(in, true)` to a `try-with-resources` cleans up a lot of code, and we can also use `var` and remove redundant exception handling. Also, in `MonotonicTimeService`, changing `Duration elapsed = stopwatch.elapsed();` to `var elapsed` makes it cleaner. Guice inject can be simplified from `com.google.inject.Inject` to `jakarta.inject.Inject`.
+**Learning:** Pure explanatory comments (`//`) are usually preferred by the maintainer and shouldn't be automatically assumed to be "cruft" just because they only explain what the code is doing without the context of "why". Indiscriminate deletion of comments will fail code review and block merges.
 
-**Action:** Apply cleaner try-with-resources patterns and combine catch blocks where possible to make verticle start up code much leaner and readable. Apply `var` for local variables. Change Guice `@Inject` to Jakarta.
+**Action:** Be very conservative about deleting comments. Focus primarily on the code logic tasks (like `new RuntimeException() -> new CustomException()`) and only delete comments that are extremely obviously auto-generated artifact cruft or directly contradict code.

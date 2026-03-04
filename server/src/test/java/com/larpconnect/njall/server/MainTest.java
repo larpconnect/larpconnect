@@ -63,9 +63,9 @@ final class MainTest {
      * ensure no propagation of exception.
      */
 
-    // Test RuntimeException
+    // Test Exception
     var runtimeService = new TestVerticleService();
-    runtimeService.exceptionToThrow.set(new RuntimeException());
+    runtimeService.exceptionToThrow.set(new IllegalStateException());
     main.shutdown(runtimeService);
   }
 

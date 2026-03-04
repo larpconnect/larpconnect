@@ -134,7 +134,7 @@ final class WebServerTest {
             8080,
             "openapi.yaml",
             m -> {
-              throw new RuntimeException("Unexpected error");
+              throw new IllegalStateException("Unexpected error");
             },
             Optional.empty());
 
