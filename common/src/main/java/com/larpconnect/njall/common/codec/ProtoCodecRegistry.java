@@ -10,6 +10,16 @@ import com.larpconnect.njall.proto.Message;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
+/**
+ * A message codec for transmitting Protocol Buffer {@link Message} objects over the Vert.x event
+ * bus.
+ *
+ * <p>This codec is designed to optimize communication within the system. For local delivery (within
+ * the same JVM), it relies on the immutability of Protocol Buffers and performs an identity
+ * transformation, bypassing serialization overhead. For clustered or remote delivery, it serializes
+ * the message and actively strips out the application's base namespace prefix from the message type
+ * URL to minimize payload size and reduce bandwidth consumption.
+ */
 @Immutable
 public final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
   private static final short VERSION = 0x01;
