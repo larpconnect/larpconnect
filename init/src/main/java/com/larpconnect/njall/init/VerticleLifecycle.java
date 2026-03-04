@@ -13,6 +13,7 @@ import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.spi.VerticleFactory;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +35,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   private final AtomicReference<VerticleSetupService> setupServiceRef = new AtomicReference<>();
   private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
 
-  VerticleLifecycle(Vertx vertx) {
+  VerticleLifecycle(Vertx vertx, VerticleFactory verticleFactory) {
     this.modules = ImmutableList.of();
     this.vertxRef.set(vertx);
   }
