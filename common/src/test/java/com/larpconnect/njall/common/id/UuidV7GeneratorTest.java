@@ -64,7 +64,7 @@ final class UuidV7GeneratorTest {
     // Call generate: time is still 1000, so counter increments by 7 to 17.
     UUID id = generator.generate();
 
-    assertThat(id.version()).isEqualTo(8);
+    assertThat(id.version()).isEqualTo(7);
     assertThat(id.variant()).isEqualTo(2);
 
     long timestamp = id.getMostSignificantBits() >>> 16;
@@ -173,5 +173,35 @@ final class UuidV7GeneratorTest {
     assertThat(done).isTrue();
 
     assertThat(ids).hasSize(numThreads * numIdsPerThread);
+  }
+
+  @Test
+  void generate_validatesBitStructure() {
+    fakeTimeService.timeMs = 0x1234567890ABL; // Use an explicit hex time to easily see in bits
+    fakeRandom.nextBoundedLongVal = 0xBCDL; // counter
+    fakeRandom.nextLongVal = 0xAAAAAAAAAAAAAAAAL; // 101010... pattern
+
+    // UUIDv7 bits:
+    // MSB: 48 bit timestamp + 4 bit version + 12 bit counter/random
+    // LSB: 2 bit variant + 62 bit random
+    UUID id = generator.generate();
+
+    long msb = id.getMostSignificantBits();
+    long lsb = id.getLeastSignificantBits();
+
+    // Validate timestamp (top 48 bits of MSB)
+    assertThat(msb >>> 16).isEqualTo(0x1234567890ABL);
+
+    // Validate version (4 bits in MSB)
+    assertThat((msb >>> 12) & 0xF).isEqualTo(7L);
+
+    // Validate counter (lowest 12 bits of MSB)
+    assertThat(msb & 0xFFF).isEqualTo(0xBCDL);
+
+    // Validate variant (top 2 bits of LSB)
+    assertThat(lsb >>> 62).isEqualTo(2L);
+
+    // Validate random bits (lower 62 bits of LSB)
+    assertThat(lsb & 0x3FFFFFFFFFFFFFFFL).isEqualTo(0xAAAAAAAAAAAAAAAAL & 0x3FFFFFFFFFFFFFFFL);
   }
 }

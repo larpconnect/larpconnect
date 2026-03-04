@@ -18,7 +18,7 @@ final class UuidV7Generator implements IdGenerator {
   private static final long COUNTER_MASK = 0xFFFL;
   private static final long COUNTER_INCREMENT = 7L;
   private static final long TIME_MSB_SHIFT = 16L;
-  private static final long VERSION_BITS = 0x8000L;
+  private static final long VERSION_BITS = 0x7000L;
   private static final long VARIANT_BITS = 0x8000000000000000L;
   private static final long RANDOM_MASK = 0x3FFFFFFFFFFFFFFFL;
 
