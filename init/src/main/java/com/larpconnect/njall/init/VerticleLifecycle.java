@@ -38,6 +38,9 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   VerticleLifecycle(Vertx vertx, VerticleFactory verticleFactory) {
     this.modules = ImmutableList.of();
     this.vertxRef.set(vertx);
+    if (verticleFactory != null) {
+      vertx.registerVerticleFactory(verticleFactory);
+    }
   }
 
   VerticleLifecycle(List<Module> modules) {
