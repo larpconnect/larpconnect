@@ -17,8 +17,7 @@ import io.vertx.core.eventbus.MessageCodec;
  * <p>This codec is designed to optimize communication within the system. For local delivery (within
  * the same JVM), it relies on the immutability of Protocol Buffers and performs an identity
  * transformation, bypassing serialization overhead. For clustered or remote delivery, it serializes
- * the message and actively strips out the application's base namespace prefix from the message type
- * URL to minimize payload size and reduce bandwidth consumption.
+ * using protobuf rather than JSON to minimize payload size and reduce bandwidth consumption.
  */
 @Immutable
 public final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
