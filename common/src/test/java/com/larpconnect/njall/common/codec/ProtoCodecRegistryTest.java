@@ -16,6 +16,12 @@ final class ProtoCodecRegistryTest {
   @Test
   void encodeToWire_validMessage_success() {
     var registry = new ProtoCodecRegistry();
+    var any =
+        com.google.protobuf.Any.newBuilder()
+            .setTypeUrl("com.larpconnect.njall.proto.MyType")
+            .setValue(ByteString.EMPTY)
+            .build();
+
     var original =
         Message.newBuilder()
             .setTraceparent(
@@ -23,7 +29,10 @@ final class ProtoCodecRegistryTest {
                     .setTraceId(ByteString.copyFromUtf8("trace-123456789012"))
                     .build())
             .setProto(
-                com.larpconnect.njall.proto.ProtoDef.newBuilder().setProtobufName("MyType").build())
+                com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                    .setMessage(any)
+                    .setProtobufName("IgnoredOldName")
+                    .build())
             .build();
 
     var buffer = Buffer.buffer();
@@ -39,9 +48,8 @@ final class ProtoCodecRegistryTest {
     var decoded = registry.decodeFromWire(0, buffer);
     assertThat(decoded.getTraceparent().getTraceId())
         .isEqualTo(original.getTraceparent().getTraceId());
-    // The namespace is prepended during decode
-    assertThat(decoded.getProto().getProtobufName())
-        .isEqualTo("com.larpconnect.njall.proto.MyType");
+    // The namespace is stripped during decode
+    assertThat(decoded.getProto().getProtobufName()).isEqualTo("MyType");
   }
 
   @Test
@@ -125,5 +133,31 @@ final class ProtoCodecRegistryTest {
             .setProto(com.larpconnect.njall.proto.ProtoDef.newBuilder().build())
             .build();
     assertThat(registry.transform(original)).isSameAs(original);
+  }
+
+  @Test
+  void decodeFromWire_unexpectedNamespace_notConverted() {
+    var registry = new ProtoCodecRegistry();
+    var any =
+        com.google.protobuf.Any.newBuilder()
+            .setTypeUrl("type.googleapis.com/com.example.other.Namespace")
+            .setValue(ByteString.EMPTY)
+            .build();
+
+    var original =
+        Message.newBuilder()
+            .setProto(
+                com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                    .setMessage(any)
+                    .setProtobufName("OriginalName")
+                    .build())
+            .build();
+
+    var buffer = Buffer.buffer();
+    registry.encodeToWire(buffer, original);
+
+    var decoded = registry.decodeFromWire(0, buffer);
+
+    assertThat(decoded.getProto().getProtobufName()).isEqualTo("OriginalName");
   }
 }

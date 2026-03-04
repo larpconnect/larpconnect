@@ -49,11 +49,14 @@ public final class ProtoCodecRegistry implements MessageCodec<Message, Message> 
                   .nioBuffer(currentPos, size));
 
       if (message.hasProto()) {
-        var originalType = message.getProto().getProtobufName();
-        var newType = NAMESPACE + originalType;
-        return message.toBuilder()
-            .setProto(message.getProto().toBuilder().setProtobufName(newType))
-            .build();
+        var typeUrl = message.getProto().getMessage().getTypeUrl();
+        // Only shortname types in our namespace to save space over the wire.
+        if (typeUrl.startsWith(NAMESPACE)) {
+          var shortName = typeUrl.substring(NAMESPACE.length());
+          return message.toBuilder()
+              .setProto(message.getProto().toBuilder().setProtobufName(shortName).build())
+              .build();
+        }
       }
       return message;
     } catch (InvalidProtocolBufferException e) {
