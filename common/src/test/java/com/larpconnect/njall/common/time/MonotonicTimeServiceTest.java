@@ -10,6 +10,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.concurrent.CountDownLatch;
 import org.junit.jupiter.api.Test;
 
 final class MonotonicTimeServiceTest {
@@ -63,6 +64,37 @@ final class MonotonicTimeServiceTest {
     ticker.advanceNanos(5_000_000L); // 5 ms
 
     assertThat(service.monotonicNowMillis()).isEqualTo(1005L);
+  }
+
+  @Test
+  void monotonicNowMillis_starting_throwsException() throws Exception {
+    var clock = new FakeClock(Instant.ofEpochMilli(1000));
+    var ticker = new FakeTicker();
+    var latch = new CountDownLatch(1);
+    var startedLatch = new CountDownLatch(1);
+
+    MonotonicTimeService service =
+        new MonotonicTimeService(
+            clock,
+            () -> {
+              startedLatch.countDown();
+              try {
+                latch.await();
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+              }
+              return Stopwatch.createUnstarted(ticker);
+            });
+
+    service.startAsync();
+    startedLatch.await(); // ensure we have entered startUp and are blocking
+
+    assertThatThrownBy(service::monotonicNowMillis)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("MonotonicTimeService is not started");
+
+    latch.countDown();
+    service.awaitRunning();
   }
 
   @Test
