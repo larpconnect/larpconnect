@@ -1,9 +1,7 @@
 package com.larpconnect.njall.server;
 
-import static com.google.common.io.Closeables.close;
 import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 
-import com.google.errorprone.annotations.Var;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.annotations.BuildWith;
@@ -101,9 +99,7 @@ final class WebServerVerticle extends AbstractVerticle {
     vertx
         .<String>executeBlocking(
             () -> {
-              @Var InputStream in = null;
-              try {
-                in = getClass().getClassLoader().getResourceAsStream(openApiSpec);
+              try (InputStream in = getClass().getClassLoader().getResourceAsStream(openApiSpec)) {
                 if (in == null) {
                   throw new IOException(openApiSpec + " not found on classpath");
                 }
@@ -111,12 +107,6 @@ final class WebServerVerticle extends AbstractVerticle {
                 Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
                 tempFile.toFile().deleteOnExit();
                 return tempFile.toAbsolutePath().toString();
-              } finally {
-                try {
-                  close(in, true);
-                } catch (IOException e) {
-                  // Should not happen as swallowIOException is true
-                }
               }
             })
         .onFailure(startPromise::fail)
@@ -167,10 +157,7 @@ final class WebServerVerticle extends AbstractVerticle {
     try {
       var json = serializer.print(message);
       ctx.json(new JsonObject(json));
-    } catch (RuntimeException e) {
-      logger.error("Failed to convert message to JSON", e);
-      ctx.fail(e);
-    } catch (IOException e) {
+    } catch (RuntimeException | IOException e) {
       logger.error("Failed to convert message to JSON", e);
       ctx.fail(e);
     }

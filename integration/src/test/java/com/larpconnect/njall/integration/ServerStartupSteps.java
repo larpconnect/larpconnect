@@ -2,6 +2,7 @@ package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
@@ -21,7 +22,6 @@ import io.vertx.ext.web.client.WebClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +57,7 @@ public final class ServerStartupSteps {
 
     lifecycle =
         VerticleServices.create(
-            Arrays.asList(
+            ImmutableList.of(
                 overrideModule,
                 new AbstractModule() {
                   @Override

@@ -6,8 +6,10 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.larpconnect.njall.common.time.TimeService;
 import jakarta.inject.Provider;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -139,20 +141,6 @@ final class UuidV7GeneratorTest {
   @Test
   void generate_concurrent_success() throws InterruptedException {
     fakeTimeService.timeMs = 2000L;
-    /*
-     * With 12 bits we can only have 4096 unique values if time is constant and random is constant.
-     * The test was failing with 4096 unique items because fakeRandom always returns 10,
-     * so `UUID` only varies by the 12-bit counter (4096 values). The random bits are 10.
-     * Let's advance time or let it fail?
-     * In our test fake random returns 10L always.
-     * So the UUID is completely deterministic based on time and counter.
-     * If we want more than 4096 unique values, we need time to advance or fake random to give new
-     * numbers.
-     * Since we are generating 10,000 UUIDs and time is frozen, the counter wraps around after 4096
-     * times
-     * and produces duplicate UUIDs since time isn't advancing and fakeRandom is static!
-     * Let's use ThreadLocalRandom for the randomProvider in this specific test.
-     */
 
     generator = new UuidV7Generator(fakeTimeService, ThreadLocalRandom::current);
 
@@ -161,7 +149,7 @@ final class UuidV7GeneratorTest {
 
     CountDownLatch latch = new CountDownLatch(1);
     CountDownLatch doneLatch = new CountDownLatch(numThreads);
-    var ids = java.util.concurrent.ConcurrentHashMap.<UUID>newKeySet();
+    var ids = ConcurrentHashMap.<UUID>newKeySet();
 
     for (int i = 0; i < numThreads; i++) {
       new Thread(
@@ -181,7 +169,7 @@ final class UuidV7GeneratorTest {
     }
 
     latch.countDown();
-    boolean done = doneLatch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+    boolean done = doneLatch.await(5, TimeUnit.SECONDS);
     assertThat(done).isTrue();
 
     assertThat(ids).hasSize(numThreads * numIdsPerThread);

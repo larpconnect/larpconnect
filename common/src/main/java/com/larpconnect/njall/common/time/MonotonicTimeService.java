@@ -6,7 +6,6 @@ import com.larpconnect.njall.common.annotations.AiContract;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import java.time.Clock;
-import java.time.Duration;
 
 final class MonotonicTimeService extends AbstractIdleService implements TimeService {
   private final Clock clock;
@@ -45,7 +44,7 @@ final class MonotonicTimeService extends AbstractIdleService implements TimeServ
     if (stopwatch == null) {
       throw new IllegalStateException("MonotonicTimeService is not started");
     }
-    Duration elapsed = stopwatch.elapsed();
+    var elapsed = stopwatch.elapsed();
     return baseTimeMillis + elapsed.toMillis();
   }
 }
