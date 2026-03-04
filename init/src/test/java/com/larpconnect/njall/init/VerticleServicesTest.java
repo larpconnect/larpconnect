@@ -28,4 +28,14 @@ final class VerticleServicesTest {
     assertThat(service).isNotNull();
     assertThat(service).isInstanceOf(VerticleLifecycle.class);
   }
+
+  @Test
+  void create_withVertxAndNullFactory_returnsVerticleLifecycle() {
+    Vertx vertx = mock(Vertx.class);
+
+    VerticleService service = VerticleServices.create(vertx, null);
+
+    assertThat(service).isNotNull();
+    assertThat(service).isInstanceOf(VerticleLifecycle.class);
+  }
 }
