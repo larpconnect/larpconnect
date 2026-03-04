@@ -90,21 +90,20 @@ final class ProtoCodecRegistryTest {
 
     // This should fail either with IndexOutOfBounds or IllegalArgumentException
     assertThatThrownBy(() -> registry.decodeFromWire(0, buffer))
-        .isInstanceOfAny(IndexOutOfBoundsException.class, IllegalArgumentException.class);
+        .isInstanceOfAny(IndexOutOfBoundsException.class, IllegalStateException.class);
   }
 
   @Test
-  void decodeFromWire_withInvalidProto() {
+  void decodeFromWire_invalidBuffer_throwsIllegalStateException() {
     var registry = new ProtoCodecRegistry();
     var buffer = Buffer.buffer();
     buffer.appendShort((short) 0x01);
     buffer.appendInt(10);
-    // Add 10 bytes of garbage
     buffer.appendBytes(new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
 
     assertThatThrownBy(() -> registry.decodeFromWire(0, buffer))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Failed to decode protobuf message");
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Failed to decode message");
   }
 
   @Test

@@ -57,7 +57,7 @@ public final class ProtoCodecRegistry implements MessageCodec<Message, Message> 
       }
       return message;
     } catch (InvalidProtocolBufferException e) {
-      throw new IllegalArgumentException("Failed to decode protobuf message", e);
+      throw new IllegalStateException("Failed to decode message", e);
     }
   }
 
