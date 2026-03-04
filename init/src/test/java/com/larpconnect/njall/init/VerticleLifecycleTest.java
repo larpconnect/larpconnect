@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
 import io.vertx.core.AbstractVerticle;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ final class VerticleLifecycleTest {
 
   @Test
   public void startUp_validConfig_success() throws Exception {
-    var lifecycle = VerticleServices.create(Collections.emptyList());
+    var lifecycle = VerticleServices.create(ImmutableList.of());
 
     lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
     assertThat(lifecycle.isRunning()).isTrue();
@@ -30,7 +30,7 @@ final class VerticleLifecycleTest {
   public void startUp_missingConfig_throwsRuntimeException() {
     System.setProperty("njall.config.resource", "missing.json");
     try {
-      var lifecycle = VerticleServices.create(Collections.emptyList());
+      var lifecycle = VerticleServices.create(ImmutableList.of());
       assertThatThrownBy(() -> lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS))
           .isInstanceOf(IllegalStateException.class);
     } finally {
@@ -40,7 +40,7 @@ final class VerticleLifecycleTest {
 
   @Test
   public void deploy_notStarted_throwsException() {
-    var lifecycle = new VerticleLifecycle(Collections.emptyList());
+    var lifecycle = new VerticleLifecycle(ImmutableList.of());
     assertThatThrownBy(() -> lifecycle.deploy(TestVerticle.class))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("VerticleLifecycle not started");
@@ -48,7 +48,7 @@ final class VerticleLifecycleTest {
 
   @Test
   public void shutDown_closeNotStarted_doesNothing() {
-    var lifecycle = new VerticleLifecycle(Collections.emptyList());
+    var lifecycle = new VerticleLifecycle(ImmutableList.of());
     // Never started, so shutDown should safely do nothing
     lifecycle.shutDown();
   }
@@ -56,7 +56,7 @@ final class VerticleLifecycleTest {
   @Test
   @SuppressWarnings("unchecked")
   public void shutDown_closeFails_logsError() throws Exception {
-    var lifecycle = new VerticleLifecycle(Collections.emptyList());
+    var lifecycle = new VerticleLifecycle(ImmutableList.of());
     var field = VerticleLifecycle.class.getDeclaredField("vertxRef");
     field.setAccessible(true);
     var vertxRef = (AtomicReference<io.vertx.core.Vertx>) field.get(lifecycle);
@@ -73,7 +73,7 @@ final class VerticleLifecycleTest {
   @Test
   @SuppressWarnings("unchecked")
   public void shutDown_interrupted_logsWarning() throws Exception {
-    var lifecycle = new VerticleLifecycle(Collections.emptyList());
+    var lifecycle = new VerticleLifecycle(ImmutableList.of());
     var field = VerticleLifecycle.class.getDeclaredField("vertxRef");
     field.setAccessible(true);
     var vertxRef = (AtomicReference<io.vertx.core.Vertx>) field.get(lifecycle);
