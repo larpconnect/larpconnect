@@ -2,9 +2,9 @@ package com.larpconnect.njall.init;
 
 import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Module;
 import com.larpconnect.njall.common.annotations.AiContract;
-import com.google.common.collect.ImmutableList;
 
 public interface VerticleServices {
   @AiContract(

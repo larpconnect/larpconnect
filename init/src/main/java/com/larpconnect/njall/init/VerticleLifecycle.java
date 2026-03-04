@@ -16,7 +16,6 @@ import io.vertx.core.json.JsonObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +34,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
 
   VerticleLifecycle(ImmutableList<Module> modules) {
-    this.modules = ImmutableList.copyOf(modules);
+    this.modules = modules;
   }
 
   @Override
