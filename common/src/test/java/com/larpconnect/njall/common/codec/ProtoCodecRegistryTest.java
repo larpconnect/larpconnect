@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.buffer.Buffer;
 import org.junit.jupiter.api.Test;
@@ -103,7 +104,8 @@ final class ProtoCodecRegistryTest {
 
     assertThatThrownBy(() -> registry.decodeFromWire(0, buffer))
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Failed to decode message");
+        .hasMessageContaining("Failed to decode message")
+        .hasCauseInstanceOf(InvalidProtocolBufferException.class);
   }
 
   @Test
