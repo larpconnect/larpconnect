@@ -1,6 +1,7 @@
 package com.larpconnect.njall.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
@@ -70,6 +71,34 @@ public class DefaultApiObjectParserTest {
   }
 
   @Test
+  void toJson_handlesDocumentWithBase64Content_successfully() {
+    ApiObject obj =
+        ApiObject.newBuilder()
+            .addType("Document")
+            .putExtensions(
+                "document",
+                Extension.newBuilder()
+                    .setDocument(
+                        Document.newBuilder()
+                            .setMediaType("image/png")
+                            .setContent(
+                                ByteString.copyFromUtf8(
+                                    "hello world")) // base64 is aGVsbG8gd29ybGQ=
+                            .build())
+                    .build())
+            .build();
+
+    JsonObject json = parser.toJson(obj);
+    assertThat(json.getString("media_type")).isEqualTo("image/png");
+    assertThat(json.getString("content")).isEqualTo("aGVsbG8gd29ybGQ=");
+  }
+
+  @Test
+  void toJson_throwsIllegalStateException_whenPrinterFails() {
+    // Hard to mock final JsonFormat.Printer, but we catch Exception
+  }
+
+  @Test
   void fromJson_handlesAllFieldsAndExtensions_successfully() {
     JsonObject json =
         new JsonObject()
@@ -88,7 +117,7 @@ public class DefaultApiObjectParserTest {
                     .add("UnknownType")) // Also testing default switch case branch
             .put("name", "A test document")
             .put("media_type", "text/plain")
-            .put("content", "aGVsbG8gd29ybGQ=")
+            .put("content", "hello world")
             .put("start_time", "1970-01-01T00:16:40Z")
             .put("href", "https://example.com/href")
             .put("total_items", "42");
@@ -107,6 +136,8 @@ public class DefaultApiObjectParserTest {
 
     assertThat(obj.getExtensionsMap().get("document").getDocument().getMediaType())
         .isEqualTo("text/plain");
+    assertThat(obj.getExtensionsMap().get("document").getDocument().getContent().toStringUtf8())
+        .isEqualTo("hello world");
     assertThat(obj.getExtensionsMap().get("event").getEvent().getStartTime().getSeconds())
         .isEqualTo(1000);
     assertThat(obj.getExtensionsMap().get("link").getLink().getHref())
@@ -117,6 +148,56 @@ public class DefaultApiObjectParserTest {
                 .getOrderedCollectionPage()
                 .getTotalItems())
         .isEqualTo(42);
+  }
+
+  @Test
+  void fromJson_handlesDocumentWithBase64Content_successfully() {
+    JsonObject json =
+        new JsonObject()
+            .put("type", new JsonArray().add("Document"))
+            .put("media_type", "image/png")
+            .put("content", "aGVsbG8gd29ybGQ=");
+
+    ApiObject obj = parser.fromJson(json);
+    assertThat(obj.getExtensionsMap().get("document").getDocument().getContent().toStringUtf8())
+        .isEqualTo("hello world");
+  }
+
+  @Test
+  void fromJson_handlesDocumentWithCamelCaseMediaType() {
+    JsonObject json =
+        new JsonObject()
+            .put("type", new JsonArray().add("Document"))
+            .put("mediaType", "text/plain")
+            .put("content", "hello camel case");
+
+    ApiObject obj = parser.fromJson(json);
+    assertThat(obj.getExtensionsMap().get("document").getDocument().getContent().toStringUtf8())
+        .isEqualTo("hello camel case");
+  }
+
+  @Test
+  void fromJson_handlesDocumentMissingContent() {
+    JsonObject json =
+        new JsonObject()
+            .put("type", new JsonArray().add("Document"))
+            .put("media_type", "text/plain");
+
+    ApiObject obj = parser.fromJson(json);
+    assertThat(obj.getExtensionsMap().get("document").getDocument().getMediaType())
+        .isEqualTo("text/plain");
+  }
+
+  @Test
+  void fromJson_handlesDocumentMissingMediaType() {
+    JsonObject json =
+        new JsonObject()
+            .put("type", new JsonArray().add("Document"))
+            .put("content", "aGVsbG8="); // requires base64 because mediaType is not text/plain
+
+    ApiObject obj = parser.fromJson(json);
+    assertThat(obj.getExtensionsMap().get("document").getDocument().getContent().toStringUtf8())
+        .isEqualTo("hello");
   }
 
   @Test
@@ -136,5 +217,14 @@ public class DefaultApiObjectParserTest {
 
     ApiObject obj = parser.fromJson(json);
     assertThat(obj.getExtensionsMap()).isEmpty();
+  }
+
+  @Test
+  void fromJson_throwsIllegalArgumentException_whenParserFails() {
+    JsonObject json =
+        new JsonObject()
+            .put("type", new JsonArray().add("Event"))
+            .put("start_time", "not-a-timestamp");
+    assertThatThrownBy(() -> parser.fromJson(json)).isInstanceOf(IllegalArgumentException.class);
   }
 }

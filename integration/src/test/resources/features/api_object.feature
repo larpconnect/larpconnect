@@ -24,7 +24,7 @@ Feature: ApiObject JSON Serialization and Deserialization
           "Document"
         ],
         "media_type": "text/plain",
-        "content": "aGVsbG8gd29ybGQ="
+        "content": "hello world"
       }
       """
     When it is deserialized back to an ApiObject

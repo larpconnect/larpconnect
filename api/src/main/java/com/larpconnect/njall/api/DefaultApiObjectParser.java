@@ -34,12 +34,9 @@ public final class DefaultApiObjectParser implements ApiObjectParser {
       if (extensions != null) {
         for (String key : extensions.fieldNames()) {
           JsonObject extMap = extensions.getJsonObject(key);
-          if (extMap != null && !extMap.isEmpty()) {
+          if (!extMap.isEmpty()) {
             String innerKey = extMap.fieldNames().iterator().next();
-            JsonObject extData = extMap.getJsonObject(innerKey);
-            if (extData != null) {
-              json.mergeIn(extData);
-            }
+            json.mergeIn(extMap.getJsonObject(innerKey));
           }
         }
       }
@@ -76,13 +73,11 @@ public final class DefaultApiObjectParser implements ApiObjectParser {
           switch (type) {
             case "Document" -> {
               Document.Builder docBuilder = Document.newBuilder();
-              // When content is raw string but protobuf expects base64 bytes, JsonFormat will fail.
-              // Workaround: We temporarily remove the content, parse it, and then set it back if
-              // it's text.
+              String mediaTypeStr = json.getString("media_type", json.getString("mediaType"));
               boolean isRawText =
                   json.containsKey("content")
-                      && json.containsKey("mediaType")
-                      && json.getString("mediaType").startsWith("text/");
+                      && mediaTypeStr != null
+                      && mediaTypeStr.startsWith("text/");
               if (isRawText) {
                 String rawContent = json.getString("content");
                 JsonObject safeJson = json.copy();
