@@ -3,13 +3,14 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":proto"))
-    implementation(project(":common"))
-    implementation(libs.vertx.config)
-    implementation(libs.protobuf.java)
-
     compileOnly(libs.vertx.codegen)
 
-    testImplementation(libs.vertx.junit5)
+    implementation(project(":common"))
+    implementation(project(":proto"))
+    implementation(libs.protobuf.java)
+    implementation(libs.vertx.config)
+
     testCompileOnly(libs.vertx.codegen)
+
+    testImplementation(libs.vertx.junit5)
 }

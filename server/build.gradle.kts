@@ -3,17 +3,20 @@ plugins {
 }
 
 dependencies {
+    compileOnly(libs.vertx.codegen)
+
     implementation(project(":common"))
     implementation(project(":init"))
     implementation(project(":proto"))
+    implementation(libs.protobuf.java.util)
     implementation(libs.vertx.config)
     implementation(libs.vertx.healthcheck)
-    implementation(libs.vertx.web)
     implementation(libs.vertx.openapi)
+    implementation(libs.vertx.web)
     implementation(libs.vertx.web.openapi.router)
-    implementation(libs.protobuf.java.util)
-    compileOnly(libs.vertx.codegen)
+
     testCompileOnly(libs.vertx.codegen)
+
     testImplementation(libs.vertx.junit5)
     testImplementation(libs.vertx.web.client)
 }

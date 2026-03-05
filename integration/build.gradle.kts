@@ -3,13 +3,14 @@ plugins {
 }
 
 dependencies {
+    testCompileOnly(libs.vertx.codegen)
+
     testImplementation(project(":api"))
     testImplementation(project(":common"))
+    testImplementation(project(":init"))
     testImplementation(project(":proto"))
     testImplementation(project(":server"))
-    testImplementation(project(":init"))
-    testImplementation(libs.vertx.web.client)
-    testImplementation(libs.vertx.junit5)
-    testCompileOnly(libs.vertx.codegen)
     testImplementation(libs.archunit.junit5)
+    testImplementation(libs.vertx.junit5)
+    testImplementation(libs.vertx.web.client)
 }
