@@ -249,7 +249,7 @@ final class AbstractLcVerticleTest {
           @Override
           protected MessageResponse handleMessage(byte[] spanId, Message message) {
             handled.set(true);
-            throw new RuntimeException("Test exception");
+            throw new IllegalStateException("Test exception");
           }
         };
 
