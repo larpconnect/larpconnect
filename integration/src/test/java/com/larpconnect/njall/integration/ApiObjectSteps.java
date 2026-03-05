@@ -2,7 +2,9 @@ package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.protobuf.util.JsonFormat;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.larpconnect.njall.api.ApiModule;
 import com.larpconnect.njall.api.ApiObjectParser;
 import com.larpconnect.njall.proto.ApiObject;
 import io.cucumber.java.en.Given;
@@ -18,21 +20,8 @@ public final class ApiObjectSteps {
   private final ApiObjectParser parser;
 
   public ApiObjectSteps() {
-    try {
-      java.lang.reflect.Constructor<?> ctor =
-          Class.forName("com.larpconnect.njall.api.DefaultApiObjectParser")
-              .getDeclaredConstructor(JsonFormat.Printer.class, JsonFormat.Parser.class);
-      ctor.setAccessible(true);
-      this.parser =
-          (ApiObjectParser)
-              ctor.newInstance(
-                  JsonFormat.printer()
-                      .preservingProtoFieldNames()
-                      .omittingInsignificantWhitespace(),
-                  JsonFormat.parser().ignoringUnknownFields());
-    } catch (Exception e) {
-      throw new IllegalStateException("Failed to initialize parser", e);
-    }
+    Injector injector = Guice.createInjector(new ApiModule());
+    this.parser = injector.getInstance(ApiObjectParser.class);
   }
 
   @Given("an ApiObject constructed from the following JSON:")
