@@ -52,4 +52,29 @@ public final class ApiObjectSteps {
     assertThat(deserializedObj.getName()).isEqualTo(inputJson.getString("name"));
     assertThat(deserializedObj.getTypeList().get(0)).isEqualTo("Document");
   }
+
+  @Then("the resulting ApiObject contains a {string} extension")
+  public void theResultingApiObjectContainsAExtension(String extensionKey) {
+    assertThat(deserializedObj.getExtensionsMap()).containsKey(extensionKey);
+  }
+
+  @Then("the resulting ApiObject contains an {string} extension")
+  public void theResultingApiObjectContainsAnExtension(String extensionKey) {
+    assertThat(deserializedObj.getExtensionsMap()).containsKey(extensionKey);
+  }
+
+  @Then("the Document extension has mediaType {string} and content {string}")
+  public void theDocumentExtensionHasMediaTypeAndContent(String mediaType, String content) {
+    var doc = deserializedObj.getExtensionsMap().get("document").getDocument();
+    assertThat(doc.getMediaType()).isEqualTo(mediaType);
+    assertThat(doc.getContent().toStringUtf8()).isEqualTo(content);
+  }
+
+  @Then("the Event extension has startTime {string}")
+  public void theEventExtensionHasStartTime(String startTime) {
+    var event = deserializedObj.getExtensionsMap().get("event").getEvent();
+    // In Protobuf JSON, Timestamp is parsed to seconds and nanos. We can test via Instant.
+    assertThat(event.getStartTime().getSeconds())
+        .isEqualTo(java.time.Instant.parse(startTime).getEpochSecond());
+  }
 }
