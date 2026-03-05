@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.proto.ApiObject;
@@ -42,6 +43,15 @@ public final class DefaultApiObjectParser implements ApiObjectParser {
           }
         }
       }
+
+      // Handle raw content override for Document
+      if (obj.getExtensionsMap().containsKey("document")) {
+        Document doc = obj.getExtensionsMap().get("document").getDocument();
+        if (doc.getMediaType().startsWith("text/")) {
+          json.put("content", doc.getContent().toStringUtf8());
+        }
+      }
+
       return json;
     } catch (InvalidProtocolBufferException e) {
       throw new IllegalStateException("Failed to convert ApiObject to JSON", e);
@@ -66,7 +76,22 @@ public final class DefaultApiObjectParser implements ApiObjectParser {
           switch (type) {
             case "Document" -> {
               Document.Builder docBuilder = Document.newBuilder();
-              parser.merge(jsonString, docBuilder);
+              // When content is raw string but protobuf expects base64 bytes, JsonFormat will fail.
+              // Workaround: We temporarily remove the content, parse it, and then set it back if
+              // it's text.
+              boolean isRawText =
+                  json.containsKey("content")
+                      && json.containsKey("mediaType")
+                      && json.getString("mediaType").startsWith("text/");
+              if (isRawText) {
+                String rawContent = json.getString("content");
+                JsonObject safeJson = json.copy();
+                safeJson.remove("content");
+                parser.merge(safeJson.encode(), docBuilder);
+                docBuilder.setContent(ByteString.copyFromUtf8(rawContent));
+              } else {
+                parser.merge(jsonString, docBuilder);
+              }
               builder.putExtensions(
                   "document", Extension.newBuilder().setDocument(docBuilder).build());
             }

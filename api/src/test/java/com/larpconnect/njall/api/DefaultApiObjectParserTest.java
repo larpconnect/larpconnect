@@ -58,7 +58,7 @@ public class DefaultApiObjectParserTest {
     assertThat(json.getString("deleted")).isEqualTo("2023-01-01T00:00:00Z");
 
     assertThat(json.getString("media_type")).isEqualTo("text/plain");
-    assertThat(json.getString("content")).isEqualTo("aGVsbG8gd29ybGQ=");
+    assertThat(json.getString("content")).isEqualTo("hello world");
     assertThat(json.containsKey("extensions")).isFalse();
   }
 
