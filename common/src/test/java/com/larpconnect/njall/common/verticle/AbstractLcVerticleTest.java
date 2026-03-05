@@ -260,21 +260,24 @@ final class AbstractLcVerticleTest {
                 id -> {
                   Message message = Message.newBuilder().build();
 
-                  vertx.eventBus().send(CHANNEL, message);
-
-                  vertx.setTimer(
-                      100,
-                      t -> {
-                        testContext.verify(
-                            () -> {
-                              assertThat(handled.get()).isTrue();
-                              // MDC should be cleared despite the exception
-                              assertThat(MDC.get("trace_id")).isNull();
-                              assertThat(MDC.get("parent_span_id")).isNull();
-                              assertThat(MDC.get("span_id")).isNull();
-                              testContext.completeNow();
-                            });
-                      });
+                  vertx
+                      .eventBus()
+                      .<Message>request(CHANNEL, message)
+                      .onComplete(
+                          testContext.failing(
+                              err ->
+                                  testContext.verify(
+                                      () -> {
+                                        io.vertx.core.eventbus.ReplyException re =
+                                            (io.vertx.core.eventbus.ReplyException) err;
+                                        assertThat(re.failureCode()).isEqualTo(-1);
+                                        assertThat(re.getMessage()).isEqualTo("Internal Error");
+                                        assertThat(handled.get()).isTrue();
+                                        assertThat(MDC.get("trace_id")).isNull();
+                                        assertThat(MDC.get("parent_span_id")).isNull();
+                                        assertThat(MDC.get("span_id")).isNull();
+                                        testContext.completeNow();
+                                      })));
                 }));
   }
 

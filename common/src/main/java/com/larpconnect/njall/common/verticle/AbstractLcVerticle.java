@@ -14,6 +14,8 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 abstract class AbstractLcVerticle extends AbstractVerticle {
@@ -34,6 +36,7 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
   private final String channel;
   private final Provider<RandomGenerator> randomProvider;
   private final IdGenerator idGenerator;
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   protected AbstractLcVerticle(String channel, IdGenerator idGenerator) {
     this(channel, ThreadLocalRandom::current, idGenerator);
@@ -76,6 +79,9 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
                 }
               } catch (IOException e) {
                 // Closer does not throw IOException in this context
+              } catch (RuntimeException e) {
+                log.error("Error handling message on channel: " + channel, e);
+                msg.fail(-1, "Internal Error");
               }
             });
 
