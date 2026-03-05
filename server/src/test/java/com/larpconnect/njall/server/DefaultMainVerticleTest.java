@@ -39,7 +39,7 @@ final class DefaultMainVerticleTest {
   static final class FailingVerticle extends AbstractVerticle {
     @Override
     public void start(Promise<Void> startPromise) {
-      startPromise.fail(new RuntimeException("Fail"));
+      startPromise.fail(new IllegalStateException("Fail"));
     }
   }
 
@@ -77,7 +77,7 @@ final class DefaultMainVerticleTest {
     Vertx mockVertx = mock(Vertx.class);
     Context mockContext = mock(Context.class);
 
-    RuntimeException failure = new RuntimeException("Deployment failed");
+    IllegalStateException failure = new IllegalStateException("Deployment failed");
     when(mockVertx.deployVerticle(any(Verticle.class))).thenReturn(Future.failedFuture(failure));
 
     mainVerticle.init(mockVertx, mockContext);

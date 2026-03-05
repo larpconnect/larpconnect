@@ -52,7 +52,6 @@ final class MainTest {
                 });
     var main = new Main(runtime, overrideModule);
 
-    // Test TimeoutException
     var timeoutService = new TestVerticleService();
     timeoutService.exceptionToThrow.set(new TimeoutException());
     main.shutdown(timeoutService);
@@ -63,9 +62,8 @@ final class MainTest {
      * ensure no propagation of exception.
      */
 
-    // Test RuntimeException
     var runtimeService = new TestVerticleService();
-    runtimeService.exceptionToThrow.set(new RuntimeException());
+    runtimeService.exceptionToThrow.set(new IllegalStateException());
     main.shutdown(runtimeService);
   }
 
@@ -75,14 +73,10 @@ final class MainTest {
     final AtomicBoolean stopCalled = new AtomicBoolean(false);
 
     @Override
-    public void deploy(Class<? extends Verticle> verticleClass) {
-      // No-op
-    }
+    public void deploy(Class<? extends Verticle> verticleClass) {}
 
     @Override
-    protected void startUp() throws Exception {
-      // No-op
-    }
+    protected void startUp() throws Exception {}
 
     @Override
     protected void shutDown() throws Exception {
