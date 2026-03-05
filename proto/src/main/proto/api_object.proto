@@ -1,0 +1,52 @@
+edition = "2024";
+
+package com.larpconnect.njall.proto;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.larpconnect.njall.proto";
+option go_package = "com.larpconnect.njall.proto";
+
+message Extension {
+  oneof extension {
+    Document document = 1;
+    Event event = 2;
+    Link link = 3;
+    OrderedCollectionPage ordered_collection_page = 4;
+  }
+}
+
+message Document {
+  bytes content = 1;
+  string media_type = 2;
+}
+
+message Event {
+  google.protobuf.Timestamp start_time = 1;
+  google.protobuf.Timestamp end_time = 2;
+}
+
+message Link {
+  string href = 1;
+  repeated string rel = 2;
+  string media_type = 3;
+}
+
+message OrderedCollectionPage {
+  uint64 total_items = 1;
+  string first = 2;
+  string last = 3;
+  string part_of = 4;
+  string next = 5;
+  string prev = 6;
+  repeated string items = 7;
+}
+
+message ApiObject {
+  repeated string context = 1;
+  string id = 2;
+  repeated string type = 3;
+  string name = 4;
+  google.protobuf.Timestamp deleted = 5;
+  map<string, Extension> extensions = 6;
+}

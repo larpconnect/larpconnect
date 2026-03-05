@@ -14,3 +14,6 @@ dependencies {
     testImplementation(libs.vertx.junit5)
     testImplementation(libs.vertx.web.client)
 }
+dependencies {
+    implementation(project(":api"))
+}
