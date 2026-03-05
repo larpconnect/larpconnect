@@ -43,17 +43,17 @@ final class VerticleSetupService {
   void deploy(Class<? extends Verticle> verticleClass) {
     var vertx = vertxRef.get();
     checkState(vertx != null, "Vertx not initialized");
-    vertx
-        .deployVerticle("guice:" + verticleClass.getName())
-        .onSuccess(
-            id ->
-                logger.info(
-                    "{} deployed successfully with ID: {}", verticleClass.getSimpleName(), id))
-        .onFailure(
-            err -> {
-              logger.error("Failed to deploy verticle", err);
-              throw new IllegalStateException(
-                  "Failed to deploy verticle " + verticleClass.getName(), err);
-            });
+    try {
+      var id =
+          vertx
+              .deployVerticle("guice:" + verticleClass.getName())
+              .toCompletionStage()
+              .toCompletableFuture()
+              .join();
+      logger.info("{} deployed successfully with ID: {}", verticleClass.getSimpleName(), id);
+    } catch (RuntimeException err) {
+      logger.error("Failed to deploy verticle", err);
+      throw new IllegalStateException("Failed to deploy verticle " + verticleClass.getName(), err);
+    }
   }
 }

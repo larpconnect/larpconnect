@@ -53,16 +53,16 @@ final class VerticleSetupServiceTest {
   }
 
   @Test
-  void deploy_failure_throwsRuntimeException() {
+  void deploy_failure_throwsIllegalStateException() {
     var failure = new RuntimeException("fail");
     when(mockVertx.deployVerticle(anyString())).thenReturn(Future.failedFuture(failure));
 
     service.setup(mockVertx, mockInjector);
 
     assertThatThrownBy(() -> service.deploy(TestVerticle.class))
-        .isInstanceOf(RuntimeException.class)
+        .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Failed to deploy verticle")
-        .hasCause(failure);
+        .hasCauseInstanceOf(java.util.concurrent.CompletionException.class);
   }
 
   static final class TestVerticle extends AbstractVerticle {}
