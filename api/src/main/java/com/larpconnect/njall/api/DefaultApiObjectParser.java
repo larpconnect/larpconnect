@@ -13,7 +13,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Inject;
 
-public final class DefaultApiObjectParser implements ApiObjectParser {
+final class DefaultApiObjectParser implements ApiObjectParser {
 
   private final JsonFormat.Printer printer;
   private final JsonFormat.Parser parser;
