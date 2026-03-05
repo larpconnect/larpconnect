@@ -1,9 +1,15 @@
 package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -61,6 +67,31 @@ final class DefaultMainVerticleTest {
     vertx
         .deployVerticle(mainVerticle)
         .onComplete(testContext.failing(err -> testContext.completeNow()));
+  }
+
+  @Test
+  void start_failsPromise_whenVertxDeployVerticleFails(VertxTestContext testContext) {
+    TestVerticle testVerticle = new TestVerticle();
+    DefaultMainVerticle mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
+
+    Vertx mockVertx = mock(Vertx.class);
+    Context mockContext = mock(Context.class);
+
+    RuntimeException failure = new RuntimeException("Deployment failed");
+    when(mockVertx.deployVerticle(any(Verticle.class))).thenReturn(Future.failedFuture(failure));
+
+    mainVerticle.init(mockVertx, mockContext);
+    Promise<Void> startPromise = Promise.promise();
+    mainVerticle.start(startPromise);
+
+    startPromise
+        .future()
+        .onComplete(
+            testContext.failing(
+                err -> {
+                  assertThat(err).isSameAs(failure);
+                  testContext.completeNow();
+                }));
   }
 
   @Test

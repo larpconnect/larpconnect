@@ -1,0 +1,5 @@
+🧪 [testing improvement] Add mockito test for Verticle deployment failure in DefaultMainVerticle
+
+🎯 What: Added a new test `start_failsPromise_whenVertxDeployVerticleFails` using Mockito to verify the behavior of `DefaultMainVerticle` when `vertx.deployVerticle` fails due to an internal error or exception before the child verticle is fully deployed.
+📊 Coverage: Ensures the error path from `logger.error("Failed to deploy verticles", err)` and `startPromise.fail(err)` inside `start()` method is covered when the deployment futures fail.
+✨ Result: Missing coverage for deployment failure logic is successfully added and verified to catch bugs if that path is incorrectly modified.
