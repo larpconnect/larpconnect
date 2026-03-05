@@ -102,7 +102,7 @@ final class MainVerticleTest {
                         new AbstractVerticle() {
                           @Override
                           public void start() {
-                            throw new RuntimeException("Fail");
+                            throw new IllegalStateException("Fail");
                           }
                         });
               }
