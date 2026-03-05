@@ -81,3 +81,4 @@ Strategies you can use:
 - If you need to mock something but can't because it is `final` or because its
   constructor is package private, then create an interface for it, bind it in
   Guice, and then use Guice to inject it.
+

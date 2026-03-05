@@ -75,3 +75,4 @@ Strategies:
 
   Note that this doesn't usually apply when working with **record** objects, but
   it does apply when working when objects that involve actual application logic.
+

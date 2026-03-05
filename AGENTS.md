@@ -142,3 +142,4 @@ response.
 - API Documentation: Publicly accessible types and methods require comprehensive
   Javadoc documentation. Brief descriptions may be omitted only if the
   functionality is inherently self-evident from the identifier naming.
+

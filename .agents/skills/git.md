@@ -27,3 +27,4 @@ This skill handles the proper use of git.
 4. Commit messages should be descriptive of what was done in the commit.
 5. Commit messages should be professional and written with an eye toward future
    developers.
+

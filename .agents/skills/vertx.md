@@ -115,3 +115,4 @@ The following ecosystem libraries should be used for their respective domains:
 | `CompletableFuture.supplyAsync()`       | `vertx.executeBlocking()`                | Keeps blocking tasks managed within Vert.x worker pools.    |
 | Manual JSON parsing/building            | `JsonObject.mapFrom()` with Java Records | Reduces boilerplate and leverages built-in Jackson mapping. |
 | Try/Catch around async operations       | `.onFailure(...)` on the `Future`        | Standard try/catch blocks do not catch async exceptions.    |
+
