@@ -27,3 +27,4 @@ build tools.
 - `./gradlew :batch:run --args="..."`: Executes the application in batch mode.
 - `./gradlew :repl:run`: Initializes the interactive REPL session.
 - `./gradlew build`: Builds the entire project
+

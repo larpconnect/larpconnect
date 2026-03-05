@@ -43,3 +43,4 @@ order:
 2. Third Party
 3. Domain-Specific
 4. Conflict Resolution (per `AGENTS.md`)
+
