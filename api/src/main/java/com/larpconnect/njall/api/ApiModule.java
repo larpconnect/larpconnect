@@ -1,6 +1,7 @@
 package com.larpconnect.njall.api;
 
 import com.google.inject.AbstractModule;
+import com.google.protobuf.util.JsonFormat;
 
 /**
  * Guice module for the API module. Exposing it allows other modules to install it and bypasses the
@@ -11,6 +12,10 @@ public final class ApiModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    // Guice bindings can be added here
+    bind(ApiObjectParser.class).to(DefaultApiObjectParser.class);
+    bind(JsonFormat.Printer.class)
+        .toInstance(
+            JsonFormat.printer().preservingProtoFieldNames().omittingInsignificantWhitespace());
+    bind(JsonFormat.Parser.class).toInstance(JsonFormat.parser().ignoringUnknownFields());
   }
 }

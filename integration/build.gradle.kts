@@ -13,7 +13,5 @@ dependencies {
     testImplementation(libs.archunit.junit5)
     testImplementation(libs.vertx.junit5)
     testImplementation(libs.vertx.web.client)
-}
-dependencies {
-    implementation(project(":api"))
+    testImplementation(libs.protobuf.java.util)
 }
