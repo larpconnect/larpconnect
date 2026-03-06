@@ -24,6 +24,8 @@ dependencies {
         api(project(":parent"))
     }
     api(libs.slf4j.api)
+    compileOnly(libs.vertx.codegen)
+    testCompileOnly(libs.vertx.codegen)
     constraints {
         implementation(libs.commons.beanutils) {
             because("CVE-2025-48734")
