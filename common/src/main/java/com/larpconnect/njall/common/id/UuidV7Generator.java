@@ -9,6 +9,18 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGenerator;
 
+/**
+ * Implementation of {@link IdGenerator} that produces UUID version 7 identifiers.
+ *
+ * <p>UUIDv7 is used instead of standard UUIDv4 to provide time-ordered uniqueness. This design
+ * decision significantly improves database insert performance and B-tree index locality, as new IDs
+ * are appended sequentially rather than scattered randomly across the index.
+ *
+ * <p>Additionally, because the timestamp is embedded within the ID, it allows for implicit
+ * chronological sorting and reduces the need for separate creation timestamp columns in certain
+ * data models, while still retaining sufficient randomness to avoid collisions in distributed
+ * systems.
+ */
 @Singleton
 @BuildWith(IdModule.class)
 final class UuidV7Generator implements IdGenerator {
