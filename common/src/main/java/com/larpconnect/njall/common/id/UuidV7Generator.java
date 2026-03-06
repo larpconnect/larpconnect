@@ -41,8 +41,10 @@ final class UuidV7Generator implements IdGenerator {
   public UUID generate() {
     long currentTimeMs = timeService.monotonicNowMillis();
 
-    // Generate unconditionally outside the atomic update to avoid side effects during retries
-    // under contention, keeping the update function pure.
+    /*
+     * Generate unconditionally outside the atomic update to avoid side effects during retries
+     * under contention, keeping the update function pure.
+     */
     long nextRandomCounter = randomProvider.get().nextLong(MIN_COUNTER, MAX_COUNTER);
 
     State updatedState =

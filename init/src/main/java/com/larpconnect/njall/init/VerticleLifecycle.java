@@ -77,10 +77,8 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new IllegalStateException("Interrupted while loading config", e);
-    } catch (ExecutionException e) {
+    } catch (ExecutionException | TimeoutException e) {
       throw new IllegalStateException("Failed to load config", e);
-    } catch (TimeoutException e) {
-      throw new IllegalStateException("Timed out loading config", e);
     } finally {
       tempVertx.close();
     }
