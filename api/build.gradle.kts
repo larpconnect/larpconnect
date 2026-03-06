@@ -8,5 +8,4 @@ dependencies {
     implementation(libs.vertx.core)
     implementation(libs.protobuf.java.util)
     implementation(libs.guice)
-    compileOnly(libs.vertx.codegen)
 }

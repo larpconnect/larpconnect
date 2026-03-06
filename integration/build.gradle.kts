@@ -3,8 +3,6 @@ plugins {
 }
 
 dependencies {
-    testCompileOnly(libs.vertx.codegen)
-
     testImplementation(project(":api"))
     testImplementation(project(":common"))
     testImplementation(project(":init"))

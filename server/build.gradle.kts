@@ -3,8 +3,6 @@ plugins {
 }
 
 dependencies {
-    compileOnly(libs.vertx.codegen)
-
     implementation(project(":common"))
     implementation(project(":init"))
     implementation(project(":proto"))
@@ -14,8 +12,6 @@ dependencies {
     implementation(libs.vertx.openapi)
     implementation(libs.vertx.web)
     implementation(libs.vertx.web.openapi.router)
-
-    testCompileOnly(libs.vertx.codegen)
 
     testImplementation(libs.vertx.junit5)
     testImplementation(libs.vertx.web.client)
