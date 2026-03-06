@@ -3,6 +3,7 @@ package com.larpconnect.njall.init;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.larpconnect.njall.common.annotations.AiContract;
@@ -104,7 +105,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     try {
       var timeService = injector.getInstance(TimeService.class);
       timeService.startAsync().awaitRunning();
-    } catch (com.google.inject.ConfigurationException e) {
+    } catch (ConfigurationException e) {
       logger.debug("TimeService not bound, skipping start.");
     }
 
