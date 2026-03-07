@@ -10,12 +10,12 @@ Intelligence.
 LarpConnect uses a multi-module Gradle build. This separation enforces strict architectural
 boundaries between different parts of the system.
 
-- **Isolation of Concerns:** By splitting the project into modules like `api`, `common`,
-  `server`, and `init`, we ensure that low-level domain logic (like protocol definitions)
+- **Isolation of Concerns:** By splitting the project into modules like `:api`, `:common`,
+  `:server`, and `:init`, we ensure that low-level domain logic (like protocol definitions)
   remains entirely unaware of high-level runtime mechanics (like HTTP routing).
 - **Compile-Time Enforcement:** Instead of relying on discipline to avoid cyclic dependencies or
-  leaking abstractions, the build system enforces these rules. If a class in `common` tries to
-  import a class from `server`, it simply will not compile.
+  leaking abstractions, the build system enforces these rules. If a class in `:common` tries to
+  import a class from `:server`, it simply will not compile.
 
 ## Why Vert.x and Guice?
 
@@ -42,34 +42,35 @@ application together. This is where Guice comes in.
 - **Deterministic Initialization:** Guice is used strictly during the startup phase of the
   application to wire together all the dependencies and configurations before any Vert.x components
   begin accepting traffic.
-- **Type Safety and Qualifiers:** We avoid relying on string-based lookups or global state. Guice
-  allows us to use custom annotations (like `@WebPort` or `@OpenApiSpec`) to safely inject
-  configuration values exactly where they are needed.
+- **Type Safety:** We avoid relying on string-based lookups or global state. Guice
+  allows us to safely inject configuration values exactly where they are needed.
 
 The integration of these two frameworks requires a rigid initialization process, typically managed
-in the `init` module, to prevent race conditions where a verticle might attempt to start before its
+in the `:init` module, to prevent race conditions where a verticle might attempt to start before its
 dependencies are fully resolved.
 
 ## Context Engineering
 
 Because LarpConnect is designed to be co-developed with AI agents, the codebase includes specific
-metadata intended to guide these agents. We refer to this as "Context Engineering."
+metadata intended to guide these agents.
 
 ### The `@AiContract` Annotation
 
 In a highly asynchronous, event-driven system, the flow of execution can be difficult for an AI (or
 a human) to trace. To solve this, we use the `@AiContract` annotation.
 
-This annotation serves as a form of "Design by Contract." It explicitly defines the preconditions,
+This annotation serves as an _ersatz_ form of "Design by Contract." It explicitly defines the
+preconditions,
 postconditions, and invariants of a method or component using mathematical or logical notation.
 Rather than explaining *how* the code works, it guarantees *what must be true* before and after
 it executes.
 
 For example, a contract might state:
-`ensure = "$res \\neq \\bot$"`
+`ensure = "$res \\ge 0"`
 
-This tells the AI that the method is guaranteed to never return a null value, allowing it to safely
-skip null-checks in calling code.
+This tells the AI that the method is guaranteed to return a positive value or zero. We also make
+use of other standard annotations like `@Nullable`, `@Immutable`, and `@ThreadSafe` to further
+clarify expectations and invariants for the agents.
 
 ### Guice Guidance Annotations
 
