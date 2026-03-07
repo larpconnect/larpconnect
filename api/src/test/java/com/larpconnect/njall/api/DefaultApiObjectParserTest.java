@@ -14,7 +14,7 @@ import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class DefaultApiObjectParserTest {
+public final class DefaultApiObjectParserTest {
 
   private ApiObjectParser parser;
 
