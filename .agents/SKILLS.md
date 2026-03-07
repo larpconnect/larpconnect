@@ -6,13 +6,14 @@ a task falls within the defined "Activation Trigger."
 
 ## 1. Core Engineering Skills (Always Active)
 
-| Skill Name                | Activation Trigger                                    | Source File                 |
-|:--------------------------|:------------------------------------------------------|:----------------------------|
-| **Java 25 Mastery**       | Any `.java` file modification                         | `.agents/skills/java.md`    |
-| **Common Gradle Skills**  | All projects that require compiling the code          | `.agents/skills/common.md`  |
-| **Testing Standards**     | Any `src/test` modification or work in `:integration` | `.agents/skills/testing.md` |
-| **Git Usage**             | Downloading or pushing a commit.                      | `.agents/skills/git.md`     |
-| **Context Documentation** | Writing a javadoc, encountering an annotation         | `.agents/skills/context.md` |
+| Skill Name                | Activation Trigger                                    | Source File                         |
+|:--------------------------|:------------------------------------------------------|:------------------------------------|
+| **Java 25 Mastery**       | Any `.java` file modification                         | `.agents/skills/java.md`            |
+| **Common Gradle Skills**  | All projects that require compiling the code          | `.agents/skills/common.md`          |
+| **Testing Standards**     | Any `src/test` modification or work in `:integration` | `.agents/skills/testing.md`         |
+| **Git Usage**             | Downloading or pushing a commit.                      | `.agents/skills/git.md`             |
+| **Context Documentation** | Writing a javadoc, encountering an annotation         | `.agents/skills/context.md`         |
+| **Design Patterns**       | Any `.java` file modificatio                          | `.agents/skills/design-patterns.md` |
 
 ## 2. Third Party Skills (Situational)
 
@@ -22,6 +23,7 @@ If working with Render, load Render's documentation from context7.
 |:--------------|:---------------------------------|:----------------------------------------------------------------------------------------------|
 | Render Debug  | Debugging Render Output          | [Render Debug](https://github.com/render-oss/skills/blob/main/skills/render-debug/SKILL.md)   |
 | Render Deploy | Publish Code for further testing | [Render Deploy](https://github.com/render-oss/skills/blob/main/skills/render-deploy/SKILL.md) |
+| Frontend design | When working on user interfaces | [Frontend Design](https://context7.com/skills/anthropics/skills/frontend-design) |
 
 ## 3. Domain-Specific Skills (Contextual)
 
