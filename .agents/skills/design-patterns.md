@@ -11,7 +11,7 @@ This skill provides guidance on common design patterns used by LarpConnect and h
 
 ## Specific Patterns
 
-### Module Layout
+### Guice Module Layout
 
 The basic pattern for modules is as follows:
 
@@ -54,7 +54,6 @@ Note that it doesn't have to be named as a _binding_ module, but names here shou
 rather than simply restating the kinds of bindings being used. For example, separating out the `Factory` bindings,
 separating out all bindings that relate to a single internal subcomponent, etc.
 
-
 ### Guava Services
 
 The easiest pattern for utilizing things that involve initialization is to have two interfaces on top of the class:
@@ -80,7 +79,7 @@ void configuration() {
 Then in code that needs to manage the _lifecycle_ of `Capability` you inject the `CapabilityService`, while the rest of the system
 only needs to deal with `Capability`. This makes `Capability` easy to mock for downstream classes as well. 
 
-### Utility Class
+### Utility Classes
 
 _Most_ utility classes should be injected via guice. These are just like any other class and by injecting them via guice it allows for
 them to be mocked. 
@@ -101,5 +100,26 @@ public final Utility {
 Note marking this as `final`  and `@Immutable`: these objects must always disallow inheritance and never carry state of any form. They
 must also have a `private` constructor to forbid instantiation. 
 
-Strongly prefer, however, writing this as a just a Guice object that can be injected.
+Strongly prefer, however, writing this as a Guice object that can be injected:
+
+```java
+
+Utility.java:
+
+@Immutable
+@DefaultImplementation(DefaultUtility.class)
+public interface Utility {
+   String escape(String arg);
+}
+
+DefaultUtility.java:
+public final Utility {
+   @Inject
+   Utility() {}
+
+   @Override
+   public String escape(String arg) { /* code here */ }
+}
+```
+
 
