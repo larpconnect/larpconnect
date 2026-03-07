@@ -13,7 +13,6 @@ dependencies {
     implementation(libs.vertx.web)
     implementation(libs.vertx.web.openapi.router)
 
-    testImplementation(libs.vertx.junit5)
     testImplementation(libs.vertx.web.client)
 }
 

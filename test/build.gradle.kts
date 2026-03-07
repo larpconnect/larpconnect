@@ -12,6 +12,7 @@ dependencies {
     api(libs.junit.platform.suite)
     api(libs.mockito.core)
     api(libs.mockito.junit.jupiter)
+    api(libs.vertx.junit5)
 
     runtimeOnly(libs.junit.engine)
     runtimeOnly(libs.junit.platform.launcher)

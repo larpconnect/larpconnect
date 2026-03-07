@@ -9,7 +9,6 @@ dependencies {
     testImplementation(project(":proto"))
     testImplementation(project(":server"))
     testImplementation(libs.archunit.junit5)
-    testImplementation(libs.vertx.junit5)
-    testImplementation(libs.vertx.web.client)
     testImplementation(libs.protobuf.java.util)
+    testImplementation(libs.vertx.web.client)
 }
