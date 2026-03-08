@@ -6,13 +6,13 @@ import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 import com.google.errorprone.annotations.Immutable;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.larpconnect.njall.common.annotations.AiContract;
-import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
 /**
- * A message codec for transmitting Protocol Buffer {@link Message} objects over the Vert.x event
- * bus.
+ * A message codec for transmitting Protocol Buffer {@link MessageRequest} objects over the Vert.x
+ * event bus.
  *
  * <p>This codec is designed to optimize communication within the system. For local delivery (within
  * the same JVM), it relies on the immutability of Protocol Buffers and performs an identity
@@ -20,7 +20,7 @@ import io.vertx.core.eventbus.MessageCodec;
  * using protobuf rather than JSON to minimize payload size and reduce bandwidth consumption.
  */
 @Immutable
-public final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
+public final class ProtoCodecRegistry implements MessageCodec<MessageRequest, MessageRequest> {
   private static final short VERSION = 0x01;
   private static final int INT_SIZE = 4;
   private static final String NAMESPACE = "com.larpconnect.njall.proto.";
@@ -31,7 +31,7 @@ public final class ProtoCodecRegistry implements MessageCodec<Message, Message> 
   @AiContract(
       ensure = "buffer \\text{ appended with } VERSION, bytes.length, bytes",
       implementationHint = "Writes protocol version, payload size, and payload bytes.")
-  public void encodeToWire(Buffer buffer, Message message) {
+  public void encodeToWire(Buffer buffer, MessageRequest message) {
     var bytes = message.toByteArray();
     buffer.appendShort(VERSION);
     buffer.appendInt(bytes.length);
@@ -43,7 +43,7 @@ public final class ProtoCodecRegistry implements MessageCodec<Message, Message> 
       ensure = "!$res.hasProto() || $res.proto.protobufName \\text{ starts with } NAMESPACE",
       implementationHint =
           "Reads size, parses message, and updates message type if using proto payload.")
-  public Message decodeFromWire(int pos, Buffer buffer) {
+  public MessageRequest decodeFromWire(int pos, Buffer buffer) {
     var currentPos = pos + 2;
 
     var size = buffer.getInt(currentPos);
@@ -51,7 +51,7 @@ public final class ProtoCodecRegistry implements MessageCodec<Message, Message> 
 
     try {
       var message =
-          Message.parseFrom(
+          MessageRequest.parseFrom(
               io.vertx.core.buffer.impl.BufferImpl.class
                   .cast(buffer)
                   .byteBuf()
@@ -78,7 +78,7 @@ public final class ProtoCodecRegistry implements MessageCodec<Message, Message> 
       ensure = "$res == message",
       tags = {PURE, IDEMPOTENT},
       implementationHint = "Identity transformation for local event bus delivery.")
-  public Message transform(Message message) {
+  public MessageRequest transform(MessageRequest message) {
     return message;
   }
 

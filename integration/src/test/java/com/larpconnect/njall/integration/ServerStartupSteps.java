@@ -9,7 +9,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
-import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.server.MainVerticle;
 import com.larpconnect.njall.server.ServerModule;
 import io.cucumber.java.After;
@@ -96,13 +96,13 @@ public final class ServerStartupSteps {
     assertThat(vertx.deploymentIDs()).isNotEmpty();
   }
 
-  @Then("I should be able to send a Message on the event bus")
+  @Then("I should be able to send a MessageRequest on the event bus")
   public void i_should_be_able_to_send_a_message_on_the_event_bus() throws InterruptedException {
     var latch = new CountDownLatch(1);
     var success = new AtomicBoolean(false);
 
     var msg =
-        Message.newBuilder()
+        MessageRequest.newBuilder()
             .setProto(
                 com.larpconnect.njall.proto.ProtoDef.newBuilder().setProtobufName("Ping").build())
             .build();
@@ -111,7 +111,7 @@ public final class ServerStartupSteps {
         .eventBus()
         .consumer(
             "test-address",
-            (io.vertx.core.eventbus.Message<Message> m) -> {
+            (io.vertx.core.eventbus.Message<MessageRequest> m) -> {
               m.reply(m.body());
             });
 
@@ -120,14 +120,14 @@ public final class ServerStartupSteps {
         .request("test-address", msg)
         .onSuccess(
             reply -> {
-              if (reply.body() instanceof Message) {
+              if (reply.body() instanceof MessageRequest) {
                 success.set(true);
               }
               latch.countDown();
             })
         .onFailure(
             err -> {
-              logger.error("Message send failed", err);
+              logger.error("MessageRequest send failed", err);
               latch.countDown();
             });
 

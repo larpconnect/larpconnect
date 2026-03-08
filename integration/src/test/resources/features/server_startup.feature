@@ -5,4 +5,4 @@ Feature: Server Startup
     When I start the server
     Then the server should be running
     And the MainVerticle should be deployed
-    And I should be able to send a Message on the event bus
+    And I should be able to send a MessageRequest on the event bus

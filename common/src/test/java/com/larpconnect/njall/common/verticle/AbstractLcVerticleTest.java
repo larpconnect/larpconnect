@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.protobuf.ByteString;
 import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
 import com.larpconnect.njall.common.id.IdGenerator;
-import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
@@ -31,7 +31,7 @@ final class AbstractLcVerticleTest {
   @BeforeEach
   void setUp(VertxTestContext testContext) {
     vertx = Vertx.vertx();
-    vertx.eventBus().registerDefaultCodec(Message.class, new ProtoCodecRegistry());
+    vertx.eventBus().registerDefaultCodec(MessageRequest.class, new ProtoCodecRegistry());
     testContext.completeNow();
   }
 
@@ -58,7 +58,7 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
             handled.set(true);
             return BasicResponse.CONTINUE;
           }
@@ -74,7 +74,7 @@ final class AbstractLcVerticleTest {
                               com.google.protobuf.ByteString.copyFrom(
                                   new byte[] {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}))
                           .build();
-                  Message message = Message.newBuilder().setTraceparent(obs).build();
+                  MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
                   vertx.eventBus().send(CHANNEL, message);
                   vertx.setTimer(
                       100,
@@ -105,7 +105,7 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
             handled.set(true);
             return BasicResponse.CONTINUE;
           }
@@ -121,7 +121,7 @@ final class AbstractLcVerticleTest {
                               com.google.protobuf.ByteString.copyFrom(
                                   new byte[] {2, 2, 2, 2, 2, 2, 2, 2}))
                           .build();
-                  Message message = Message.newBuilder().setTraceparent(obs).build();
+                  MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
                   vertx.eventBus().send(CHANNEL, message);
                   vertx.setTimer(
                       100,
@@ -140,7 +140,7 @@ final class AbstractLcVerticleTest {
     AbstractLcVerticle verticle =
         new AbstractLcVerticle("test-channel", mockIdGenerator) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
             return BasicResponse.CONTINUE;
           }
         };
@@ -174,7 +174,7 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
             handled.set(true);
             receivedSpanId.set(spanId);
             mdcTraceId.set(MDC.get("trace_id"));
@@ -198,9 +198,9 @@ final class AbstractLcVerticleTest {
                           .setSpanId(ByteString.copyFrom(parentSpanIdBytes))
                           .build();
 
-                  Message message = Message.newBuilder().setTraceparent(obs).build();
+                  MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
 
-                  vertx.eventBus().<Message>request(CHANNEL, message).onComplete(ar -> {});
+                  vertx.eventBus().<MessageRequest>request(CHANNEL, message).onComplete(ar -> {});
 
                   vertx.setTimer(
                       100,
@@ -247,7 +247,7 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
             handled.set(true);
             throw new IllegalStateException("Test exception");
           }
@@ -258,11 +258,11 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  Message message = Message.newBuilder().build();
+                  MessageRequest message = MessageRequest.newBuilder().build();
 
                   vertx
                       .eventBus()
-                      .<Message>request(CHANNEL, message)
+                      .<MessageRequest>request(CHANNEL, message)
                       .onComplete(
                           testContext.failing(
                               err ->
@@ -308,7 +308,7 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
@@ -322,7 +322,7 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  Message message = Message.newBuilder().build(); // No traceparent
+                  MessageRequest message = MessageRequest.newBuilder().build(); // No traceparent
 
                   vertx.eventBus().send(CHANNEL, message);
 
@@ -372,7 +372,7 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
@@ -388,7 +388,7 @@ final class AbstractLcVerticleTest {
                 id -> {
                   Observability obs =
                       Observability.newBuilder().build(); // Empty traceId and spanId
-                  Message message = Message.newBuilder().setTraceparent(obs).build();
+                  MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
 
                   vertx.eventBus().send(CHANNEL, message);
 
@@ -438,7 +438,7 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, Message message) {
+          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
@@ -452,7 +452,7 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  Message message = Message.newBuilder().build(); // No traceparent
+                  MessageRequest message = MessageRequest.newBuilder().build(); // No traceparent
 
                   vertx.eventBus().send(CHANNEL, message);
 

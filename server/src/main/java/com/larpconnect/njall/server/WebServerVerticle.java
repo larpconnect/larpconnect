@@ -5,7 +5,7 @@ import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.annotations.BuildWith;
-import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.server.annotations.OpenApiSpec;
 import com.larpconnect.njall.server.annotations.WebPort;
 import io.vertx.core.AbstractVerticle;
@@ -46,7 +46,7 @@ final class WebServerVerticle extends AbstractVerticle {
       ensure = "returns JSON representation of message",
       tags = {PURE})
   interface Serializer {
-    String print(Message message) throws IOException;
+    String print(MessageRequest message) throws IOException;
   }
 
   WebServerVerticle() {
@@ -148,7 +148,7 @@ final class WebServerVerticle extends AbstractVerticle {
       implementationHint = "Serializes a Greeting message to JSON and writes it to the response")
   void handleGetMessage(RoutingContext ctx) {
     var message =
-        Message.newBuilder()
+        MessageRequest.newBuilder()
             .setProto(
                 com.larpconnect.njall.proto.ProtoDef.newBuilder()
                     .setProtobufName("Greeting")

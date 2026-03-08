@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.inject.Injector;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
-import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import jakarta.inject.Inject;
@@ -32,7 +32,7 @@ final class VerticleSetupService {
       implementationHint = "Registers Guice verticle factory and Proto codec.")
   void setup(Vertx vertx, Injector injector) {
     vertx.registerVerticleFactory(new GuiceVerticleFactory(injector));
-    vertx.eventBus().registerDefaultCodec(Message.class, new ProtoCodecRegistry());
+    vertx.eventBus().registerDefaultCodec(MessageRequest.class, new ProtoCodecRegistry());
     vertxRef.set(vertx);
   }
 
