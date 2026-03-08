@@ -3,10 +3,12 @@ package com.larpconnect.njall.common.time;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.larpconnect.njall.common.annotations.AiContract;
+import com.larpconnect.njall.common.annotations.BuildWith;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import java.time.Clock;
 
+@BuildWith(TimeModule.class)
 final class MonotonicTimeService extends AbstractIdleService implements TimeService {
   private final Clock clock;
   private final Provider<Stopwatch> stopwatchProvider;

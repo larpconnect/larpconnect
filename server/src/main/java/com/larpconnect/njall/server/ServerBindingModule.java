@@ -5,6 +5,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+import com.larpconnect.njall.common.annotations.InstallInstead;
 import com.larpconnect.njall.server.annotations.OpenApiSpec;
 import com.larpconnect.njall.server.annotations.WebPort;
 import io.vertx.core.Verticle;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@InstallInstead(ServerModule.class)
 final class ServerBindingModule extends AbstractModule {
   private final Function<String, String> getenv;
   private static final int DEFAULT_PORT = 8080;

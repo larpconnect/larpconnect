@@ -3,6 +3,7 @@ package com.larpconnect.njall.api;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
+import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.proto.ApiObject;
 import com.larpconnect.njall.proto.Document;
 import com.larpconnect.njall.proto.Event;
@@ -13,6 +14,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Inject;
 
+@BuildWith(ApiModule.class)
 final class DefaultApiObjectParser implements ApiObjectParser {
 
   private final JsonFormat.Printer printer;

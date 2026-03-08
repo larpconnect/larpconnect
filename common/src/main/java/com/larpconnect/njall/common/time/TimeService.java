@@ -2,6 +2,7 @@ package com.larpconnect.njall.common.time;
 
 import com.google.common.util.concurrent.Service;
 import com.larpconnect.njall.common.annotations.AiContract;
+import com.larpconnect.njall.common.annotations.DefaultImplementation;
 
 /**
  * A central service providing a uniform view of temporal operations within the application.
@@ -12,6 +13,7 @@ import com.larpconnect.njall.common.annotations.AiContract;
  * time for unit tests, safely perform time-travel or freeze time scenarios, and guarantee
  * reproducibility in time-sensitive workflows.
  */
+@DefaultImplementation(MonotonicTimeService.class)
 public interface TimeService extends Service {
   /**
    * Retrieves a reliable, monotonically increasing timestamp.
