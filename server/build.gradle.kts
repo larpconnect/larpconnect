@@ -5,7 +5,6 @@ plugins {
 dependencies {
     implementation(project(":common"))
     implementation(project(":init"))
-    implementation(project(":proto"))
     implementation(libs.protobuf.java.util)
     implementation(libs.vertx.config)
     implementation(libs.vertx.healthcheck)
