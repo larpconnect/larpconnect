@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.inject.Injector;
 import com.larpconnect.njall.common.annotations.AiContract;
-import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
 import com.larpconnect.njall.proto.Message;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageCodec;
 import jakarta.inject.Inject;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
@@ -17,8 +17,11 @@ final class VerticleSetupService {
   private final Logger logger = LoggerFactory.getLogger(VerticleSetupService.class);
   private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
 
+  private final MessageCodec<Message, Message> protoCodecRegistry;
+
   @Inject
-  VerticleSetupService(ProtoCodecRegistry protoCodecRegistry) {
+  VerticleSetupService(MessageCodec<Message, Message> protoCodecRegistry) {
+    this.protoCodecRegistry = protoCodecRegistry;
     logger.info("Loaded ProtoCodecRegistry: {}", protoCodecRegistry);
   }
 
@@ -32,7 +35,7 @@ final class VerticleSetupService {
       implementationHint = "Registers Guice verticle factory and Proto codec.")
   void setup(Vertx vertx, Injector injector) {
     vertx.registerVerticleFactory(new GuiceVerticleFactory(injector));
-    vertx.eventBus().registerDefaultCodec(Message.class, new ProtoCodecRegistry());
+    vertx.eventBus().registerDefaultCodec(Message.class, this.protoCodecRegistry);
     vertxRef.set(vertx);
   }
 

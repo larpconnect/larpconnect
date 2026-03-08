@@ -15,7 +15,9 @@ final class VerticleLifecycleTest {
 
   @Test
   public void startUp_validConfig_success() throws Exception {
-    var lifecycle = VerticleServices.create(ImmutableList.of());
+    var lifecycle =
+        VerticleServices.create(
+            ImmutableList.of(new com.larpconnect.njall.common.codec.CodecModule()));
 
     lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
     assertThat(lifecycle.isRunning()).isTrue();
@@ -30,7 +32,9 @@ final class VerticleLifecycleTest {
   public void startUp_missingConfig_throwsRuntimeException() {
     System.setProperty("njall.config.resource", "missing.json");
     try {
-      var lifecycle = VerticleServices.create(ImmutableList.of());
+      var lifecycle =
+          VerticleServices.create(
+              ImmutableList.of(new com.larpconnect.njall.common.codec.CodecModule()));
       assertThatThrownBy(() -> lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS))
           .isInstanceOf(IllegalStateException.class);
     } finally {

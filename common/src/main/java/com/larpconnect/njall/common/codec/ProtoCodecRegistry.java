@@ -20,11 +20,13 @@ import io.vertx.core.eventbus.MessageCodec;
  * using protobuf rather than JSON to minimize payload size and reduce bandwidth consumption.
  */
 @Immutable
-public final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
+@jakarta.inject.Singleton
+final class ProtoCodecRegistry implements MessageCodec<Message, Message> {
   private static final short VERSION = 0x01;
   private static final int INT_SIZE = 4;
   private static final String NAMESPACE = "com.larpconnect.njall.proto.";
 
+  @jakarta.inject.Inject
   public ProtoCodecRegistry() {}
 
   @Override

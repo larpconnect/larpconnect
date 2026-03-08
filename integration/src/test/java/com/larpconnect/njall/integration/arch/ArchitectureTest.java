@@ -66,10 +66,6 @@ final class ArchitectureTest {
           .areNotAnonymousClasses()
           .and()
           .resideOutsideOfPackage("com.larpconnect.njall.proto..")
-          .and()
-          .resideOutsideOfPackage("com.larpconnect.njall.api..")
-          .and()
-          .resideOutsideOfPackage("com.larpconnect.njall.common.codec..")
           .should()
           .haveModifier(JavaModifier.ABSTRACT)
           .orShould()
@@ -89,10 +85,6 @@ final class ArchitectureTest {
           .areNotAssignableTo(Module.class)
           .and()
           .resideOutsideOfPackage("com.larpconnect.njall.proto..")
-          .and()
-          .resideOutsideOfPackage("com.larpconnect.njall.api..")
-          .and()
-          .resideOutsideOfPackage("com.larpconnect.njall.common.codec..")
           .should()
           .notBePublic();
 
@@ -204,4 +196,13 @@ final class ArchitectureTest {
                 }
               })
           .allowEmptyShould(true);
+
+  // 8. All record classes must be annotated with @Immutable.
+  @ArchTest
+  public static final ArchRule records_must_be_annotated_immutable =
+      classes()
+          .that()
+          .areRecords()
+          .should()
+          .beAnnotatedWith(com.google.errorprone.annotations.Immutable.class);
 }

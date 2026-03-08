@@ -2,12 +2,16 @@ package com.larpconnect.njall.common.verticle;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.inject.Guice;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import com.google.protobuf.ByteString;
-import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
+import com.larpconnect.njall.common.codec.CodecModule;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.Message;
 import com.larpconnect.njall.proto.Observability;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageCodec;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import jakarta.inject.Provider;
@@ -31,7 +35,10 @@ final class AbstractLcVerticleTest {
   @BeforeEach
   void setUp(VertxTestContext testContext) {
     vertx = Vertx.vertx();
-    vertx.eventBus().registerDefaultCodec(Message.class, new ProtoCodecRegistry());
+    MessageCodec<Message, Message> codec =
+        Guice.createInjector(new CodecModule())
+            .getInstance(Key.get(new TypeLiteral<MessageCodec<Message, Message>>() {}));
+    vertx.eventBus().registerDefaultCodec(Message.class, codec);
     testContext.completeNow();
   }
 

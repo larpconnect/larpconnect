@@ -8,12 +8,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
+import com.larpconnect.njall.common.codec.CodecModule;
+import com.larpconnect.njall.proto.Message;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.MessageCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +36,10 @@ final class VerticleSetupServiceTest {
     mockInjector = mock(Injector.class);
     when(mockVertx.eventBus()).thenReturn(mockEventBus);
     when(mockEventBus.registerDefaultCodec(any(), any())).thenReturn(mockEventBus);
-    service = new VerticleSetupService(new ProtoCodecRegistry());
+    MessageCodec<Message, Message> codec =
+        Guice.createInjector(new CodecModule())
+            .getInstance(Key.get(new TypeLiteral<MessageCodec<Message, Message>>() {}));
+    service = new VerticleSetupService(codec);
   }
 
   @Test

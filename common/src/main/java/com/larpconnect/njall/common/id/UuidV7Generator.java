@@ -38,6 +38,7 @@ final class UuidV7Generator implements IdGenerator {
   private final Provider<RandomGenerator> randomProvider;
   private final AtomicReference<State> state;
 
+  @com.google.errorprone.annotations.Immutable
   private record State(long timeMs, long counter) {}
 
   @Inject
