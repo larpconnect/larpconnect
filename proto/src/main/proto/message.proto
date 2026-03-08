@@ -42,10 +42,18 @@ message Header {
   repeated string accept = 1;
 }
 
-message Message {
+message Parameter {
+  string key = 1;
+  oneof value {
+    string string_value = 2;
+  }
+}
+
+message MessageRequest {
   Observability traceparent = 1;
   Authentication authentication = 4;
   Header header = 5;
+  repeated Parameter parameters = 6;
 
   oneof payload {
     ProtoDef proto = 2;
@@ -54,7 +62,7 @@ message Message {
 }
 
 service MessageService {
-  rpc GetMessage(google.protobuf.Empty) returns (Message) {
+  rpc GetMessage(google.protobuf.Empty) returns (MessageRequest) {
     option (google.api.http) = {
       get: "/v1/message"
     };

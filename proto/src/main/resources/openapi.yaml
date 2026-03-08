@@ -17,7 +17,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/Message'
+                                $ref: '#/components/schemas/MessageRequest'
                 default:
                     description: Default error response
                     content:
@@ -49,7 +49,7 @@ components:
                     type: array
                     items:
                         type: string
-        Message:
+        MessageRequest:
             type: object
             properties:
                 traceparent:

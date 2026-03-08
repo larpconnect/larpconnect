@@ -4,7 +4,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closer;
 import com.google.protobuf.ByteString;
 import com.larpconnect.njall.common.id.IdGenerator;
-import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -53,15 +53,15 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
   public void start(Promise<Void> startPromise) {
     vertx
         .eventBus()
-        .<Message>consumer(
+        .<MessageRequest>consumer(
             channel,
             msg -> {
-              Message message = msg.body();
+              MessageRequest message = msg.body();
 
               byte[] newSpanId = new byte[SPAN_ID_BYTES];
               randomProvider.get().nextBytes(newSpanId);
 
-              Message finalMessage = ensureObservability(message);
+              MessageRequest finalMessage = ensureObservability(message);
               String traceIdStr =
                   HEX.encode(finalMessage.getTraceparent().getTraceId().toByteArray());
               String parentSpanIdStr =
@@ -88,7 +88,7 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
     startPromise.complete();
   }
 
-  private Message ensureObservability(Message message) {
+  private MessageRequest ensureObservability(MessageRequest message) {
     Observability.Builder obsBuilder =
         message.hasTraceparent()
             ? message.getTraceparent().toBuilder()
@@ -112,5 +112,5 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
     return message.toBuilder().setTraceparent(obsBuilder.build()).build();
   }
 
-  protected abstract MessageResponse handleMessage(byte[] spanId, Message message);
+  protected abstract MessageResponse handleMessage(byte[] spanId, MessageRequest message);
 }

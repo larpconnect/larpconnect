@@ -49,7 +49,8 @@ final class VerticleSetupServiceTest {
     service.deploy(TestVerticle.class);
 
     verify(mockVertx).deployVerticle("guice:" + TestVerticle.class.getName());
-    verify(mockEventBus).registerDefaultCodec(eq(com.larpconnect.njall.proto.Message.class), any());
+    verify(mockEventBus)
+        .registerDefaultCodec(eq(com.larpconnect.njall.proto.MessageRequest.class), any());
   }
 
   @Test

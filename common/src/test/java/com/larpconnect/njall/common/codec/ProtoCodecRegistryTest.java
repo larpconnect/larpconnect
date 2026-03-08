@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.protobuf.ByteString;
-import com.larpconnect.njall.proto.Message;
+import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.buffer.Buffer;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +23,7 @@ final class ProtoCodecRegistryTest {
             .build();
 
     var original =
-        Message.newBuilder()
+        MessageRequest.newBuilder()
             .setTraceparent(
                 com.larpconnect.njall.proto.Observability.newBuilder()
                     .setTraceId(ByteString.copyFromUtf8("trace-123456789012"))
@@ -56,7 +56,7 @@ final class ProtoCodecRegistryTest {
   void decodeFromWire_withoutProtoDef() {
     var registry = new ProtoCodecRegistry();
     var original =
-        Message.newBuilder()
+        MessageRequest.newBuilder()
             .setMime(com.larpconnect.njall.proto.MimeType.newBuilder().setType("text").build())
             .build();
 
@@ -71,7 +71,7 @@ final class ProtoCodecRegistryTest {
   void transform_anyMessage_identity() {
     var registry = new ProtoCodecRegistry();
     var original =
-        Message.newBuilder()
+        MessageRequest.newBuilder()
             .setProto(
                 com.larpconnect.njall.proto.ProtoDef.newBuilder().setProtobufName("foo").build())
             .build();
@@ -82,7 +82,7 @@ final class ProtoCodecRegistryTest {
   void transform_anyMessageWithoutProtoDef_identity() {
     var registry = new ProtoCodecRegistry();
     var original =
-        Message.newBuilder()
+        MessageRequest.newBuilder()
             .setMime(com.larpconnect.njall.proto.MimeType.newBuilder().setType("text").build())
             .build();
     assertThat(registry.transform(original)).isSameAs(original);
@@ -129,7 +129,7 @@ final class ProtoCodecRegistryTest {
   void transform_anyMessageWithEmptyProtoDef_identity() {
     var registry = new ProtoCodecRegistry();
     var original =
-        Message.newBuilder()
+        MessageRequest.newBuilder()
             .setProto(com.larpconnect.njall.proto.ProtoDef.newBuilder().build())
             .build();
     assertThat(registry.transform(original)).isSameAs(original);
@@ -145,7 +145,7 @@ final class ProtoCodecRegistryTest {
             .build();
 
     var original =
-        Message.newBuilder()
+        MessageRequest.newBuilder()
             .setProto(
                 com.larpconnect.njall.proto.ProtoDef.newBuilder()
                     .setMessage(any)
