@@ -13,7 +13,7 @@ import java.util.UUID;
  * Second, it abstracts away randomness and temporal dependencies, enabling test doubles to inject
  * predictable or deterministic IDs during unit and integration testing.
  */
-@DefaultImplementation(UuidV7Generator.class)
+@DefaultImplementation(IdGeneratorService.class)
 public interface IdGenerator {
   /**
    * Generates a new, system-wide unique identifier.

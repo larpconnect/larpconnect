@@ -12,7 +12,8 @@ final class IdBindingModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(IdGenerator.class).to(UuidV7Generator.class);
+    bind(IdGenerator.class).to(IdGeneratorService.class);
+    bind(IdGeneratorService.class).to(UuidV7GeneratorService.class);
   }
 
   @Provides

@@ -14,7 +14,7 @@ import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-final class UuidV7GeneratorTest {
+final class UuidV7GeneratorServiceTest {
 
   private static final class FakeTimeService extends AbstractIdleService implements TimeService {
     long timeMs = 1000L;
@@ -48,14 +48,15 @@ final class UuidV7GeneratorTest {
 
   private FakeTimeService fakeTimeService;
   private FakeRandomGenerator fakeRandom;
-  private UuidV7Generator generator;
+  private UuidV7GeneratorService generator;
 
   @BeforeEach
   void setUp() {
     fakeTimeService = new FakeTimeService();
     fakeRandom = new FakeRandomGenerator();
     Provider<RandomGenerator> randomProvider = () -> fakeRandom;
-    generator = new UuidV7Generator(fakeTimeService, randomProvider);
+    generator = new UuidV7GeneratorService(fakeTimeService, randomProvider);
+    generator.startAsync().awaitRunning();
   }
 
   @Test
@@ -142,7 +143,8 @@ final class UuidV7GeneratorTest {
   void generate_concurrent_success() throws InterruptedException {
     fakeTimeService.timeMs = 2000L;
 
-    generator = new UuidV7Generator(fakeTimeService, ThreadLocalRandom::current);
+    generator = new UuidV7GeneratorService(fakeTimeService, ThreadLocalRandom::current);
+    generator.startAsync().awaitRunning();
 
     int numThreads = 10;
     int numIdsPerThread = 1000;

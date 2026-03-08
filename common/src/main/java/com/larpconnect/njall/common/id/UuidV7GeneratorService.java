@@ -1,5 +1,6 @@
 package com.larpconnect.njall.common.id;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.common.time.TimeService;
 import jakarta.inject.Inject;
@@ -23,7 +24,7 @@ import java.util.random.RandomGenerator;
  */
 @Singleton
 @BuildWith(IdModule.class)
-final class UuidV7Generator implements IdGenerator {
+final class UuidV7GeneratorService extends AbstractIdleService implements IdGeneratorService {
 
   private static final long MIN_COUNTER = 3L;
   private static final long MAX_COUNTER = 1024L;
@@ -41,7 +42,7 @@ final class UuidV7Generator implements IdGenerator {
   private record State(long timeMs, long counter) {}
 
   @Inject
-  UuidV7Generator(TimeService timeService, Provider<RandomGenerator> randomProvider) {
+  UuidV7GeneratorService(TimeService timeService, Provider<RandomGenerator> randomProvider) {
     this.timeService = timeService;
     this.randomProvider = randomProvider;
     long initialCounter = randomProvider.get().nextLong(MIN_COUNTER, MAX_COUNTER);
@@ -83,4 +84,10 @@ final class UuidV7Generator implements IdGenerator {
 
     return new UUID(msb, lsb);
   }
+
+  @Override
+  protected void startUp() throws Exception {}
+
+  @Override
+  protected void shutDown() throws Exception {}
 }
