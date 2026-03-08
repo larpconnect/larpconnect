@@ -6,14 +6,14 @@ import com.larpconnect.njall.common.annotations.DefaultImplementation;
 /**
  * A central interface providing a uniform view of temporal operations within the application.
  *
- * <p>Directly referencing {@code System.currentTimeMillis()} or {@code System.nanoTime()} scatters
- * implicit, uncontrollable dependencies throughout the codebase. By injecting a uniform {@link
- * Time}, the application gains full control over the clock. This makes it possible to mock time for
- * unit tests, safely perform time-travel or freeze time scenarios, and guarantee reproducibility in
- * time-sensitive workflows.
+ * <p>Directly referencing {@code System.currentMonotonicClockMillis()} or {@code
+ * System.nanoMonotonicClock()} scatters implicit, uncontrollable dependencies throughout the
+ * codebase. By injecting a uniform {@link MonotonicClock}, the application gains full control over
+ * the clock. This makes it possible to mock time for unit tests, safely perform time-travel or
+ * freeze time scenarios, and guarantee reproducibility in time-sensitive workflows.
  */
 @DefaultImplementation(MonotonicTimeService.class)
-public interface Time {
+public interface MonotonicClock {
   /**
    * Retrieves a reliable, monotonically increasing timestamp.
    *

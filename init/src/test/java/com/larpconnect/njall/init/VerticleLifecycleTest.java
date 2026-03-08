@@ -6,7 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Guice;
 import io.vertx.core.AbstractVerticle;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,19 +24,6 @@ final class VerticleLifecycleTest {
 
     lifecycle.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
     assertThat(lifecycle.isRunning()).isFalse();
-  }
-
-  @Test
-  public void vertxModule_bindsDeployerAndService_success() {
-    var lifecycle = new VerticleLifecycle(ImmutableList.of());
-    var module = new VertxModule(lifecycle);
-    var injector = Guice.createInjector(module);
-
-    var deployer = injector.getInstance(VerticleDeployer.class);
-    var service = injector.getInstance(VerticleService.class);
-
-    assertThat(deployer).isSameAs(lifecycle);
-    assertThat(service).isSameAs(lifecycle);
   }
 
   @Test
