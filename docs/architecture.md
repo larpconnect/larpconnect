@@ -58,11 +58,11 @@ rules are enforced:
    within the package.
 2. Every package's `Module` is responsible for installing the modules of the subpackages. This means that you know that
    by installing `a.b.c`'s module you will _always_ get `a.b.c.d`'s module, if there is one.
-4. Dependencies may only go "down or out" within the package hierarchy. So the package `a.b.c` an depend on `a.b.c.d`
+3. Dependencies may only go "down or out" within the package hierarchy. So the package `a.b.c` an depend on `a.b.c.d`
    or on `a.e.f` but not on `a.b`. This creates a directed acyclic graph in the package hierarchy itself.
-5. All bindings are declared explicitly and within the modules. They are your "source of truth" for how the system is
+4. All bindings are declared explicitly and within the modules. They are your "source of truth" for how the system is
    wired together.
-6. Modules may either `install` other modules or they can do bindings, not both. This creates a separation of concerns
+5. Modules may either `install` other modules or they can do bindings, not both. This creates a separation of concerns
    and encourages module segmentation and will also facilitate the use of `PrivateModule`s later, if we decide to go
    that direction.
 
@@ -117,7 +117,7 @@ the dependency graph, we use several custom annotations:
   `FooModule`, so you can get your `Foo` binding there."
 
 These annotations do not affect the runtime behavior of the application: they exist solely to build
-a richer context for automated analysis and development. 
+a richer context for automated analysis and development.
 
 ## Conclusion
 
