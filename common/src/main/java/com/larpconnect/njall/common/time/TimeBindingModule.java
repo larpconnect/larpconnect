@@ -13,7 +13,8 @@ final class TimeBindingModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(TimeService.class).to(MonotonicTimeService.class);
+    bind(Time.class).to(TimeService.class);
+    bind(TimeService.class).to(MonotonicTimeService.class).in(Singleton.class);
   }
 
   @Provides

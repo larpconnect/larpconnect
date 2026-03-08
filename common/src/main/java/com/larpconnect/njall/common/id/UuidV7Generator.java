@@ -1,7 +1,7 @@
 package com.larpconnect.njall.common.id;
 
 import com.larpconnect.njall.common.annotations.BuildWith;
-import com.larpconnect.njall.common.time.TimeService;
+import com.larpconnect.njall.common.time.Time;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -34,14 +34,14 @@ final class UuidV7Generator implements IdGenerator {
   private static final long VARIANT_BITS = 0x8000000000000000L;
   private static final long RANDOM_MASK = 0x3FFFFFFFFFFFFFFFL;
 
-  private final TimeService timeService;
+  private final Time timeService;
   private final Provider<RandomGenerator> randomProvider;
   private final AtomicReference<State> state;
 
   private record State(long timeMs, long counter) {}
 
   @Inject
-  UuidV7Generator(TimeService timeService, Provider<RandomGenerator> randomProvider) {
+  UuidV7Generator(Time timeService, Provider<RandomGenerator> randomProvider) {
     this.timeService = timeService;
     this.randomProvider = randomProvider;
     long initialCounter = randomProvider.get().nextLong(MIN_COUNTER, MAX_COUNTER);

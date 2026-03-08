@@ -3,7 +3,7 @@ package com.larpconnect.njall.common.id;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.larpconnect.njall.common.time.TimeService;
+import com.larpconnect.njall.common.time.Time;
 import jakarta.inject.Provider;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 final class UuidV7GeneratorTest {
 
-  private static final class FakeTimeService extends AbstractIdleService implements TimeService {
+  private static final class FakeTimeService extends AbstractIdleService implements Time {
     long timeMs = 1000L;
 
     @Override
