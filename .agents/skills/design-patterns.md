@@ -11,6 +11,34 @@ This skill provides guidance on common design patterns used by LarpConnect and h
 
 ## Specific Patterns
 
+### Single Implementation Interfaces
+
+A relatively common situation is only needing to create one type of something. For this a single implementation
+interface is often the right strategy.
+
+```java
+Foo.java:
+
+interface Foo {}
+
+DefaultFoo.java:
+
+final class DefaultFoo implements Foo {
+   @Inject
+   DefaultFoo() {}
+}
+
+LocalModule.java:
+
+public final class LocalModule extends AbstractModule {
+   void configure() {
+      bind(Foo.class).to(DefaultFoo.class);
+   }
+}
+```
+
+This format is always preferable to having a "naked" class without an interface.
+
 ### Guice Module Layout
 
 The basic pattern for modules is as follows:
