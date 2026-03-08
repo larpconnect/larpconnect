@@ -19,11 +19,11 @@ a task falls within the defined "Activation Trigger."
 
 If working with Render, load Render's documentation from context7.
 
-| Skill Name    | Activation Trigger               | Source File                                                                                   |
-|:--------------|:---------------------------------|:----------------------------------------------------------------------------------------------|
-| Render Debug  | Debugging Render Output          | [Render Debug](https://github.com/render-oss/skills/blob/main/skills/render-debug/SKILL.md)   |
-| Render Deploy | Publish Code for further testing | [Render Deploy](https://github.com/render-oss/skills/blob/main/skills/render-deploy/SKILL.md) |
-| Frontend design | When working on user interfaces | [Frontend Design](https://context7.com/skills/anthropics/skills/frontend-design) |
+| Skill Name      | Activation Trigger               | Source File                                                                                   |
+|:----------------|:---------------------------------|:----------------------------------------------------------------------------------------------|
+| Render Debug    | Debugging Render Output          | [Render Debug](https://github.com/render-oss/skills/blob/main/skills/render-debug/SKILL.md)   |
+| Render Deploy   | Publish Code for further testing | [Render Deploy](https://github.com/render-oss/skills/blob/main/skills/render-deploy/SKILL.md) |
+| Frontend design | When working on user interfaces  | [Frontend Design](https://context7.com/skills/anthropics/skills/frontend-design)              |
 
 ## 3. Domain-Specific Skills (Contextual)
 

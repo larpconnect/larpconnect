@@ -107,12 +107,12 @@ void configuration() {
 ```
 
 Then in code that needs to manage the _lifecycle_ of `Capability` you inject the `CapabilityService`, while the rest of the system
-only needs to deal with `Capability`. This makes `Capability` easy to mock for downstream classes as well. 
+only needs to deal with `Capability`. This makes `Capability` easy to mock for downstream classes as well.
 
 ### Utility Classes
 
 _Most_ utility classes should be injected via guice. These are just like any other class and by injecting them via guice it allows for
-them to be mocked. 
+them to be mocked.
 
 The exceptional cases are things where we can never really envision needing to mock it: the functions are so straightforward
 and formulaic, on the level of basic transforms, or the utility so ubiquetous that static methods are called for. In that case:
@@ -128,7 +128,7 @@ public final Utility {
 ```
 
 Note marking this as `final`  and `@Immutable`: these objects must always disallow inheritance and never carry state of any form. They
-must also have a `private` constructor to forbid instantiation. 
+must also have a `private` constructor to forbid instantiation.
 
 Strongly prefer, however, writing this as a Guice object that can be injected:
 
@@ -151,5 +151,4 @@ public final Utility {
    public String escape(String arg) { /* code here */ }
 }
 ```
-
 
