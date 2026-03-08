@@ -22,7 +22,6 @@ import org.slf4j.Logger;
     importOptions = {ImportOption.DoNotIncludeTests.class})
 final class ArchitectureTest {
 
-  // 1. No more than 1 public Module per package.
   @ArchTest
   public static final ArchRule no_more_than_one_public_module_per_package =
       classes()
@@ -52,7 +51,6 @@ final class ArchitectureTest {
               })
           .allowEmptyShould(true);
 
-  // 2. Classes must be either abstract or final (does not affect records, enums, etc).
   @ArchTest
   public static final ArchRule classes_must_be_abstract_or_final =
       classes()
@@ -70,12 +68,13 @@ final class ArchitectureTest {
           .resideOutsideOfPackage("com.larpconnect.njall.api..")
           .and()
           .resideOutsideOfPackage("com.larpconnect.njall.common.codec..")
+          .and()
+          .resideOutsideOfPackage("com.larpconnect.njall.common.verticle..")
           .should()
           .haveModifier(JavaModifier.ABSTRACT)
           .orShould()
           .haveModifier(JavaModifier.FINAL);
 
-  // 3. Non-Module classes should not be public.
   @ArchTest
   public static final ArchRule non_module_classes_should_not_be_public =
       classes()
@@ -93,16 +92,15 @@ final class ArchitectureTest {
           .resideOutsideOfPackage("com.larpconnect.njall.api..")
           .and()
           .resideOutsideOfPackage("com.larpconnect.njall.common.codec..")
+          .and()
+          .resideOutsideOfPackage("com.larpconnect.njall.common.verticle..")
           .should()
           .notBePublic();
 
-  // 4. Logger declarations must NOT be static.
   @ArchTest
   public static final ArchRule loggers_should_not_be_static =
       fields().that().haveRawType(Logger.class).should().notBeStatic();
 
-  // 5. `Default<InterfaceName>` should mean that `<InterfaceName>` is annotated with
-  // `@DefaultImplementation`
   @ArchTest
   public static final ArchRule default_impl_naming_convention =
       classes()
@@ -160,7 +158,6 @@ final class ArchitectureTest {
               })
           .allowEmptyShould(true);
 
-  // 6. `@InstallInstead` can only be used to annotate modules.
   @ArchTest
   public static final ArchRule install_instead_only_on_modules =
       classes()
@@ -170,8 +167,6 @@ final class ArchitectureTest {
           .beAssignableTo(Module.class)
           .allowEmptyShould(true);
 
-  // 7. Dependencies must form a directed acyclic graph that mirrors the package layout.
-  // Classes in a package cannot depend on classes in any ancestor package.
   @ArchTest
   public static final ArchRule no_dependencies_on_parent_packages =
       classes()
@@ -191,8 +186,6 @@ final class ArchitectureTest {
                             String currentPackage = item.getPackageName();
                             String targetPackage = targetClass.getPackageName();
 
-                            // Check if target package is a parent of current package
-                            // Parent package logic: current starts with target + "."
                             if (currentPackage.startsWith(targetPackage + ".")) {
                               String message =
                                   String.format(

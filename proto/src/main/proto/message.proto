@@ -38,6 +38,11 @@ message Authentication {
   AuthStatus status = 2;
 }
 
+message Parameter {
+  string key = 1;
+  string value = 2;
+}
+
 message Header {
   repeated string accept = 1;
 }
@@ -46,6 +51,7 @@ message Message {
   Observability traceparent = 1;
   Authentication authentication = 4;
   Header header = 5;
+  repeated Parameter parameter = 6;
 
   oneof payload {
     ProtoDef proto = 2;

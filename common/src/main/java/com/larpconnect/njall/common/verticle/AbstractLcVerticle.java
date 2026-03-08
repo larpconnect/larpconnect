@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-abstract class AbstractLcVerticle extends AbstractVerticle {
+public abstract class AbstractLcVerticle extends AbstractVerticle {
   private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
   private static final int SPAN_ID_BYTES = 8;
   private static final int TRACE_ID_BYTES = 16;
@@ -74,6 +74,9 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
                 closer.register(MDC.putCloseable("span_id", spanIdStr));
 
                 MessageResponse response = handleMessage(newSpanId, finalMessage);
+                if (response instanceof ReplyResponse rr) {
+                  msg.reply(rr.reply());
+                }
                 if (response == BasicResponse.SHUTDOWN) {
                   vertx.eventBus().consumer(channel).unregister();
                 }
