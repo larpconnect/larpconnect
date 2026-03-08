@@ -3,6 +3,7 @@ package com.larpconnect.njall.integration.arch;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 
+import com.google.errorprone.annotations.Immutable;
 import com.google.inject.Module;
 import com.larpconnect.njall.common.annotations.DefaultImplementation;
 import com.larpconnect.njall.common.annotations.InstallInstead;
@@ -66,10 +67,6 @@ final class ArchitectureTest {
           .areNotAnonymousClasses()
           .and()
           .resideOutsideOfPackage("com.larpconnect.njall.proto..")
-          .and()
-          .resideOutsideOfPackage("com.larpconnect.njall.api..")
-          .and()
-          .resideOutsideOfPackage("com.larpconnect.njall.common.codec..")
           .should()
           .haveModifier(JavaModifier.ABSTRACT)
           .orShould()
@@ -89,10 +86,6 @@ final class ArchitectureTest {
           .areNotAssignableTo(Module.class)
           .and()
           .resideOutsideOfPackage("com.larpconnect.njall.proto..")
-          .and()
-          .resideOutsideOfPackage("com.larpconnect.njall.api..")
-          .and()
-          .resideOutsideOfPackage("com.larpconnect.njall.common.codec..")
           .should()
           .notBePublic();
 
@@ -204,4 +197,9 @@ final class ArchitectureTest {
                 }
               })
           .allowEmptyShould(true);
+
+  // 8. All record classes should be annotated with @Immutable.
+  @ArchTest
+  public static final ArchRule records_should_be_immutable =
+      classes().that().areRecords().should().beAnnotatedWith(Immutable.class);
 }

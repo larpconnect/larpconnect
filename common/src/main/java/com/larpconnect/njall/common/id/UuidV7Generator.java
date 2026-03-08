@@ -1,5 +1,6 @@
 package com.larpconnect.njall.common.id;
 
+import com.google.errorprone.annotations.Immutable;
 import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.common.time.MonotonicClock;
 import jakarta.inject.Inject;
@@ -38,6 +39,7 @@ final class UuidV7Generator implements IdGenerator {
   private final Provider<RandomGenerator> randomProvider;
   private final AtomicReference<State> state;
 
+  @Immutable
   private record State(long timeMs, long counter) {}
 
   @Inject

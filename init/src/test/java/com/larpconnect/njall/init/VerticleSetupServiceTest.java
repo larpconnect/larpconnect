@@ -9,7 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.inject.Injector;
-import com.larpconnect.njall.common.codec.ProtoCodecRegistry;
+import com.larpconnect.njall.common.codec.ProtoCodec;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -31,7 +31,7 @@ final class VerticleSetupServiceTest {
     mockInjector = mock(Injector.class);
     when(mockVertx.eventBus()).thenReturn(mockEventBus);
     when(mockEventBus.registerDefaultCodec(any(), any())).thenReturn(mockEventBus);
-    service = new VerticleSetupService(new ProtoCodecRegistry());
+    service = new VerticleSetupService(mock(ProtoCodec.class));
   }
 
   @Test

@@ -87,6 +87,7 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     var builder = ImmutableList.<Module>builder();
     builder.addAll(modules);
     builder.add(new VertxModule(this));
+    builder.add(new com.larpconnect.njall.common.codec.CodecModule());
     builder.add(new ConfigModule(config));
 
     // Create Guice Injector

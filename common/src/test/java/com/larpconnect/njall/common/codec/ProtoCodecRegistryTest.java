@@ -15,7 +15,7 @@ final class ProtoCodecRegistryTest {
 
   @Test
   void encodeToWire_validMessage_success() {
-    var registry = new ProtoCodecRegistry();
+    ProtoCodec registry = new ProtoCodecRegistry();
     var any =
         com.google.protobuf.Any.newBuilder()
             .setTypeUrl("com.larpconnect.njall.proto.MyType")
@@ -54,7 +54,7 @@ final class ProtoCodecRegistryTest {
 
   @Test
   void decodeFromWire_withoutProtoDef() {
-    var registry = new ProtoCodecRegistry();
+    ProtoCodec registry = new ProtoCodecRegistry();
     var original =
         MessageRequest.newBuilder()
             .setMime(com.larpconnect.njall.proto.MimeType.newBuilder().setType("text").build())
@@ -69,7 +69,7 @@ final class ProtoCodecRegistryTest {
 
   @Test
   void transform_anyMessage_identity() {
-    var registry = new ProtoCodecRegistry();
+    ProtoCodec registry = new ProtoCodecRegistry();
     var original =
         MessageRequest.newBuilder()
             .setProto(
@@ -80,7 +80,7 @@ final class ProtoCodecRegistryTest {
 
   @Test
   void transform_anyMessageWithoutProtoDef_identity() {
-    var registry = new ProtoCodecRegistry();
+    ProtoCodec registry = new ProtoCodecRegistry();
     var original =
         MessageRequest.newBuilder()
             .setMime(com.larpconnect.njall.proto.MimeType.newBuilder().setType("text").build())
@@ -90,7 +90,7 @@ final class ProtoCodecRegistryTest {
 
   @Test
   void decodeFromWire_incompleteBuffer_failure() {
-    var registry = new ProtoCodecRegistry();
+    ProtoCodec registry = new ProtoCodecRegistry();
     var buffer = Buffer.buffer();
     buffer.appendShort((short) 0x01);
     buffer.appendInt(10);
@@ -103,7 +103,7 @@ final class ProtoCodecRegistryTest {
 
   @Test
   void decodeFromWire_withInvalidProto() {
-    var registry = new ProtoCodecRegistry();
+    ProtoCodec registry = new ProtoCodecRegistry();
     var buffer = Buffer.buffer();
     buffer.appendShort((short) 0x01);
     buffer.appendInt(10);
@@ -127,7 +127,7 @@ final class ProtoCodecRegistryTest {
 
   @Test
   void transform_anyMessageWithEmptyProtoDef_identity() {
-    var registry = new ProtoCodecRegistry();
+    ProtoCodec registry = new ProtoCodecRegistry();
     var original =
         MessageRequest.newBuilder()
             .setProto(com.larpconnect.njall.proto.ProtoDef.newBuilder().build())
@@ -137,7 +137,7 @@ final class ProtoCodecRegistryTest {
 
   @Test
   void decodeFromWire_unexpectedNamespace_notConverted() {
-    var registry = new ProtoCodecRegistry();
+    ProtoCodec registry = new ProtoCodecRegistry();
     var any =
         com.google.protobuf.Any.newBuilder()
             .setTypeUrl("type.googleapis.com/com.example.other.Namespace")

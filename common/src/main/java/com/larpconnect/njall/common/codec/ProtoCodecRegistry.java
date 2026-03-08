@@ -8,7 +8,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.eventbus.MessageCodec;
 
 /**
  * A message codec for transmitting Protocol Buffer {@link MessageRequest} objects over the Vert.x
@@ -20,7 +19,7 @@ import io.vertx.core.eventbus.MessageCodec;
  * using protobuf rather than JSON to minimize payload size and reduce bandwidth consumption.
  */
 @Immutable
-public final class ProtoCodecRegistry implements MessageCodec<MessageRequest, MessageRequest> {
+final class ProtoCodecRegistry implements ProtoCodec {
   private static final short VERSION = 0x01;
   private static final int INT_SIZE = 4;
   private static final String NAMESPACE = "com.larpconnect.njall.proto.";
