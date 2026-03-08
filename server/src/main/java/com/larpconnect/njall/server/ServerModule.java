@@ -12,6 +12,9 @@ public final class ServerModule extends AbstractModule {
   protected void configure() {
     install(new ApiModule());
     install(new CommonModule());
+    // VertxModule and ConfigModule require state initialized dynamically during
+    // VerticleLifecycle startup, so they are injected directly by the lifecycle
+    // instead of statically installed here.
     install(new InitModule());
     install(new ServerBindingModule());
   }
