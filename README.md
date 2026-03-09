@@ -54,16 +54,6 @@ To compile the project and run the test suite:
 ./gradlew build
 ```
 
-### Updating OpenAPI Specs
-
-To regenerate the OpenAPI specification (`openapi.yaml`) from Protobuf
-definitions and copy it to `src/main/resources` where it should be checked into
-version control, run:
-
-```bash
-./gradlew :proto:updateOpenApi
-```
-
 ### Running Locally
 
 To run the server directly via Gradle:

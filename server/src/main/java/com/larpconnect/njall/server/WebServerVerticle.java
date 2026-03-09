@@ -117,14 +117,14 @@ final class WebServerVerticle extends AbstractVerticle {
                   .onSuccess(
                       contract -> {
                         var builder = RouterBuilder.create(vertx, contract);
-                        builder
-                            .getRoute("MessageService_GetMessage")
-                            .addHandler(this::handleGetMessage);
+                        builder.getRoute("getMessage").addHandler(this::handleGetMessage);
+
+                        var hc = HealthCheckHandler.create(vertx);
+                        builder.getRoute("healthz").addHandler(hc);
+
+                        builder.getRoute("webfinger").addHandler(this::handleWebfinger);
 
                         var router = builder.createRouter();
-                        var hc = HealthCheckHandler.create(vertx);
-                        router.get("/healthz").handler(hc);
-                        router.get("/.well-known/webfinger").handler(this::handleWebfinger);
                         vertx
                             .createHttpServer()
                             .requestHandler(router)

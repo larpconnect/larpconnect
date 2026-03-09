@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: LARPConnect API
+  version: 0.0.1
+paths:
+  /v1/message:
+    get:
+      operationId: getMessage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageRequest'
+        default:
+          description: Default error response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /healthz:
+    get:
+      operationId: healthz
+      responses:
+        "200":
+          description: OK
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+  /.well-known/webfinger:
+    get:
+      operationId: webfinger
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    Authentication:
+      type: object
+      properties:
+        username:
+          type: string
+        status:
+          type: integer
+          format: enum
+    GoogleProtobufAny:
+      type: object
+      properties:
+        '@type':
+          type: string
+          description: The type of the serialized message.
+      additionalProperties: true
+      description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+    Header:
+      type: object
+      properties:
+        accept:
+          type: array
+          items:
+            type: string
+    MessageRequest:
+      type: object
+      properties:
+        traceparent:
+          $ref: '#/components/schemas/Observability'
+        authentication:
+          $ref: '#/components/schemas/Authentication'
+        header:
+          $ref: '#/components/schemas/Header'
+        proto:
+          $ref: '#/components/schemas/ProtoDef'
+        mime:
+          $ref: '#/components/schemas/MimeType'
+    MimeType:
+      type: object
+      properties:
+        type:
+          type: string
+        subtype:
+          type: string
+        content:
+          type: string
+          format: bytes
+    Observability:
+      type: object
+      properties:
+        version:
+          type: integer
+          format: uint32
+        traceId:
+          type: string
+          format: bytes
+        spanId:
+          type: string
+          format: bytes
+        flags:
+          type: integer
+          format: uint32
+    ProtoDef:
+      type: object
+      properties:
+        protobufName:
+          type: string
+        message:
+          $ref: '#/components/schemas/GoogleProtobufAny'
+    Status:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: The status code.
+          format: int32
+        message:
+          type: string
+          description: A developer-facing error message.
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleProtobufAny'
+          description: A list of messages that carry the error details.
