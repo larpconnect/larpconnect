@@ -144,7 +144,7 @@ final class WebServerVerticle extends AbstractVerticle {
 
   // Package-private for testing
   @AiContract(
-      ensure = "ctx.response() \\text{ contains JSON Greeting}",
+      ensure = "ctx.response() \text{ contains JSON Greeting}",
       implementationHint = "Serializes a Greeting message to JSON and writes it to the response")
   void handleGetMessage(RoutingContext ctx) {
     var message =
@@ -156,7 +156,7 @@ final class WebServerVerticle extends AbstractVerticle {
             .build();
     try {
       var json = serializer.print(message);
-      ctx.json(new JsonObject(json));
+      ctx.response().putHeader("content-type", "application/json").end(json);
     } catch (RuntimeException | IOException e) {
       logger.error("Failed to convert message to JSON", e);
       ctx.fail(e);
@@ -164,7 +164,7 @@ final class WebServerVerticle extends AbstractVerticle {
   }
 
   @AiContract(
-      ensure = "ctx.response() \\text{ contains JSON Webfinger response}",
+      ensure = "ctx.response() \text{ contains JSON Webfinger response}",
       implementationHint = "Returns a valid JSON response for a webfinger query")
   void handleWebfinger(RoutingContext ctx) {
     var response = new JsonObject().put("subject", "acct:system@localhost");
