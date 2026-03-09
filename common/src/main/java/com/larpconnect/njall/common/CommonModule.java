@@ -10,6 +10,7 @@ public final class CommonModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    install(new CommonBindingModule());
     install(new TimeModule());
     install(new IdModule());
     install(new CodecModule());

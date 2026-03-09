@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Guice;
 import com.google.protobuf.ByteString;
-import com.larpconnect.njall.common.codec.CodecModule;
 import com.larpconnect.njall.common.codec.ProtoCodec;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.MessageRequest;
@@ -37,7 +36,10 @@ final class AbstractLcVerticleTest {
         .eventBus()
         .registerDefaultCodec(
             MessageRequest.class,
-            Guice.createInjector(new CodecModule()).getInstance(ProtoCodec.class));
+            Guice.createInjector(
+                    new com.larpconnect.njall.common.codec.CodecModule(),
+                    new com.larpconnect.njall.common.CommonModule())
+                .getInstance(ProtoCodec.class));
     testContext.completeNow();
   }
 

@@ -124,7 +124,7 @@ final class MonotonicTimeServiceTest {
 
   @Test
   void configure_bindsService_success() {
-    var injector = Guice.createInjector(new TimeModule());
+    var injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var service = injector.getInstance(MonotonicClock.class);
     assertThat(service).isInstanceOf(MonotonicTimeService.class);
 
