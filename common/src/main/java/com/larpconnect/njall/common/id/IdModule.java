@@ -6,7 +6,5 @@ public final class IdModule extends AbstractModule {
   public IdModule() {}
 
   @Override
-  protected void configure() {
-    install(new IdBindingModule());
-  }
+  protected void configure() {}
 }

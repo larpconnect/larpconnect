@@ -16,8 +16,7 @@ final class VerticleLifecycleTest {
   @Test
   public void startUp_validConfig_success() throws Exception {
     var lifecycle =
-        VerticleServices.create(
-            ImmutableList.of(new com.larpconnect.njall.common.codec.CodecModule()));
+        VerticleServices.create(ImmutableList.of(new com.larpconnect.njall.common.CommonModule()));
 
     lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS);
     assertThat(lifecycle.isRunning()).isTrue();
@@ -34,7 +33,7 @@ final class VerticleLifecycleTest {
     try {
       var lifecycle =
           VerticleServices.create(
-              ImmutableList.of(new com.larpconnect.njall.common.codec.CodecModule()));
+              ImmutableList.of(new com.larpconnect.njall.common.CommonModule()));
       assertThatThrownBy(() -> lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS))
           .isInstanceOf(IllegalStateException.class);
     } finally {
@@ -45,8 +44,7 @@ final class VerticleLifecycleTest {
   @Test
   public void deploy_notStarted_throwsException() {
     var lifecycle =
-        new VerticleLifecycle(
-            ImmutableList.of(new com.larpconnect.njall.common.codec.CodecModule()));
+        new VerticleLifecycle(ImmutableList.of(new com.larpconnect.njall.common.CommonModule()));
     assertThatThrownBy(() -> lifecycle.deploy(TestVerticle.class))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("VerticleLifecycle not started");
@@ -55,8 +53,7 @@ final class VerticleLifecycleTest {
   @Test
   public void shutDown_closeNotStarted_doesNothing() {
     var lifecycle =
-        new VerticleLifecycle(
-            ImmutableList.of(new com.larpconnect.njall.common.codec.CodecModule()));
+        new VerticleLifecycle(ImmutableList.of(new com.larpconnect.njall.common.CommonModule()));
     // Never started, so shutDown should safely do nothing
     lifecycle.shutDown();
   }
@@ -65,8 +62,7 @@ final class VerticleLifecycleTest {
   @SuppressWarnings("unchecked")
   public void shutDown_closeFails_logsError() throws Exception {
     var lifecycle =
-        new VerticleLifecycle(
-            ImmutableList.of(new com.larpconnect.njall.common.codec.CodecModule()));
+        new VerticleLifecycle(ImmutableList.of(new com.larpconnect.njall.common.CommonModule()));
     var field = VerticleLifecycle.class.getDeclaredField("vertxRef");
     field.setAccessible(true);
     var vertxRef = (AtomicReference<io.vertx.core.Vertx>) field.get(lifecycle);
@@ -84,8 +80,7 @@ final class VerticleLifecycleTest {
   @SuppressWarnings("unchecked")
   public void shutDown_interrupted_logsWarning() throws Exception {
     var lifecycle =
-        new VerticleLifecycle(
-            ImmutableList.of(new com.larpconnect.njall.common.codec.CodecModule()));
+        new VerticleLifecycle(ImmutableList.of(new com.larpconnect.njall.common.CommonModule()));
     var field = VerticleLifecycle.class.getDeclaredField("vertxRef");
     field.setAccessible(true);
     var vertxRef = (AtomicReference<io.vertx.core.Vertx>) field.get(lifecycle);

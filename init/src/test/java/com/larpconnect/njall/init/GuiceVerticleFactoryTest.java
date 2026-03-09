@@ -24,6 +24,7 @@ final class GuiceVerticleFactoryTest {
   public void createVerticle_validClass_success(VertxTestContext testContext) {
     Injector injector =
         Guice.createInjector(
+            new com.larpconnect.njall.common.CommonModule(),
             new AbstractModule() {
               @Override
               protected void configure() {
@@ -55,7 +56,7 @@ final class GuiceVerticleFactoryTest {
 
   @Test
   public void createVerticle_missingClass_failure(VertxTestContext testContext) {
-    Injector injector = Guice.createInjector();
+    Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var factory = new GuiceVerticleFactory(injector);
 
     Promise<Callable<Verticle>> promise = Promise.promise();

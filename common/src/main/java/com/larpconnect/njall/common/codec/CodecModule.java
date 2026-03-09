@@ -6,7 +6,5 @@ public final class CodecModule extends AbstractModule {
   public CodecModule() {}
 
   @Override
-  protected void configure() {
-    install(new CodecBindingModule());
-  }
+  protected void configure() {}
 }

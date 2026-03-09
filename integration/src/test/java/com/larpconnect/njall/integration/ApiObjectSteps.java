@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.larpconnect.njall.api.ApiModule;
 import com.larpconnect.njall.api.ApiObjectParser;
 import com.larpconnect.njall.proto.ApiObject;
 import io.cucumber.java.en.Given;
@@ -20,7 +19,10 @@ public final class ApiObjectSteps {
   private final ApiObjectParser parser;
 
   public ApiObjectSteps() {
-    Injector injector = Guice.createInjector(new ApiModule());
+    Injector injector =
+        Guice.createInjector(
+            new com.larpconnect.njall.api.ApiModule(),
+            new com.larpconnect.njall.common.CommonModule());
     this.parser = injector.getInstance(ApiObjectParser.class);
   }
 
