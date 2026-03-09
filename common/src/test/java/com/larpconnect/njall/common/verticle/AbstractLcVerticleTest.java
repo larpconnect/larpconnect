@@ -36,7 +36,9 @@ final class AbstractLcVerticleTest {
         .eventBus()
         .registerDefaultCodec(
             MessageRequest.class,
-            Guice.createInjector(new com.larpconnect.njall.common.CommonModule())
+            Guice.createInjector(
+                    new com.larpconnect.njall.common.codec.CodecModule(),
+                    new com.larpconnect.njall.common.CommonModule())
                 .getInstance(ProtoCodec.class));
     testContext.completeNow();
   }
