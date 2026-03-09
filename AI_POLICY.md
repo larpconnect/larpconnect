@@ -20,16 +20,15 @@ before submission.
    **and** _which_ AI agent or agents were used (e.g., jules/gemini 3, claud 4,
    etc).
 2. **Forbidden Tools**: The following AI tools are forbidden for _any_ use in
-   contributions. You **MUST** not use them in any way on this project. This
+   contributions. You **MUST NOT** use them in any way on this project. This
    list may change over time:
    - Grok/xAI
    - Llama/Meta AI
    - Devin/Cognition AI
    - Perplexity AI
    - Stability AI (and in general we won't use any AI generated "art")
-   - **Not** forbidden, but I'd personally prefer avoiding OpenAI as well
 3. **Principal Authorship**: A human (_you_) **MUST** be listed as the primary
-   author.
+   author or coauthor.
 4. **Accountability**: A human (_you_) are responsible for any contributions put
    under your name, regardless of if they use an AI. You **MUST** ensure that
    the terms and conditions of the generative AI tool do not place any
@@ -70,7 +69,7 @@ before submission.
 
 ## A Note on Using AI in Pipeline Versus Process
 
-Generative AI tooling may **never** be integrated into the actual pipeline for
+Generative AI tooling **MUST** **never** be integrated into the actual pipeline for
 this tool. This tool is about building and coordinating community spaces and
 games, _not_ about using AI agents for tasks.
 
