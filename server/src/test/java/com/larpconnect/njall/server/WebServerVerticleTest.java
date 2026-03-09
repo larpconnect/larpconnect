@@ -24,7 +24,7 @@ final class WebServerVerticleTest {
 
   @BeforeEach
   void setUp(Vertx vertx, VertxTestContext testContext) {
-    AtomicInteger actualPort = new AtomicInteger();
+    var actualPort = new AtomicInteger();
     verticle =
         new WebServerVerticle(
             0, "openapi.yaml", m -> "{\"test\":\"json\"}", Optional.of(actualPort::set));
@@ -85,7 +85,7 @@ final class WebServerVerticleTest {
 
   @Test
   void missingOpenApiSpec_failsDeployment(Vertx vertx, VertxTestContext testContext) {
-    WebServerVerticle badVerticle = new WebServerVerticle(0, "missing.yaml");
+    var badVerticle = new WebServerVerticle(0, "missing.yaml");
     vertx
         .deployVerticle(badVerticle)
         .onComplete(
@@ -105,8 +105,8 @@ final class WebServerVerticleTest {
         m -> {
           throw new IOException("test io exception");
         };
-    AtomicInteger actualPort = new AtomicInteger();
-    WebServerVerticle badVerticle =
+    var actualPort = new AtomicInteger();
+    var badVerticle =
         new WebServerVerticle(0, "openapi.yaml", badSerializer, Optional.of(actualPort::set));
 
     vertx
@@ -141,8 +141,8 @@ final class WebServerVerticleTest {
         m -> {
           throw new IllegalStateException("test runtime exception");
         };
-    AtomicInteger actualPort = new AtomicInteger();
-    WebServerVerticle badVerticle =
+    var actualPort = new AtomicInteger();
+    var badVerticle =
         new WebServerVerticle(0, "openapi.yaml", badSerializer, Optional.of(actualPort::set));
 
     vertx
@@ -174,7 +174,7 @@ final class WebServerVerticleTest {
   @Test
   void actualPort_returnsConfiguredPort(Vertx vertx, VertxTestContext testContext) {
     assertThat(verticle.actualPort()).isEqualTo(port);
-    WebServerVerticle unstarted = new WebServerVerticle();
+    var unstarted = new WebServerVerticle();
     assertThat(unstarted.actualPort()).isEqualTo(8080); // default
     testContext.completeNow();
   }

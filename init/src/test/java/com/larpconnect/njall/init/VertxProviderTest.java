@@ -32,7 +32,7 @@ final class VertxProviderTest {
 
   @Test
   void get_multipleThreads_returnsSameInstance() throws InterruptedException {
-    AtomicInteger calls = new AtomicInteger(0);
+    var calls = new AtomicInteger(0);
     Supplier<Vertx> factory =
         () -> {
           calls.incrementAndGet();
@@ -40,8 +40,8 @@ final class VertxProviderTest {
         };
     var provider = new VertxProvider(factory);
 
-    Thread t1 = new Thread(provider::get);
-    Thread t2 = new Thread(provider::get);
+    var t1 = new Thread(provider::get);
+    var t2 = new Thread(provider::get);
     t1.start();
     t2.start();
     t1.join();

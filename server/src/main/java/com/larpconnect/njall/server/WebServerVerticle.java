@@ -6,6 +6,7 @@ import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.proto.MessageRequest;
+import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.server.annotations.OpenApiSpec;
 import com.larpconnect.njall.server.annotations.WebPort;
 import io.vertx.core.AbstractVerticle;
@@ -149,10 +150,7 @@ final class WebServerVerticle extends AbstractVerticle {
   void handleGetMessage(RoutingContext ctx) {
     var message =
         MessageRequest.newBuilder()
-            .setProto(
-                com.larpconnect.njall.proto.ProtoDef.newBuilder()
-                    .setProtobufName("Greeting")
-                    .build())
+            .setProto(ProtoDef.newBuilder().setProtobufName("Greeting").build())
             .build();
     try {
       var json = serializer.print(message);

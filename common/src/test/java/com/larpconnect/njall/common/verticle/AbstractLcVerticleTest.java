@@ -62,7 +62,7 @@ final class AbstractLcVerticleTest {
               @Override
               public void nextBytes(byte[] bytes) {}
             };
-    AbstractLcVerticle verticle =
+    var verticle =
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
@@ -109,7 +109,7 @@ final class AbstractLcVerticleTest {
               @Override
               public void nextBytes(byte[] bytes) {}
             };
-    AbstractLcVerticle verticle =
+    var verticle =
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
@@ -145,7 +145,7 @@ final class AbstractLcVerticleTest {
   @Test
   void constructor_twoArgs_compilesAndWorks() {
     IdGenerator mockIdGenerator = () -> UUID.fromString("12345678-1234-1234-1234-123456789abc");
-    AbstractLcVerticle verticle =
+    var verticle =
         new AbstractLcVerticle("test-channel", mockIdGenerator) {
           @Override
           protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
@@ -178,7 +178,7 @@ final class AbstractLcVerticleTest {
               }
             };
 
-    AbstractLcVerticle verticle =
+    var verticle =
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
@@ -251,7 +251,7 @@ final class AbstractLcVerticleTest {
               }
             };
 
-    AbstractLcVerticle verticle =
+    var verticle =
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
@@ -312,7 +312,7 @@ final class AbstractLcVerticleTest {
     var mdcParentSpanId = new AtomicReference<String>();
     var mdcSpanId = new AtomicReference<String>();
 
-    AbstractLcVerticle verticle =
+    var verticle =
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
@@ -376,7 +376,7 @@ final class AbstractLcVerticleTest {
     var mdcParentSpanId = new AtomicReference<String>();
     var mdcSpanId = new AtomicReference<String>();
 
-    AbstractLcVerticle verticle =
+    var verticle =
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
@@ -442,7 +442,7 @@ final class AbstractLcVerticleTest {
     var mdcParentSpanId = new AtomicReference<String>();
     var mdcSpanId = new AtomicReference<String>();
 
-    AbstractLcVerticle verticle =
+    var verticle =
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override

@@ -26,7 +26,7 @@ final class WebServerTest {
 
   @Test
   void start_invokesPortListener(Vertx vertx, VertxTestContext testContext) {
-    AtomicInteger capturedPort = new AtomicInteger();
+    var capturedPort = new AtomicInteger();
     var verticle =
         new WebServerVerticle(0, "openapi.yaml", Optional.of(port -> capturedPort.set(port)));
 
@@ -110,7 +110,7 @@ final class WebServerTest {
   void handleGetMessage_handlesSerializationFailure(Vertx vertx, VertxTestContext testContext) {
     RoutingContext ctx = mock(RoutingContext.class);
 
-    WebServerVerticle verticle =
+    var verticle =
         new WebServerVerticle(
             8080,
             "openapi.yaml",
@@ -129,7 +129,7 @@ final class WebServerTest {
   void handleGetMessage_handlesRuntimeException(Vertx vertx, VertxTestContext testContext) {
     RoutingContext ctx = mock(RoutingContext.class);
 
-    WebServerVerticle verticle =
+    var verticle =
         new WebServerVerticle(
             8080,
             "openapi.yaml",

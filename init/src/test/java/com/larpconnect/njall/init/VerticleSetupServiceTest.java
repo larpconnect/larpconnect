@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.inject.Injector;
 import com.larpconnect.njall.common.codec.ProtoCodec;
+import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -49,8 +50,7 @@ final class VerticleSetupServiceTest {
     service.deploy(TestVerticle.class);
 
     verify(mockVertx).deployVerticle("guice:" + TestVerticle.class.getName());
-    verify(mockEventBus)
-        .registerDefaultCodec(eq(com.larpconnect.njall.proto.MessageRequest.class), any());
+    verify(mockEventBus).registerDefaultCodec(eq(MessageRequest.class), any());
   }
 
   @Test

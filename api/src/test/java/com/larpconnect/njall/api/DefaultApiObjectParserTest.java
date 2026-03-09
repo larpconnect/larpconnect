@@ -14,7 +14,7 @@ import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public final class DefaultApiObjectParserTest {
+final class DefaultApiObjectParserTest {
 
   private ApiObjectParser parser;
 
@@ -100,7 +100,7 @@ public final class DefaultApiObjectParserTest {
 
   @Test
   void fromJson_handlesAllFieldsAndExtensions_successfully() {
-    JsonObject json =
+    var json =
         new JsonObject()
             .put(
                 "context",
@@ -152,7 +152,7 @@ public final class DefaultApiObjectParserTest {
 
   @Test
   void fromJson_handlesDocumentWithBase64Content_successfully() {
-    JsonObject json =
+    var json =
         new JsonObject()
             .put("type", new JsonArray().add("Document"))
             .put("media_type", "image/png")
@@ -165,7 +165,7 @@ public final class DefaultApiObjectParserTest {
 
   @Test
   void fromJson_handlesDocumentWithCamelCaseMediaType() {
-    JsonObject json =
+    var json =
         new JsonObject()
             .put("type", new JsonArray().add("Document"))
             .put("mediaType", "text/plain")
@@ -178,7 +178,7 @@ public final class DefaultApiObjectParserTest {
 
   @Test
   void fromJson_handlesDocumentMissingContent() {
-    JsonObject json =
+    var json =
         new JsonObject()
             .put("type", new JsonArray().add("Document"))
             .put("media_type", "text/plain");
@@ -190,7 +190,7 @@ public final class DefaultApiObjectParserTest {
 
   @Test
   void fromJson_handlesDocumentMissingMediaType() {
-    JsonObject json =
+    var json =
         new JsonObject()
             .put("type", new JsonArray().add("Document"))
             .put("content", "aGVsbG8="); // requires base64 because mediaType is not text/plain
@@ -208,7 +208,7 @@ public final class DefaultApiObjectParserTest {
 
   @Test
   void fromJson_doesNotParseExtensions_whenDeleted() {
-    JsonObject json =
+    var json =
         new JsonObject()
             .put("id", "https://example.com/obj/1")
             .put("type", new JsonArray().add("Document"))
@@ -221,7 +221,7 @@ public final class DefaultApiObjectParserTest {
 
   @Test
   void fromJson_throwsIllegalArgumentException_whenParserFails() {
-    JsonObject json =
+    var json =
         new JsonObject()
             .put("type", new JsonArray().add("Event"))
             .put("start_time", "not-a-timestamp");

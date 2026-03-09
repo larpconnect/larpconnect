@@ -29,8 +29,8 @@ before submission.
    - Stability AI (and in general we won't use any AI generated "art")
    - **Not** forbidden, but I'd personally prefer avoiding OpenAI as well
 3. **Principal Authorship**: A human (_you_) **MUST** be listed as the primary
-   author. 
-5. **Accountability**: A human (_you_) are responsible for any contributions put
+   author.
+4. **Accountability**: A human (_you_) are responsible for any contributions put
    under your name, regardless of if they use an AI. You **MUST** ensure that
    the terms and conditions of the generative AI tool do not place any
    contractual restrictions on how the tool’s output can be used that are
@@ -46,25 +46,25 @@ before submission.
    - **Dangerous Contributions** You are responsible for what the AI generates:
      if the AI generates harmful code, you need to be able to answer for it with
      something more than blaming "the AI."
-6. **Human Validation**: You **MUST** personally review and validate any code
+5. **Human Validation**: You **MUST** personally review and validate any code
    contributed by an AI agent in your name. This **MUST** be done _BEFORE_
    submitting it for others to review. You **SHOULD** understand all of what
    is being contributed and **MUST** make note of anything you do not understand.
-8. **Quality Standards**: AI Agents output is held to extremely strict quality
+6. **Quality Standards**: AI Agents output is held to extremely strict quality
    standards and the build must pass successfully (humans are also held to this
    standard, but many of the elements have seemed easier for humans than AI
    agents). They **SHOULD** follow the guidance in `AGENTS.md` and
    `.agents/SKILLS.md`.
-9. **Isolation of Concerns**:
+7. **Isolation of Concerns**:
    - Agent contributions **SHOULD NOT** modify the code quality system unless
      _directly_ requested to do so.
    - Agent contributions **SHOULD NOT** mix code quality changes with functional
      changes.
-10. **Branch Naming and Grouping**: Agent contributions **SHOULD** as a best
+8. **Branch Naming and Grouping**: Agent contributions **SHOULD** as a best
    effort name their branches as `<agent name>/<branch name>`, e.g.,
    `jules/my-feature-change`. This is an easy one to miss, but check for it the
    best you can.
-11. **Security and Privacy**: You **MUST NOT** include credentials,
+9. **Security and Privacy**: You **MUST NOT** include credentials,
    non-anonymized production data, or proprietary logic in prompts to AI agents
    for contributions to this project.
 

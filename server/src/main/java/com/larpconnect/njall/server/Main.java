@@ -73,9 +73,7 @@ final class Main {
     try {
       lifecycle.stopAsync().awaitTerminated(SHUTDOWN_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
       logger.info("Server shutdown successfully.");
-    } catch (TimeoutException e) {
-      logger.error("Shutdown timed out", e);
-    } catch (RuntimeException e) {
+    } catch (TimeoutException | RuntimeException e) {
       logger.error("Error during shutdown", e);
     }
   }

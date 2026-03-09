@@ -56,8 +56,7 @@ final class MonotonicTimeServiceTest {
     var clock = new FakeClock(Instant.ofEpochMilli(1000));
     var ticker = new FakeTicker();
 
-    MonotonicTimeService service =
-        new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
+    var service = new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
 
     service.startUp();
 
@@ -73,7 +72,7 @@ final class MonotonicTimeServiceTest {
     var latch = new CountDownLatch(1);
     var startedLatch = new CountDownLatch(1);
 
-    MonotonicTimeService service =
+    var service =
         new MonotonicTimeService(
             clock,
             () -> {
@@ -101,8 +100,7 @@ final class MonotonicTimeServiceTest {
   void monotonicNowMillis_notStarted_throwsException() {
     var clock = new FakeClock(Instant.ofEpochMilli(1000));
     var ticker = new FakeTicker();
-    MonotonicTimeService service =
-        new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
+    var service = new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
 
     assertThatThrownBy(service::monotonicNowMillis)
         .isInstanceOf(IllegalStateException.class)
@@ -113,8 +111,7 @@ final class MonotonicTimeServiceTest {
   void shutDown_stopsStopwatch_success() throws Exception {
     var clock = new FakeClock(Instant.ofEpochMilli(1000));
     var ticker = new FakeTicker();
-    MonotonicTimeService service =
-        new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
+    var service = new MonotonicTimeService(clock, () -> Stopwatch.createUnstarted(ticker));
     service.startUp();
 
     service.shutDown();

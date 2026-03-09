@@ -10,7 +10,6 @@ import com.larpconnect.njall.proto.Event;
 import com.larpconnect.njall.proto.Extension;
 import com.larpconnect.njall.proto.Link;
 import com.larpconnect.njall.proto.OrderedCollectionPage;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Inject;
 
@@ -29,15 +28,15 @@ final class DefaultApiObjectParser implements ApiObjectParser {
   @Override
   public JsonObject toJson(ApiObject obj) {
     try {
-      JsonObject json = new JsonObject(printer.print(obj));
-      JsonObject extensions = json.getJsonObject("extensions");
+      var json = new JsonObject(printer.print(obj));
+      var extensions = json.getJsonObject("extensions");
       json.remove("extensions");
 
       if (extensions != null) {
         for (String key : extensions.fieldNames()) {
-          JsonObject extMap = extensions.getJsonObject(key);
+          var extMap = extensions.getJsonObject(key);
           if (!extMap.isEmpty()) {
-            String innerKey = extMap.fieldNames().iterator().next();
+            var innerKey = extMap.fieldNames().iterator().next();
             json.mergeIn(extMap.getJsonObject(innerKey));
           }
         }
@@ -45,7 +44,7 @@ final class DefaultApiObjectParser implements ApiObjectParser {
 
       // Handle raw content override for Document
       if (obj.getExtensionsMap().containsKey("document")) {
-        Document doc = obj.getExtensionsMap().get("document").getDocument();
+        var doc = obj.getExtensionsMap().get("document").getDocument();
         if (doc.getMediaType().startsWith("text/")) {
           json.put("content", doc.getContent().toStringUtf8());
         }
@@ -60,29 +59,29 @@ final class DefaultApiObjectParser implements ApiObjectParser {
   @Override
   public ApiObject fromJson(JsonObject json) {
     try {
-      String jsonString = json.encode();
-      ApiObject.Builder builder = ApiObject.newBuilder();
+      var jsonString = json.encode();
+      var builder = ApiObject.newBuilder();
       parser.merge(jsonString, builder);
 
       if (builder.hasDeleted()) {
         return builder.build();
       }
 
-      JsonArray types = json.getJsonArray("type");
+      var types = json.getJsonArray("type");
       if (types != null) {
         for (int i = 0; i < types.size(); i++) {
-          String type = types.getString(i);
+          var type = types.getString(i);
           switch (type) {
             case "Document" -> {
-              Document.Builder docBuilder = Document.newBuilder();
-              String mediaTypeStr = json.getString("media_type", json.getString("mediaType"));
+              var docBuilder = Document.newBuilder();
+              var mediaTypeStr = json.getString("media_type", json.getString("mediaType"));
               boolean isRawText =
                   json.containsKey("content")
                       && mediaTypeStr != null
                       && mediaTypeStr.startsWith("text/");
               if (isRawText) {
-                String rawContent = json.getString("content");
-                JsonObject safeJson = json.copy();
+                var rawContent = json.getString("content");
+                var safeJson = json.copy();
                 safeJson.remove("content");
                 parser.merge(safeJson.encode(), docBuilder);
                 docBuilder.setContent(ByteString.copyFromUtf8(rawContent));
@@ -93,17 +92,17 @@ final class DefaultApiObjectParser implements ApiObjectParser {
                   "document", Extension.newBuilder().setDocument(docBuilder).build());
             }
             case "Event" -> {
-              Event.Builder evtBuilder = Event.newBuilder();
+              var evtBuilder = Event.newBuilder();
               parser.merge(jsonString, evtBuilder);
               builder.putExtensions("event", Extension.newBuilder().setEvent(evtBuilder).build());
             }
             case "Link" -> {
-              Link.Builder linkBuilder = Link.newBuilder();
+              var linkBuilder = Link.newBuilder();
               parser.merge(jsonString, linkBuilder);
               builder.putExtensions("link", Extension.newBuilder().setLink(linkBuilder).build());
             }
             case "OrderedCollectionPage" -> {
-              OrderedCollectionPage.Builder ocpBuilder = OrderedCollectionPage.newBuilder();
+              var ocpBuilder = OrderedCollectionPage.newBuilder();
               parser.merge(jsonString, ocpBuilder);
               builder.putExtensions(
                   "ordered_collection_page",

@@ -45,8 +45,8 @@ final class DefaultMainVerticleTest {
 
   @Test
   void start_deploysAllVerticles_successfully(Vertx vertx, VertxTestContext testContext) {
-    TestVerticle testVerticle = new TestVerticle();
-    DefaultMainVerticle mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
+    var testVerticle = new TestVerticle();
+    var mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
 
     vertx
         .deployVerticle(mainVerticle)
@@ -61,8 +61,8 @@ final class DefaultMainVerticleTest {
   @Test
   void start_failsPromise_whenChildVerticleDeploymentFails(
       Vertx vertx, VertxTestContext testContext) {
-    FailingVerticle failingVerticle = new FailingVerticle();
-    DefaultMainVerticle mainVerticle = new DefaultMainVerticle(Set.of(failingVerticle));
+    var failingVerticle = new FailingVerticle();
+    var mainVerticle = new DefaultMainVerticle(Set.of(failingVerticle));
 
     vertx
         .deployVerticle(mainVerticle)
@@ -71,13 +71,13 @@ final class DefaultMainVerticleTest {
 
   @Test
   void start_failsPromise_whenVertxDeployVerticleFails(VertxTestContext testContext) {
-    TestVerticle testVerticle = new TestVerticle();
-    DefaultMainVerticle mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
+    var testVerticle = new TestVerticle();
+    var mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
 
     Vertx mockVertx = mock(Vertx.class);
     Context mockContext = mock(Context.class);
 
-    IllegalStateException failure = new IllegalStateException("Deployment failed");
+    var failure = new IllegalStateException("Deployment failed");
     when(mockVertx.deployVerticle(any(Verticle.class))).thenReturn(Future.failedFuture(failure));
 
     mainVerticle.init(mockVertx, mockContext);
@@ -96,8 +96,8 @@ final class DefaultMainVerticleTest {
 
   @Test
   void stop_completesSuccessfully(Vertx vertx, VertxTestContext testContext) {
-    TestVerticle testVerticle = new TestVerticle();
-    DefaultMainVerticle mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
+    var testVerticle = new TestVerticle();
+    var mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
 
     vertx
         .deployVerticle(mainVerticle)

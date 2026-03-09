@@ -41,7 +41,7 @@ final class ServerBindingModule extends AbstractModule {
   @Singleton
   @WebPort
   int provideWebPort(JsonObject config) {
-    String envPort = getenv.apply("PORT");
+    var envPort = getenv.apply("PORT");
     if (envPort != null) {
       try {
         return Integer.parseInt(envPort);

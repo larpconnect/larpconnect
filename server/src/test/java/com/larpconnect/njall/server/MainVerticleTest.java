@@ -36,7 +36,7 @@ final class MainVerticleTest {
 
   @Test
   void mainVerticle_startsAndStopsChildren(Vertx vertx, VertxTestContext testContext) {
-    TestVerticle testVerticle = new TestVerticle();
+    var testVerticle = new TestVerticle();
 
     Injector injector =
         Guice.createInjector(

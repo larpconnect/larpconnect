@@ -10,6 +10,7 @@ import com.google.inject.util.Modules;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
 import com.larpconnect.njall.proto.MessageRequest;
+import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.server.MainVerticle;
 import com.larpconnect.njall.server.ServerModule;
 import io.cucumber.java.After;
@@ -103,8 +104,7 @@ public final class ServerStartupSteps {
 
     var msg =
         MessageRequest.newBuilder()
-            .setProto(
-                com.larpconnect.njall.proto.ProtoDef.newBuilder().setProtobufName("Ping").build())
+            .setProto(ProtoDef.newBuilder().setProtobufName("Ping").build())
             .build();
 
     vertx

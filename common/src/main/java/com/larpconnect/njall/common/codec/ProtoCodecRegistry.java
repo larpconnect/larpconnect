@@ -24,7 +24,7 @@ final class ProtoCodecRegistry implements ProtoCodec {
   private static final int INT_SIZE = 4;
   private static final String NAMESPACE = "com.larpconnect.njall.proto.";
 
-  public ProtoCodecRegistry() {}
+  ProtoCodecRegistry() {}
 
   @Override
   @AiContract(
