@@ -1,0 +1,7 @@
+🧹 Nifftyinator: CLEAN! IT! UP!
+
+💡 What was changed
+Integrated vertx-openapi validation explicitly within the route handler, adhering to the Vert.x 5 standard.
+
+Consistency edits that were needed
+Ensured all tests properly fail appropriately and formatting is correct.
