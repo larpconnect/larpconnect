@@ -2,8 +2,12 @@ package com.larpconnect.njall.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.proto.ApiObject;
@@ -94,8 +98,18 @@ final class DefaultApiObjectParserTest {
   }
 
   @Test
-  void toJson_throwsIllegalStateException_whenPrinterFails() {
-    // Hard to mock final JsonFormat.Printer, but we catch Exception
+  void toJson_throwsIllegalStateException_whenPrinterFails() throws Exception {
+    JsonFormat.Printer mockPrinter = mock(JsonFormat.Printer.class);
+    when(mockPrinter.print(any(ApiObject.class)))
+        .thenThrow(new InvalidProtocolBufferException("Mock exception"));
+
+    ApiObjectParser testParser =
+        new DefaultApiObjectParser(mockPrinter, JsonFormat.parser().ignoringUnknownFields());
+
+    assertThatThrownBy(() -> testParser.toJson(ApiObject.getDefaultInstance()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Failed to convert ApiObject to JSON")
+        .hasCauseInstanceOf(InvalidProtocolBufferException.class);
   }
 
   @Test
