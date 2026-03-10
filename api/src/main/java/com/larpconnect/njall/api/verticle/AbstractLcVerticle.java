@@ -1,4 +1,4 @@
-package com.larpconnect.njall.common.verticle;
+package com.larpconnect.njall.api.verticle;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closer;
@@ -6,7 +6,6 @@ import com.google.protobuf.ByteString;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
-import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import jakarta.inject.Provider;
 import java.io.IOException;
@@ -18,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-abstract class AbstractLcVerticle extends AbstractVerticle {
+abstract class AbstractLcVerticle extends io.vertx.core.AbstractVerticle {
   private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
   private static final int SPAN_ID_BYTES = 8;
   private static final int TRACE_ID_BYTES = 16;
@@ -73,10 +72,25 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
                 closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
                 closer.register(MDC.putCloseable("span_id", spanIdStr));
 
-                MessageResponse response = handleMessage(newSpanId, finalMessage);
-                if (response == BasicResponse.SHUTDOWN) {
-                  vertx.eventBus().consumer(channel).unregister();
-                }
+                Promise<MessageResponse> responsePromise = Promise.promise();
+                responsePromise
+                    .future()
+                    .onComplete(
+                        ar -> {
+                          if (ar.succeeded()) {
+                            MessageResponse response = ar.result();
+                            if (response == BasicResponse.SHUTDOWN) {
+                              vertx.eventBus().consumer(channel).unregister();
+                            } else if (response instanceof ReplyResponse replyResponse) {
+                              msg.reply(replyResponse.payload());
+                            }
+                          } else {
+                            log.error("Error handling message on channel: " + channel, ar.cause());
+                            msg.fail(-1, "Internal Error");
+                          }
+                        });
+
+                handleMessage(newSpanId, finalMessage, responsePromise);
               } catch (IOException e) {
                 // Closer does not throw IOException in this context
               } catch (RuntimeException e) {
@@ -112,5 +126,6 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
     return message.toBuilder().setTraceparent(obsBuilder.build()).build();
   }
 
-  protected abstract MessageResponse handleMessage(byte[] spanId, MessageRequest message);
+  protected abstract void handleMessage(
+      byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise);
 }

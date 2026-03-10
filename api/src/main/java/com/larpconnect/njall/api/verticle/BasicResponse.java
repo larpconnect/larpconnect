@@ -1,4 +1,4 @@
-package com.larpconnect.njall.common.verticle;
+package com.larpconnect.njall.api.verticle;
 
 /**
  * Standard responses that indicate what the underlying verticle should do next after processing a

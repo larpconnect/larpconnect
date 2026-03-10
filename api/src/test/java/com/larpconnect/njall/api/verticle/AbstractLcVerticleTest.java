@@ -1,4 +1,4 @@
-package com.larpconnect.njall.common.verticle;
+package com.larpconnect.njall.api.verticle;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,6 +8,7 @@ import com.larpconnect.njall.common.codec.ProtoCodec;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -66,9 +67,10 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
+          protected void handleMessage(
+              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
             handled.set(true);
-            return BasicResponse.CONTINUE;
+            responsePromise.complete(BasicResponse.CONTINUE);
           }
         };
     vertx
@@ -113,9 +115,10 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
+          protected void handleMessage(
+              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
             handled.set(true);
-            return BasicResponse.CONTINUE;
+            responsePromise.complete(BasicResponse.CONTINUE);
           }
         };
     vertx
@@ -148,8 +151,9 @@ final class AbstractLcVerticleTest {
     var verticle =
         new AbstractLcVerticle("test-channel", mockIdGenerator) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
-            return BasicResponse.CONTINUE;
+          protected void handleMessage(
+              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
+            responsePromise.complete(BasicResponse.CONTINUE);
           }
         };
     assertThat(verticle).isNotNull();
@@ -182,13 +186,14 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
+          protected void handleMessage(
+              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
             handled.set(true);
             receivedSpanId.set(spanId);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
-            return BasicResponse.CONTINUE;
+            responsePromise.complete(BasicResponse.CONTINUE);
           }
         };
 
@@ -255,7 +260,8 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
+          protected void handleMessage(
+              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
             handled.set(true);
             throw new IllegalStateException("Test exception");
           }
@@ -316,12 +322,13 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
+          protected void handleMessage(
+              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
-            return BasicResponse.CONTINUE;
+            responsePromise.complete(BasicResponse.CONTINUE);
           }
         };
 
@@ -380,12 +387,13 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
+          protected void handleMessage(
+              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
-            return BasicResponse.CONTINUE;
+            responsePromise.complete(BasicResponse.CONTINUE);
           }
         };
 
@@ -446,12 +454,13 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected MessageResponse handleMessage(byte[] spanId, MessageRequest message) {
+          protected void handleMessage(
+              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
-            return BasicResponse.SHUTDOWN;
+            responsePromise.complete(BasicResponse.SHUTDOWN);
           }
         };
 

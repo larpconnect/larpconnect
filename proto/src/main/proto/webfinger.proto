@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package com.larpconnect.njall.proto;
+
+option java_multiple_files = true;
+option java_package = "com.larpconnect.njall.proto";
+option go_package = "com.larpconnect.njall.proto";
+
+message WebfingerLink {
+  string rel = 1;
+  string type = 2;
+  string href = 3;
+}
+
+message WebfingerResponse {
+  string subject = 1;
+  repeated string aliases = 2;
+  map<string, string> properties = 3;
+  repeated WebfingerLink links = 4;
+}
