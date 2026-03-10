@@ -20,6 +20,8 @@ final class GuiceVerticleFactoryTest {
 
   static final class TestVerticle extends AbstractVerticle {}
 
+  static final class NonVerticleClass {}
+
   @Test
   public void createVerticle_validClass_success(VertxTestContext testContext) {
     Injector injector =
@@ -74,6 +76,35 @@ final class GuiceVerticleFactoryTest {
                     assertThat(e)
                         .isInstanceOf(IllegalArgumentException.class)
                         .hasMessageContaining("Failed to load verticle class");
+                    testContext.completeNow();
+                  } catch (Exception e) {
+                    testContext.failNow(e);
+                  }
+                }));
+  }
+
+  @Test
+  public void createVerticle_nonVerticleClass_failure(VertxTestContext testContext) {
+    Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
+    var factory = new GuiceVerticleFactory(injector);
+
+    Promise<Callable<Verticle>> promise = Promise.promise();
+    factory.createVerticle(
+        "guice:" + NonVerticleClass.class.getName(), getClass().getClassLoader(), promise);
+
+    promise
+        .future()
+        .onComplete(
+            testContext.succeeding(
+                callable -> {
+                  try {
+                    callable.call();
+                    testContext.failNow("Expected IllegalArgumentException was not thrown");
+                  } catch (IllegalArgumentException e) {
+                    assertThat(e)
+                        .isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("Failed to load verticle class")
+                        .hasCauseInstanceOf(ClassCastException.class);
                     testContext.completeNow();
                   } catch (Exception e) {
                     testContext.failNow(e);
