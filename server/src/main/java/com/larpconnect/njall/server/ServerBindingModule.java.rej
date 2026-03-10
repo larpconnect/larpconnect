@@ -1,0 +1,12 @@
+--- server/src/main/java/com/larpconnect/njall/server/ServerBindingModule.java
++++ server/src/main/java/com/larpconnect/njall/server/ServerBindingModule.java
+@@ -43,7 +43,8 @@
+       try {
+         return Integer.parseInt(envPort);
+       } catch (NumberFormatException e) {
+-        logger.warn("Environment variable PORT='{}' is not a valid integer, falling back to configuration port.", envPort, e);
++        logger.warn("Environment variable PORT='{}' is not a valid integer, falling back "
++            + "to configuration port.", envPort, e);
+       }
+     }
+     var appConfig = config.getJsonObject("larpconnect");

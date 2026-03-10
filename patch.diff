@@ -1,0 +1,10 @@
+--- server/src/main/java/com/larpconnect/njall/server/ServerBindingModule.java
++++ server/src/main/java/com/larpconnect/njall/server/ServerBindingModule.java
+@@ -19,7 +19,7 @@
+
+ @InstallInstead(ServerModule.class)
+ final class ServerBindingModule extends AbstractModule {
+-  private static final Logger logger = LoggerFactory.getLogger(ServerBindingModule.class);
++  private final Logger logger = LoggerFactory.getLogger(ServerBindingModule.class);
+   private final Function<String, String> getenv;
+   private static final int DEFAULT_PORT = 8080;

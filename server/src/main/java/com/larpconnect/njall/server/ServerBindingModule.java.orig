@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 @InstallInstead(ServerModule.class)
 final class ServerBindingModule extends AbstractModule {
-  private final Logger logger = LoggerFactory.getLogger(ServerBindingModule.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerBindingModule.class);
   private final Function<String, String> getenv;
   private static final int DEFAULT_PORT = 8080;
 
@@ -50,8 +50,7 @@ final class ServerBindingModule extends AbstractModule {
         return Integer.parseInt(envPort);
       } catch (NumberFormatException e) {
         logger.warn(
-            "Environment variable PORT='{}' is not a valid integer, falling back "
-                + "to configuration port.",
+            "Environment variable PORT='{}' is not a valid integer, falling back to configuration port.",
             envPort,
             e);
       }
