@@ -7,6 +7,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Deployable;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.junit5.VertxExtension;
@@ -35,8 +36,8 @@ final class GuiceVerticleFactoryTest {
     var factory = new GuiceVerticleFactory(injector);
     assertThat(factory.prefix()).isEqualTo("guice");
 
-    Promise<Callable<Verticle>> promise = Promise.promise();
-    factory.createVerticle(
+    Promise<Callable<? extends Deployable>> promise = Promise.promise();
+    factory.createVerticle2(
         "guice:" + TestVerticle.class.getName(), getClass().getClassLoader(), promise);
 
     promise
@@ -45,7 +46,7 @@ final class GuiceVerticleFactoryTest {
             testContext.succeeding(
                 callable -> {
                   try {
-                    Verticle verticle = callable.call();
+                    Verticle verticle = (Verticle) callable.call();
                     assertThat(verticle).isInstanceOf(TestVerticle.class);
                     testContext.completeNow();
                   } catch (Exception e) { // Callable throws Exception
@@ -59,8 +60,8 @@ final class GuiceVerticleFactoryTest {
     Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var factory = new GuiceVerticleFactory(injector);
 
-    Promise<Callable<Verticle>> promise = Promise.promise();
-    factory.createVerticle("guice:com.example.MissingClass", getClass().getClassLoader(), promise);
+    Promise<Callable<? extends Deployable>> promise = Promise.promise();
+    factory.createVerticle2("guice:com.example.MissingClass", getClass().getClassLoader(), promise);
 
     promise
         .future()
