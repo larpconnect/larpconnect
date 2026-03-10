@@ -7,7 +7,6 @@ import com.larpconnect.njall.proto.Parameter;
 import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Promise;
 import jakarta.inject.Inject;
-import java.util.List;
 
 /** Verticle handling Webfinger requests from the /.well-known/webfinger endpoint. */
 final class WebfingerVerticle extends AbstractLcVerticle {
@@ -23,7 +22,7 @@ final class WebfingerVerticle extends AbstractLcVerticle {
   protected MessageResponse handleMessage(
       byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
     String resource = null;
-    List<Parameter> params = message.getParametersList();
+    var params = message.getParametersList();
 
     for (Parameter p : params) {
       if ("resource".equals(p.getKey()) && p.hasStringValue()) {

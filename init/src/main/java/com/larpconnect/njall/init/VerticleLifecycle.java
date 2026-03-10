@@ -15,7 +15,6 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -52,10 +51,8 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
       var configResource = System.getProperty("njall.config.resource", "config.json");
       var url = Resources.getResource(configResource);
       defaultConfig = new JsonObject(Resources.toString(url, StandardCharsets.UTF_8));
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Failed to load default config", e);
-    } catch (IOException e) {
-      throw new UncheckedIOException("Failed to load default config", e);
+    } catch (IllegalArgumentException | IOException e) {
+      throw new IllegalStateException("Failed to load default config", e);
     }
 
     // Create temp Vertx for config loading
