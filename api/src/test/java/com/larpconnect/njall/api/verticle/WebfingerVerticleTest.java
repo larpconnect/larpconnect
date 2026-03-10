@@ -61,7 +61,7 @@ final class WebfingerVerticleTest {
   }
 
   @Test
-  void webfinger_withoutResource_returnsDefaultSubject(VertxTestContext testContext) {
+  void webfinger_withoutResource_returnsEmptyResponse(VertxTestContext testContext) {
     MessageRequest request = MessageRequest.newBuilder().build();
 
     vertx
@@ -73,7 +73,7 @@ final class WebfingerVerticleTest {
                   testContext.verify(
                       () -> {
                         WebfingerResponse response = reply.body();
-                        assertThat(response.getSubject()).isEqualTo("acct:system@localhost");
+                        assertThat(response.getSubject()).isEmpty();
                         testContext.completeNow();
                       });
                 }));

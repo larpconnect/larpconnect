@@ -1,3 +1,4 @@
+// Copyright 2024 LarpConnect
 syntax = "proto3";
 
 package com.larpconnect.njall.proto;

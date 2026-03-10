@@ -1,6 +1,7 @@
 package com.larpconnect.njall.api;
 
 import com.google.inject.AbstractModule;
+import com.larpconnect.njall.api.verticle.ApiVerticleModule;
 
 /**
  * Guice module for the API module. Exposing it allows other modules to install it and bypasses the
@@ -12,5 +13,6 @@ public final class ApiModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new ApiBindingModule());
+    install(new ApiVerticleModule());
   }
 }

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
@@ -13,6 +12,7 @@ import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.server.MainVerticle;
 import com.larpconnect.njall.server.ServerModule;
+import com.larpconnect.njall.server.annotations.WebPort;
 import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -50,7 +50,7 @@ public final class ServerStartupSteps {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                    bindConstant().annotatedWith(WebPort.class).to(0);
                     bind(new TypeLiteral<Optional<Consumer<Integer>>>() {})
                         .toInstance(Optional.of(port -> serverCaptor.setPort(port)));
                   }
@@ -77,7 +77,7 @@ public final class ServerStartupSteps {
 
     var start = System.currentTimeMillis();
     while (System.currentTimeMillis() - start < 5000) {
-      if (vertx != null && !vertx.deploymentIDs().isEmpty()) {
+      if (vertx != null && !vertx.deploymentIDs().isEmpty() && serverCaptor.getPort() > 0) {
         deploymentSuccess.set(true);
         break;
       }
@@ -147,8 +147,14 @@ public final class ServerStartupSteps {
     var client = WebClient.create(vertx);
     // Use dynamic port
     int port = serverCaptor.getPort();
+
+    String requestUri = uri.getPath();
+    if (uri.getQuery() != null) {
+      requestUri += "?" + uri.getQuery();
+    }
+
     client
-        .get(port, uri.getHost(), uri.getPath())
+        .get(port, uri.getHost(), requestUri)
         .send()
         .onSuccess(
             response -> {

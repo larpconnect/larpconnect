@@ -2,12 +2,10 @@ package com.larpconnect.njall.api.verticle;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.inject.Guice;
-import com.google.protobuf.ByteString;
-import com.larpconnect.njall.common.codec.ProtoCodec;
-import com.larpconnect.njall.common.id.IdGenerator;
+import com.google.protobuf.Message;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
+import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
@@ -27,20 +25,11 @@ import org.slf4j.MDC;
 final class AbstractLcVerticleTest {
 
   private static final String CHANNEL = "test-channel";
-
   private Vertx vertx;
 
   @BeforeEach
   void setUp(VertxTestContext testContext) {
     vertx = Vertx.vertx();
-    vertx
-        .eventBus()
-        .registerDefaultCodec(
-            MessageRequest.class,
-            Guice.createInjector(
-                    new com.larpconnect.njall.common.codec.CodecModule(),
-                    new com.larpconnect.njall.common.CommonModule())
-                .getInstance(ProtoCodec.class));
     testContext.completeNow();
   }
 
@@ -50,122 +39,8 @@ final class AbstractLcVerticleTest {
   }
 
   @Test
-  void handleMessage_successWithOnlyTraceId(VertxTestContext testContext) {
+  void handleMessage_successWithTraceparent(VertxTestContext testContext) {
     var handled = new AtomicBoolean(false);
-    Provider<RandomGenerator> mockRandom =
-        () ->
-            new RandomGenerator() {
-              @Override
-              public long nextLong() {
-                return 0;
-              }
-
-              @Override
-              public void nextBytes(byte[] bytes) {}
-            };
-    var verticle =
-        new AbstractLcVerticle(
-            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
-          @Override
-          protected void handleMessage(
-              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
-            handled.set(true);
-            responsePromise.complete(BasicResponse.CONTINUE);
-          }
-        };
-    vertx
-        .deployVerticle(verticle)
-        .onComplete(
-            testContext.succeeding(
-                id -> {
-                  Observability obs =
-                      Observability.newBuilder()
-                          .setTraceId(
-                              com.google.protobuf.ByteString.copyFrom(
-                                  new byte[] {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}))
-                          .build();
-                  MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
-                  vertx.eventBus().send(CHANNEL, message);
-                  vertx.setTimer(
-                      100,
-                      t ->
-                          testContext.verify(
-                              () -> {
-                                assertThat(handled.get()).isTrue();
-                                testContext.completeNow();
-                              }));
-                }));
-  }
-
-  @Test
-  void handleMessage_successWithOnlySpanId(VertxTestContext testContext) {
-    var handled = new AtomicBoolean(false);
-    Provider<RandomGenerator> mockRandom =
-        () ->
-            new RandomGenerator() {
-              @Override
-              public long nextLong() {
-                return 0;
-              }
-
-              @Override
-              public void nextBytes(byte[] bytes) {}
-            };
-    var verticle =
-        new AbstractLcVerticle(
-            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
-          @Override
-          protected void handleMessage(
-              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
-            handled.set(true);
-            responsePromise.complete(BasicResponse.CONTINUE);
-          }
-        };
-    vertx
-        .deployVerticle(verticle)
-        .onComplete(
-            testContext.succeeding(
-                id -> {
-                  Observability obs =
-                      Observability.newBuilder()
-                          .setSpanId(
-                              com.google.protobuf.ByteString.copyFrom(
-                                  new byte[] {2, 2, 2, 2, 2, 2, 2, 2}))
-                          .build();
-                  MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
-                  vertx.eventBus().send(CHANNEL, message);
-                  vertx.setTimer(
-                      100,
-                      t ->
-                          testContext.verify(
-                              () -> {
-                                assertThat(handled.get()).isTrue();
-                                testContext.completeNow();
-                              }));
-                }));
-  }
-
-  @Test
-  void constructor_twoArgs_compilesAndWorks() {
-    IdGenerator mockIdGenerator = () -> UUID.fromString("12345678-1234-1234-1234-123456789abc");
-    var verticle =
-        new AbstractLcVerticle("test-channel", mockIdGenerator) {
-          @Override
-          protected void handleMessage(
-              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
-            responsePromise.complete(BasicResponse.CONTINUE);
-          }
-        };
-    assertThat(verticle).isNotNull();
-  }
-
-  @Test
-  void handleMessage_success(VertxTestContext testContext) {
-    var handled = new AtomicBoolean(false);
-    var receivedSpanId = new AtomicReference<byte[]>();
-    var mdcTraceId = new AtomicReference<String>();
-    var mdcParentSpanId = new AtomicReference<String>();
-    var mdcSpanId = new AtomicReference<String>();
 
     byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
     Provider<RandomGenerator> mockRandom =
@@ -182,18 +57,21 @@ final class AbstractLcVerticleTest {
               }
             };
 
+    var mdcTraceId = new AtomicReference<String>();
+    var mdcParentSpanId = new AtomicReference<String>();
+    var mdcSpanId = new AtomicReference<String>();
+
     var verticle =
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected void handleMessage(
-              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
+          protected MessageResponse handleMessage(
+              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
             handled.set(true);
-            receivedSpanId.set(spanId);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
-            responsePromise.complete(BasicResponse.CONTINUE);
+            return BasicResponse.CONTINUE;
           }
         };
 
@@ -202,18 +80,17 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  byte[] traceIdBytes = new byte[] {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-                  byte[] parentSpanIdBytes = new byte[] {2, 2, 2, 2, 2, 2, 2, 2};
-
+                  byte[] originalTraceId =
+                      new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+                  byte[] originalSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
                   Observability obs =
                       Observability.newBuilder()
-                          .setTraceId(ByteString.copyFrom(traceIdBytes))
-                          .setSpanId(ByteString.copyFrom(parentSpanIdBytes))
+                          .setTraceId(com.google.protobuf.ByteString.copyFrom(originalTraceId))
+                          .setSpanId(com.google.protobuf.ByteString.copyFrom(originalSpanId))
                           .build();
-
                   MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
 
-                  vertx.eventBus().<MessageRequest>request(CHANNEL, message).onComplete(ar -> {});
+                  vertx.eventBus().send(CHANNEL, message);
 
                   vertx.setTimer(
                       100,
@@ -221,16 +98,13 @@ final class AbstractLcVerticleTest {
                         testContext.verify(
                             () -> {
                               assertThat(handled.get()).isTrue();
-                              assertThat(receivedSpanId.get()).isEqualTo(expectedSpanId);
                               assertThat(mdcTraceId.get())
-                                  .isEqualTo("01010101010101010101010101010101");
-                              assertThat(mdcParentSpanId.get()).isEqualTo("0202020202020202");
+                                  .isEqualTo("0102030405060708090a0b0c0d0e0f10");
+                              assertThat(mdcParentSpanId.get()).isEqualTo("0102030405060708");
                               assertThat(mdcSpanId.get()).isEqualTo("0102030405060708");
-
                               assertThat(MDC.get("trace_id")).isNull();
                               assertThat(MDC.get("parent_span_id")).isNull();
                               assertThat(MDC.get("span_id")).isNull();
-
                               testContext.completeNow();
                             });
                       });
@@ -260,8 +134,8 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected void handleMessage(
-              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
+          protected MessageResponse handleMessage(
+              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
             handled.set(true);
             throw new IllegalStateException("Test exception");
           }
@@ -296,6 +170,62 @@ final class AbstractLcVerticleTest {
   }
 
   @Test
+  void handleMessage_successWithFailedPromise(VertxTestContext testContext) {
+    var handled = new AtomicBoolean(false);
+
+    byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {
+                System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+              }
+            };
+
+    var verticle =
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
+          @Override
+          protected MessageResponse handleMessage(
+              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+            handled.set(true);
+            responsePromise.fail(new IllegalStateException("Failed promise"));
+            return BasicResponse.CONTINUE;
+          }
+        };
+
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.succeeding(
+                id -> {
+                  MessageRequest message = MessageRequest.newBuilder().build();
+
+                  vertx
+                      .eventBus()
+                      .<MessageRequest>request(CHANNEL, message)
+                      .onComplete(
+                          testContext.failing(
+                              err ->
+                                  testContext.verify(
+                                      () -> {
+                                        io.vertx.core.eventbus.ReplyException re =
+                                            (io.vertx.core.eventbus.ReplyException) err;
+                                        assertThat(re.failureCode()).isEqualTo(-1);
+                                        assertThat(re.getMessage()).isEqualTo("Internal Error");
+                                        assertThat(handled.get()).isTrue();
+                                        testContext.completeNow();
+                                      })));
+                }));
+  }
+
+  @Test
   void handleMessage_successWithoutTraceparent(VertxTestContext testContext) {
     var handled = new AtomicBoolean(false);
 
@@ -322,13 +252,13 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected void handleMessage(
-              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
+          protected MessageResponse handleMessage(
+              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
-            responsePromise.complete(BasicResponse.CONTINUE);
+            return BasicResponse.CONTINUE;
           }
         };
 
@@ -387,13 +317,13 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected void handleMessage(
-              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
+          protected MessageResponse handleMessage(
+              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
-            responsePromise.complete(BasicResponse.CONTINUE);
+            return BasicResponse.CONTINUE;
           }
         };
 
@@ -454,13 +384,13 @@ final class AbstractLcVerticleTest {
         new AbstractLcVerticle(
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
-          protected void handleMessage(
-              byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
+          protected MessageResponse handleMessage(
+              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
             mdcSpanId.set(MDC.get("span_id"));
-            responsePromise.complete(BasicResponse.SHUTDOWN);
+            return BasicResponse.SHUTDOWN;
           }
         };
 
@@ -489,6 +419,62 @@ final class AbstractLcVerticleTest {
                               testContext.completeNow();
                             });
                       });
+                }));
+  }
+
+  @Test
+  void handleMessage_successWithReply(VertxTestContext testContext) {
+    var handled = new AtomicBoolean(false);
+
+    byte[] expectedSpanId = new byte[] {1, 2, 3, 4, 5, 6, 7, 8};
+    Provider<RandomGenerator> mockRandom =
+        () ->
+            new RandomGenerator() {
+              @Override
+              public long nextLong() {
+                return 0;
+              }
+
+              @Override
+              public void nextBytes(byte[] bytes) {
+                System.arraycopy(expectedSpanId, 0, bytes, 0, expectedSpanId.length);
+              }
+            };
+
+    var verticle =
+        new AbstractLcVerticle(
+            CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
+          @Override
+          protected MessageResponse handleMessage(
+              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+            handled.set(true);
+            WebfingerResponse response = WebfingerResponse.newBuilder().setSubject("reply").build();
+            responsePromise.complete(response);
+            return BasicResponse.CONTINUE;
+          }
+        };
+
+    vertx
+        .deployVerticle(verticle)
+        .onComplete(
+            testContext.succeeding(
+                id -> {
+                  MessageRequest message = MessageRequest.newBuilder().build(); // No traceparent
+
+                  vertx
+                      .eventBus()
+                      .request(CHANNEL, message)
+                      .onComplete(
+                          testContext.succeeding(
+                              reply -> {
+                                testContext.verify(
+                                    () -> {
+                                      assertThat(handled.get()).isTrue();
+                                      assertThat(reply.body())
+                                          .isInstanceOf(WebfingerResponse.class);
+                                      testContext.completeNow();
+                                    });
+                              }));
                 }));
   }
 }

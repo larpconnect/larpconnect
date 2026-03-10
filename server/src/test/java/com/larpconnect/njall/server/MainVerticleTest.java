@@ -7,6 +7,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Modules;
+import com.larpconnect.njall.common.time.TimeService;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -58,6 +59,9 @@ final class MainVerticleTest {
               }
             });
 
+    TimeService timeService = injector.getInstance(TimeService.class);
+    timeService.startAsync().awaitRunning();
+
     MainVerticle mainVerticle = injector.getInstance(MainVerticle.class);
 
     vertx
@@ -107,6 +111,9 @@ final class MainVerticleTest {
                         });
               }
             });
+
+    TimeService timeService = injector.getInstance(TimeService.class);
+    timeService.startAsync().awaitRunning();
 
     MainVerticle mainVerticle = injector.getInstance(MainVerticle.class);
 

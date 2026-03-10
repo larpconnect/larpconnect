@@ -3,6 +3,7 @@ package com.larpconnect.njall.api.verticle;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closer;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
@@ -72,25 +73,23 @@ abstract class AbstractLcVerticle extends io.vertx.core.AbstractVerticle {
                 closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
                 closer.register(MDC.putCloseable("span_id", spanIdStr));
 
-                Promise<MessageResponse> responsePromise = Promise.promise();
+                Promise<Message> responsePromise = Promise.promise();
                 responsePromise
                     .future()
                     .onComplete(
                         ar -> {
                           if (ar.succeeded()) {
-                            MessageResponse response = ar.result();
-                            if (response == BasicResponse.SHUTDOWN) {
-                              vertx.eventBus().consumer(channel).unregister();
-                            } else if (response instanceof ReplyResponse replyResponse) {
-                              msg.reply(replyResponse.payload());
-                            }
+                            msg.reply(ar.result());
                           } else {
                             log.error("Error handling message on channel: " + channel, ar.cause());
                             msg.fail(-1, "Internal Error");
                           }
                         });
 
-                handleMessage(newSpanId, finalMessage, responsePromise);
+                MessageResponse response = handleMessage(newSpanId, finalMessage, responsePromise);
+                if (response == BasicResponse.SHUTDOWN) {
+                  vertx.eventBus().consumer(channel).unregister();
+                }
               } catch (IOException e) {
                 // Closer does not throw IOException in this context
               } catch (RuntimeException e) {
@@ -126,6 +125,6 @@ abstract class AbstractLcVerticle extends io.vertx.core.AbstractVerticle {
     return message.toBuilder().setTraceparent(obsBuilder.build()).build();
   }
 
-  protected abstract void handleMessage(
-      byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise);
+  protected abstract MessageResponse handleMessage(
+      byte[] spanId, MessageRequest message, Promise<Message> responsePromise);
 }

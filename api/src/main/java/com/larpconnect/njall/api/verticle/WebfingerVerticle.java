@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api.verticle;
 
+import com.google.protobuf.Message;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Parameter;
@@ -19,29 +20,35 @@ final class WebfingerVerticle extends AbstractLcVerticle {
   }
 
   @Override
-  protected void handleMessage(
-      byte[] spanId, MessageRequest message, Promise<MessageResponse> responsePromise) {
+  protected MessageResponse handleMessage(
+      byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
     String resource = null;
     List<Parameter> params = message.getParametersList();
 
     for (Parameter p : params) {
       if ("resource".equals(p.getKey()) && p.hasStringValue()) {
-        resource = p.getStringValue();
+        resource = sanitize(p.getStringValue());
       }
     }
 
     if (resource == null) {
-      // Return empty response or basic subject if no resource provided,
-      // though typically webfinger requires a resource.
-      responsePromise.complete(
-          new ReplyResponse(
-              WebfingerResponse.newBuilder().setSubject("acct:system@localhost").build()));
-      return;
+      // Return a basic empty response rather than fake data if it's missing or invalid
+      responsePromise.complete(WebfingerResponse.newBuilder().build());
+      return BasicResponse.CONTINUE;
     }
 
-    // Basic logic to construct a webfinger response based on the subject
+    // Do not return made-up data. Just echo the subject without fake data.
     WebfingerResponse response = WebfingerResponse.newBuilder().setSubject(resource).build();
+    responsePromise.complete(response);
 
-    responsePromise.complete(new ReplyResponse(response));
+    return BasicResponse.CONTINUE;
+  }
+
+  private String sanitize(String input) {
+    if (input == null) {
+      return "";
+    }
+    // Strip all characters that aren't a-zA-Z, ., :, -, or @
+    return input.replaceAll("[^a-zA-Z.:\\-@]", "");
   }
 }
