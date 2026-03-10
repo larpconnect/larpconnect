@@ -7,6 +7,7 @@ import com.google.protobuf.Message;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import jakarta.inject.Provider;
 import java.io.IOException;
@@ -18,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-abstract class AbstractLcVerticle extends io.vertx.core.AbstractVerticle {
+abstract class AbstractLcVerticle extends AbstractVerticle {
   private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
   private static final int SPAN_ID_BYTES = 8;
   private static final int TRACE_ID_BYTES = 16;
@@ -81,7 +82,7 @@ abstract class AbstractLcVerticle extends io.vertx.core.AbstractVerticle {
                           if (ar.succeeded()) {
                             msg.reply(ar.result());
                           } else {
-                            log.error("Error handling message on channel: " + channel, ar.cause());
+                            log.error("Error handling message on channel: {}", channel, ar.cause());
                             msg.fail(-1, "Internal Error");
                           }
                         });
@@ -93,7 +94,7 @@ abstract class AbstractLcVerticle extends io.vertx.core.AbstractVerticle {
               } catch (IOException e) {
                 // Closer does not throw IOException in this context
               } catch (RuntimeException e) {
-                log.error("Error handling message on channel: " + channel, e);
+                log.error("Error handling message on channel: {}", channel, e);
                 msg.fail(-1, "Internal Error");
               }
             });
