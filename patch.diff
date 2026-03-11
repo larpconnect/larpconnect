@@ -1,18 +1,25 @@
 --- init/src/test/java/com/larpconnect/njall/init/GuiceVerticleFactoryTest.java
 +++ init/src/test/java/com/larpconnect/njall/init/GuiceVerticleFactoryTest.java
-@@ -21,6 +21,7 @@
+@@ -15,13 +15,13 @@
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+
++@SuppressWarnings("deprecation")
+ @ExtendWith(VertxExtension.class)
+ final class GuiceVerticleFactoryTest {
+
    static final class TestVerticle extends AbstractVerticle {}
 
    @Test
-+  @SuppressWarnings("deprecation")
+-  @SuppressWarnings("deprecation")
    public void createVerticle_validClass_success(VertxTestContext testContext) {
      Injector injector =
          Guice.createInjector(
-@@ -55,6 +56,7 @@
+@@ -56,7 +56,6 @@
    }
 
    @Test
-+  @SuppressWarnings("deprecation")
+-  @SuppressWarnings("deprecation")
    public void createVerticle_missingClass_failure(VertxTestContext testContext) {
      Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
      var factory = new GuiceVerticleFactory(injector);

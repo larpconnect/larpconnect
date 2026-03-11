@@ -15,13 +15,13 @@ import java.util.concurrent.Callable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+@SuppressWarnings("deprecation")
 @ExtendWith(VertxExtension.class)
 final class GuiceVerticleFactoryTest {
 
   static final class TestVerticle extends AbstractVerticle {}
 
   @Test
-  @SuppressWarnings("deprecation")
   public void createVerticle_validClass_success(VertxTestContext testContext) {
     Injector injector =
         Guice.createInjector(
@@ -56,7 +56,6 @@ final class GuiceVerticleFactoryTest {
   }
 
   @Test
-  @SuppressWarnings("deprecation")
   public void createVerticle_missingClass_failure(VertxTestContext testContext) {
     Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var factory = new GuiceVerticleFactory(injector);
