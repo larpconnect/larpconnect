@@ -3,6 +3,7 @@ package com.larpconnect.njall.api.verticle;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.larpconnect.njall.common.id.IdGenerator;
+import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Parameter;
 import com.larpconnect.njall.proto.WebfingerResponse;
@@ -47,13 +48,15 @@ final class WebfingerVerticleTest {
 
     vertx
         .eventBus()
-        .<WebfingerResponse>request(WebfingerVerticle.CHANNEL, request)
+        .<MessageReply>request(WebfingerVerticle.CHANNEL, request)
         .onComplete(
             testContext.succeeding(
                 reply -> {
                   testContext.verify(
                       () -> {
-                        WebfingerResponse response = reply.body();
+                        MessageReply replyMsg = reply.body();
+                        WebfingerResponse response =
+                            replyMsg.getProto().getMessage().unpack(WebfingerResponse.class);
                         assertThat(response.getSubject()).isEqualTo("acct:alice@example.com");
                         testContext.completeNow();
                       });
@@ -66,13 +69,15 @@ final class WebfingerVerticleTest {
 
     vertx
         .eventBus()
-        .<WebfingerResponse>request(WebfingerVerticle.CHANNEL, request)
+        .<MessageReply>request(WebfingerVerticle.CHANNEL, request)
         .onComplete(
             testContext.succeeding(
                 reply -> {
                   testContext.verify(
                       () -> {
-                        WebfingerResponse response = reply.body();
+                        MessageReply replyMsg = reply.body();
+                        WebfingerResponse response =
+                            replyMsg.getProto().getMessage().unpack(WebfingerResponse.class);
                         assertThat(response.getSubject()).isEmpty();
                         testContext.completeNow();
                       });

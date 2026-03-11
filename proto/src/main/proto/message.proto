@@ -59,3 +59,15 @@ message MessageRequest {
   }
 }
 
+
+message MessageReply {
+  Observability traceparent = 1;
+  Authentication authentication = 4;
+  Header header = 5;
+  repeated Parameter parameters = 6;
+
+  oneof payload {
+    ProtoDef proto = 2;
+    MimeType mime = 3;
+  }
+}

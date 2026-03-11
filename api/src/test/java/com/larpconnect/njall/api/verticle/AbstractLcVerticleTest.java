@@ -2,9 +2,11 @@ package com.larpconnect.njall.api.verticle;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.protobuf.Message;
+import com.google.protobuf.Any;
+import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
+import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -66,7 +68,7 @@ final class AbstractLcVerticleTest {
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(
-              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+              byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
@@ -135,7 +137,7 @@ final class AbstractLcVerticleTest {
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(
-              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+              byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
             handled.set(true);
             throw new IllegalStateException("Test exception");
           }
@@ -193,7 +195,7 @@ final class AbstractLcVerticleTest {
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(
-              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+              byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
             handled.set(true);
             responsePromise.fail(new IllegalStateException("Failed promise"));
             return BasicResponse.CONTINUE;
@@ -253,7 +255,7 @@ final class AbstractLcVerticleTest {
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(
-              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+              byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
@@ -318,7 +320,7 @@ final class AbstractLcVerticleTest {
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(
-              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+              byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
@@ -385,7 +387,7 @@ final class AbstractLcVerticleTest {
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(
-              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+              byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
             handled.set(true);
             mdcTraceId.set(MDC.get("trace_id"));
             mdcParentSpanId.set(MDC.get("parent_span_id"));
@@ -446,10 +448,17 @@ final class AbstractLcVerticleTest {
             CHANNEL, mockRandom, () -> UUID.fromString("12345678-1234-1234-1234-123456789abc")) {
           @Override
           protected MessageResponse handleMessage(
-              byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+              byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
             handled.set(true);
             WebfingerResponse response = WebfingerResponse.newBuilder().setSubject("reply").build();
-            responsePromise.complete(response);
+            responsePromise.complete(
+                MessageReply.newBuilder()
+                    .setProto(
+                        ProtoDef.newBuilder()
+                            .setProtobufName("WebfingerResponse")
+                            .setMessage(Any.pack(response))
+                            .build())
+                    .build());
             return BasicResponse.CONTINUE;
           }
         };
@@ -470,8 +479,13 @@ final class AbstractLcVerticleTest {
                                 testContext.verify(
                                     () -> {
                                       assertThat(handled.get()).isTrue();
-                                      assertThat(reply.body())
-                                          .isInstanceOf(WebfingerResponse.class);
+                                      assertThat(reply.body()).isInstanceOf(MessageReply.class);
+                                      MessageReply mr = (MessageReply) reply.body();
+                                      assertThat(
+                                              mr.getProto()
+                                                  .getMessage()
+                                                  .is(WebfingerResponse.class))
+                                          .isTrue();
                                       testContext.completeNow();
                                     });
                               }));

@@ -3,8 +3,8 @@ package com.larpconnect.njall.api.verticle;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closer;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Message;
 import com.larpconnect.njall.common.id.IdGenerator;
+import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
 import io.vertx.core.AbstractVerticle;
@@ -74,7 +74,7 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
                 closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
                 closer.register(MDC.putCloseable("span_id", spanIdStr));
 
-                Promise<Message> responsePromise = Promise.promise();
+                Promise<MessageReply> responsePromise = Promise.promise();
                 responsePromise
                     .future()
                     .onComplete(
@@ -127,5 +127,5 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
   }
 
   protected abstract MessageResponse handleMessage(
-      byte[] spanId, MessageRequest message, Promise<Message> responsePromise);
+      byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise);
 }

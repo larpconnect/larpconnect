@@ -1,9 +1,11 @@
 package com.larpconnect.njall.api.verticle;
 
-import com.google.protobuf.Message;
+import com.google.protobuf.Any;
 import com.larpconnect.njall.common.id.IdGenerator;
+import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Parameter;
+import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Promise;
 import jakarta.inject.Inject;
@@ -20,7 +22,7 @@ final class WebfingerVerticle extends AbstractLcVerticle {
 
   @Override
   protected MessageResponse handleMessage(
-      byte[] spanId, MessageRequest message, Promise<Message> responsePromise) {
+      byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
     String resource = null;
     var params = message.getParametersList();
 
@@ -32,13 +34,28 @@ final class WebfingerVerticle extends AbstractLcVerticle {
 
     if (resource == null) {
       // Return a basic empty response rather than fake data if it's missing or invalid
-      responsePromise.complete(WebfingerResponse.newBuilder().build());
+      WebfingerResponse wfResp = WebfingerResponse.newBuilder().build();
+      responsePromise.complete(
+          MessageReply.newBuilder()
+              .setProto(
+                  ProtoDef.newBuilder()
+                      .setProtobufName("WebfingerResponse")
+                      .setMessage(Any.pack(wfResp))
+                      .build())
+              .build());
       return BasicResponse.CONTINUE;
     }
 
     // Do not return made-up data. Just echo the subject without fake data.
     var response = WebfingerResponse.newBuilder().setSubject(resource).build();
-    responsePromise.complete(response);
+    responsePromise.complete(
+        MessageReply.newBuilder()
+            .setProto(
+                ProtoDef.newBuilder()
+                    .setProtobufName("WebfingerResponse")
+                    .setMessage(Any.pack(response))
+                    .build())
+            .build());
 
     return BasicResponse.CONTINUE;
   }
