@@ -21,10 +21,14 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,8 +108,13 @@ final class WebServerVerticle extends AbstractVerticle {
                 if (in == null) {
                   throw new IOException(openApiSpec + " not found on classpath");
                 }
-                Path tempFile = Files.createTempFile("openapi", ".yaml");
-                Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                FileAttribute<Set<PosixFilePermission>> attr =
+                    PosixFilePermissions.asFileAttribute(
+                        PosixFilePermissions.fromString("rw-------"));
+                Path tempFile = Files.createTempFile("openapi", ".yaml", attr);
+                try (OutputStream out = Files.newOutputStream(tempFile)) {
+                  in.transferTo(out);
+                }
                 tempFile.toFile().deleteOnExit();
                 return tempFile.toAbsolutePath().toString();
               }
@@ -157,7 +166,7 @@ final class WebServerVerticle extends AbstractVerticle {
       ctx.json(new JsonObject(json));
     } catch (RuntimeException | IOException e) {
       logger.error("Failed to convert message to JSON", e);
-      ctx.fail(e);
+      ctx.fail(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR, e);
     }
   }
 

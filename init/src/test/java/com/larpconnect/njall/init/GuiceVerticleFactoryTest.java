@@ -89,8 +89,8 @@ final class GuiceVerticleFactoryTest {
     Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var factory = new GuiceVerticleFactory(injector);
 
-    Promise<Callable<Verticle>> promise = Promise.promise();
-    factory.createVerticle(
+    Promise<Callable<? extends Deployable>> promise = Promise.promise();
+    factory.createVerticle2(
         "guice:" + NonVerticleClass.class.getName(), getClass().getClassLoader(), promise);
 
     promise

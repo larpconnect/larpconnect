@@ -2,6 +2,7 @@ package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -121,7 +122,7 @@ final class WebServerTest {
 
     verticle.handleGetMessage(ctx);
 
-    verify(ctx).fail(any(IOException.class));
+    verify(ctx).fail(eq(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR), any(IOException.class));
     testContext.completeNow();
   }
 
@@ -140,7 +141,8 @@ final class WebServerTest {
 
     verticle.handleGetMessage(ctx);
 
-    verify(ctx).fail(any(RuntimeException.class));
+    verify(ctx)
+        .fail(eq(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR), any(RuntimeException.class));
     testContext.completeNow();
   }
 }
