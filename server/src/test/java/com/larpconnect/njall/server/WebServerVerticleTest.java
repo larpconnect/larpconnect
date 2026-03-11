@@ -93,8 +93,7 @@ final class WebServerVerticleTest {
                 err ->
                     testContext.verify(
                         () -> {
-                          assertThat(err.getMessage())
-                              .contains("missing.yaml not found on classpath");
+                          assertThat(err.getMessage()).contains("resource missing.yaml not found.");
                           testContext.completeNow();
                         })));
   }

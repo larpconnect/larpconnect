@@ -100,10 +100,8 @@ final class WebServerVerticle extends AbstractVerticle {
     vertx
         .<String>executeBlocking(
             () -> {
-              try (InputStream in = getClass().getClassLoader().getResourceAsStream(openApiSpec)) {
-                if (in == null) {
-                  throw new IOException(openApiSpec + " not found on classpath");
-                }
+              try (InputStream in =
+                  com.google.common.io.Resources.getResource(openApiSpec).openStream()) {
                 Path tempFile = Files.createTempFile("openapi", ".yaml");
                 Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
                 tempFile.toFile().deleteOnExit();
