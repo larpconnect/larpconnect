@@ -2,6 +2,8 @@ package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.larpconnect.njall.proto.MessageRequest;
+import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -51,7 +53,15 @@ final class WebServerVerticleTest {
   }
 
   @Test
-  void webfingerEndpoint_succeeds_withSubject(VertxTestContext testContext) {
+  void webfingerEndpoint_succeeds_withSubject(Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.well-known.webfinger.request",
+            msg -> {
+              msg.reply(WebfingerResponse.newBuilder().setSubject("acct:system@localhost").build());
+            });
+
     webClient
         .get("/.well-known/webfinger")
         .send()
@@ -61,7 +71,8 @@ final class WebServerVerticleTest {
                     testContext.verify(
                         () -> {
                           assertThat(response.statusCode()).isEqualTo(200);
-                          assertThat(response.bodyAsJsonObject().containsKey("subject")).isTrue();
+                          assertThat(response.bodyAsJsonObject().getString("subject"))
+                              .isEqualTo("acct:system@localhost");
                           testContext.completeNow();
                         })));
   }

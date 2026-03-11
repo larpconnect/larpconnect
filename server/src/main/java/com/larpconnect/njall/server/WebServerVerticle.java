@@ -163,7 +163,35 @@ final class WebServerVerticle extends AbstractVerticle {
       ensure = "ctx.response() \\text{ contains JSON Webfinger response}",
       implementationHint = "Returns a valid JSON response for a webfinger query")
   void handleWebfinger(RoutingContext ctx) {
-    var response = new JsonObject().put("subject", "acct:system@localhost");
-    ctx.json(response);
+    var requestBuilder = MessageRequest.newBuilder();
+    ctx.queryParams()
+        .forEach(
+            (key, value) -> {
+              requestBuilder.addParameters(
+                  com.larpconnect.njall.proto.Parameter.newBuilder()
+                      .setKey(key)
+                      .setStringValue(value)
+                      .build());
+            });
+
+    vertx
+        .eventBus()
+        .<com.larpconnect.njall.proto.WebfingerResponse>request(
+            "http.well-known.webfinger.request", requestBuilder.build())
+        .onSuccess(
+            msg -> {
+              try {
+                String json = PRINTER.print(msg.body());
+                ctx.json(new JsonObject(json));
+              } catch (IOException e) {
+                logger.error("Failed to serialize webfinger response", e);
+                ctx.fail(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+              }
+            })
+        .onFailure(
+            e -> {
+              logger.error("Webfinger request failed", e);
+              ctx.fail(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+            });
   }
 }
