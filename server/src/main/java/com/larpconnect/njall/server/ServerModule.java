@@ -5,6 +5,10 @@ import com.larpconnect.njall.api.ApiModule;
 import com.larpconnect.njall.common.CommonModule;
 import com.larpconnect.njall.init.InitModule;
 
+/**
+ * The main entry point Guice module that wires together the server infrastructure, integrating the
+ * API, common utilities, and initialization components.
+ */
 public final class ServerModule extends AbstractModule {
   public ServerModule() {}
 

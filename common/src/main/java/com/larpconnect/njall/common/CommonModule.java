@@ -5,6 +5,10 @@ import com.larpconnect.njall.common.codec.CodecModule;
 import com.larpconnect.njall.common.id.IdModule;
 import com.larpconnect.njall.common.time.TimeModule;
 
+/**
+ * Guice module that provides common utilities and core infrastructure for the system, including
+ * time services, ID generation, and EventBus codecs.
+ */
 public final class CommonModule extends AbstractModule {
   public CommonModule() {}
 
