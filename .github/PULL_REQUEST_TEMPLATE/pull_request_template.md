@@ -1,4 +1,6 @@
 ---
+name: Pull Request Template
+---
 
 ## 🤖 Generative AI Disclosure
 
