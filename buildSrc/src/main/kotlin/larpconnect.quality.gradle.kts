@@ -98,11 +98,3 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.named("compileJava") {
     dependsOn("spotlessCheck")
 }
-
-tasks.matching { it.name.startsWith("spotless") && it.name.endsWith("MarkdownCheck") }.configureEach {
-    enabled = false
-}
-
-tasks.matching { it.name.startsWith("spotless") && it.name.endsWith("FlexmarkCheck") }.configureEach {
-    enabled = false
-}
