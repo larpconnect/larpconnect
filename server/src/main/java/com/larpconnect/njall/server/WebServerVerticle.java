@@ -21,10 +21,15 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,12 +105,21 @@ final class WebServerVerticle extends AbstractVerticle {
     vertx
         .<String>executeBlocking(
             () -> {
-              try (InputStream in = getClass().getClassLoader().getResourceAsStream(openApiSpec)) {
-                if (in == null) {
-                  throw new IOException(openApiSpec + " not found on classpath");
+              try (InputStream in =
+                  com.google.common.io.Resources.getResource(openApiSpec).openStream()) {
+
+                Path tempFile;
+                if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+                  FileAttribute<Set<PosixFilePermission>> attrs =
+                      PosixFilePermissions.asFileAttribute(
+                          PosixFilePermissions.fromString("rw-------"));
+                  tempFile = Files.createTempFile("openapi", ".yaml", attrs);
+                } else {
+                  tempFile = Files.createTempFile("openapi", ".yaml");
                 }
-                Path tempFile = Files.createTempFile("openapi", ".yaml");
-                Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                try (OutputStream out = Files.newOutputStream(tempFile)) {
+                  in.transferTo(out);
+                }
                 tempFile.toFile().deleteOnExit();
                 return tempFile.toAbsolutePath().toString();
               }
