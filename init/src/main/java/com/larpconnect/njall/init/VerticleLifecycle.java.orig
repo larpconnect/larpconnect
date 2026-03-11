@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 final class VerticleLifecycle extends AbstractIdleService implements VerticleService {
-  private static final int CONFIG_LOAD_TIMEOUT_SECONDS = 30;
+  private static final int CONFIG_LOAD_TIMEOUT_SECONDS = 5;
   private final Logger logger = LoggerFactory.getLogger(VerticleLifecycle.class);
 
   private final ImmutableList<Module> modules;
