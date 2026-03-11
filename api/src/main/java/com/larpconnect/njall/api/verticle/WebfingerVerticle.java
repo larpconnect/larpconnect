@@ -37,7 +37,7 @@ final class WebfingerVerticle extends AbstractLcVerticle {
     }
 
     // Do not return made-up data. Just echo the subject without fake data.
-    WebfingerResponse response = WebfingerResponse.newBuilder().setSubject(resource).build();
+    var response = WebfingerResponse.newBuilder().setSubject(resource).build();
     responsePromise.complete(response);
 
     return BasicResponse.CONTINUE;

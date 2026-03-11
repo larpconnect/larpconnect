@@ -53,7 +53,7 @@ final class DefaultApiObjectParserTest {
             .putExtensions("unknown", Extension.getDefaultInstance()) // empty extension test
             .build();
 
-    JsonObject json = parser.toJson(obj);
+    var json = parser.toJson(obj);
 
     assertThat(json.getJsonArray("context"))
         .containsExactly("https://www.w3.org/ns/activitystreams", "https://example.com/other");
@@ -69,8 +69,8 @@ final class DefaultApiObjectParserTest {
 
   @Test
   void toJson_handlesEmptyObject_successfully() {
-    ApiObject obj = ApiObject.getDefaultInstance();
-    JsonObject json = parser.toJson(obj);
+    var obj = ApiObject.getDefaultInstance();
+    var json = parser.toJson(obj);
     assertThat(json.isEmpty()).isTrue();
   }
 
@@ -92,7 +92,7 @@ final class DefaultApiObjectParserTest {
                     .build())
             .build();
 
-    JsonObject json = parser.toJson(obj);
+    var json = parser.toJson(obj);
     assertThat(json.getString("media_type")).isEqualTo("image/png");
     assertThat(json.getString("content")).isEqualTo("aGVsbG8gd29ybGQ=");
   }
@@ -136,7 +136,7 @@ final class DefaultApiObjectParserTest {
             .put("href", "https://example.com/href")
             .put("total_items", "42");
 
-    ApiObject obj = parser.fromJson(json);
+    var obj = parser.fromJson(json);
 
     assertThat(obj.getContextList())
         .containsExactly("https://www.w3.org/ns/activitystreams", "other");
@@ -172,7 +172,7 @@ final class DefaultApiObjectParserTest {
             .put("media_type", "image/png")
             .put("content", "aGVsbG8gd29ybGQ=");
 
-    ApiObject obj = parser.fromJson(json);
+    var obj = parser.fromJson(json);
     assertThat(obj.getExtensionsMap().get("document").getDocument().getContent().toStringUtf8())
         .isEqualTo("hello world");
   }
@@ -185,7 +185,7 @@ final class DefaultApiObjectParserTest {
             .put("mediaType", "text/plain")
             .put("content", "hello camel case");
 
-    ApiObject obj = parser.fromJson(json);
+    var obj = parser.fromJson(json);
     assertThat(obj.getExtensionsMap().get("document").getDocument().getContent().toStringUtf8())
         .isEqualTo("hello camel case");
   }
@@ -197,7 +197,7 @@ final class DefaultApiObjectParserTest {
             .put("type", new JsonArray().add("Document"))
             .put("media_type", "text/plain");
 
-    ApiObject obj = parser.fromJson(json);
+    var obj = parser.fromJson(json);
     assertThat(obj.getExtensionsMap().get("document").getDocument().getMediaType())
         .isEqualTo("text/plain");
   }
@@ -209,14 +209,14 @@ final class DefaultApiObjectParserTest {
             .put("type", new JsonArray().add("Document"))
             .put("content", "aGVsbG8="); // requires base64 because mediaType is not text/plain
 
-    ApiObject obj = parser.fromJson(json);
+    var obj = parser.fromJson(json);
     assertThat(obj.getExtensionsMap().get("document").getDocument().getContent().toStringUtf8())
         .isEqualTo("hello");
   }
 
   @Test
   void fromJson_handlesEmptyObject_successfully() {
-    ApiObject obj = parser.fromJson(new JsonObject());
+    var obj = parser.fromJson(new JsonObject());
     assertThat(obj.getId()).isEmpty();
   }
 
@@ -229,7 +229,7 @@ final class DefaultApiObjectParserTest {
             .put("deleted", "2023-01-01T00:00:00Z")
             .put("media_type", "text/plain");
 
-    ApiObject obj = parser.fromJson(json);
+    var obj = parser.fromJson(json);
     assertThat(obj.getExtensionsMap()).isEmpty();
   }
 

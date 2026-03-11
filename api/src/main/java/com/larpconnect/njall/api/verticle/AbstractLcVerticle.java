@@ -92,7 +92,7 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
                   vertx.eventBus().consumer(channel).unregister();
                 }
               } catch (IOException e) {
-                // Closer does not throw IOException in this context
+                throw new java.io.UncheckedIOException(e);
               } catch (RuntimeException e) {
                 log.error("Error handling message on channel: {}", channel, e);
                 msg.fail(-1, "Internal Error");

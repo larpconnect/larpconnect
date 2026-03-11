@@ -88,7 +88,7 @@ final class AbstractLcVerticleTest {
                           .setTraceId(com.google.protobuf.ByteString.copyFrom(originalTraceId))
                           .setSpanId(com.google.protobuf.ByteString.copyFrom(originalSpanId))
                           .build();
-                  MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
+                  var message = MessageRequest.newBuilder().setTraceparent(obs).build();
 
                   vertx.eventBus().send(CHANNEL, message);
 
@@ -146,7 +146,7 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  MessageRequest message = MessageRequest.newBuilder().build();
+                  var message = MessageRequest.newBuilder().build();
 
                   vertx
                       .eventBus()
@@ -205,7 +205,7 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  MessageRequest message = MessageRequest.newBuilder().build();
+                  var message = MessageRequest.newBuilder().build();
 
                   vertx
                       .eventBus()
@@ -267,7 +267,7 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  MessageRequest message = MessageRequest.newBuilder().build(); // No traceparent
+                  var message = MessageRequest.newBuilder().build(); // No traceparent
 
                   vertx.eventBus().send(CHANNEL, message);
 
@@ -334,7 +334,7 @@ final class AbstractLcVerticleTest {
                 id -> {
                   Observability obs =
                       Observability.newBuilder().build(); // Empty traceId and spanId
-                  MessageRequest message = MessageRequest.newBuilder().setTraceparent(obs).build();
+                  var message = MessageRequest.newBuilder().setTraceparent(obs).build();
 
                   vertx.eventBus().send(CHANNEL, message);
 
@@ -399,7 +399,7 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  MessageRequest message = MessageRequest.newBuilder().build(); // No traceparent
+                  var message = MessageRequest.newBuilder().build(); // No traceparent
 
                   vertx.eventBus().send(CHANNEL, message);
 
@@ -459,7 +459,7 @@ final class AbstractLcVerticleTest {
         .onComplete(
             testContext.succeeding(
                 id -> {
-                  MessageRequest message = MessageRequest.newBuilder().build(); // No traceparent
+                  var message = MessageRequest.newBuilder().build(); // No traceparent
 
                   vertx
                       .eventBus()
