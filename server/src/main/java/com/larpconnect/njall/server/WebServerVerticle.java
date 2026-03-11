@@ -22,7 +22,6 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -102,7 +101,7 @@ final class WebServerVerticle extends AbstractVerticle {
             () -> {
               try (InputStream in =
                   com.google.common.io.Resources.getResource(openApiSpec).openStream()) {
-                Path tempFile = Files.createTempFile("openapi", ".yaml");
+                var tempFile = Files.createTempFile("openapi", ".yaml");
                 Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
                 tempFile.toFile().deleteOnExit();
                 return tempFile.toAbsolutePath().toString();
@@ -181,7 +180,7 @@ final class WebServerVerticle extends AbstractVerticle {
         .onSuccess(
             msg -> {
               try {
-                String json = PRINTER.print(msg.body());
+                var json = PRINTER.print(msg.body());
                 ctx.json(new JsonObject(json));
               } catch (IOException e) {
                 logger.error("Failed to serialize webfinger response", e);
