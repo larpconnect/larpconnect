@@ -12,6 +12,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -122,7 +123,7 @@ final class WebServerTest {
 
     verticle.handleGetMessage(ctx);
 
-    verify(ctx).fail(eq(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR), any(IOException.class));
+    verify(ctx).fail(eq(HttpURLConnection.HTTP_INTERNAL_ERROR), any(IOException.class));
     testContext.completeNow();
   }
 
@@ -141,8 +142,7 @@ final class WebServerTest {
 
     verticle.handleGetMessage(ctx);
 
-    verify(ctx)
-        .fail(eq(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR), any(RuntimeException.class));
+    verify(ctx).fail(eq(HttpURLConnection.HTTP_INTERNAL_ERROR), any(RuntimeException.class));
     testContext.completeNow();
   }
 }

@@ -21,6 +21,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
@@ -154,7 +155,7 @@ final class WebServerVerticle extends AbstractVerticle {
       ctx.json(new JsonObject(json));
     } catch (RuntimeException | IOException e) {
       logger.error("Failed to convert message to JSON", e);
-      ctx.fail(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+      ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
     }
   }
 
@@ -184,13 +185,13 @@ final class WebServerVerticle extends AbstractVerticle {
                 ctx.json(new JsonObject(json));
               } catch (IOException e) {
                 logger.error("Failed to serialize webfinger response", e);
-                ctx.fail(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+                ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
               }
             })
         .onFailure(
             e -> {
               logger.error("Webfinger request failed", e);
-              ctx.fail(java.net.HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+              ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
             });
   }
 }
