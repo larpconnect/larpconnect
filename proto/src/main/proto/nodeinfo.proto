@@ -1,0 +1,56 @@
+edition = "2024";
+
+package com.larpconnect.njall.proto;
+
+option java_package = "com.larpconnect.njall.proto";
+option go_package = "com.larpconnect.njall.proto";
+
+message NodeinfoJrdLink {
+  string rel = 1;
+  string href = 2;
+}
+
+message NodeinfoJrd {
+  repeated NodeinfoJrdLink links = 1;
+}
+
+message NodeinfoInstance {
+  string name = 1;
+  string description = 2;
+}
+
+message NodeinfoSoftware {
+  string name = 1;
+  string version = 2;
+  string repository = 3;
+  string homepage = 4;
+}
+
+message NodeinfoServices {
+  repeated string inbound = 1;
+  repeated string outbound = 2;
+}
+
+message NodeinfoUsageUsers {
+  uint32 total = 1;
+  uint32 active_halfyear = 2;
+  uint32 active_month = 3;
+  uint32 active_week = 4;
+}
+
+message NodeinfoUsage {
+  NodeinfoUsageUsers users = 1;
+  uint32 local_posts = 2;
+  uint32 local_comments = 3;
+}
+
+message Nodeinfo22 {
+  string version = 1;
+  NodeinfoInstance instance = 2;
+  NodeinfoSoftware software = 3;
+  repeated string protocols = 4;
+  NodeinfoServices services = 5;
+  bool open_registrations = 6;
+  NodeinfoUsage usage = 7;
+  map<string, string> metadata = 8;
+}

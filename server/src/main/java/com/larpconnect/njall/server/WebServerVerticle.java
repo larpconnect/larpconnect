@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 final class WebServerVerticle extends AbstractVerticle {
   private static final int DEFAULT_PORT = 8080;
   private static final String DEFAULT_SPEC = "openapi.yaml";
-  private static final JsonFormat.Printer PRINTER = JsonFormat.printer();
+  private final JsonFormat.Printer printer;
   private final Logger logger = LoggerFactory.getLogger(WebServerVerticle.class);
   private final int port;
   private final String openApiSpec;
@@ -63,11 +63,33 @@ final class WebServerVerticle extends AbstractVerticle {
       @WebPort int port,
       @OpenApiSpec String openApiSpec,
       Optional<Consumer<Integer>> portListener) {
-    this(port, openApiSpec, m -> PRINTER.print(m), portListener);
+    this(port, openApiSpec, createPrinter(), portListener);
   }
 
   WebServerVerticle(int port, String openApiSpec) {
-    this(port, openApiSpec, m -> PRINTER.print(m), Optional.empty());
+    this(port, openApiSpec, createPrinter(), Optional.empty());
+  }
+
+  private static JsonFormat.Printer createPrinter() {
+    var registry =
+        com.google.protobuf.util.JsonFormat.TypeRegistry.newBuilder()
+            .add(com.larpconnect.njall.proto.WebfingerResponse.getDescriptor())
+            .add(com.larpconnect.njall.proto.NodeinfoJrd.getDescriptor())
+            .add(com.larpconnect.njall.proto.Nodeinfo22.getDescriptor())
+            .build();
+    return JsonFormat.printer().usingTypeRegistry(registry);
+  }
+
+  private WebServerVerticle(
+      int port,
+      String openApiSpec,
+      JsonFormat.Printer printer,
+      Optional<Consumer<Integer>> portListener) {
+    this.port = port;
+    this.openApiSpec = openApiSpec;
+    this.printer = printer;
+    this.serializer = m -> printer.print(m);
+    this.portListener = portListener;
   }
 
   WebServerVerticle(
@@ -77,6 +99,7 @@ final class WebServerVerticle extends AbstractVerticle {
       Optional<Consumer<Integer>> portListener) {
     this.port = port;
     this.openApiSpec = openApiSpec;
+    this.printer = createPrinter();
     this.serializer = serializer;
     this.portListener = portListener;
   }
@@ -122,6 +145,10 @@ final class WebServerVerticle extends AbstractVerticle {
                         builder.getRoute("healthz").addHandler(hc);
 
                         builder.getRoute("webfinger").addHandler(this::handleWebfinger);
+                        builder
+                            .getRoute("nodeinfoWellKnown")
+                            .addHandler(this::handleNodeinfoWellKnown);
+                        builder.getRoute("nodeinfoAdmin").addHandler(this::handleNodeinfoAdmin);
 
                         var router = builder.createRouter();
                         vertx
@@ -176,14 +203,16 @@ final class WebServerVerticle extends AbstractVerticle {
 
     vertx
         .eventBus()
-        .<com.larpconnect.njall.proto.WebfingerResponse>request(
+        .<com.larpconnect.njall.proto.MessageReply>request(
             "http.well-known.webfinger.request", requestBuilder.build())
         .onSuccess(
             msg -> {
               try {
-                var json = PRINTER.print(msg.body());
+                var replyResponse = msg.body();
+                var proto = replyResponse.getProto();
+                var json = printer.print(proto.getMessage());
                 ctx.json(new JsonObject(json));
-              } catch (IOException e) {
+              } catch (RuntimeException | IOException e) {
                 logger.error("Failed to serialize webfinger response", e);
                 ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
               }
@@ -191,6 +220,60 @@ final class WebServerVerticle extends AbstractVerticle {
         .onFailure(
             e -> {
               logger.error("Webfinger request failed", e);
+              ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+            });
+  }
+
+  @AiContract(
+      ensure = "ctx.response() \\text{ contains JSON Nodeinfo JRD response}",
+      implementationHint = "Returns a valid JSON response for a nodeinfo well-known query")
+  void handleNodeinfoWellKnown(RoutingContext ctx) {
+    vertx
+        .eventBus()
+        .<com.larpconnect.njall.proto.MessageReply>request(
+            "http.well-known.nodeinfo.request", MessageRequest.getDefaultInstance())
+        .onSuccess(
+            msg -> {
+              try {
+                var replyResponse = msg.body();
+                var proto = replyResponse.getProto();
+                var json = printer.print(proto.getMessage());
+                ctx.json(new JsonObject(json));
+              } catch (RuntimeException | IOException e) {
+                logger.error("Failed to serialize nodeinfo JRD response", e);
+                ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+              }
+            })
+        .onFailure(
+            e -> {
+              logger.error("Nodeinfo well-known request failed", e);
+              ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+            });
+  }
+
+  @AiContract(
+      ensure = "ctx.response() \\text{ contains JSON Nodeinfo 2.2 response}",
+      implementationHint = "Returns a valid JSON response for a nodeinfo admin query")
+  void handleNodeinfoAdmin(RoutingContext ctx) {
+    vertx
+        .eventBus()
+        .<com.larpconnect.njall.proto.MessageReply>request(
+            "http.admin.nodeinfo.request", MessageRequest.getDefaultInstance())
+        .onSuccess(
+            msg -> {
+              try {
+                var replyResponse = msg.body();
+                var proto = replyResponse.getProto();
+                var json = printer.print(proto.getMessage());
+                ctx.json(new JsonObject(json));
+              } catch (RuntimeException | IOException e) {
+                logger.error("Failed to serialize nodeinfo 2.2 response", e);
+                ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
+              }
+            })
+        .onFailure(
+            e -> {
+              logger.error("Nodeinfo admin request failed", e);
               ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
             });
   }

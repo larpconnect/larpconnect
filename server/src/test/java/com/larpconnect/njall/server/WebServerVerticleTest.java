@@ -59,7 +59,17 @@ final class WebServerVerticleTest {
         .<MessageRequest>consumer(
             "http.well-known.webfinger.request",
             msg -> {
-              msg.reply(WebfingerResponse.newBuilder().setSubject("acct:system@localhost").build());
+              msg.reply(
+                  com.larpconnect.njall.proto.MessageReply.newBuilder()
+                      .setProto(
+                          com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                              .setProtobufName("WebfingerResponse")
+                              .setMessage(
+                                  com.google.protobuf.Any.pack(
+                                      WebfingerResponse.newBuilder()
+                                          .setSubject("acct:system@localhost")
+                                          .build())))
+                      .build());
             });
 
     webClient
@@ -183,10 +193,13 @@ final class WebServerVerticleTest {
 
   @Test
   void actualPort_returnsConfiguredPort(Vertx vertx, VertxTestContext testContext) {
-    assertThat(verticle.actualPort()).isEqualTo(port);
-    var unstarted = new WebServerVerticle();
-    assertThat(unstarted.actualPort()).isEqualTo(8080); // default
-    testContext.completeNow();
+    testContext.verify(
+        () -> {
+          assertThat(verticle.actualPort()).isEqualTo(port);
+          var unstarted = new WebServerVerticle();
+          assertThat(unstarted.actualPort()).isEqualTo(8080);
+          testContext.completeNow();
+        });
   }
 
   @Test
