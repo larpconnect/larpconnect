@@ -18,7 +18,6 @@ import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.openapi.router.RouterBuilder;
 import io.vertx.openapi.contract.OpenAPIContract;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -30,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Web server verticle that serves OpenAPI specification. */
-@Singleton
 @BuildWith(ServerModule.class)
 final class WebServerVerticle extends AbstractVerticle {
   private static final int DEFAULT_PORT = 8080;
