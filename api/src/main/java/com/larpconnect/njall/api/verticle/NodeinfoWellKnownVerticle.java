@@ -13,8 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-public final class NodeinfoWellKnownVerticle extends AbstractLcVerticle {
-  private static final Logger logger = LoggerFactory.getLogger(NodeinfoWellKnownVerticle.class);
+final class NodeinfoWellKnownVerticle extends AbstractLcVerticle {
+  private final Logger logger = LoggerFactory.getLogger(NodeinfoWellKnownVerticle.class);
 
   @Inject
   NodeinfoWellKnownVerticle(IdGenerator idGenerator) {

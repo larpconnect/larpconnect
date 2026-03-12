@@ -17,8 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Singleton
-public final class NodeinfoVerticle extends AbstractLcVerticle {
-  private static final Logger logger = LoggerFactory.getLogger(NodeinfoVerticle.class);
+final class NodeinfoVerticle extends AbstractLcVerticle {
+  private final Logger logger = LoggerFactory.getLogger(NodeinfoVerticle.class);
 
   @Inject
   NodeinfoVerticle(IdGenerator idGenerator) {

@@ -39,6 +39,26 @@ paths:
             application/json:
               schema:
                 type: object
+  /.well-known/nodeinfo:
+    get:
+      operationId: nodeinfoWellKnown
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+  /admin/nodeinfo:
+    get:
+      operationId: nodeinfoAdmin
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
 components:
   schemas:
     Authentication:

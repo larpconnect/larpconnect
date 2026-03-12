@@ -216,4 +216,85 @@ final class WebServerVerticleTest {
                           testContext.completeNow();
                         })));
   }
+
+  @Test
+  void handleNodeinfoWellKnown_succeeds(Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.well-known.nodeinfo.request",
+            msg -> {
+              msg.reply(
+                  com.larpconnect.njall.proto.MessageReply.newBuilder()
+                      .setProto(
+                          com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                              .setProtobufName("NodeinfoJrd")
+                              .setMessage(
+                                  com.google.protobuf.Any.pack(
+                                      com.larpconnect.njall.proto.NodeinfoJrd.newBuilder()
+                                          .addLinks(
+                                              com.larpconnect.njall.proto.NodeinfoJrdLink
+                                                  .newBuilder()
+                                                  .setRel(
+                                                      "http://nodeinfo.diaspora.software/ns/schema/2.2")
+                                                  .setHref("http://localhost:8080/admin/nodeinfo")
+                                                  .build())
+                                          .build())))
+                      .build());
+            });
+
+    webClient
+        .get("/.well-known/nodeinfo")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(200);
+                          assertThat(response.bodyAsJsonObject().containsKey("links")).isTrue();
+                          testContext.completeNow();
+                        })));
+  }
+
+  @Test
+  void handleNodeinfoAdmin_succeeds(Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.admin.nodeinfo.request",
+            msg -> {
+              msg.reply(
+                  com.larpconnect.njall.proto.MessageReply.newBuilder()
+                      .setProto(
+                          com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                              .setProtobufName("Nodeinfo22")
+                              .setMessage(
+                                  com.google.protobuf.Any.pack(
+                                      com.larpconnect.njall.proto.Nodeinfo22.newBuilder()
+                                          .setVersion("2.2")
+                                          .setSoftware(
+                                              com.larpconnect.njall.proto.NodeinfoSoftware
+                                                  .newBuilder()
+                                                  .setName("larpconnect")
+                                                  .setVersion("0.0.1")
+                                                  .build())
+                                          .build())))
+                      .build());
+            });
+
+    webClient
+        .get("/admin/nodeinfo")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(200);
+                          assertThat(response.bodyAsJsonObject().getString("version"))
+                              .isEqualTo("2.2");
+                          testContext.completeNow();
+                        })));
+  }
 }
