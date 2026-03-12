@@ -63,7 +63,15 @@ final class NodeinfoVerticle extends AbstractLcVerticle {
                       .build())
               .build();
 
-      return new ReplyResponse(Any.pack(nodeinfo));
+      responsePromise.complete(
+          MessageReply.newBuilder()
+              .setProto(
+                  com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                      .setProtobufName("Nodeinfo22")
+                      .setMessage(Any.pack(nodeinfo))
+                      .build())
+              .build());
+      return BasicResponse.CONTINUE;
     } catch (RuntimeException e) {
       logger.error("Failed to generate nodeinfo 2.2 response", e);
       responsePromise.fail(e);

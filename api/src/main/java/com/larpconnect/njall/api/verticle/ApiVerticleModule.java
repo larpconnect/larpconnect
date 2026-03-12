@@ -15,7 +15,11 @@ public final class ApiVerticleModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(WebfingerVerticle.class).in(Scopes.SINGLETON);
+    bind(NodeinfoWellKnownVerticle.class).in(Scopes.SINGLETON);
+    bind(NodeinfoVerticle.class).in(Scopes.SINGLETON);
     Multibinder<Verticle> verticleBinder = Multibinder.newSetBinder(binder(), Verticle.class);
     verticleBinder.addBinding().to(WebfingerVerticle.class);
+    verticleBinder.addBinding().to(NodeinfoWellKnownVerticle.class);
+    verticleBinder.addBinding().to(NodeinfoVerticle.class);
   }
 }

@@ -27,12 +27,9 @@ public final class NodeinfoWellKnownVerticleTest {
     Promise<MessageReply> promise = Promise.promise();
     MessageRequest request = MessageRequest.getDefaultInstance();
 
-    MessageResponse response = verticle.handleMessage(new byte[8], request, promise);
-
-    assertThat(response).isInstanceOf(ReplyResponse.class);
-
-    ReplyResponse replyResponse = (ReplyResponse) response;
-    Any payload = (Any) replyResponse.payload();
+    verticle.handleMessage(new byte[8], request, promise);
+    MessageReply replyResponse = promise.future().toCompletionStage().toCompletableFuture().get();
+    Any payload = replyResponse.getProto().getMessage();
     NodeinfoJrd jrd = payload.unpack(NodeinfoJrd.class);
 
     assertThat(jrd.getLinksCount()).isEqualTo(1);

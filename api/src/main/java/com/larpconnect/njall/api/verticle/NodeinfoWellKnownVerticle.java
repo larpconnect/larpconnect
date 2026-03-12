@@ -34,7 +34,15 @@ final class NodeinfoWellKnownVerticle extends AbstractLcVerticle {
                       .build())
               .build();
 
-      return new ReplyResponse(Any.pack(nodeinfoJrd));
+      responsePromise.complete(
+          MessageReply.newBuilder()
+              .setProto(
+                  com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                      .setProtobufName("NodeinfoJrd")
+                      .setMessage(Any.pack(nodeinfoJrd))
+                      .build())
+              .build());
+      return BasicResponse.CONTINUE;
     } catch (RuntimeException e) {
       logger.error("Failed to generate nodeinfo jrd response", e);
       responsePromise.fail(e);
