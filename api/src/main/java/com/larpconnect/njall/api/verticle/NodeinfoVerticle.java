@@ -12,11 +12,9 @@ import com.larpconnect.njall.proto.NodeinfoUsage;
 import com.larpconnect.njall.proto.NodeinfoUsageUsers;
 import io.vertx.core.Promise;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Singleton
 final class NodeinfoVerticle extends AbstractLcVerticle {
   private final Logger logger = LoggerFactory.getLogger(NodeinfoVerticle.class);
 

@@ -8,11 +8,9 @@ import com.larpconnect.njall.proto.NodeinfoJrd;
 import com.larpconnect.njall.proto.NodeinfoJrdLink;
 import io.vertx.core.Promise;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Singleton
 final class NodeinfoWellKnownVerticle extends AbstractLcVerticle {
   private final Logger logger = LoggerFactory.getLogger(NodeinfoWellKnownVerticle.class);
 
