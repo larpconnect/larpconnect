@@ -14,3 +14,9 @@ lower Java versions.
 **Action:** Consolidate core compiler options (encoding, parameters) into the
 base Java plugin (`larpconnect.java-common`) and keep `larpconnect.quality`
 focused on linting and analysis tools.
+
+## 2026-03-12 - Spotless Markdown and Flexmark overrides
+
+**Learning:** The configurations setting `enabled = false` for Spotless tasks matching `*MarkdownCheck` or `*FlexmarkCheck` in `build.gradle.kts` and `buildSrc/src/main/kotlin/larpconnect.quality.gradle.kts` are deliberate design choices for this project.
+
+**Action:** Do not remove or alter these `enabled = false` overrides during build cleanup or maintenance tasks.
