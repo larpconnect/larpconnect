@@ -60,7 +60,7 @@ final class Main {
     } catch (RuntimeException e) {
       logger.error("Failed to start server", e);
       System.exit(1);
-      return null;
+      throw new AssertionError("Unreachable");
     }
     return lifecycle;
   }
