@@ -13,6 +13,7 @@ dependencies {
     api(libs.mockito.core)
     api(libs.mockito.junit.jupiter)
     api(libs.vertx.junit5)
+    api(libs.vertx.web.client)
 
     runtimeOnly(libs.junit.engine)
     runtimeOnly(libs.junit.platform.launcher)

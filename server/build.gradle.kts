@@ -6,14 +6,11 @@ dependencies {
     implementation(project(":api"))
     implementation(project(":common"))
     implementation(project(":init"))
-    implementation(libs.protobuf.java.util)
     implementation(libs.vertx.config)
     implementation(libs.vertx.healthcheck)
     implementation(libs.vertx.openapi)
     implementation(libs.vertx.web)
     implementation(libs.vertx.web.openapi.router)
-
-    testImplementation(libs.vertx.web.client)
 }
 
 application {
