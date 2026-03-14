@@ -2,7 +2,6 @@ package com.larpconnect.njall.data;
 
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
-import java.util.Objects;
 import java.util.UUID;
 
 /** Studio role id. */
@@ -44,20 +43,5 @@ public final class StudioRoleId implements Serializable {
 
   public void setIndividualId(UUID individualId) {
     this.individualId = individualId;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    StudioRoleId that = (StudioRoleId) o;
-    return Objects.equals(studioId, that.studioId)
-        && Objects.equals(roleId, that.roleId)
-        && Objects.equals(individualId, that.individualId);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(studioId, roleId, individualId);
   }
 }
