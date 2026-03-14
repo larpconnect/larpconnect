@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.0"
+             xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+
+    <persistence-unit name="njall-pu" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.reactive.provider.ReactivePersistenceProvider</provider>
+
+        <class>com.larpconnect.njall.data.NjallEntity</class>
+        <class>com.larpconnect.njall.data.ServerMetadata</class>
+        <class>com.larpconnect.njall.data.ContactInfo</class>
+        <class>com.larpconnect.njall.data.Actor</class>
+        <class>com.larpconnect.njall.data.ActorEndpoint</class>
+        <class>com.larpconnect.njall.data.Collection</class>
+        <class>com.larpconnect.njall.data.CollectionItem</class>
+        <class>com.larpconnect.njall.data.Individual</class>
+        <class>com.larpconnect.njall.data.User</class>
+        <class>com.larpconnect.njall.data.Studio</class>
+        <class>com.larpconnect.njall.data.Role</class>
+        <class>com.larpconnect.njall.data.StudioRole</class>
+        <class>com.larpconnect.njall.data.Location</class>
+        <class>com.larpconnect.njall.data.System</class>
+        <class>com.larpconnect.njall.data.Campaign</class>
+        <class>com.larpconnect.njall.data.Game</class>
+        <class>com.larpconnect.njall.data.Character</class>
+        <class>com.larpconnect.njall.data.CharacterInstance</class>
+
+        <properties>
+            <!-- Database driver -->
+            <property name="hibernate.connection.pool_size" value="10"/>
+        </properties>
+    </persistence-unit>
+</persistence>
