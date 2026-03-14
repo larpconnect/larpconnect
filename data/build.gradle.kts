@@ -15,15 +15,14 @@ dependencies {
 
 tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
-        rules.forEach { rule ->
-            rule.limits.forEach { limit ->
-                limit.minimum = 0.00.toBigDecimal()
-            }
-        }
         rule {
-            limit {
-                minimum = 0.00.toBigDecimal()
-            }
+            element = "CLASS"
+            excludes =
+                listOf(
+                    "com.larpconnect.njall.data.DataModule",
+                    "com.larpconnect.njall.data.DataBindingModule",
+                    "com.larpconnect.njall.data.Greeting",
+                )
         }
     }
 }
