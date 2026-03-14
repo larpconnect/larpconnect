@@ -10,6 +10,8 @@ dependencies {
     if (project.name != "test") {
         testImplementation(project(":test"))
     }
+    testRuntimeOnly(libs.junit.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.logback.classic)
 }
 
