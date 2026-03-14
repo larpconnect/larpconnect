@@ -97,8 +97,6 @@ components:
           $ref: '#/components/schemas/ProtoDef'
         mime:
           $ref: '#/components/schemas/MimeType'
-        server:
-          type: string
     MimeType:
       type: object
       properties:
