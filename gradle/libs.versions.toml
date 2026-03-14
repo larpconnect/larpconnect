@@ -27,7 +27,11 @@ log4j = "2.53.2"
 commons-lang3 = "3.20.0"
 archunit = "1.4.1"
 google-common-protos = "2.66.0"
+hibernate-reactive-core = { module = "org.hibernate.reactive:hibernate-reactive-core", version.ref = "hibernate-reactive" }
 shadow = "9.3.2"
+hibernate-reactive = "4.0.0.Beta1"
+testcontainers = "1.21.3"
+
 
 [libraries]
 # Core
@@ -40,6 +44,7 @@ vertx-web-openapi-router = { module = "io.vertx:vertx-web-openapi-router", versi
 vertx-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx" }
 vertx-config = { module = "io.vertx:vertx-config", version.ref = "vertx" }
 vertx-healthcheck = { module = "io.vertx:vertx-health-check", version.ref = "vertx" }
+vertx-pg-client = { module = "io.vertx:vertx-pg-client", version.ref = "vertx" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
@@ -58,6 +63,7 @@ spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", ve
 protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 protobuf-java-util = { module = "com.google.protobuf:protobuf-java-util", version.ref = "protobuf" }
 google-common-protos = { module = "com.google.api.grpc:proto-google-common-protos", version.ref = "google-common-protos" }
+hibernate-reactive-core = { module = "org.hibernate.reactive:hibernate-reactive-core", version.ref = "hibernate-reactive" }
 
 # Testing
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
@@ -73,6 +79,8 @@ cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber"
 cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 shadow-gradle-plugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
