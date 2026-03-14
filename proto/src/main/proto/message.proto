@@ -52,6 +52,7 @@ message MessageRequest {
   Authentication authentication = 4;
   Header header = 5;
   repeated Parameter parameters = 6;
+  string server = 7;
 
   oneof payload {
     ProtoDef proto = 2;
@@ -65,6 +66,7 @@ message MessageReply {
   Authentication authentication = 4;
   Header header = 5;
   repeated Parameter parameters = 6;
+  string server = 7;
 
   oneof payload {
     ProtoDef proto = 2;
