@@ -29,7 +29,7 @@ archunit = "1.4.1"
 google-common-protos = "2.66.0"
 hibernate-reactive-core = { module = "org.hibernate.reactive:hibernate-reactive-core", version.ref = "hibernate-reactive" }
 shadow = "9.3.2"
-hibernate-reactive = "4.0.0.Beta1"
+hibernate-reactive = "4.2.5.Final"
 testcontainers = "1.21.3"
 
 
