@@ -12,7 +12,3 @@ dependencies {
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.junit.jupiter)
 }
-
-tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
-    enabled = false
-}
