@@ -2,6 +2,7 @@ package com.larpconnect.njall.data;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.persistence.Persistence;
 import java.util.HashMap;
@@ -18,12 +19,15 @@ final class DataBindingModule extends AbstractModule {
 
   @Provides
   @Singleton
-  Mutiny.SessionFactory provideSessionFactory() {
-    // Here we could inject config instead of hardcoding
+  Mutiny.SessionFactory provideSessionFactory(
+      @Named("db.url") String url,
+      @Named("db.user") String user,
+      @Named("db.password") String password) {
     Map<String, String> properties = new HashMap<>();
-    properties.put("jakarta.persistence.jdbc.url", "jdbc:postgresql://localhost:5432/test");
-    properties.put("jakarta.persistence.jdbc.user", "test");
-    properties.put("jakarta.persistence.jdbc.password", "test");
+    properties.put("jakarta.persistence.jdbc.url", url);
+    properties.put("jakarta.persistence.jdbc.user", user);
+    properties.put("jakarta.persistence.jdbc.password", password);
+    properties.put("hibernate.connection.pool_size", "10");
 
     return Persistence.createEntityManagerFactory("larpconnect", properties)
         .unwrap(Mutiny.SessionFactory.class);

@@ -2,11 +2,12 @@ package com.larpconnect.njall.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.name.Names;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import jakarta.persistence.Persistence;
-import java.util.HashMap;
-import java.util.Map;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,21 +26,28 @@ public class GreetingTest {
           .withUsername("test")
           .withPassword("test");
 
-  private Mutiny.SessionFactory sessionFactory;
-
   @Test
   public void saveAndRetrieveGreeting_success(VertxTestContext testContext) {
-    Map<String, String> properties = new HashMap<>();
-    properties.put("jakarta.persistence.jdbc.url", postgresContainer.getJdbcUrl());
-    properties.put("jakarta.persistence.jdbc.user", postgresContainer.getUsername());
-    properties.put("jakarta.persistence.jdbc.password", postgresContainer.getPassword());
-    properties.put("hibernate.connection.pool_size", "10");
+    Injector injector =
+        Guice.createInjector(
+            new DataModule(),
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(String.class)
+                    .annotatedWith(Names.named("db.url"))
+                    .toInstance(postgresContainer.getJdbcUrl());
+                bind(String.class)
+                    .annotatedWith(Names.named("db.user"))
+                    .toInstance(postgresContainer.getUsername());
+                bind(String.class)
+                    .annotatedWith(Names.named("db.password"))
+                    .toInstance(postgresContainer.getPassword());
+              }
+            });
 
-    sessionFactory =
-        Persistence.createEntityManagerFactory("larpconnect", properties)
-            .unwrap(Mutiny.SessionFactory.class);
-
-    Greeting greeting = new Greeting("Hello, Vert.x and Hibernate Reactive!");
+    Mutiny.SessionFactory sessionFactory = injector.getInstance(Mutiny.SessionFactory.class);
+    Greeting greeting = new Greeting("Hello, Vert.x and Hibernate Reactive via Guice!");
 
     sessionFactory
         .withTransaction(session -> session.persist(greeting))
@@ -54,7 +62,7 @@ public class GreetingTest {
                   () -> {
                     assertThat(savedGreeting).isNotNull();
                     assertThat(savedGreeting.getMessage())
-                        .isEqualTo("Hello, Vert.x and Hibernate Reactive!");
+                        .isEqualTo("Hello, Vert.x and Hibernate Reactive via Guice!");
                   });
               testContext.completeNow();
             },
