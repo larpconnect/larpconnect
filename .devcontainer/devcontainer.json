@@ -14,6 +14,7 @@
       "jdkDistro": "tem",
       "installGradle": true,
       "gradleVersion": "latest"
-    }
+    },
+    "ghcr.io/itsmechlark/features/postgresql:1": {}
   }
 }
