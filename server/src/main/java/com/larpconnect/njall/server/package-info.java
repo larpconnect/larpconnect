@@ -1,3 +1,7 @@
+/**
+ * Contains the primary entry points and base execution setup for the LarpConnect server, connecting
+ * dependency injection with web server deployment logic.
+ */
 @ParametersAreNonnullByDefault
 @ReturnValuesAreNonnullByDefault
 package com.larpconnect.njall.server;
