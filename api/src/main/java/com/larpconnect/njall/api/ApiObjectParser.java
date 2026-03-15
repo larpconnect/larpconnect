@@ -1,5 +1,8 @@
 package com.larpconnect.njall.api;
 
+import com.larpconnect.njall.common.annotations.AiContract;
+import com.larpconnect.njall.common.annotations.BuildWith;
+import com.larpconnect.njall.common.annotations.ContractTag;
 import com.larpconnect.njall.common.annotations.DefaultImplementation;
 import com.larpconnect.njall.proto.ApiObject;
 import io.vertx.core.json.JsonObject;
@@ -15,6 +18,7 @@ import io.vertx.core.json.JsonObject;
  * dynamically reconstructing the type-safe extensions from incoming JSON payloads based on type
  * metadata.
  */
+@BuildWith(ApiModule.class)
 @DefaultImplementation(DefaultApiObjectParser.class)
 public interface ApiObjectParser {
 
@@ -30,6 +34,11 @@ public interface ApiObjectParser {
    * @return the flattened JSON representation suitable for HTTP responses
    * @throws IllegalStateException if the underlying Protobuf conversion fails
    */
+  @AiContract(
+      require = {"$obj \\neq \\bot$"},
+      ensure = {"$res \\neq \\bot$"},
+      tags = {ContractTag.PURE},
+      implementationHint = "Converts an internal ApiObject to a flattened JSON representation.")
   JsonObject toJson(ApiObject obj);
 
   /**
@@ -44,5 +53,10 @@ public interface ApiObjectParser {
    * @return the reconstructed type-safe internal representation
    * @throws IllegalArgumentException if the JSON structure is malformed or conversion fails
    */
+  @AiContract(
+      require = {"$json \\neq \\bot$"},
+      ensure = {"$res \\neq \\bot$"},
+      tags = {ContractTag.PURE},
+      implementationHint = "Reconstructs an ApiObject from a flattened JSON payload.")
   ApiObject fromJson(JsonObject json);
 }

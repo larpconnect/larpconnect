@@ -3,6 +3,7 @@ package com.larpconnect.njall.api.verticle;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closer;
 import com.google.protobuf.ByteString;
+import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
@@ -51,6 +52,12 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
   }
 
   @Override
+  @AiContract(
+      require = {"$startPromise \\neq \\bot$"},
+      ensure = {},
+      implementationHint =
+          "Registers the verticle to handle messages on the configured event bus "
+              + "channel, adding tracing headers if absent.")
   public void start(Promise<Void> startPromise) {
     vertx
         .eventBus()
@@ -126,6 +133,12 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
     return message.toBuilder().setTraceparent(obsBuilder.build()).build();
   }
 
+  @AiContract(
+      require = {"$spanId \\neq \\bot$", "$message \\neq \\bot$", "$responsePromise \\neq \\bot$"},
+      ensure = {"$res \\neq \\bot$"},
+      implementationHint =
+          "Processes an incoming EventBus message and returns a MessageResponse "
+              + "flow control directive.")
   protected abstract MessageResponse handleMessage(
       byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise);
 }
