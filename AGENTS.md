@@ -143,3 +143,14 @@ response.
   Javadoc documentation. Brief descriptions may be omitted only if the
   functionality is inherently self-evident from the identifier naming.
 
+## Critical Infrastructure
+
+LarpConnect depends on the following:
+
+* Java 25+
+* PostgreSQL 16+
+  * Extension: `uuid-ossp`
+  * Extension: `citext`
+* RabbitMQ 4.2+ (using AMQP 1.0)
+
+
