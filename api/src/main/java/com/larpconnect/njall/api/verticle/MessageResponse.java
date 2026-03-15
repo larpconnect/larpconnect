@@ -1,5 +1,7 @@
 package com.larpconnect.njall.api.verticle;
 
+import com.larpconnect.njall.common.annotations.AiContract;
+
 /**
  * A sealed interface representing the outcome of handling a message over the Vert.x EventBus.
  *
@@ -8,4 +10,7 @@ package com.larpconnect.njall.api.verticle;
  * away from the business logic. This decouples verticles from the underlying EventBus mechanics,
  * making handlers easier to test and preventing accidental misuse of the raw Vert.x APIs.
  */
+@AiContract(
+    implementationHint =
+        "Sealed interface representing the outcome of handling a message over the Vert.x EventBus.")
 public sealed interface MessageResponse permits BasicResponse, ReplyResponse {}

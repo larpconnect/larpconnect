@@ -153,4 +153,3 @@ LarpConnect depends on the following:
   * Extension: `citext`
 * RabbitMQ 4.2+ (using AMQP 1.0)
 
-
