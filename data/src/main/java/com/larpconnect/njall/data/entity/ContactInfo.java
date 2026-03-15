@@ -1,6 +1,8 @@
 package com.larpconnect.njall.data.entity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
@@ -10,7 +12,7 @@ import jakarta.persistence.Table;
 import java.util.UUID;
 import org.hibernate.annotations.Generated;
 
-@jakarta.persistence.Entity
+@Entity
 @Table(name = "contact_info")
 public class ContactInfo {
   public ContactInfo() {}
@@ -40,18 +42,22 @@ public class ContactInfo {
     address
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public UUID getId() {
     return id;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setId(UUID id) {
     this.id = id;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Entity getOwner() {
     return owner;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setOwner(Entity owner) {
     this.owner = owner;
   }
@@ -64,18 +70,22 @@ public class ContactInfo {
     this.ordering = ordering;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public ContactType getContactType() {
     return contactType;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setContactType(ContactType contactType) {
     this.contactType = contactType;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getContact() {
     return contact;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setContact(String contact) {
     this.contact = contact;
   }

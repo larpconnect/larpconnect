@@ -11,7 +11,7 @@ public final class DefaultUserDao implements UserDao {
   private final Provider<Mutiny.SessionFactory> sessionFactoryProvider;
 
   @Inject
-  public DefaultUserDao(Provider<Mutiny.SessionFactory> sessionFactoryProvider) {
+  DefaultUserDao(Provider<Mutiny.SessionFactory> sessionFactoryProvider) {
     this.sessionFactoryProvider = sessionFactoryProvider;
   }
 

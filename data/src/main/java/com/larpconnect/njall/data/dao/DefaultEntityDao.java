@@ -11,7 +11,7 @@ public final class DefaultEntityDao implements EntityDao {
   private final Provider<Mutiny.SessionFactory> sessionFactoryProvider;
 
   @Inject
-  public DefaultEntityDao(Provider<Mutiny.SessionFactory> sessionFactoryProvider) {
+  DefaultEntityDao(Provider<Mutiny.SessionFactory> sessionFactoryProvider) {
     this.sessionFactoryProvider = sessionFactoryProvider;
   }
 

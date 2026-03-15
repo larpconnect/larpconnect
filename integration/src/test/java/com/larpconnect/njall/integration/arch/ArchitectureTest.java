@@ -49,6 +49,8 @@ public final class ArchitectureTest {
               .and()
               .resideOutsideOfPackage("com.larpconnect.njall.data.entity..")
               .and()
+              .resideOutsideOfPackage("com.larpconnect.njall.data.dao..")
+              .and()
               .resideOutsideOfPackage("com.larpconnect.njall.integration..")
               .should()
               .haveModifier(com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT)

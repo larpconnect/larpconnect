@@ -1,15 +1,15 @@
 package com.larpconnect.njall.data.entity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-@jakarta.persistence.Entity
+@Entity
 @Table(name = "collections")
-@DiscriminatorValue("collections")
-public class Collection extends Entity {
+public class Collection extends com.larpconnect.njall.data.entity.Entity {
   public Collection() {}
 
   @ManyToOne
@@ -19,18 +19,22 @@ public class Collection extends Entity {
   @Column(name = "name")
   private String name;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Entity getOwner() {
     return owner;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setOwner(Entity owner) {
     this.owner = owner;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getName() {
     return name;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setName(String name) {
     this.name = name;
   }

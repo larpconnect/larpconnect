@@ -1,6 +1,8 @@
 package com.larpconnect.njall.data.entity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
@@ -10,7 +12,7 @@ import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
-@jakarta.persistence.Entity
+@Entity
 @Table(name = "actor_endpoints")
 @IdClass(ActorEndpoint.ActorEndpointId.class)
 public class ActorEndpoint {
@@ -28,18 +30,22 @@ public class ActorEndpoint {
       this.name = name;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public UUID getActor() {
       return actor;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public void setActor(UUID actor) {
       this.actor = actor;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public String getName() {
       return name;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public void setName(String name) {
       this.name = name;
     }
@@ -69,26 +75,32 @@ public class ActorEndpoint {
   @Column(name = "endpoint")
   private String endpoint;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Actor getActor() {
     return actor;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setActor(Actor actor) {
     this.actor = actor;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getName() {
     return name;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setName(String name) {
     this.name = name;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getEndpoint() {
     return endpoint;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setEndpoint(String endpoint) {
     this.endpoint = endpoint;
   }

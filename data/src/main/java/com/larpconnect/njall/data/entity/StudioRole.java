@@ -1,5 +1,6 @@
 package com.larpconnect.njall.data.entity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
@@ -30,26 +31,32 @@ public class StudioRole {
       this.individual = individual;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public UUID getStudio() {
       return studio;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public void setStudio(UUID studio) {
       this.studio = studio;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public UUID getRole() {
       return role;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public void setRole(UUID role) {
       this.role = role;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public UUID getIndividual() {
       return individual;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP2")
     public void setIndividual(UUID individual) {
       this.individual = individual;
     }
@@ -84,26 +91,32 @@ public class StudioRole {
   @JoinColumn(name = "individual_id")
   private Individual individual;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Studio getStudio() {
     return studio;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setStudio(Studio studio) {
     this.studio = studio;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Role getRole() {
     return role;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setRole(Role role) {
     this.role = role;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Individual getIndividual() {
     return individual;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setIndividual(Individual individual) {
     this.individual = individual;
   }

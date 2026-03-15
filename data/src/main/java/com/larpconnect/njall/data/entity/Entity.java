@@ -1,7 +1,7 @@
 package com.larpconnect.njall.data.entity;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
@@ -12,8 +12,7 @@ import org.hibernate.annotations.Generated;
 
 @jakarta.persistence.Entity
 @Table(name = "entities")
-@Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn(name = "entity_type")
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class Entity {
   public Entity() {}
 
@@ -34,34 +33,42 @@ public class Entity {
   @Column(name = "deleted_on", insertable = false, updatable = false)
   private OffsetDateTime deletedOn;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public UUID getId() {
     return id;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setId(UUID id) {
     this.id = id;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getEntityType() {
     return entityType;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getExternalReference() {
     return externalReference;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setExternalReference(String externalReference) {
     this.externalReference = externalReference;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public OffsetDateTime getCreatedOn() {
     return createdOn;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public OffsetDateTime getUpdatedOn() {
     return updatedOn;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public OffsetDateTime getDeletedOn() {
     return deletedOn;
   }
