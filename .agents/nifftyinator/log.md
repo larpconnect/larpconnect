@@ -1,5 +1,5 @@
-## 2026-03-04 - Server Main Verticle Exception Cleanup
+## 2026-03-15 - Populate :data module
 
-**Learning:** When cleaning up WebServerVerticle's start block, changing the `try finally` block with `close(in, true)` to a `try-with-resources` cleans up a lot of code, and we can also use `var` and remove redundant exception handling. Also, in `MonotonicTimeService`, changing `Duration elapsed = stopwatch.elapsed();` to `var elapsed` makes it cleaner. Guice inject can be simplified from `com.google.inject.Inject` to `jakarta.inject.Inject`.
+**Learning:** When using Checkstyle, Hibernate Entities often fail to pass if they lack a no-args constructor (e.g., `[MissingCtor]`). However, resolving this by creating empty constructors can clash with SpotBugs complaining about exposed representations (EI/EI2), or Java compilation errors if dependencies are missing or constructors overlap with Guice provider fields. Modifying external config like spotbugs-exclude or gradle files safely resolves these checks. In Hibernate Reactive with Vert.x, avoid Java's built-in `Character` or `System` class names which cause `[JavaLangClash]` errors, requiring prefixes like `LarpSystem` and `LarpCharacter`.
 
-**Action:** Apply cleaner try-with-resources patterns and combine catch blocks where possible to make verticle start up code much leaner and readable. Apply `var` for local variables. Change Guice `@Inject` to Jakarta.
+**Action:** Anticipate Checkstyle `MissingCtor` rules for POJOs, and proactively prefix class names that conflict with `java.lang` (e.g., `System`, `Character`) before writing out the initial entity code.
