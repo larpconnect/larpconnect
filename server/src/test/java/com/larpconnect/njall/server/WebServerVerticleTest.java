@@ -2,7 +2,14 @@ package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.protobuf.Any;
+import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
+import com.larpconnect.njall.proto.Nodeinfo22;
+import com.larpconnect.njall.proto.NodeinfoJrd;
+import com.larpconnect.njall.proto.NodeinfoJrdLink;
+import com.larpconnect.njall.proto.NodeinfoSoftware;
+import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
@@ -60,12 +67,12 @@ final class WebServerVerticleTest {
             "http.well-known.webfinger.request",
             msg -> {
               msg.reply(
-                  com.larpconnect.njall.proto.MessageReply.newBuilder()
+                  MessageReply.newBuilder()
                       .setProto(
-                          com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                          ProtoDef.newBuilder()
                               .setProtobufName("WebfingerResponse")
                               .setMessage(
-                                  com.google.protobuf.Any.pack(
+                                  Any.pack(
                                       WebfingerResponse.newBuilder()
                                           .setSubject("acct:system@localhost")
                                           .build())))
@@ -225,16 +232,15 @@ final class WebServerVerticleTest {
             "http.well-known.nodeinfo.request",
             msg -> {
               msg.reply(
-                  com.larpconnect.njall.proto.MessageReply.newBuilder()
+                  MessageReply.newBuilder()
                       .setProto(
-                          com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                          ProtoDef.newBuilder()
                               .setProtobufName("NodeinfoJrd")
                               .setMessage(
-                                  com.google.protobuf.Any.pack(
-                                      com.larpconnect.njall.proto.NodeinfoJrd.newBuilder()
+                                  Any.pack(
+                                      NodeinfoJrd.newBuilder()
                                           .addLinks(
-                                              com.larpconnect.njall.proto.NodeinfoJrdLink
-                                                  .newBuilder()
+                                              NodeinfoJrdLink.newBuilder()
                                                   .setRel(
                                                       "http://nodeinfo.diaspora.software/ns/schema/2.2")
                                                   .setHref("http://localhost:8080/admin/nodeinfo")
@@ -265,17 +271,16 @@ final class WebServerVerticleTest {
             "http.admin.nodeinfo.request",
             msg -> {
               msg.reply(
-                  com.larpconnect.njall.proto.MessageReply.newBuilder()
+                  MessageReply.newBuilder()
                       .setProto(
-                          com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                          ProtoDef.newBuilder()
                               .setProtobufName("Nodeinfo22")
                               .setMessage(
-                                  com.google.protobuf.Any.pack(
-                                      com.larpconnect.njall.proto.Nodeinfo22.newBuilder()
+                                  Any.pack(
+                                      Nodeinfo22.newBuilder()
                                           .setVersion("2.2")
                                           .setSoftware(
-                                              com.larpconnect.njall.proto.NodeinfoSoftware
-                                                  .newBuilder()
+                                              NodeinfoSoftware.newBuilder()
                                                   .setName("larpconnect")
                                                   .setVersion("0.0.1")
                                                   .build())

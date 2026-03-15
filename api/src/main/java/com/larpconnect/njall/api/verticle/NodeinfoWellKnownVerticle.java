@@ -6,6 +6,7 @@ import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.NodeinfoJrd;
 import com.larpconnect.njall.proto.NodeinfoJrdLink;
+import com.larpconnect.njall.proto.ProtoDef;
 import io.vertx.core.Promise;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ final class NodeinfoWellKnownVerticle extends AbstractLcVerticle {
       responsePromise.complete(
           MessageReply.newBuilder()
               .setProto(
-                  com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                  ProtoDef.newBuilder()
                       .setProtobufName("NodeinfoJrd")
                       .setMessage(Any.pack(nodeinfoJrd))
                       .build())

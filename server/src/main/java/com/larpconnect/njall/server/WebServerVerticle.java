@@ -2,11 +2,17 @@ package com.larpconnect.njall.server;
 
 import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 
+import com.google.common.io.Resources;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.annotations.BuildWith;
+import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
+import com.larpconnect.njall.proto.Nodeinfo22;
+import com.larpconnect.njall.proto.NodeinfoJrd;
+import com.larpconnect.njall.proto.Parameter;
 import com.larpconnect.njall.proto.ProtoDef;
+import com.larpconnect.njall.proto.WebfingerResponse;
 import com.larpconnect.njall.server.annotations.OpenApiSpec;
 import com.larpconnect.njall.server.annotations.WebPort;
 import io.vertx.core.AbstractVerticle;
@@ -71,9 +77,9 @@ final class WebServerVerticle extends AbstractVerticle {
   private static JsonFormat.Printer createPrinter() {
     var registry =
         com.google.protobuf.util.JsonFormat.TypeRegistry.newBuilder()
-            .add(com.larpconnect.njall.proto.WebfingerResponse.getDescriptor())
-            .add(com.larpconnect.njall.proto.NodeinfoJrd.getDescriptor())
-            .add(com.larpconnect.njall.proto.Nodeinfo22.getDescriptor())
+            .add(WebfingerResponse.getDescriptor())
+            .add(NodeinfoJrd.getDescriptor())
+            .add(Nodeinfo22.getDescriptor())
             .build();
     return JsonFormat.printer().usingTypeRegistry(registry);
   }
@@ -121,8 +127,7 @@ final class WebServerVerticle extends AbstractVerticle {
     vertx
         .<String>executeBlocking(
             () -> {
-              try (InputStream in =
-                  com.google.common.io.Resources.getResource(openApiSpec).openStream()) {
+              try (InputStream in = Resources.getResource(openApiSpec).openStream()) {
                 var tempFile = Files.createTempFile("openapi", ".yaml");
                 Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
                 tempFile.toFile().deleteOnExit();
@@ -193,16 +198,12 @@ final class WebServerVerticle extends AbstractVerticle {
         .forEach(
             (key, value) -> {
               requestBuilder.addParameters(
-                  com.larpconnect.njall.proto.Parameter.newBuilder()
-                      .setKey(key)
-                      .setStringValue(value)
-                      .build());
+                  Parameter.newBuilder().setKey(key).setStringValue(value).build());
             });
 
     vertx
         .eventBus()
-        .<com.larpconnect.njall.proto.MessageReply>request(
-            "http.well-known.webfinger.request", requestBuilder.build())
+        .<MessageReply>request("http.well-known.webfinger.request", requestBuilder.build())
         .onSuccess(
             msg -> {
               try {
@@ -228,7 +229,7 @@ final class WebServerVerticle extends AbstractVerticle {
   void handleNodeinfoWellKnown(RoutingContext ctx) {
     vertx
         .eventBus()
-        .<com.larpconnect.njall.proto.MessageReply>request(
+        .<MessageReply>request(
             "http.well-known.nodeinfo.request", MessageRequest.getDefaultInstance())
         .onSuccess(
             msg -> {
@@ -255,8 +256,7 @@ final class WebServerVerticle extends AbstractVerticle {
   void handleNodeinfoAdmin(RoutingContext ctx) {
     vertx
         .eventBus()
-        .<com.larpconnect.njall.proto.MessageReply>request(
-            "http.admin.nodeinfo.request", MessageRequest.getDefaultInstance())
+        .<MessageReply>request("http.admin.nodeinfo.request", MessageRequest.getDefaultInstance())
         .onSuccess(
             msg -> {
               try {

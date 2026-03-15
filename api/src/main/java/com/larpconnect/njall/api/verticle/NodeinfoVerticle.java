@@ -10,6 +10,7 @@ import com.larpconnect.njall.proto.NodeinfoServices;
 import com.larpconnect.njall.proto.NodeinfoSoftware;
 import com.larpconnect.njall.proto.NodeinfoUsage;
 import com.larpconnect.njall.proto.NodeinfoUsageUsers;
+import com.larpconnect.njall.proto.ProtoDef;
 import io.vertx.core.Promise;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -64,7 +65,7 @@ final class NodeinfoVerticle extends AbstractLcVerticle {
       responsePromise.complete(
           MessageReply.newBuilder()
               .setProto(
-                  com.larpconnect.njall.proto.ProtoDef.newBuilder()
+                  ProtoDef.newBuilder()
                       .setProtobufName("Nodeinfo22")
                       .setMessage(Any.pack(nodeinfo))
                       .build())
