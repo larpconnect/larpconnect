@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(project(":api"))
     implementation(project(":common"))
+    implementation(project(":data"))
     implementation(project(":init"))
     implementation(libs.vertx.config)
     implementation(libs.vertx.healthcheck)

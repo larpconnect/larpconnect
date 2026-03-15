@@ -6,6 +6,7 @@ dependencies {
     constraints {
         api(project(":api"))
         api(project(":common"))
+        api(project(":data"))
         api(project(":init"))
         api(project(":integration"))
         api(project(":parent"))

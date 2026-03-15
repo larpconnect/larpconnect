@@ -70,6 +70,7 @@ For this the primary design involves four core pieces:
 2. The database (PGSQL, though other databases can be used in test)
 3. The queue (RabbitMQ, though other queues can be used in test)
 4. The API specification, which is OpenAPI + Protobuf.
+5. The data module, which will contain the actual data model and data interaction elements.
 
 We'll use some sort of ORM layer here, but what that looks like is TBD.
 
