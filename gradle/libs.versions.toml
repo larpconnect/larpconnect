@@ -1,4 +1,7 @@
 [versions]
+mutiny = "3.1.1"
+mutiny-vertx = "3.21.5"
+testcontainers = "1.21.3"
 java = "25"
 vertx = "5.0.8"
 slf4j = "2.0.17"
@@ -29,7 +32,7 @@ archunit = "1.4.1"
 google-common-protos = "2.66.0"
 shadow = "9.3.2"
 hibernate = "7.2.7.Final"
-hibernate-reactive = "4.2.1.Final"
+hibernate-reactive = "4.2.5.Final"
 
 [libraries]
 # Core
@@ -46,6 +49,11 @@ vertx-pg-client = { module = "io.vertx:vertx-pg-client", version.ref = "vertx" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 hibernate-core = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate" }
 hibernate-reactive-core = { module = "org.hibernate.reactive:hibernate-reactive-core", version.ref = "hibernate-reactive" }
+mutiny-core = { module = "io.smallrye.reactive:mutiny", version.ref = "mutiny" }
+mutiny-vertx-core = { module = "io.smallrye.reactive:smallrye-mutiny-vertx-core", version.ref = "mutiny-vertx" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
 # Utilities
