@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableSet;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
@@ -13,7 +14,6 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,7 @@ final class DefaultMainVerticleTest {
   @Test
   void start_deploysAllVerticles_successfully(Vertx vertx, VertxTestContext testContext) {
     var testVerticle = new TestVerticle();
-    var mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
+    var mainVerticle = new DefaultMainVerticle(ImmutableSet.of(testVerticle));
 
     vertx
         .deployVerticle(mainVerticle)
@@ -62,7 +62,7 @@ final class DefaultMainVerticleTest {
   void start_failsPromise_whenChildVerticleDeploymentFails(
       Vertx vertx, VertxTestContext testContext) {
     var failingVerticle = new FailingVerticle();
-    var mainVerticle = new DefaultMainVerticle(Set.of(failingVerticle));
+    var mainVerticle = new DefaultMainVerticle(ImmutableSet.of(failingVerticle));
 
     vertx
         .deployVerticle(mainVerticle)
@@ -72,7 +72,7 @@ final class DefaultMainVerticleTest {
   @Test
   void start_failsPromise_whenVertxDeployVerticleFails(VertxTestContext testContext) {
     var testVerticle = new TestVerticle();
-    var mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
+    var mainVerticle = new DefaultMainVerticle(ImmutableSet.of(testVerticle));
 
     Vertx mockVertx = mock(Vertx.class);
     Context mockContext = mock(Context.class);
@@ -97,7 +97,7 @@ final class DefaultMainVerticleTest {
   @Test
   void stop_completesSuccessfully(Vertx vertx, VertxTestContext testContext) {
     var testVerticle = new TestVerticle();
-    var mainVerticle = new DefaultMainVerticle(Set.of(testVerticle));
+    var mainVerticle = new DefaultMainVerticle(ImmutableSet.of(testVerticle));
 
     vertx
         .deployVerticle(mainVerticle)
