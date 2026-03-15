@@ -11,6 +11,14 @@ import com.larpconnect.njall.init.InitModule;
  * API, common utilities, and initialization components.
  */
 public final class ServerModule extends AbstractModule {
+  /**
+   * Constructs a new {@link ServerModule}.
+   *
+   * <p>This constructor is intentionally public to serve as the root configuration for the Guice
+   * dependency injection graph. It is installed directly by tests or the main application bootstrap
+   * process. It installs the {@link ApiModule}, {@link CommonModule}, {@link DataModule}, {@link
+   * InitModule}, and the internal {@link ServerBindingModule}.
+   */
   public ServerModule() {}
 
   @Override
