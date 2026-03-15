@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude EI_EXPOSE_REP and EI_EXPOSE_REP2 for entity classes -->
+    <Match>
+        <Package name="com.larpconnect.njall.data.entity" />
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2" />
+    </Match>
+</FindBugsFilter>

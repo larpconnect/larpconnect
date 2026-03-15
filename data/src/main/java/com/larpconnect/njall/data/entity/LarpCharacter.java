@@ -1,6 +1,5 @@
 package com.larpconnect.njall.data.entity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -19,22 +18,18 @@ public class LarpCharacter extends com.larpconnect.njall.data.entity.Entity {
   @Column(name = "name_template")
   private String nameTemplate;
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Campaign getCampaign() {
     return campaign;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setCampaign(Campaign campaign) {
     this.campaign = campaign;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getNameTemplate() {
     return nameTemplate;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setNameTemplate(String nameTemplate) {
     this.nameTemplate = nameTemplate;
   }

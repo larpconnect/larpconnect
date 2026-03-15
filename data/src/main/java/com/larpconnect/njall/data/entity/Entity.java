@@ -1,6 +1,5 @@
 package com.larpconnect.njall.data.entity;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
@@ -33,42 +32,34 @@ public class Entity {
   @Column(name = "deleted_on", insertable = false, updatable = false)
   private OffsetDateTime deletedOn;
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public UUID getId() {
     return id;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setId(UUID id) {
     this.id = id;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getEntityType() {
     return entityType;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public String getExternalReference() {
     return externalReference;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public void setExternalReference(String externalReference) {
     this.externalReference = externalReference;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public OffsetDateTime getCreatedOn() {
     return createdOn;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public OffsetDateTime getUpdatedOn() {
     return updatedOn;
   }
 
-  @SuppressFBWarnings("EI_EXPOSE_REP")
   public OffsetDateTime getDeletedOn() {
     return deletedOn;
   }
