@@ -39,18 +39,6 @@ type safety.
 
 ---
 
-## Modules
-
-The project is structured into multiple modules:
-- `:api`: Contains the API logic.
-- `:common`: Contains common utilities.
-- `:data`: Contains the actual data model and data interaction elements for the database (PSQL) and Queue (RabbitMQ).
-- `:init`: Contains the initialization components.
-- `:integration`: Contains integration tests.
-- `:proto`: Contains the protocol buffers definitions.
-- `:server`: The main entry point server.
-- `:test`: Contains testing utilities.
-
 ## Getting Started
 
 ### Prerequisites
