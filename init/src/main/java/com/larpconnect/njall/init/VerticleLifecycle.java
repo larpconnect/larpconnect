@@ -6,6 +6,7 @@ import com.larpconnect.njall.common.annotations.AiContract;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import java.util.concurrent.CountDownLatch;
 import org.slf4j.Logger;
@@ -15,14 +16,15 @@ import org.slf4j.LoggerFactory;
 final class VerticleLifecycle extends AbstractIdleService implements VerticleService {
   private final Logger logger = LoggerFactory.getLogger(VerticleLifecycle.class);
 
-  private final Vertx vertx;
+  private final Provider<Vertx> vertxProvider;
   private final VerticleSetupService setupService;
 
   @Inject
-  VerticleLifecycle(Vertx vertx, VerticleSetupService setupService, Injector injector) {
-    this.vertx = vertx;
+  VerticleLifecycle(
+      Provider<Vertx> vertxProvider, VerticleSetupService setupService, Injector injector) {
+    this.vertxProvider = vertxProvider;
     this.setupService = setupService;
-    this.setupService.setup(vertx, injector);
+    this.setupService.setup(vertxProvider.get(), injector);
   }
 
   @Override
@@ -36,7 +38,8 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   protected void shutDown() {
     logger.info("Stopping VerticleLifecycle...");
     var latch = new CountDownLatch(1);
-    vertx
+    vertxProvider
+        .get()
         .close()
         .onComplete(
             ar -> {
