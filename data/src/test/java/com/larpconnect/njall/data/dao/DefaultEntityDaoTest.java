@@ -35,7 +35,7 @@ class DefaultEntityDaoTest {
   @Test
   void findById_shouldReturnEntity_whenFound() {
     UUID id = UUID.randomUUID();
-    Entity expectedEntity = new Entity();
+    Entity expectedEntity = new Entity() {};
     expectedEntity.setId(id);
 
     when(sessionFactory.withSession(any()))
@@ -54,7 +54,7 @@ class DefaultEntityDaoTest {
 
   @Test
   void persist_shouldReturnPersistedEntity() {
-    Entity entityToPersist = new Entity();
+    Entity entityToPersist = new Entity() {};
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(

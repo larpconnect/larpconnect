@@ -1,7 +1,6 @@
 package com.larpconnect.njall.data.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
@@ -11,13 +10,13 @@ import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "actor_endpoints")
 @IdClass(ActorEndpoint.ActorEndpointId.class)
-public class ActorEndpoint {
+public final class ActorEndpoint {
   public ActorEndpoint() {}
 
-  public static class ActorEndpointId implements Serializable {
+  public static final class ActorEndpointId implements Serializable {
     private static final long serialVersionUID = 1L;
     private UUID actor;
     private String name;

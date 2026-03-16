@@ -7,7 +7,7 @@ import jakarta.inject.Provider;
 import java.util.UUID;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-public final class DefaultEntityDao implements EntityDao {
+final class DefaultEntityDao implements EntityDao {
   private final Provider<Mutiny.SessionFactory> sessionFactoryProvider;
 
   @Inject

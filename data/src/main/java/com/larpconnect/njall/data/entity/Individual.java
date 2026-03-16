@@ -1,12 +1,11 @@
 package com.larpconnect.njall.data.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "individuals")
-public class Individual extends com.larpconnect.njall.data.entity.Entity {
+public abstract class Individual extends Entity {
   public Individual() {}
 
   @Column(name = "name")

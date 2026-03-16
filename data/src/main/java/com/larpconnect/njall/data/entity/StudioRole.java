@@ -1,6 +1,5 @@
 package com.larpconnect.njall.data.entity;
 
-import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
@@ -10,13 +9,13 @@ import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "studio_roles")
 @IdClass(StudioRole.StudioRoleId.class)
-public class StudioRole {
+public final class StudioRole {
   public StudioRole() {}
 
-  public static class StudioRoleId implements Serializable {
+  public static final class StudioRoleId implements Serializable {
     private static final long serialVersionUID = 1L;
     private UUID studio;
     private UUID role;

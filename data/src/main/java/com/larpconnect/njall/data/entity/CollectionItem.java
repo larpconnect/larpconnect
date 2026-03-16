@@ -1,7 +1,6 @@
 package com.larpconnect.njall.data.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -10,9 +9,9 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.hibernate.annotations.Generated;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "collection_items")
-public class CollectionItem {
+public final class CollectionItem {
   public CollectionItem() {}
 
   // Implicitly needed since hibernate requires @Id for entities even without PK in SQL

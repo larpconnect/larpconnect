@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
     <!-- Exclude EI_EXPOSE_REP and EI_EXPOSE_REP2 for entity classes -->
+    <!-- Entities are POJOs mapping exactly to tables, encapsulating strings and UUIDs natively.
+         The getters/setters inherently expose internal state representation and this cannot be avoided without duplicating DTOs -->
     <Match>
         <Package name="com.larpconnect.njall.data.entity" />
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2" />

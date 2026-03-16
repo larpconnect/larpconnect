@@ -1,12 +1,11 @@
 package com.larpconnect.njall.data.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "server_metadata")
-public class ServerMetadata extends com.larpconnect.njall.data.entity.Entity {
+public final class ServerMetadata extends Entity {
   public ServerMetadata() {}
 
   @Column(name = "name")

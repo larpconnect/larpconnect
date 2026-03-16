@@ -12,7 +12,7 @@ import org.hibernate.annotations.Generated;
 @jakarta.persistence.Entity
 @Table(name = "entities")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public class Entity {
+public abstract class Entity {
   public Entity() {}
 
   @Id @Generated private UUID id;

@@ -1,13 +1,12 @@
 package com.larpconnect.njall.data.entity;
 
-import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-@Entity
+@jakarta.persistence.Entity
 @Table(name = "campaigns")
-public class Campaign extends com.larpconnect.njall.data.entity.Entity {
+public final class Campaign extends Entity {
   public Campaign() {}
 
   @ManyToOne

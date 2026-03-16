@@ -21,6 +21,10 @@ tasks.jacocoTestCoverageVerification {
     }
 }
 
+spotbugs {
+    excludeFilter.set(file("src/main/resources/spotbugs-exclude.xml"))
+}
+
 dependencies {
     implementation(libs.hibernate.core)
     implementation(libs.hibernate.reactive.core)
