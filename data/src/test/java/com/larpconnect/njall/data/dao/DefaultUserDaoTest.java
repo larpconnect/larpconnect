@@ -35,8 +35,7 @@ class DefaultUserDaoTest {
   @Test
   void findById_shouldReturnUser_whenFound() {
     UUID id = UUID.randomUUID();
-    User expectedUser = createInstance(User.class);
-    expectedUser.setId(id);
+    User expectedUser = org.mockito.Mockito.mock(User.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -54,7 +53,7 @@ class DefaultUserDaoTest {
 
   @Test
   void persist_shouldReturnPersistedUser() {
-    User userToPersist = createInstance(User.class);
+    User userToPersist = org.mockito.Mockito.mock(User.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -71,17 +70,3 @@ class DefaultUserDaoTest {
     verify(session).persist(userToPersist);
     verify(session).flush();
   }
-
-  private <T> T createInstance(Class<T> clazz) {
-    if (java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
-      return org.mockito.Mockito.mock(clazz, org.mockito.Mockito.CALLS_REAL_METHODS);
-    }
-    try {
-      java.lang.reflect.Constructor<T> ctor = clazz.getDeclaredConstructor();
-      ctor.setAccessible(true);
-      return ctor.newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-}

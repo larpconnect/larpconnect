@@ -5,19 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class ActorEndpointTest {
-
-  private ActorEndpoint createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(ActorEndpoint.class.getModifiers())) {
-      return new ActorEndpoint() {};
-    }
-    java.lang.reflect.Constructor<ActorEndpoint> ctor =
-        ActorEndpoint.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private ActorEndpoint createInstance() {
+    return new ActorEndpoint();
   }
 
   @Test
-  void test_Actor() throws Exception {
+  void test_Actor() {
     ActorEndpoint obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setActor(val);
@@ -25,7 +18,7 @@ public class ActorEndpointTest {
   }
 
   @Test
-  void test_Name() throws Exception {
+  void test_Name() {
     ActorEndpoint obj = createInstance();
     String val = "test";
     obj.setName(val);
@@ -33,7 +26,7 @@ public class ActorEndpointTest {
   }
 
   @Test
-  void test_Actor() throws Exception {
+  void test_Actor() {
     ActorEndpoint obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setActor(val);
@@ -41,7 +34,7 @@ public class ActorEndpointTest {
   }
 
   @Test
-  void test_Name() throws Exception {
+  void test_Name() {
     ActorEndpoint obj = createInstance();
     String val = "test";
     obj.setName(val);
@@ -49,7 +42,7 @@ public class ActorEndpointTest {
   }
 
   @Test
-  void test_Endpoint() throws Exception {
+  void test_Endpoint() {
     ActorEndpoint obj = createInstance();
     String val = "test";
     obj.setEndpoint(val);

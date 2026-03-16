@@ -5,25 +5,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class StudioRoleTest {
-
-  private StudioRole createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(StudioRole.class.getModifiers())) {
-      return new StudioRole() {};
-    }
-    java.lang.reflect.Constructor<StudioRole> ctor = StudioRole.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private StudioRole createInstance() {
+    return new StudioRole();
   }
 
-  private StudioRole.StudioRoleId createStudioRoleId() throws Exception {
-    java.lang.reflect.Constructor<StudioRole.StudioRoleId> ctor =
-        StudioRole.StudioRoleId.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private StudioRole.StudioRoleId createStudioRoleId() {
+    return new StudioRole.StudioRoleId();
   }
 
   @Test
-  void test_Studio() throws Exception {
+  void test_Studio() {
     StudioRole obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setStudio(val);
@@ -31,7 +22,7 @@ public class StudioRoleTest {
   }
 
   @Test
-  void test_Role() throws Exception {
+  void test_Role() {
     StudioRole obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setRole(val);
@@ -39,7 +30,7 @@ public class StudioRoleTest {
   }
 
   @Test
-  void test_Individual() throws Exception {
+  void test_Individual() {
     StudioRole obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setIndividual(val);
@@ -47,7 +38,7 @@ public class StudioRoleTest {
   }
 
   @Test
-  void test_Studio() throws Exception {
+  void test_Studio() {
     StudioRole obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setStudio(val);
@@ -55,7 +46,7 @@ public class StudioRoleTest {
   }
 
   @Test
-  void test_Role() throws Exception {
+  void test_Role() {
     StudioRole obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setRole(val);
@@ -63,7 +54,7 @@ public class StudioRoleTest {
   }
 
   @Test
-  void test_Individual() throws Exception {
+  void test_Individual() {
     StudioRole obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setIndividual(val);
@@ -71,7 +62,7 @@ public class StudioRoleTest {
   }
 
   @Test
-  void test_studioRoleId_equals() throws Exception {
+  void test_studioRoleId_equals() {
     StudioRole.StudioRoleId id1 = createStudioRoleId();
     StudioRole.StudioRoleId id2 = createStudioRoleId();
     java.util.UUID u = java.util.UUID.randomUUID();

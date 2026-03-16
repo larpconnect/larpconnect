@@ -5,19 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class CharacterInstanceTest {
-
-  private CharacterInstance createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(CharacterInstance.class.getModifiers())) {
-      return new CharacterInstance() {};
-    }
-    java.lang.reflect.Constructor<CharacterInstance> ctor =
-        CharacterInstance.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private CharacterInstance createInstance() {
+    return new CharacterInstance();
   }
 
   @Test
-  void test_Character() throws Exception {
+  void test_Character() {
     CharacterInstance obj = createInstance();
     LarpCharacter val = org.mockito.Mockito.mock(LarpCharacter.class);
     obj.setCharacter(val);
@@ -25,7 +18,7 @@ public class CharacterInstanceTest {
   }
 
   @Test
-  void test_Player() throws Exception {
+  void test_Player() {
     CharacterInstance obj = createInstance();
     Individual val = org.mockito.Mockito.mock(Individual.class);
     obj.setPlayer(val);
@@ -33,7 +26,7 @@ public class CharacterInstanceTest {
   }
 
   @Test
-  void test_Game() throws Exception {
+  void test_Game() {
     CharacterInstance obj = createInstance();
     Game val = org.mockito.Mockito.mock(Game.class);
     obj.setGame(val);
@@ -41,7 +34,7 @@ public class CharacterInstanceTest {
   }
 
   @Test
-  void test_IndividualName() throws Exception {
+  void test_IndividualName() {
     CharacterInstance obj = createInstance();
     String val = "test";
     obj.setIndividualName(val);

@@ -5,19 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class LarpCharacterTest {
-
-  private LarpCharacter createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(LarpCharacter.class.getModifiers())) {
-      return new LarpCharacter() {};
-    }
-    java.lang.reflect.Constructor<LarpCharacter> ctor =
-        LarpCharacter.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private LarpCharacter createInstance() {
+    return new LarpCharacter();
   }
 
   @Test
-  void test_Campaign() throws Exception {
+  void test_Campaign() {
     LarpCharacter obj = createInstance();
     Campaign val = org.mockito.Mockito.mock(Campaign.class);
     obj.setCampaign(val);
@@ -25,7 +18,7 @@ public class LarpCharacterTest {
   }
 
   @Test
-  void test_NameTemplate() throws Exception {
+  void test_NameTemplate() {
     LarpCharacter obj = createInstance();
     String val = "test";
     obj.setNameTemplate(val);

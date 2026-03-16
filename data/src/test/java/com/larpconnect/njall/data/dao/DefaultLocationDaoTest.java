@@ -35,7 +35,7 @@ class DefaultLocationDaoTest {
   @Test
   void findById_shouldReturnEntity_whenFound() {
     UUID id = null;
-    Location expectedEntity = createInstance(Location.class);
+    Location expectedEntity = org.mockito.Mockito.mock(Location.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -53,7 +53,7 @@ class DefaultLocationDaoTest {
 
   @Test
   void persist_shouldReturnPersistedEntity() {
-    Location entityToPersist = createInstance(Location.class);
+    Location entityToPersist = org.mockito.Mockito.mock(Location.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -70,17 +70,3 @@ class DefaultLocationDaoTest {
     verify(session).persist(entityToPersist);
     verify(session).flush();
   }
-
-  private <T> T createInstance(Class<T> clazz) {
-    if (java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
-      return org.mockito.Mockito.mock(clazz, org.mockito.Mockito.CALLS_REAL_METHODS);
-    }
-    try {
-      java.lang.reflect.Constructor<T> ctor = clazz.getDeclaredConstructor();
-      ctor.setAccessible(true);
-      return ctor.newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-}

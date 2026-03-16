@@ -5,18 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class CampaignTest {
-
-  private Campaign createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(Campaign.class.getModifiers())) {
-      return new Campaign() {};
-    }
-    java.lang.reflect.Constructor<Campaign> ctor = Campaign.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private Campaign createInstance() {
+    return new Campaign();
   }
 
   @Test
-  void test_System() throws Exception {
+  void test_System() {
     Campaign obj = createInstance();
     LarpSystem val = org.mockito.Mockito.mock(LarpSystem.class);
     obj.setSystem(val);

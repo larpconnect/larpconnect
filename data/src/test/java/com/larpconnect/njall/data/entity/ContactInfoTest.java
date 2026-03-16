@@ -5,18 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class ContactInfoTest {
-
-  private ContactInfo createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(ContactInfo.class.getModifiers())) {
-      return new ContactInfo() {};
-    }
-    java.lang.reflect.Constructor<ContactInfo> ctor = ContactInfo.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private ContactInfo createInstance() {
+    return new ContactInfo();
   }
 
   @Test
-  void test_Id() throws Exception {
+  void test_Id() {
     ContactInfo obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setId(val);
@@ -24,7 +18,7 @@ public class ContactInfoTest {
   }
 
   @Test
-  void test_Owner() throws Exception {
+  void test_Owner() {
     ContactInfo obj = createInstance();
     Entity val = org.mockito.Mockito.mock(Entity.class);
     obj.setOwner(val);
@@ -32,7 +26,7 @@ public class ContactInfoTest {
   }
 
   @Test
-  void test_Ordering() throws Exception {
+  void test_Ordering() {
     ContactInfo obj = createInstance();
     int val = 1;
     obj.setOrdering(val);
@@ -40,7 +34,7 @@ public class ContactInfoTest {
   }
 
   @Test
-  void test_ContactType() throws Exception {
+  void test_ContactType() {
     ContactInfo obj = createInstance();
     ContactType val = org.mockito.Mockito.mock(ContactType.class);
     obj.setContactType(val);
@@ -48,7 +42,7 @@ public class ContactInfoTest {
   }
 
   @Test
-  void test_Contact() throws Exception {
+  void test_Contact() {
     ContactInfo obj = createInstance();
     String val = "test";
     obj.setContact(val);
@@ -56,7 +50,7 @@ public class ContactInfoTest {
   }
 
   @Test
-  void test_isActive() throws Exception {
+  void test_isActive() {
     ContactInfo obj = createInstance();
     boolean val = true;
     obj.setActive(val);

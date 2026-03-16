@@ -5,19 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class ServerMetadataTest {
-
-  private ServerMetadata createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(ServerMetadata.class.getModifiers())) {
-      return new ServerMetadata() {};
-    }
-    java.lang.reflect.Constructor<ServerMetadata> ctor =
-        ServerMetadata.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private ServerMetadata createInstance() {
+    return new ServerMetadata();
   }
 
   @Test
-  void test_Name() throws Exception {
+  void test_Name() {
     ServerMetadata obj = createInstance();
     String val = "test";
     obj.setName(val);

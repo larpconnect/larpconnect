@@ -35,7 +35,7 @@ class DefaultCharacterInstanceDaoTest {
   @Test
   void findById_shouldReturnEntity_whenFound() {
     UUID id = null;
-    CharacterInstance expectedEntity = createInstance(CharacterInstance.class);
+    CharacterInstance expectedEntity = org.mockito.Mockito.mock(CharacterInstance.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -54,7 +54,7 @@ class DefaultCharacterInstanceDaoTest {
 
   @Test
   void persist_shouldReturnPersistedEntity() {
-    CharacterInstance entityToPersist = createInstance(CharacterInstance.class);
+    CharacterInstance entityToPersist = org.mockito.Mockito.mock(CharacterInstance.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -71,17 +71,3 @@ class DefaultCharacterInstanceDaoTest {
     verify(session).persist(entityToPersist);
     verify(session).flush();
   }
-
-  private <T> T createInstance(Class<T> clazz) {
-    if (java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
-      return org.mockito.Mockito.mock(clazz, org.mockito.Mockito.CALLS_REAL_METHODS);
-    }
-    try {
-      java.lang.reflect.Constructor<T> ctor = clazz.getDeclaredConstructor();
-      ctor.setAccessible(true);
-      return ctor.newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-}

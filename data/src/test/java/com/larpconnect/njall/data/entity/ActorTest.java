@@ -5,18 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class ActorTest {
-
-  private Actor createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(Actor.class.getModifiers())) {
-      return new Actor() {};
-    }
-    java.lang.reflect.Constructor<Actor> ctor = Actor.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private Actor createInstance() {
+    return new Actor();
   }
 
   @Test
-  void test_Owner() throws Exception {
+  void test_Owner() {
     Actor obj = createInstance();
     Entity val = org.mockito.Mockito.mock(Entity.class);
     obj.setOwner(val);
@@ -24,7 +18,7 @@ public class ActorTest {
   }
 
   @Test
-  void test_Summary() throws Exception {
+  void test_Summary() {
     Actor obj = createInstance();
     String val = "test";
     obj.setSummary(val);
@@ -32,7 +26,7 @@ public class ActorTest {
   }
 
   @Test
-  void test_PreferredUsername() throws Exception {
+  void test_PreferredUsername() {
     Actor obj = createInstance();
     String val = "test";
     obj.setPreferredUsername(val);

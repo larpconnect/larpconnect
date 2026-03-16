@@ -34,7 +34,7 @@ class DefaultStudioRoleDaoTest {
   @Test
   void findById_shouldReturnEntity_whenFound() {
     StudioRole.StudioRoleId id = null;
-    StudioRole expectedEntity = createInstance(StudioRole.class);
+    StudioRole expectedEntity = org.mockito.Mockito.mock(StudioRole.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -52,7 +52,7 @@ class DefaultStudioRoleDaoTest {
 
   @Test
   void persist_shouldReturnPersistedEntity() {
-    StudioRole entityToPersist = createInstance(StudioRole.class);
+    StudioRole entityToPersist = org.mockito.Mockito.mock(StudioRole.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -69,17 +69,3 @@ class DefaultStudioRoleDaoTest {
     verify(session).persist(entityToPersist);
     verify(session).flush();
   }
-
-  private <T> T createInstance(Class<T> clazz) {
-    if (java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
-      return org.mockito.Mockito.mock(clazz, org.mockito.Mockito.CALLS_REAL_METHODS);
-    }
-    try {
-      java.lang.reflect.Constructor<T> ctor = clazz.getDeclaredConstructor();
-      ctor.setAccessible(true);
-      return ctor.newInstance();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-}

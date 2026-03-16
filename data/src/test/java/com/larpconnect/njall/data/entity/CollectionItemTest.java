@@ -5,19 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class CollectionItemTest {
-
-  private CollectionItem createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(CollectionItem.class.getModifiers())) {
-      return new CollectionItem() {};
-    }
-    java.lang.reflect.Constructor<CollectionItem> ctor =
-        CollectionItem.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private CollectionItem createInstance() {
+    return new CollectionItem();
   }
 
   @Test
-  void test_ImplicitId() throws Exception {
+  void test_ImplicitId() {
     CollectionItem obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setImplicitId(val);
@@ -25,7 +18,7 @@ public class CollectionItemTest {
   }
 
   @Test
-  void test_Collection() throws Exception {
+  void test_Collection() {
     CollectionItem obj = createInstance();
     Collection val = org.mockito.Mockito.mock(Collection.class);
     obj.setCollection(val);
@@ -33,13 +26,13 @@ public class CollectionItemTest {
   }
 
   @Test
-  void test_AddedOn() throws Exception {
+  void test_AddedOn() {
     CollectionItem obj = createInstance();
     obj.getAddedOn();
   }
 
   @Test
-  void test_RefersTo() throws Exception {
+  void test_RefersTo() {
     CollectionItem obj = createInstance();
     Entity val = org.mockito.Mockito.mock(Entity.class);
     obj.setRefersTo(val);

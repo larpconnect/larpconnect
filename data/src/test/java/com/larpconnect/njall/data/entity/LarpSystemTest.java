@@ -5,18 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class LarpSystemTest {
-
-  private LarpSystem createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(LarpSystem.class.getModifiers())) {
-      return new LarpSystem() {};
-    }
-    java.lang.reflect.Constructor<LarpSystem> ctor = LarpSystem.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private LarpSystem createInstance() {
+    return new LarpSystem();
   }
 
   @Test
-  void test_Name() throws Exception {
+  void test_Name() {
     LarpSystem obj = createInstance();
     String val = "test";
     obj.setName(val);

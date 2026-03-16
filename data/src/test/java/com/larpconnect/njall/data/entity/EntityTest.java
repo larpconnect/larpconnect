@@ -5,18 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class EntityTest {
-
-  private Entity createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(Entity.class.getModifiers())) {
-      return new Entity() {};
-    }
-    java.lang.reflect.Constructor<Entity> ctor = Entity.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private Entity createInstance() {
+    return new Entity();
   }
 
   @Test
-  void test_Id() throws Exception {
+  void test_Id() {
     Entity obj = createInstance();
     UUID val = java.util.UUID.randomUUID();
     obj.setId(val);
@@ -24,13 +18,13 @@ public class EntityTest {
   }
 
   @Test
-  void test_EntityType() throws Exception {
+  void test_EntityType() {
     Entity obj = createInstance();
     obj.getEntityType();
   }
 
   @Test
-  void test_ExternalReference() throws Exception {
+  void test_ExternalReference() {
     Entity obj = createInstance();
     String val = "test";
     obj.setExternalReference(val);
@@ -38,19 +32,19 @@ public class EntityTest {
   }
 
   @Test
-  void test_CreatedOn() throws Exception {
+  void test_CreatedOn() {
     Entity obj = createInstance();
     obj.getCreatedOn();
   }
 
   @Test
-  void test_UpdatedOn() throws Exception {
+  void test_UpdatedOn() {
     Entity obj = createInstance();
     obj.getUpdatedOn();
   }
 
   @Test
-  void test_DeletedOn() throws Exception {
+  void test_DeletedOn() {
     Entity obj = createInstance();
     obj.getDeletedOn();
   }

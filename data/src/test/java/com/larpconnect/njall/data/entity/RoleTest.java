@@ -5,18 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 public class RoleTest {
-
-  private Role createInstance() throws Exception {
-    if (java.lang.reflect.Modifier.isAbstract(Role.class.getModifiers())) {
-      return new Role() {};
-    }
-    java.lang.reflect.Constructor<Role> ctor = Role.class.getDeclaredConstructor();
-    ctor.setAccessible(true);
-    return ctor.newInstance();
+  private Role createInstance() {
+    return new Role();
   }
 
   @Test
-  void test_RoleName() throws Exception {
+  void test_RoleName() {
     Role obj = createInstance();
     String val = "test";
     obj.setRoleName(val);
