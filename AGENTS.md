@@ -148,7 +148,7 @@ response.
 LarpConnect depends on the following:
 
 * Java 25+
-* PostgreSQL 16+
+* PostgreSQL 18+
   * Extension: `uuid-ossp`
   * Extension: `citext`
 * RabbitMQ 4.2+ (using AMQP 1.0)
