@@ -4,4 +4,10 @@
     <Match>
         <Class name="~.*\.generated\..*"/>
     </Match>
+
+    <!-- Exclude entities from exposure rules -->
+    <Match>
+        <Class name="~com\.larpconnect\.njall\.data\.entity\..*"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>
