@@ -50,7 +50,7 @@ Commons utilities where available. Use context7 to get the latest documentation.
 - Do not use `@Deprecated` components unless absolutely necessary and document
   why they are necessary if they must be used.
 - Do not use `@Beta` components in the library modules. They _may_ be used
-  anywhere in testing as well as in the application components (repl and batch).
+  anywhere in testing as well as in the application components (`:server`).
 
 ### Implementation Directives
 
@@ -89,8 +89,6 @@ Commons utilities where available. Use context7 to get the latest documentation.
   - Do not ignore exceptions. If they are truly trivial they can be logged at a
     debug level, or a comment can be inserted indicating that the exception
     cannot happen.
-
-happen.
 
 ### Java Style
 
