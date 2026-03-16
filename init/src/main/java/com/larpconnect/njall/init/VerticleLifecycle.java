@@ -17,19 +17,23 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
   private final Logger logger = LoggerFactory.getLogger(VerticleLifecycle.class);
 
   private final Provider<Vertx> vertxProvider;
-  private final VerticleSetupService setupService;
+  private final Provider<VerticleSetupService> setupServiceProvider;
+  private final Injector injector;
 
   @Inject
   VerticleLifecycle(
-      Provider<Vertx> vertxProvider, VerticleSetupService setupService, Injector injector) {
+      Provider<Vertx> vertxProvider,
+      Provider<VerticleSetupService> setupServiceProvider,
+      Injector injector) {
     this.vertxProvider = vertxProvider;
-    this.setupService = setupService;
-    this.setupService.setup(vertxProvider.get(), injector);
+    this.setupServiceProvider = setupServiceProvider;
+    this.injector = injector;
   }
 
   @Override
   @AiContract(implementationHint = "Starts the lifecycle.")
   protected void startUp() {
+    setupServiceProvider.get().setup(vertxProvider.get(), injector);
     logger.info("VerticleLifecycle started.");
   }
 
@@ -67,6 +71,6 @@ final class VerticleLifecycle extends AbstractIdleService implements VerticleSer
     if (!isRunning()) {
       throw new IllegalStateException("VerticleLifecycle not started");
     }
-    setupService.deploy(verticleClass);
+    setupServiceProvider.get().deploy(verticleClass);
   }
 }

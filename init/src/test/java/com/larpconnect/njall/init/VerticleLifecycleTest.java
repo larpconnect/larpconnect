@@ -17,7 +17,7 @@ final class VerticleLifecycleTest {
     var mockVertx = mock(Vertx.class);
     var mockSetupService = mock(VerticleSetupService.class);
     var mockInjector = mock(Injector.class);
-    var lifecycle = new VerticleLifecycle(() -> mockVertx, mockSetupService, mockInjector);
+    var lifecycle = new VerticleLifecycle(() -> mockVertx, () -> mockSetupService, mockInjector);
 
     assertThatThrownBy(() -> lifecycle.deploy(TestVerticle.class))
         .isInstanceOf(IllegalStateException.class)
@@ -30,7 +30,7 @@ final class VerticleLifecycleTest {
     when(mockVertx.close()).thenReturn(io.vertx.core.Future.succeededFuture());
     var mockSetupService = mock(VerticleSetupService.class);
     var mockInjector = mock(Injector.class);
-    var lifecycle = new VerticleLifecycle(() -> mockVertx, mockSetupService, mockInjector);
+    var lifecycle = new VerticleLifecycle(() -> mockVertx, () -> mockSetupService, mockInjector);
 
     assertThatCode(lifecycle::shutDown).doesNotThrowAnyException();
   }
@@ -41,7 +41,7 @@ final class VerticleLifecycleTest {
     when(mockVertx.close()).thenReturn(io.vertx.core.Future.failedFuture("Close failed"));
     var mockSetupService = mock(VerticleSetupService.class);
     var mockInjector = mock(Injector.class);
-    var lifecycle = new VerticleLifecycle(() -> mockVertx, mockSetupService, mockInjector);
+    var lifecycle = new VerticleLifecycle(() -> mockVertx, () -> mockSetupService, mockInjector);
 
     assertThatCode(lifecycle::shutDown).doesNotThrowAnyException();
   }
@@ -54,7 +54,7 @@ final class VerticleLifecycleTest {
     when(mockVertx.close()).thenReturn(promise.future());
     var mockSetupService = mock(VerticleSetupService.class);
     var mockInjector = mock(Injector.class);
-    var lifecycle = new VerticleLifecycle(() -> mockVertx, mockSetupService, mockInjector);
+    var lifecycle = new VerticleLifecycle(() -> mockVertx, () -> mockSetupService, mockInjector);
 
     Thread.currentThread().interrupt();
     try {

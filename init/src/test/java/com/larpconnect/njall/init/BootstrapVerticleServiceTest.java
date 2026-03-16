@@ -12,7 +12,7 @@ final class BootstrapVerticleServiceTest {
 
   @Test
   public void deploy_notStarted_throwsException() {
-    var lifecycle = VerticleServices.create(ImmutableList.of());
+    BootstrapVerticleService lifecycle = new BootstrapVerticleService(ImmutableList.of());
     assertThatThrownBy(() -> lifecycle.deploy(TestVerticle.class))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("BootstrapVerticleService not started");
@@ -20,8 +20,8 @@ final class BootstrapVerticleServiceTest {
 
   @Test
   public void startUp_validConfig_success() throws Exception {
-    var lifecycle =
-        VerticleServices.create(
+    BootstrapVerticleService lifecycle =
+        new BootstrapVerticleService(
             ImmutableList.of(
                 new com.larpconnect.njall.common.CommonModule(),
                 new com.larpconnect.njall.common.codec.CodecModule()));
@@ -39,11 +39,7 @@ final class BootstrapVerticleServiceTest {
   public void startUp_missingConfig_throwsRuntimeException() {
     System.setProperty("njall.config.resource", "missing.json");
     try {
-      var lifecycle =
-          VerticleServices.create(
-              ImmutableList.of(
-                  new com.larpconnect.njall.common.CommonModule(),
-                  new com.larpconnect.njall.common.codec.CodecModule()));
+      BootstrapVerticleService lifecycle = new BootstrapVerticleService(ImmutableList.of());
       assertThatThrownBy(() -> lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS))
           .isInstanceOf(IllegalStateException.class);
     } finally {
