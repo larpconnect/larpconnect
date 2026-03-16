@@ -1,6 +1,8 @@
 package com.larpconnect.njall.data;
 
 import com.google.inject.AbstractModule;
+import com.larpconnect.njall.data.dao.DaoModule;
+import com.larpconnect.njall.data.entity.EntityModule;
 
 /** Guice module for configuring data access layer dependencies. */
 public final class DataModule extends AbstractModule {
@@ -8,6 +10,7 @@ public final class DataModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    // Configure data access layer bindings
+    install(new EntityModule());
+    install(new DaoModule());
   }
 }
