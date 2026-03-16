@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "systems")
 public final class LarpSystem extends Entity {
-  public LarpSystem() {}
+  LarpSystem() {}
 
   @Column(name = "name")
   private String name;

@@ -35,7 +35,7 @@ class DefaultServerMetadataDaoTest {
   @Test
   void findById_shouldReturnEntity_whenFound() {
     UUID id = null;
-    ServerMetadata expectedEntity = new ServerMetadata();
+    ServerMetadata expectedEntity = createInstance(ServerMetadata.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -53,7 +53,7 @@ class DefaultServerMetadataDaoTest {
 
   @Test
   void persist_shouldReturnPersistedEntity() {
-    ServerMetadata entityToPersist = new ServerMetadata();
+    ServerMetadata entityToPersist = createInstance(ServerMetadata.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -69,5 +69,18 @@ class DefaultServerMetadataDaoTest {
     assertThat(persistedEntity).isEqualTo(entityToPersist);
     verify(session).persist(entityToPersist);
     verify(session).flush();
+  }
+
+  private <T> T createInstance(Class<T> clazz) {
+    if (java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+      return org.mockito.Mockito.mock(clazz, org.mockito.Mockito.CALLS_REAL_METHODS);
+    }
+    try {
+      java.lang.reflect.Constructor<T> ctor = clazz.getDeclaredConstructor();
+      ctor.setAccessible(true);
+      return ctor.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

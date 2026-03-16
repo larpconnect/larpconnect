@@ -13,8 +13,8 @@ import java.util.UUID;
 @jakarta.persistence.Entity
 @Table(name = "actor_endpoints")
 @IdClass(ActorEndpoint.ActorEndpointId.class)
-public final class ActorEndpoint {
-  public ActorEndpoint() {}
+public final class ActorEndpoint implements DatabaseObject {
+  ActorEndpoint() {}
 
   public static final class ActorEndpointId implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "roles")
 public final class Role extends Entity {
-  public Role() {}
+  Role() {}
 
   @Column(name = "role_name")
   private String roleName;

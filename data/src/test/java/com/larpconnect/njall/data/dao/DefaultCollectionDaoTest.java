@@ -35,7 +35,7 @@ class DefaultCollectionDaoTest {
   @Test
   void findById_shouldReturnEntity_whenFound() {
     UUID id = null;
-    Collection expectedEntity = new Collection();
+    Collection expectedEntity = createInstance(Collection.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -53,7 +53,7 @@ class DefaultCollectionDaoTest {
 
   @Test
   void persist_shouldReturnPersistedEntity() {
-    Collection entityToPersist = new Collection();
+    Collection entityToPersist = createInstance(Collection.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -69,5 +69,18 @@ class DefaultCollectionDaoTest {
     assertThat(persistedEntity).isEqualTo(entityToPersist);
     verify(session).persist(entityToPersist);
     verify(session).flush();
+  }
+
+  private <T> T createInstance(Class<T> clazz) {
+    if (java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+      return org.mockito.Mockito.mock(clazz, org.mockito.Mockito.CALLS_REAL_METHODS);
+    }
+    try {
+      java.lang.reflect.Constructor<T> ctor = clazz.getDeclaredConstructor();
+      ctor.setAccessible(true);
+      return ctor.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

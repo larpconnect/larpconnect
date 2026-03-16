@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "studios")
 public final class Studio extends Entity {
-  public Studio() {}
+  Studio() {}
 
   @Column(name = "name")
   private String name;

@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "locations")
 public final class Location extends Entity {
-  public Location() {}
+  Location() {}
 
   @Column(name = "address")
   private String address;

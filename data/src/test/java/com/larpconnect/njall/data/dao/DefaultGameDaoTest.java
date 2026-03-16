@@ -35,7 +35,7 @@ class DefaultGameDaoTest {
   @Test
   void findById_shouldReturnEntity_whenFound() {
     UUID id = null;
-    Game expectedEntity = new Game();
+    Game expectedEntity = createInstance(Game.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -53,7 +53,7 @@ class DefaultGameDaoTest {
 
   @Test
   void persist_shouldReturnPersistedEntity() {
-    Game entityToPersist = new Game();
+    Game entityToPersist = createInstance(Game.class);
 
     when(sessionFactory.withSession(any()))
         .thenAnswer(
@@ -69,5 +69,18 @@ class DefaultGameDaoTest {
     assertThat(persistedEntity).isEqualTo(entityToPersist);
     verify(session).persist(entityToPersist);
     verify(session).flush();
+  }
+
+  private <T> T createInstance(Class<T> clazz) {
+    if (java.lang.reflect.Modifier.isAbstract(clazz.getModifiers())) {
+      return org.mockito.Mockito.mock(clazz, org.mockito.Mockito.CALLS_REAL_METHODS);
+    }
+    try {
+      java.lang.reflect.Constructor<T> ctor = clazz.getDeclaredConstructor();
+      ctor.setAccessible(true);
+      return ctor.newInstance();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

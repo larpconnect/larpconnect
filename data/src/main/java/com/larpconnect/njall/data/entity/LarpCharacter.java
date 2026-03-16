@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "characters")
 public final class LarpCharacter extends Entity {
-  public LarpCharacter() {}
+  LarpCharacter() {}
 
   @ManyToOne
   @JoinColumn(name = "campaign_id")

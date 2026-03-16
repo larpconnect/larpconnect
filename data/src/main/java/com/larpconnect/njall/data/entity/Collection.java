@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "collections")
 public final class Collection extends Entity {
-  public Collection() {}
+  Collection() {}
 
   @ManyToOne
   @JoinColumn(name = "owner_id")

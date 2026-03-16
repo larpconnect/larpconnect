@@ -12,8 +12,8 @@ import java.util.UUID;
 @jakarta.persistence.Entity
 @Table(name = "studio_roles")
 @IdClass(StudioRole.StudioRoleId.class)
-public final class StudioRole {
-  public StudioRole() {}
+public final class StudioRole implements DatabaseObject {
+  StudioRole() {}
 
   public static final class StudioRoleId implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -21,7 +21,7 @@ public final class StudioRole {
     private UUID role;
     private UUID individual;
 
-    public StudioRoleId() {}
+    StudioRoleId() {}
 
     public StudioRoleId(UUID studio, UUID role, UUID individual) {
       this.studio = studio;

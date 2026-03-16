@@ -12,8 +12,8 @@ import org.hibernate.annotations.Generated;
 @jakarta.persistence.Entity
 @Table(name = "entities")
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public abstract class Entity {
-  public Entity() {}
+public abstract non-sealed class Entity implements DatabaseObject {
+  protected Entity() {}
 
   @Id @Generated private UUID id;
 

@@ -11,8 +11,8 @@ import org.hibernate.annotations.Generated;
 
 @jakarta.persistence.Entity
 @Table(name = "collection_items")
-public final class CollectionItem {
-  public CollectionItem() {}
+public final class CollectionItem implements DatabaseObject {
+  CollectionItem() {}
 
   // Implicitly needed since hibernate requires @Id for entities even without PK in SQL
   @Id @Generated private UUID implicitId;

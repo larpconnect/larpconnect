@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "server_metadata")
 public final class ServerMetadata extends Entity {
-  public ServerMetadata() {}
+  ServerMetadata() {}
 
   @Column(name = "name")
   private String name;

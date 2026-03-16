@@ -12,8 +12,8 @@ import org.hibernate.annotations.Generated;
 
 @jakarta.persistence.Entity
 @Table(name = "contact_info")
-public final class ContactInfo {
-  public ContactInfo() {}
+public final class ContactInfo implements DatabaseObject {
+  ContactInfo() {}
 
   @Id @Generated private UUID id;
 

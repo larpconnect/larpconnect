@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "character_instances")
 public final class CharacterInstance extends Entity {
-  public CharacterInstance() {}
+  CharacterInstance() {}
 
   @ManyToOne
   @JoinColumn(name = "character_id")

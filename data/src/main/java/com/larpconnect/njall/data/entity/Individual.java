@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 @jakarta.persistence.Entity
 @Table(name = "individuals")
 public abstract class Individual extends Entity {
-  public Individual() {}
+  protected Individual() {}
 
   @Column(name = "name")
   private String name;
