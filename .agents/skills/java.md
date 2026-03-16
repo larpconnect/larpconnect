@@ -172,7 +172,6 @@ functionality should be employed freely.
 - `dev.cel:cel` if needed for expressions or user-entered "code" that cannot be
   (or should not be) done declaratively
 
-
 ## Antipatterns
 
 This table contans a list of patterns to avoid, as well as the alternative to

@@ -27,6 +27,6 @@ public interface VerticleServices {
       tags = PURE,
       implementationHint = "Creates a new VerticleService instance with the provided modules.")
   static VerticleService create(ImmutableList<Module> modules) {
-    return new VerticleLifecycle(modules);
+    return new BootstrapVerticleService(modules);
   }
 }

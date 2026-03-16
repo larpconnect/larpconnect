@@ -6,9 +6,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Injector;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Vertx;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 final class VerticleLifecycleTest {
@@ -48,11 +49,11 @@ final class VerticleLifecycleTest {
 
   @Test
   public void deploy_notStarted_throwsException() {
-    var lifecycle =
-        new VerticleLifecycle(
-            ImmutableList.of(
-                new com.larpconnect.njall.common.CommonModule(),
-                new com.larpconnect.njall.common.codec.CodecModule()));
+    var mockVertx = mock(Vertx.class);
+    var mockSetupService = mock(VerticleSetupService.class);
+    var mockInjector = mock(Injector.class);
+    var lifecycle = new VerticleLifecycle(mockVertx, mockSetupService, mockInjector);
+
     assertThatThrownBy(() -> lifecycle.deploy(TestVerticle.class))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("VerticleLifecycle not started");
@@ -60,53 +61,35 @@ final class VerticleLifecycleTest {
 
   @Test
   public void shutDown_closeNotStarted_doesNothing() {
-    var lifecycle =
-        new VerticleLifecycle(
-            ImmutableList.of(
-                new com.larpconnect.njall.common.CommonModule(),
-                new com.larpconnect.njall.common.codec.CodecModule()));
-    // Never started, so shutDown should safely do nothing
+    var mockVertx = mock(Vertx.class);
+    when(mockVertx.close()).thenReturn(io.vertx.core.Future.succeededFuture());
+    var mockSetupService = mock(VerticleSetupService.class);
+    var mockInjector = mock(Injector.class);
+    var lifecycle = new VerticleLifecycle(mockVertx, mockSetupService, mockInjector);
+
     lifecycle.shutDown();
   }
 
   @Test
-  @SuppressWarnings("unchecked")
-  public void shutDown_closeFails_logsError() throws Exception {
-    var lifecycle =
-        new VerticleLifecycle(
-            ImmutableList.of(
-                new com.larpconnect.njall.common.CommonModule(),
-                new com.larpconnect.njall.common.codec.CodecModule()));
-    var field = VerticleLifecycle.class.getDeclaredField("vertxRef");
-    field.setAccessible(true);
-    var vertxRef = (AtomicReference<io.vertx.core.Vertx>) field.get(lifecycle);
-
-    var mockVertx = mock(io.vertx.core.Vertx.class);
+  public void shutDown_closeFails_logsError() {
+    var mockVertx = mock(Vertx.class);
     when(mockVertx.close()).thenReturn(io.vertx.core.Future.failedFuture("Close failed"));
-    vertxRef.set(mockVertx);
+    var mockSetupService = mock(VerticleSetupService.class);
+    var mockInjector = mock(Injector.class);
+    var lifecycle = new VerticleLifecycle(mockVertx, mockSetupService, mockInjector);
 
     lifecycle.shutDown();
-
-    // We should be able to get here without throwing, and it will have logged an error.
   }
 
   @Test
-  @SuppressWarnings("unchecked")
-  public void shutDown_interrupted_logsWarning() throws Exception {
-    var lifecycle =
-        new VerticleLifecycle(
-            ImmutableList.of(
-                new com.larpconnect.njall.common.CommonModule(),
-                new com.larpconnect.njall.common.codec.CodecModule()));
-    var field = VerticleLifecycle.class.getDeclaredField("vertxRef");
-    field.setAccessible(true);
-    var vertxRef = (AtomicReference<io.vertx.core.Vertx>) field.get(lifecycle);
-
-    var mockVertx = mock(io.vertx.core.Vertx.class);
+  public void shutDown_interrupted_logsWarning() {
+    var mockVertx = mock(Vertx.class);
     // Never complete the future so latch.await() blocks
     var promise = io.vertx.core.Promise.<Void>promise();
     when(mockVertx.close()).thenReturn(promise.future());
-    vertxRef.set(mockVertx);
+    var mockSetupService = mock(VerticleSetupService.class);
+    var mockInjector = mock(Injector.class);
+    var lifecycle = new VerticleLifecycle(mockVertx, mockSetupService, mockInjector);
 
     Thread.currentThread().interrupt();
     try {

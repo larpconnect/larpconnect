@@ -5,16 +5,12 @@ import io.vertx.core.Vertx;
 import jakarta.inject.Singleton;
 
 final class VertxModule extends AbstractModule {
-  private final VerticleService verticleService;
-
-  VertxModule(VerticleService verticleService) {
-    this.verticleService = verticleService;
-  }
+  VertxModule() {}
 
   @Override
   protected void configure() {
-    bind(VerticleDeployer.class).to(VerticleService.class);
-    bind(VerticleService.class).toInstance(verticleService);
+    bind(VerticleService.class).to(VerticleLifecycle.class);
+    bind(VerticleDeployer.class).to(VerticleLifecycle.class);
     bind(Vertx.class).toProvider(VertxProvider.class).in(Singleton.class);
   }
 }
