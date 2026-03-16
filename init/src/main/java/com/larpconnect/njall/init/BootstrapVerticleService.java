@@ -99,19 +99,14 @@ final class BootstrapVerticleService extends AbstractIdleService implements Vert
   @Override
   protected void shutDown() {
     logger.info("Stopping BootstrapVerticleService...");
-    var delegate = delegateRef.get();
-    if (delegate != null) {
-      delegate.stopAsync().awaitTerminated();
-    }
+    delegateRef.get().stopAsync().awaitTerminated();
   }
 
   @Override
   public void deploy(Class<? extends Verticle> verticleClass) {
-    var delegate = delegateRef.get();
-    if (delegate != null) {
-      delegate.deploy(verticleClass);
-    } else {
+    if (!isRunning()) {
       throw new IllegalStateException("BootstrapVerticleService not started");
     }
+    delegateRef.get().deploy(verticleClass);
   }
 }
