@@ -6,7 +6,6 @@ dependencies {
     api(libs.assertj.core)
     api(libs.assertj.guava)
     api(libs.cucumber.java)
-    api(libs.cucumber.junit.platform.engine)
     api(libs.junit.api)
     api(libs.junit.params)
     api(libs.junit.platform.suite)
