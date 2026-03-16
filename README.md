@@ -5,7 +5,7 @@
 > for production traffic. **DO NOT USE IT IN PRODUCTION.** Core security,
 > stability, and data integrity features are still under active development.
 
-[![Build](https://github.com/larpconnect/larpconnect/actions/workflows/build.yml/badge.svg)](https://github.com/larpconnect/larpconnect/actions/workflows/build.yml)
+[![Build](https://github.com/larpconnect/larpconnect/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/larpconnect/larpconnect/actions/workflows/build.yml)
 
 ---
 
