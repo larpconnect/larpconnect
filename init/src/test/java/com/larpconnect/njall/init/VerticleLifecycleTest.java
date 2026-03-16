@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 final class VerticleLifecycleTest {
 
   @Test
-  public void bootstrap_deploy_notStarted_throwsException() {
+  public void deploy_bootstrapNotStarted_throwsException() {
     var lifecycle = VerticleServices.create(ImmutableList.of());
     assertThatThrownBy(() -> lifecycle.deploy(TestVerticle.class))
         .isInstanceOf(IllegalStateException.class)
