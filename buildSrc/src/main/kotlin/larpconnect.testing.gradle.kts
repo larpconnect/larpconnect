@@ -12,6 +12,7 @@ dependencies {
     }
     testRuntimeOnly(libs.junit.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
+    testRuntimeOnly(libs.cucumber.junit.platform.engine)
     testRuntimeOnly(libs.logback.classic)
 }
 
