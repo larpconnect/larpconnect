@@ -152,3 +152,14 @@ public final Utility {
 }
 ```
 
+## Basic API Pattern
+
+1. Create a protobuf that represents any JSON in the request and/or response.
+2. Modify the `openapi.yaml` file to add the endpoint
+3. Add the verticle to handle the JSON version of the request in `:api`. It MAY delegate
+   to some other location or it may solve it locally. If it delegates then it SHOULD
+   convert the JSON into a protobuf and convert any replies payload into JSON.
+4. Wire it in the `:server` module.
+5. Write unit tests.
+6. Write integration tests.
+

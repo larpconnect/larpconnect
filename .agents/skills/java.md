@@ -11,7 +11,7 @@ This skill handles working in the modern Java 25 environment.
    the stream API, lambdas, and a functional style.
 2. This project has the experimental features enabled. This should be used for
    the structured concurrency features in Java 25.
-3. Primary code must be written in Java 21+. Build files must be written in
+3. Primary code must be written in Java 25+. Build files must be written in
    kotlin. Integration tests may be written in gherkin.
 
 ## Specific Guidance
@@ -50,9 +50,7 @@ Commons utilities where available. Use context7 to get the latest documentation.
 - Do not use `@Deprecated` components unless absolutely necessary and document
   why they are necessary if they must be used.
 - Do not use `@Beta` components in the library modules. They _may_ be used
-  anywhere in testing as well as in the application components (repl and batch).
-
-exercised.
+  anywhere in testing as well as in the application components (`:server`).
 
 ### Implementation Directives
 
@@ -92,8 +90,6 @@ exercised.
     debug level, or a comment can be inserted indicating that the exception
     cannot happen.
 
-happen.
-
 ### Java Style
 
 - When there only exists a single implementation for a java interface or
@@ -127,8 +123,6 @@ happen.
     regressions. Should typically use Gatling or the Java Microbenchmark
     Harness.
 
-tests.
-
 ### Logging with SLF4J
 
 - Every class that is going to be doing logging should have a
@@ -159,6 +153,7 @@ functionality should be employed freely.
 - ErrorProne Annotations, `mug-errorprone`
 - Any of the vert.x 5 libraries. Use context7 to get the most recent
   documentation on these when you use them.
+- `smallrye-mutiny` for reactive programming. Load most recent documentation from context7.
 - Mug and Mug extensions, and in particular `mug-guava`, `dot-parse`, and
   `mug-concurrent24`
 - Guava, especially if the functionality does not exist in the JDK or in Mug. In

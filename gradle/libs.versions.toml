@@ -8,7 +8,7 @@ slf4j = "2.0.17"
 logback = "1.5.32"
 guava = "33.5.0-jre"
 guice = "7.0.0"
-mug = "9.9.4"
+mug = "9.9.8"
 jsr305 = "3.0.2"
 errorprone = "2.48.0"
 errorprone-plugin = "5.1.0"
@@ -32,7 +32,11 @@ archunit = "1.4.1"
 google-common-protos = "2.66.0"
 shadow = "9.3.2"
 hibernate = "7.2.7.Final"
+<<<<<<< feature/issue-211-data-module-3017094295324734225
 hibernate-reactive = "4.2.5.Final"
+=======
+hibernate-reactive = "4.2.6.Final"
+>>>>>>> main
 
 [libraries]
 # Core
