@@ -6,8 +6,8 @@ This skill provides guidance on how to write effective APIs.
 
 ## Technical Constraints
 
-- APIs are managed using OpenAPI (version 3) but otherwise follow the guidance of the [AIPs](https://google.aip.dev)
-- Payloads are specified using protobuf
+- APIs are managed using OpenAPI (version 3) but otherwise follow the guidance of the [AIPs](https://google.aip.dev). Load documentation on AIP and on OpenAPI from context7 when interacting with the `openapi.yaml` file.
+- Payloads are specified using protobuf. 
 - Security is paramount when writing good APIs. Everything needs to be sanitized and validated.
 - Everything should be both unit tested and (separately) integration tested. Integration tests should be written using
   cucumber.
