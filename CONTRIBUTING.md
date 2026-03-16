@@ -8,7 +8,7 @@ rules. But it is, at its core, first and foremost, an online distributed
 application that is designed to run on the internet. So we welcome contributions
 _so long as they adhere to the guidelines and checks put into place_.
 
-> [!IMPORTANT]] AI Policy: Purely AI-generated contributions without human
+> [!IMPORTANT] AI Policy: Purely AI-generated contributions without human
 > oversight are not permitted. Contributors must review and take full
 > responsibility for their code. See [AI_POLICY.md](./AI_POLICY.md) for details
 
