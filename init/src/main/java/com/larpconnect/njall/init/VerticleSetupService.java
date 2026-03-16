@@ -9,10 +9,12 @@ import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Singleton
 final class VerticleSetupService {
   private final Logger logger = LoggerFactory.getLogger(VerticleSetupService.class);
   private final AtomicReference<Vertx> vertxRef = new AtomicReference<>();
