@@ -35,6 +35,7 @@ If working with Render, load Render's documentation from context7.
 | **Data Handling**            | Any modifications to JSON or CSV files or work inside of `:proto`                                     | `.agents/skills/data.md`       |
 | **Markdown Documentation**   | Building documentation in markdown (`.md`)                                                            | `.agents/skills/markdown.md`   |
 | **Breakglass Documentation** | If you are "stuck" on a problem                                                                       | `.agents/skills/breakglass.md` |
+| **API Mastery**              | Writing code in the `:api` module, interacting with `openapi.yaml`                                    | `.agents/skills/api.md`        |
 
 ## 3. Delegation Protocol
 
