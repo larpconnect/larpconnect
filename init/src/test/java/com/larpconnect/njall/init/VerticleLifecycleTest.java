@@ -38,7 +38,8 @@ final class VerticleLifecycleTest {
   @Test
   public void shutDown_closeFails_doesNotThrowException() {
     var mockVertx = mock(Vertx.class);
-    when(mockVertx.close()).thenReturn(io.vertx.core.Future.failedFuture("Close failed"));
+    when(mockVertx.close())
+        .thenReturn(io.vertx.core.Future.failedFuture(new RuntimeException("Close failed")));
     var mockSetupService = mock(VerticleSetupService.class);
     var mockInjector = mock(Injector.class);
     var lifecycle = new VerticleLifecycle(() -> mockVertx, () -> mockSetupService, mockInjector);
@@ -64,6 +65,36 @@ final class VerticleLifecycleTest {
       // Clear interrupt status for other tests
       Thread.interrupted();
     }
+  }
+
+  @Test
+  public void shutDown_interruptedWhileWaiting_restoresInterruptStatus() throws Exception {
+    var mockVertx = mock(Vertx.class);
+    var promise = io.vertx.core.Promise.<Void>promise();
+    when(mockVertx.close()).thenReturn(promise.future());
+    var mockSetupService = mock(VerticleSetupService.class);
+    var mockInjector = mock(Injector.class);
+    var lifecycle = new VerticleLifecycle(() -> mockVertx, () -> mockSetupService, mockInjector);
+
+    var latch = new java.util.concurrent.CountDownLatch(1);
+    var interruptStatus = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    var thread =
+        new Thread(
+            () -> {
+              latch.countDown();
+              lifecycle.shutDown();
+              interruptStatus.set(Thread.currentThread().isInterrupted());
+            });
+    thread.start();
+
+    latch.await(); // wait for the thread to start
+    Thread.sleep(50); // give it a moment to block in shutDown
+    thread.interrupt();
+
+    thread.join(1000);
+
+    assertThat(interruptStatus.get()).isTrue();
   }
 
   static final class TestVerticle extends AbstractVerticle {}
