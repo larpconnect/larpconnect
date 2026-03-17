@@ -4,5 +4,6 @@ plugins {
 
 dependencies {
     api(project(":proto"))
+
     implementation(project(":common"))
 }
