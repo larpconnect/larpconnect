@@ -59,7 +59,7 @@ final class Main {
       lifecycle.deploy(MainVerticle.class);
     } catch (RuntimeException e) {
       logger.error("Failed to start server", e);
-      System.exit(1);
+      runtime.exit(1);
       throw new AssertionError("Unreachable");
     }
     return lifecycle;
