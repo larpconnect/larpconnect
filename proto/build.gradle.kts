@@ -8,6 +8,7 @@ plugins {
 dependencies {
     api(libs.protobuf.java)
     api(libs.protobuf.java.util)
+
     implementation(libs.google.common.protos)
 }
 

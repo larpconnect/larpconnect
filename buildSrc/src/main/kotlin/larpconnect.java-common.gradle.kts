@@ -24,17 +24,20 @@ dependencies {
         api(project(":parent"))
     }
     api(libs.slf4j.api)
+
     compileOnly(libs.vertx.codegen)
-    testCompileOnly(libs.vertx.codegen)
+
     constraints {
         implementation(libs.commons.beanutils) {
             because("CVE-2025-48734")
         }
-        implementation(libs.log4j.core) {
-            because("CVE-2025-68161")
-        }
         implementation(libs.commons.lang3) {
             because("CVE-2025-48924")
         }
+        implementation(libs.log4j.core) {
+            because("CVE-2025-68161")
+        }
     }
+
+    testCompileOnly(libs.vertx.codegen)
 }
