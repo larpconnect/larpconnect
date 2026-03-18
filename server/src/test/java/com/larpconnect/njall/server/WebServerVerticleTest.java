@@ -95,6 +95,64 @@ final class WebServerVerticleTest {
   }
 
   @Test
+  void webfingerEndpoint_eventBusFailure_returns500(Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.well-known.webfinger.request",
+            msg -> {
+              msg.fail(500, "Internal Server Error");
+            });
+
+    webClient
+        .get("/.well-known/webfinger")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(500);
+                          testContext.completeNow();
+                        })));
+  }
+
+  @Test
+  void webfingerEndpoint_serializationFailure_returns500(
+      Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.well-known.webfinger.request",
+            msg -> {
+              msg.reply(
+                  MessageReply.newBuilder()
+                      .setProto(
+                          ProtoDef.newBuilder()
+                              .setProtobufName("WebfingerResponse")
+                              .setMessage(
+                                  Any.newBuilder()
+                                      .setTypeUrl("type.googleapis.com/invalid")
+                                      .setValue(
+                                          com.google.protobuf.ByteString.copyFromUtf8("invalid"))
+                                      .build()))
+                      .build());
+            });
+
+    webClient
+        .get("/.well-known/webfinger")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(500);
+                          testContext.completeNow();
+                        })));
+  }
+
+  @Test
   void getMessageEndpoint_succeeds(VertxTestContext testContext) {
     webClient
         .get("/v1/message")
