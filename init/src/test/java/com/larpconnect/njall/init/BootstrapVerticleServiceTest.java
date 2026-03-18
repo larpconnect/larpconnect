@@ -41,7 +41,12 @@ final class BootstrapVerticleServiceTest {
     try {
       BootstrapVerticleService lifecycle = new BootstrapVerticleService(ImmutableList.of());
       assertThatThrownBy(() -> lifecycle.startAsync().awaitRunning(10, TimeUnit.SECONDS))
-          .isInstanceOf(IllegalStateException.class);
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("BootstrapVerticleService [FAILED]");
+      assertThat(lifecycle.failureCause())
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessage("Failed to load default config")
+          .hasCauseInstanceOf(IllegalArgumentException.class);
     } finally {
       System.clearProperty("njall.config.resource");
     }
