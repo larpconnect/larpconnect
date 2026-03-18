@@ -76,23 +76,33 @@ final class VerticleLifecycleTest {
     var mockInjector = mock(Injector.class);
     var lifecycle = new VerticleLifecycle(() -> mockVertx, () -> mockSetupService, mockInjector);
 
-    var latch = new java.util.concurrent.CountDownLatch(1);
+    var startedLatch = new java.util.concurrent.CountDownLatch(1);
     var interruptStatus = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     var thread =
         new Thread(
             () -> {
-              latch.countDown();
+              startedLatch.countDown();
               lifecycle.shutDown();
               interruptStatus.set(Thread.currentThread().isInterrupted());
+              // Clear the interrupt status so it doesn't leak
+              Thread.interrupted();
             });
     thread.start();
 
-    latch.await(); // wait for the thread to start
-    Thread.sleep(50); // give it a moment to block in shutDown
-    thread.interrupt();
+    // Use a small loop or awaitility if possible, but standard latch wait is ok
+    startedLatch.await();
 
-    thread.join(1000);
+    // We cannot easily determine when shutDown() has entered latch.await(),
+    // so we wait a short moment and then interrupt, or repeatedly interrupt until
+    // the thread completes.
+    // An alternative that doesn't use sleep is to repeatedly call interrupt
+    // and wait for the thread to join with a timeout.
+    // If it joins, we are done.
+    while (thread.isAlive()) {
+      thread.interrupt();
+      thread.join(10);
+    }
 
     assertThat(interruptStatus.get()).isTrue();
   }
