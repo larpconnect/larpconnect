@@ -51,7 +51,7 @@ final class ServerBindingModule extends AbstractModule {
     try {
       JsonFormat.parser().ignoringUnknownFields().merge(sourceConfig.encode(), builder);
     } catch (InvalidProtocolBufferException e) {
-      throw new RuntimeException("Failed to parse LarpConnectConfig", e);
+      throw new IllegalStateException("Failed to parse LarpConnectConfig", e);
     }
 
     if (builder.getWebPort() == 0) {
