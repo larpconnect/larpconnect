@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
-final class AbstractLcVerticleIOExceptionTest {
+final class AbstractLcVerticleExceptionTest {
 
   private static final String CHANNEL = "test-channel";
   private Vertx vertx;
