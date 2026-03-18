@@ -6,6 +6,7 @@ import com.google.common.io.Resources;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.annotations.BuildWith;
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Nodeinfo22;
@@ -13,8 +14,6 @@ import com.larpconnect.njall.proto.NodeinfoJrd;
 import com.larpconnect.njall.proto.Parameter;
 import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.proto.WebfingerResponse;
-import com.larpconnect.njall.server.annotations.OpenApiSpec;
-import com.larpconnect.njall.server.annotations.WebPort;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.http.HttpServer;
@@ -55,23 +54,29 @@ final class WebServerVerticle extends AbstractVerticle {
   }
 
   WebServerVerticle() {
-    this(DEFAULT_PORT, DEFAULT_SPEC);
+    this(
+        LarpConnectConfig.newBuilder()
+            .setWebPort(DEFAULT_PORT)
+            .setOpenapiSpec(DEFAULT_SPEC)
+            .build(),
+        Optional.empty());
   }
 
   WebServerVerticle(String openApiSpec) {
-    this(DEFAULT_PORT, openApiSpec);
+    this(
+        LarpConnectConfig.newBuilder().setWebPort(DEFAULT_PORT).setOpenapiSpec(openApiSpec).build(),
+        Optional.empty());
   }
 
   @Inject
-  WebServerVerticle(
-      @WebPort int port,
-      @OpenApiSpec String openApiSpec,
-      Optional<Consumer<Integer>> portListener) {
-    this(port, openApiSpec, createPrinter(), portListener);
+  WebServerVerticle(LarpConnectConfig config, Optional<Consumer<Integer>> portListener) {
+    this(config, m -> createPrinter().print(m), portListener);
   }
 
   WebServerVerticle(int port, String openApiSpec) {
-    this(port, openApiSpec, createPrinter(), Optional.empty());
+    this(
+        LarpConnectConfig.newBuilder().setWebPort(port).setOpenapiSpec(openApiSpec).build(),
+        Optional.empty());
   }
 
   private static JsonFormat.Printer createPrinter() {
@@ -84,25 +89,10 @@ final class WebServerVerticle extends AbstractVerticle {
     return JsonFormat.printer().usingTypeRegistry(registry);
   }
 
-  private WebServerVerticle(
-      int port,
-      String openApiSpec,
-      JsonFormat.Printer printer,
-      Optional<Consumer<Integer>> portListener) {
-    this.port = port;
-    this.openApiSpec = openApiSpec;
-    this.printer = printer;
-    this.serializer = m -> printer.print(m);
-    this.portListener = portListener;
-  }
-
   WebServerVerticle(
-      int port,
-      String openApiSpec,
-      Serializer serializer,
-      Optional<Consumer<Integer>> portListener) {
-    this.port = port;
-    this.openApiSpec = openApiSpec;
+      LarpConnectConfig config, Serializer serializer, Optional<Consumer<Integer>> portListener) {
+    this.port = config.getWebPort();
+    this.openApiSpec = config.getOpenapiSpec();
     this.printer = createPrinter();
     this.serializer = serializer;
     this.portListener = portListener;

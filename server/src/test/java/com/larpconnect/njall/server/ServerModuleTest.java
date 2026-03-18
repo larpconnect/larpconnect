@@ -8,76 +8,62 @@ import org.junit.jupiter.api.Test;
 
 final class ServerModuleTest {
   @Test
-  void provideWebPort_usesPortEnvVar_whenPresentAndValid() {
+  void provideLarpConnectConfig_usesPortEnvVar_whenPresentAndValid() {
     Function<String, String> envProvider = name -> "PORT".equals(name) ? "9999" : null;
     var module = new ServerBindingModule(envProvider);
-    var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
+    var config = new JsonObject().put("larpconnect", new JsonObject().put("webPort", 1234));
 
-    var port = module.provideWebPort(config);
+    var larpConfig = module.provideLarpConnectConfig(config);
 
-    assertThat(port).isEqualTo(9999);
+    assertThat(larpConfig.getWebPort()).isEqualTo(9999);
+    assertThat(larpConfig.getOpenapiSpec()).isEqualTo("openapi.yaml");
   }
 
   @Test
-  void provideWebPort_fallsBackToConfig_whenPortEnvVarInvalid() {
+  void provideLarpConnectConfig_fallsBackToConfig_whenPortEnvVarInvalid() {
     Function<String, String> envProvider = name -> "PORT".equals(name) ? "invalid" : null;
     var module = new ServerBindingModule(envProvider);
-    var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
+    var config = new JsonObject().put("larpconnect", new JsonObject().put("webPort", 1234));
 
-    var port = module.provideWebPort(config);
+    var larpConfig = module.provideLarpConnectConfig(config);
 
-    assertThat(port).isEqualTo(1234);
+    assertThat(larpConfig.getWebPort()).isEqualTo(1234);
   }
 
   @Test
-  void provideWebPort_fallsBackToConfig_whenPortEnvVarNull() {
+  void provideLarpConnectConfig_fallsBackToConfig_whenPortEnvVarNull() {
     Function<String, String> envProvider = name -> null;
     var module = new ServerBindingModule(envProvider);
-    var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
+    var config = new JsonObject().put("larpconnect", new JsonObject().put("webPort", 1234));
 
-    var port = module.provideWebPort(config);
+    var larpConfig = module.provideLarpConnectConfig(config);
 
-    assertThat(port).isEqualTo(1234);
+    assertThat(larpConfig.getWebPort()).isEqualTo(1234);
   }
 
   @Test
-  void provideWebPort_usesLarpconnectConfig_whenPresent() {
-    var module = new ServerBindingModule();
-    var config = new JsonObject().put("larpconnect", new JsonObject().put("web.port", 1234));
-
-    var port = module.provideWebPort(config);
-
-    assertThat(port).isEqualTo(1234);
-  }
-
-  @Test
-  void provideWebPort_usesRootConfig_whenLarpconnectMissing() {
-    var module = new ServerBindingModule();
-    var config = new JsonObject().put("web.port", 5678);
-
-    var port = module.provideWebPort(config);
-
-    assertThat(port).isEqualTo(5678);
-  }
-
-  @Test
-  void provideOpenApiSpec_usesLarpconnectConfig_whenPresent() {
+  void provideLarpConnectConfig_usesLarpConnectConfig_whenPresent() {
     var module = new ServerBindingModule();
     var config =
-        new JsonObject().put("larpconnect", new JsonObject().put("openapi.spec", "spec.yaml"));
+        new JsonObject()
+            .put(
+                "larpconnect",
+                new JsonObject().put("webPort", 1234).put("openapiSpec", "spec.yaml"));
 
-    var spec = module.provideOpenApiSpec(config);
+    var larpConfig = module.provideLarpConnectConfig(config);
 
-    assertThat(spec).isEqualTo("spec.yaml");
+    assertThat(larpConfig.getWebPort()).isEqualTo(1234);
+    assertThat(larpConfig.getOpenapiSpec()).isEqualTo("spec.yaml");
   }
 
   @Test
-  void provideOpenApiSpec_usesRootConfig_whenLarpconnectMissing() {
+  void provideLarpConnectConfig_usesRootConfig_whenLarpconnectMissing() {
     var module = new ServerBindingModule();
-    var config = new JsonObject().put("openapi.spec", "root-spec.yaml");
+    var config = new JsonObject().put("webPort", 5678).put("openapiSpec", "root-spec.yaml");
 
-    var spec = module.provideOpenApiSpec(config);
+    var larpConfig = module.provideLarpConnectConfig(config);
 
-    assertThat(spec).isEqualTo("root-spec.yaml");
+    assertThat(larpConfig.getWebPort()).isEqualTo(5678);
+    assertThat(larpConfig.getOpenapiSpec()).isEqualTo("root-spec.yaml");
   }
 }

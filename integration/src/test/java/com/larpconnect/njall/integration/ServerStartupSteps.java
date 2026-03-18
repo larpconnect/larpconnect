@@ -8,11 +8,11 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.server.MainVerticle;
 import com.larpconnect.njall.server.ServerModule;
-import com.larpconnect.njall.server.annotations.WebPort;
 import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -50,7 +50,12 @@ public final class ServerStartupSteps {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bindConstant().annotatedWith(WebPort.class).to(0);
+                    bind(LarpConnectConfig.class)
+                        .toInstance(
+                            LarpConnectConfig.newBuilder()
+                                .setWebPort(0)
+                                .setOpenapiSpec("openapi.yaml")
+                                .build());
                     bind(new TypeLiteral<Optional<Consumer<Integer>>>() {})
                         .toInstance(Optional.of(port -> serverCaptor.setPort(port)));
                   }

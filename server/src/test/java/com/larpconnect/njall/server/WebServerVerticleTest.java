@@ -36,7 +36,12 @@ final class WebServerVerticleTest {
     var actualPort = new AtomicInteger();
     verticle =
         new WebServerVerticle(
-            0, "openapi.yaml", m -> "{\"test\":\"json\"}", Optional.of(actualPort::set));
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
+                .setWebPort(0)
+                .setOpenapiSpec("openapi.yaml")
+                .build(),
+            m -> "{\"test\":\"json\"}",
+            Optional.of(actualPort::set));
 
     vertx
         .deployVerticle(verticle)
@@ -171,7 +176,13 @@ final class WebServerVerticleTest {
 
   @Test
   void missingOpenApiSpec_failsDeployment(Vertx vertx, VertxTestContext testContext) {
-    var badVerticle = new WebServerVerticle(0, "missing.yaml");
+    var badVerticle =
+        new WebServerVerticle(
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
+                .setWebPort(0)
+                .setOpenapiSpec("missing.yaml")
+                .build(),
+            java.util.Optional.empty());
     vertx
         .deployVerticle(badVerticle)
         .onComplete(
@@ -192,7 +203,13 @@ final class WebServerVerticleTest {
         };
     var actualPort = new AtomicInteger();
     var badVerticle =
-        new WebServerVerticle(0, "openapi.yaml", badSerializer, Optional.of(actualPort::set));
+        new WebServerVerticle(
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
+                .setWebPort(0)
+                .setOpenapiSpec("openapi.yaml")
+                .build(),
+            badSerializer,
+            Optional.of(actualPort::set));
 
     vertx
         .deployVerticle(badVerticle)
@@ -228,7 +245,13 @@ final class WebServerVerticleTest {
         };
     var actualPort = new AtomicInteger();
     var badVerticle =
-        new WebServerVerticle(0, "openapi.yaml", badSerializer, Optional.of(actualPort::set));
+        new WebServerVerticle(
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
+                .setWebPort(0)
+                .setOpenapiSpec("openapi.yaml")
+                .build(),
+            badSerializer,
+            Optional.of(actualPort::set));
 
     vertx
         .deployVerticle(badVerticle)
