@@ -58,7 +58,7 @@ final class GuiceVerticleFactoryTest {
   }
 
   @Test
-  public void createVerticle_missingClass_failure(VertxTestContext testContext) {
+  public void createVerticle_classNotFoundException_failure(VertxTestContext testContext) {
     Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var factory = new GuiceVerticleFactory(injector);
 
@@ -76,7 +76,8 @@ final class GuiceVerticleFactoryTest {
                   } catch (IllegalArgumentException e) {
                     assertThat(e)
                         .isInstanceOf(IllegalArgumentException.class)
-                        .hasMessageContaining("Failed to load verticle class");
+                        .hasMessageContaining("Failed to load verticle class")
+                        .hasCauseInstanceOf(ClassNotFoundException.class);
                     testContext.completeNow();
                   } catch (Exception e) {
                     testContext.failNow(e);
@@ -85,7 +86,7 @@ final class GuiceVerticleFactoryTest {
   }
 
   @Test
-  public void createVerticle_nonVerticleClass_failure(VertxTestContext testContext) {
+  public void createVerticle_classCastException_failure(VertxTestContext testContext) {
     Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var factory = new GuiceVerticleFactory(injector);
 
