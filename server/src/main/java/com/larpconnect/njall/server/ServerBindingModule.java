@@ -5,8 +5,7 @@ import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.larpconnect.njall.common.annotations.InstallInstead;
-import com.larpconnect.njall.server.annotations.OpenApiSpec;
-import com.larpconnect.njall.server.annotations.WebPort;
+import com.larpconnect.njall.proto.LarpconnectConfig;
 import io.vertx.core.Verticle;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Singleton;
@@ -18,6 +17,7 @@ import java.util.function.Function;
 final class ServerBindingModule extends AbstractModule {
   private final Function<String, String> getenv;
   private static final int DEFAULT_PORT = 8080;
+  private static final String DEFAULT_SPEC = "openapi.yaml";
 
   ServerBindingModule() {
     this(System::getenv);
@@ -38,31 +38,33 @@ final class ServerBindingModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @WebPort
-  int provideWebPort(JsonObject config) {
+  LarpconnectConfig provideLarpconnectConfig(JsonObject config) {
+    var builder = LarpconnectConfig.newBuilder();
+
+    var appConfig = config.getJsonObject("larpconnect");
+    int port = DEFAULT_PORT;
+    String spec = DEFAULT_SPEC;
+
+    if (appConfig != null) {
+      port = appConfig.getInteger("web.port", DEFAULT_PORT);
+      spec = appConfig.getString("openapi.spec", DEFAULT_SPEC);
+    } else {
+      port = config.getInteger("web.port", DEFAULT_PORT);
+      spec = config.getString("openapi.spec", DEFAULT_SPEC);
+    }
+
     var envPort = getenv.apply("PORT");
     if (envPort != null) {
       try {
-        return Integer.parseInt(envPort);
+        port = Integer.parseInt(envPort);
       } catch (NumberFormatException ignored) {
         // Fall back to config if env var is not a valid integer
       }
     }
-    var appConfig = config.getJsonObject("larpconnect");
-    if (appConfig != null) {
-      return appConfig.getInteger("web.port", DEFAULT_PORT);
-    }
-    return config.getInteger("web.port", DEFAULT_PORT);
-  }
 
-  @Provides
-  @Singleton
-  @OpenApiSpec
-  String provideOpenApiSpec(JsonObject config) {
-    var appConfig = config.getJsonObject("larpconnect");
-    if (appConfig != null) {
-      return appConfig.getString("openapi.spec", "openapi.yaml");
-    }
-    return config.getString("openapi.spec", "openapi.yaml");
+    builder.setWebPort(port);
+    builder.setOpenapiSpec(spec);
+
+    return builder.build();
   }
 }

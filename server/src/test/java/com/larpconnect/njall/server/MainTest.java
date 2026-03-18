@@ -6,9 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service.State;
 import com.google.inject.AbstractModule;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.init.VerticleService;
+import com.larpconnect.njall.proto.LarpconnectConfig;
 import io.vertx.core.Verticle;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -27,7 +27,12 @@ final class MainTest {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                    bind(LarpconnectConfig.class)
+                        .toInstance(
+                            LarpconnectConfig.newBuilder()
+                                .setWebPort(0)
+                                .setOpenapiSpec("openapi.yaml")
+                                .build());
                   }
                 });
     var main = new Main(runtime, overrideModule);
@@ -49,7 +54,12 @@ final class MainTest {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                    bind(LarpconnectConfig.class)
+                        .toInstance(
+                            LarpconnectConfig.newBuilder()
+                                .setWebPort(0)
+                                .setOpenapiSpec("openapi.yaml")
+                                .build());
                   }
                 });
     var main = new Main(runtime, overrideModule);
@@ -74,7 +84,12 @@ final class MainTest {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                    bind(LarpconnectConfig.class)
+                        .toInstance(
+                            LarpconnectConfig.newBuilder()
+                                .setWebPort(0)
+                                .setOpenapiSpec("openapi.yaml")
+                                .build());
                   }
                 });
     var main = new Main(runtime, overrideModule);

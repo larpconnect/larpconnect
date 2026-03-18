@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package com.larpconnect.njall.proto;
+
+option java_multiple_files = true;
+option java_package = "com.larpconnect.njall.proto";
+option go_package = "com.larpconnect.njall.proto";
+
+message LarpconnectConfig {
+  int32 web_port = 1;
+  string openapi_spec = 2;
+}

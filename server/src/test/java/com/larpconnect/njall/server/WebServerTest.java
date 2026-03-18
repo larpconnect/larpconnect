@@ -30,7 +30,12 @@ final class WebServerTest {
   void start_invokesPortListener(Vertx vertx, VertxTestContext testContext) {
     var capturedPort = new AtomicInteger();
     var verticle =
-        new WebServerVerticle(0, "openapi.yaml", Optional.of(port -> capturedPort.set(port)));
+        new WebServerVerticle(
+            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+                .setWebPort(0)
+                .setOpenapiSpec("openapi.yaml")
+                .build(),
+            Optional.of(port -> capturedPort.set(port)));
 
     vertx
         .deployVerticle(verticle)
@@ -114,10 +119,12 @@ final class WebServerTest {
 
     var verticle =
         new WebServerVerticle(
-            8080,
-            "openapi.yaml",
+            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+                .setWebPort(8080)
+                .setOpenapiSpec("openapi.yaml")
+                .build(),
             m -> {
-              throw new IOException("Serialization failed");
+              throw new java.io.IOException("Serialization failed");
             },
             Optional.empty());
 
@@ -133,8 +140,10 @@ final class WebServerTest {
 
     var verticle =
         new WebServerVerticle(
-            8080,
-            "openapi.yaml",
+            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+                .setWebPort(8080)
+                .setOpenapiSpec("openapi.yaml")
+                .build(),
             m -> {
               throw new IllegalStateException("Unexpected error");
             },

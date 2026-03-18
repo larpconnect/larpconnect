@@ -46,9 +46,12 @@ final class MainVerticleTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bindConstant()
-                            .annotatedWith(com.larpconnect.njall.server.annotations.WebPort.class)
-                            .to(0);
+                        bind(com.larpconnect.njall.proto.LarpconnectConfig.class)
+                            .toInstance(
+                                com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+                                    .setWebPort(0)
+                                    .setOpenapiSpec("openapi.yaml")
+                                    .build());
                       }
                     }),
             new AbstractModule() {
@@ -91,9 +94,12 @@ final class MainVerticleTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bindConstant()
-                            .annotatedWith(com.larpconnect.njall.server.annotations.WebPort.class)
-                            .to(0);
+                        bind(com.larpconnect.njall.proto.LarpconnectConfig.class)
+                            .toInstance(
+                                com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+                                    .setWebPort(0)
+                                    .setOpenapiSpec("openapi.yaml")
+                                    .build());
                       }
                     }),
             new AbstractModule() {
