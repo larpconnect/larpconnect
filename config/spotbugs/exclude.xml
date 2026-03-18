@@ -10,4 +10,15 @@
         <Class name="~com\.larpconnect\.njall\.data\.entity\..*"/>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
     </Match>
+
+    <!-- Exclude protobuf generated code -->
+    <Match>
+        <Package name="com.larpconnect.njall.proto" />
+    </Match>
+
+    <!-- Exclude intentional JVM termination in the Main entry point -->
+    <Match>
+        <Class name="com.larpconnect.njall.server.Main" />
+        <Bug pattern="DM_EXIT" />
+    </Match>
 </FindBugsFilter>
