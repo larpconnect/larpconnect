@@ -20,3 +20,9 @@ focused on linting and analysis tools.
 **Learning:** The configurations setting `enabled = false` for Spotless tasks matching `*MarkdownCheck` or `*FlexmarkCheck` in `build.gradle.kts` and `buildSrc/src/main/kotlin/larpconnect.quality.gradle.kts` are deliberate design choices for this project.
 
 **Action:** Do not remove or alter these `enabled = false` overrides during build cleanup or maintenance tasks.
+
+## 2026-03-18 - Centralizing SpotBugs Exclusions
+
+**Learning:** SpotBugs exclusions must be centralized in the global `config/spotbugs/exclude.xml` file. Applying `excludeFilter.set(...)` in individual project build scripts (e.g., `server/build.gradle.kts` or `proto/build.gradle.kts`) drops the global exclusions defined in the `larpconnect.quality` convention plugin instead of merging with them.
+
+**Action:** Whenever a new SpotBugs exclusion is needed for a specific module, add it to the global `config/spotbugs/exclude.xml` with appropriate matchers (e.g., `<Package>` or `<Class>`) rather than creating a local exclusion file and overriding the filter.

@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":common"))
     implementation(libs.vertx.config)
+    implementation(project(":common"))
 }
