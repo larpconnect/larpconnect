@@ -302,4 +302,164 @@ final class WebServerVerticleTest {
                           testContext.completeNow();
                         })));
   }
+
+  @Test
+  void handleWebfinger_serializationException_returns500(
+      Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.well-known.webfinger.request",
+            msg -> {
+              msg.reply(
+                  MessageReply.newBuilder()
+                      .setProto(
+                          ProtoDef.newBuilder()
+                              .setProtobufName("WebfingerResponse")
+                              .setMessage(Any.pack(MessageRequest.getDefaultInstance())))
+                      .build());
+            });
+
+    webClient
+        .get("/.well-known/webfinger")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(500);
+                          testContext.completeNow();
+                        })));
+  }
+
+  @Test
+  void handleNodeinfoWellKnown_serializationException_returns500(
+      Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.well-known.nodeinfo.request",
+            msg -> {
+              msg.reply(
+                  MessageReply.newBuilder()
+                      .setProto(
+                          ProtoDef.newBuilder()
+                              .setProtobufName("NodeinfoJrd")
+                              .setMessage(Any.pack(MessageRequest.getDefaultInstance())))
+                      .build());
+            });
+
+    webClient
+        .get("/.well-known/nodeinfo")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(500);
+                          testContext.completeNow();
+                        })));
+  }
+
+  @Test
+  void handleNodeinfoAdmin_serializationException_returns500(
+      Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.admin.nodeinfo.request",
+            msg -> {
+              msg.reply(
+                  MessageReply.newBuilder()
+                      .setProto(
+                          ProtoDef.newBuilder()
+                              .setProtobufName("Nodeinfo22")
+                              .setMessage(Any.pack(MessageRequest.getDefaultInstance())))
+                      .build());
+            });
+
+    webClient
+        .get("/admin/nodeinfo")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(500);
+                          testContext.completeNow();
+                        })));
+  }
+
+  @Test
+  void handleWebfinger_eventBusFailure_returns500(Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.well-known.webfinger.request",
+            msg -> {
+              msg.fail(500, "Internal Server Error");
+            });
+
+    webClient
+        .get("/.well-known/webfinger")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(500);
+                          testContext.completeNow();
+                        })));
+  }
+
+  @Test
+  void handleNodeinfoWellKnown_eventBusFailure_returns500(
+      Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.well-known.nodeinfo.request",
+            msg -> {
+              msg.fail(500, "Internal Server Error");
+            });
+
+    webClient
+        .get("/.well-known/nodeinfo")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(500);
+                          testContext.completeNow();
+                        })));
+  }
+
+  @Test
+  void handleNodeinfoAdmin_eventBusFailure_returns500(Vertx vertx, VertxTestContext testContext) {
+    vertx
+        .eventBus()
+        .<MessageRequest>consumer(
+            "http.admin.nodeinfo.request",
+            msg -> {
+              msg.fail(500, "Internal Server Error");
+            });
+
+    webClient
+        .get("/admin/nodeinfo")
+        .send()
+        .onComplete(
+            testContext.succeeding(
+                response ->
+                    testContext.verify(
+                        () -> {
+                          assertThat(response.statusCode()).isEqualTo(500);
+                          testContext.completeNow();
+                        })));
+  }
 }
