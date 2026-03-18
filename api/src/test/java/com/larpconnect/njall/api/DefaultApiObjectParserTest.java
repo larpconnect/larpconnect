@@ -3,11 +3,13 @@ package com.larpconnect.njall.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.proto.ApiObject;
@@ -231,6 +233,86 @@ final class DefaultApiObjectParserTest {
 
     var obj = parser.fromJson(json);
     assertThat(obj.getExtensionsMap()).isEmpty();
+  }
+
+  @Test
+  void fromJson_throwsIllegalArgumentException_whenParserMergeFails() throws Exception {
+    JsonFormat.Parser mockParser = mock(JsonFormat.Parser.class);
+    doThrow(new InvalidProtocolBufferException("Mock exception"))
+        .when(mockParser)
+        .merge(any(String.class), any(ApiObject.Builder.class));
+
+    ApiObjectParser testParser = new DefaultApiObjectParser(JsonFormat.printer(), mockParser);
+
+    assertThatThrownBy(() -> testParser.fromJson(new JsonObject()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Failed to parse ApiObject from JSON")
+        .hasCauseInstanceOf(InvalidProtocolBufferException.class);
+  }
+
+  @Test
+  void fromJson_throwsIllegalArgumentException_whenParserMergeFailsForDocument() throws Exception {
+    JsonFormat.Parser mockParser = mock(JsonFormat.Parser.class);
+    doThrow(new InvalidProtocolBufferException("Mock exception"))
+        .when(mockParser)
+        .merge(any(String.class), any(Message.Builder.class));
+
+    ApiObjectParser testParser = new DefaultApiObjectParser(JsonFormat.printer(), mockParser);
+
+    var json = new JsonObject().put("type", new JsonArray().add("Document"));
+    assertThatThrownBy(() -> testParser.fromJson(json))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Failed to parse ApiObject from JSON")
+        .hasCauseInstanceOf(InvalidProtocolBufferException.class);
+  }
+
+  @Test
+  void fromJson_throwsIllegalArgumentException_whenParserMergeFailsForEvent() throws Exception {
+    JsonFormat.Parser mockParser = mock(JsonFormat.Parser.class);
+    doThrow(new InvalidProtocolBufferException("Mock exception"))
+        .when(mockParser)
+        .merge(any(String.class), any(Message.Builder.class));
+
+    ApiObjectParser testParser = new DefaultApiObjectParser(JsonFormat.printer(), mockParser);
+
+    var json = new JsonObject().put("type", new JsonArray().add("Event"));
+    assertThatThrownBy(() -> testParser.fromJson(json))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Failed to parse ApiObject from JSON")
+        .hasCauseInstanceOf(InvalidProtocolBufferException.class);
+  }
+
+  @Test
+  void fromJson_throwsIllegalArgumentException_whenParserMergeFailsForLink() throws Exception {
+    JsonFormat.Parser mockParser = mock(JsonFormat.Parser.class);
+    doThrow(new InvalidProtocolBufferException("Mock exception"))
+        .when(mockParser)
+        .merge(any(String.class), any(Message.Builder.class));
+
+    ApiObjectParser testParser = new DefaultApiObjectParser(JsonFormat.printer(), mockParser);
+
+    var json = new JsonObject().put("type", new JsonArray().add("Link"));
+    assertThatThrownBy(() -> testParser.fromJson(json))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Failed to parse ApiObject from JSON")
+        .hasCauseInstanceOf(InvalidProtocolBufferException.class);
+  }
+
+  @Test
+  void fromJson_throwsIllegalArgumentException_whenParserMergeFailsForOrderedCollectionPage()
+      throws Exception {
+    JsonFormat.Parser mockParser = mock(JsonFormat.Parser.class);
+    doThrow(new InvalidProtocolBufferException("Mock exception"))
+        .when(mockParser)
+        .merge(any(String.class), any(Message.Builder.class));
+
+    ApiObjectParser testParser = new DefaultApiObjectParser(JsonFormat.printer(), mockParser);
+
+    var json = new JsonObject().put("type", new JsonArray().add("OrderedCollectionPage"));
+    assertThatThrownBy(() -> testParser.fromJson(json))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Failed to parse ApiObject from JSON")
+        .hasCauseInstanceOf(InvalidProtocolBufferException.class);
   }
 
   @Test
