@@ -36,7 +36,7 @@ final class WebServerVerticleTest {
     var actualPort = new AtomicInteger();
     verticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                 .setWebPort(0)
                 .setOpenapiSpec("openapi.yaml")
                 .build(),
@@ -178,7 +178,7 @@ final class WebServerVerticleTest {
   void missingOpenApiSpec_failsDeployment(Vertx vertx, VertxTestContext testContext) {
     var badVerticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                 .setWebPort(0)
                 .setOpenapiSpec("missing.yaml")
                 .build(),
@@ -204,7 +204,7 @@ final class WebServerVerticleTest {
     var actualPort = new AtomicInteger();
     var badVerticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                 .setWebPort(0)
                 .setOpenapiSpec("openapi.yaml")
                 .build(),
@@ -246,7 +246,7 @@ final class WebServerVerticleTest {
     var actualPort = new AtomicInteger();
     var badVerticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                 .setWebPort(0)
                 .setOpenapiSpec("openapi.yaml")
                 .build(),

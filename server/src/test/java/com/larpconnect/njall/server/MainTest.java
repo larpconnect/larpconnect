@@ -8,7 +8,7 @@ import com.google.common.util.concurrent.Service.State;
 import com.google.inject.AbstractModule;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.init.VerticleService;
-import com.larpconnect.njall.proto.LarpconnectConfig;
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import io.vertx.core.Verticle;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -27,9 +27,9 @@ final class MainTest {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bind(LarpconnectConfig.class)
+                    bind(LarpConnectConfig.class)
                         .toInstance(
-                            LarpconnectConfig.newBuilder()
+                            LarpConnectConfig.newBuilder()
                                 .setWebPort(0)
                                 .setOpenapiSpec("openapi.yaml")
                                 .build());
@@ -54,9 +54,9 @@ final class MainTest {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bind(LarpconnectConfig.class)
+                    bind(LarpConnectConfig.class)
                         .toInstance(
-                            LarpconnectConfig.newBuilder()
+                            LarpConnectConfig.newBuilder()
                                 .setWebPort(0)
                                 .setOpenapiSpec("openapi.yaml")
                                 .build());
@@ -84,9 +84,9 @@ final class MainTest {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bind(LarpconnectConfig.class)
+                    bind(LarpConnectConfig.class)
                         .toInstance(
-                            LarpconnectConfig.newBuilder()
+                            LarpConnectConfig.newBuilder()
                                 .setWebPort(0)
                                 .setOpenapiSpec("openapi.yaml")
                                 .build());

@@ -6,7 +6,7 @@ import com.google.common.io.Resources;
 import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.annotations.BuildWith;
-import com.larpconnect.njall.proto.LarpconnectConfig;
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Nodeinfo22;
@@ -55,7 +55,7 @@ final class WebServerVerticle extends AbstractVerticle {
 
   WebServerVerticle() {
     this(
-        LarpconnectConfig.newBuilder()
+        LarpConnectConfig.newBuilder()
             .setWebPort(DEFAULT_PORT)
             .setOpenapiSpec(DEFAULT_SPEC)
             .build(),
@@ -64,18 +64,18 @@ final class WebServerVerticle extends AbstractVerticle {
 
   WebServerVerticle(String openApiSpec) {
     this(
-        LarpconnectConfig.newBuilder().setWebPort(DEFAULT_PORT).setOpenapiSpec(openApiSpec).build(),
+        LarpConnectConfig.newBuilder().setWebPort(DEFAULT_PORT).setOpenapiSpec(openApiSpec).build(),
         Optional.empty());
   }
 
   @Inject
-  WebServerVerticle(LarpconnectConfig config, Optional<Consumer<Integer>> portListener) {
+  WebServerVerticle(LarpConnectConfig config, Optional<Consumer<Integer>> portListener) {
     this(config, m -> createPrinter().print(m), portListener);
   }
 
   WebServerVerticle(int port, String openApiSpec) {
     this(
-        LarpconnectConfig.newBuilder().setWebPort(port).setOpenapiSpec(openApiSpec).build(),
+        LarpConnectConfig.newBuilder().setWebPort(port).setOpenapiSpec(openApiSpec).build(),
         Optional.empty());
   }
 
@@ -90,7 +90,7 @@ final class WebServerVerticle extends AbstractVerticle {
   }
 
   WebServerVerticle(
-      LarpconnectConfig config, Serializer serializer, Optional<Consumer<Integer>> portListener) {
+      LarpConnectConfig config, Serializer serializer, Optional<Consumer<Integer>> portListener) {
     this.port = config.getWebPort();
     this.openApiSpec = config.getOpenapiSpec();
     this.printer = createPrinter();

@@ -31,7 +31,7 @@ final class WebServerTest {
     var capturedPort = new AtomicInteger();
     var verticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                 .setWebPort(0)
                 .setOpenapiSpec("openapi.yaml")
                 .build(),
@@ -119,7 +119,7 @@ final class WebServerTest {
 
     var verticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                 .setWebPort(8080)
                 .setOpenapiSpec("openapi.yaml")
                 .build(),
@@ -140,7 +140,7 @@ final class WebServerTest {
 
     var verticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                 .setWebPort(8080)
                 .setOpenapiSpec("openapi.yaml")
                 .build(),

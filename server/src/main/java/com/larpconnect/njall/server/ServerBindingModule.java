@@ -4,8 +4,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import com.larpconnect.njall.common.annotations.InstallInstead;
-import com.larpconnect.njall.proto.LarpconnectConfig;
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import io.vertx.core.Verticle;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Singleton;
@@ -38,32 +40,35 @@ final class ServerBindingModule extends AbstractModule {
 
   @Provides
   @Singleton
-  LarpconnectConfig provideLarpconnectConfig(JsonObject config) {
-    var builder = LarpconnectConfig.newBuilder();
+  LarpConnectConfig provideLarpConnectConfig(JsonObject config) {
+    var builder = LarpConnectConfig.newBuilder();
 
-    var appConfig = config.getJsonObject("larpconnect");
-    int port = DEFAULT_PORT;
-    String spec = DEFAULT_SPEC;
+    JsonObject sourceConfig = config;
+    if (config.containsKey("larpconnect")) {
+      sourceConfig = config.getJsonObject("larpconnect");
+    }
 
-    if (appConfig != null) {
-      port = appConfig.getInteger("web.port", DEFAULT_PORT);
-      spec = appConfig.getString("openapi.spec", DEFAULT_SPEC);
-    } else {
-      port = config.getInteger("web.port", DEFAULT_PORT);
-      spec = config.getString("openapi.spec", DEFAULT_SPEC);
+    try {
+      JsonFormat.parser().ignoringUnknownFields().merge(sourceConfig.encode(), builder);
+    } catch (InvalidProtocolBufferException e) {
+      throw new RuntimeException("Failed to parse LarpConnectConfig", e);
+    }
+
+    if (builder.getWebPort() == 0) {
+      builder.setWebPort(DEFAULT_PORT);
+    }
+    if (builder.getOpenapiSpec().isEmpty()) {
+      builder.setOpenapiSpec(DEFAULT_SPEC);
     }
 
     var envPort = getenv.apply("PORT");
     if (envPort != null) {
       try {
-        port = Integer.parseInt(envPort);
+        builder.setWebPort(Integer.parseInt(envPort));
       } catch (NumberFormatException ignored) {
         // Fall back to config if env var is not a valid integer
       }
     }
-
-    builder.setWebPort(port);
-    builder.setOpenapiSpec(spec);
 
     return builder.build();
   }

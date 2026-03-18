@@ -8,7 +8,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.init.VerticleService;
 import com.larpconnect.njall.init.VerticleServices;
-import com.larpconnect.njall.proto.LarpconnectConfig;
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.server.MainVerticle;
@@ -50,9 +50,9 @@ public final class ServerStartupSteps {
                 new AbstractModule() {
                   @Override
                   protected void configure() {
-                    bind(LarpconnectConfig.class)
+                    bind(LarpConnectConfig.class)
                         .toInstance(
-                            LarpconnectConfig.newBuilder()
+                            LarpConnectConfig.newBuilder()
                                 .setWebPort(0)
                                 .setOpenapiSpec("openapi.yaml")
                                 .build());

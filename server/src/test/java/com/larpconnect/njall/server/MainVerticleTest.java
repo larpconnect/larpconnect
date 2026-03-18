@@ -46,9 +46,9 @@ final class MainVerticleTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bind(com.larpconnect.njall.proto.LarpconnectConfig.class)
+                        bind(com.larpconnect.njall.proto.LarpConnectConfig.class)
                             .toInstance(
-                                com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+                                com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                                     .setWebPort(0)
                                     .setOpenapiSpec("openapi.yaml")
                                     .build());
@@ -94,9 +94,9 @@ final class MainVerticleTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bind(com.larpconnect.njall.proto.LarpconnectConfig.class)
+                        bind(com.larpconnect.njall.proto.LarpConnectConfig.class)
                             .toInstance(
-                                com.larpconnect.njall.proto.LarpconnectConfig.newBuilder()
+                                com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
                                     .setWebPort(0)
                                     .setOpenapiSpec("openapi.yaml")
                                     .build());
