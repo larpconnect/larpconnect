@@ -63,6 +63,21 @@ final class MainTest {
     var runtimeService = new TestVerticleService();
     runtimeService.exceptionToThrow.set(new IllegalStateException("Another exception"));
     assertThatCode(() -> main.shutdown(runtimeService)).doesNotThrowAnyException();
+  }
+
+  @Test
+  void shutdown_handlesTimeoutException() {
+    var runtime = Runtime.getRuntime();
+    var overrideModule =
+        Modules.override(new ServerModule())
+            .with(
+                new AbstractModule() {
+                  @Override
+                  protected void configure() {
+                    bindConstant().annotatedWith(Names.named("web.port")).to(0);
+                  }
+                });
+    var main = new Main(runtime, overrideModule);
 
     // Specifically test TimeoutException using a proxy interface implementation
     var timeoutProxyService =
