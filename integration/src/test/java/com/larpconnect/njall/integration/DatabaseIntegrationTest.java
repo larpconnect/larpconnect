@@ -47,6 +47,7 @@ final class DatabaseIntegrationTest {
 
   @Test
   void testSerializationAndDeserialization_validEntity_succeeds() {
+  }
     ExternalResource resource = new ExternalResource();
     UUID id = UUID.randomUUID();
     resource.setId(id);
