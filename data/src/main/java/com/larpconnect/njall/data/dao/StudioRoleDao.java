@@ -1,7 +1,7 @@
 package com.larpconnect.njall.data.dao;
 
-import com.larpconnect.njall.data.entity.StudioRole;
 import com.larpconnect.njall.common.annotations.DefaultImplementation;
+import com.larpconnect.njall.data.entity.StudioRole;
 import io.smallrye.mutiny.Uni;
 
 /** DAO for StudioRole. */
