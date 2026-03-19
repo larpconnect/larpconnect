@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 final class ServerMetadataTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     ServerMetadata entity = new ServerMetadata();
 
     String nameVal = "test";

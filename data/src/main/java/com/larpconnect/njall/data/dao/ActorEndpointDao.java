@@ -5,7 +5,6 @@ import com.larpconnect.njall.data.entity.ActorEndpoint;
 import io.smallrye.mutiny.Uni;
 
 /** DAO for ActorEndpoint. */
-@com.larpconnect.njall.common.annotations.DefaultImplementation(DefaultActorEndpointDao.class)
 @DefaultImplementation(DefaultActorEndpointDao.class)
 public interface ActorEndpointDao {
 
