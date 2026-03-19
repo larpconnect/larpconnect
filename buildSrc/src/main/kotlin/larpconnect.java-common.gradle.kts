@@ -20,10 +20,10 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 dependencies {
+    api(libs.slf4j.api)
     if (project.name != "parent") {
         api(project(":parent"))
     }
-    api(libs.slf4j.api)
 
     compileOnly(libs.vertx.codegen)
 
