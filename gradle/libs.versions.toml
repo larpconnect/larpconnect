@@ -31,6 +31,10 @@ shadow = "9.4.0"
 hibernate = "7.3.0.Final"
 hibernate-reactive = "4.2.6.Final"
 
+testcontainers = "1.19.7"
+mutiny = "3.1.1"
+mutiny-vertx = "3.21.5"
+
 [libraries]
 # Core
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
@@ -78,6 +82,13 @@ cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber"
 cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 shadow-gradle-plugin = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow" }
+
+
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+mutiny-core = { module = "io.smallrye.reactive:mutiny", version.ref = "mutiny" }
+mutiny-vertx-core = { module = "io.smallrye.reactive:smallrye-mutiny-vertx-core", version.ref = "mutiny-vertx" }
+mutiny-vertx-pg-client = { module = "io.smallrye.reactive:smallrye-mutiny-vertx-pg-client", version.ref = "mutiny-vertx" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

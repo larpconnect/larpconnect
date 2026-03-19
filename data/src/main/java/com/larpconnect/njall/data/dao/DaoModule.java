@@ -8,6 +8,6 @@ public final class DaoModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    // Configure DAO bindings
+    install(new DaoBindingModule());
   }
 }

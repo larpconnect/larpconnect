@@ -8,6 +8,6 @@ public final class EntityModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    // Configure entity bindings
+    install(new EntityBindingModule());
   }
 }
