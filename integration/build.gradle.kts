@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    testImplementation(libs.commons.compress)
     testImplementation(libs.archunit.junit5)
     testImplementation(project(":api"))
     testImplementation(project(":common"))

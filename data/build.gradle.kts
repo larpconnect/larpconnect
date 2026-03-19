@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    testImplementation(libs.commons.compress)
     api(project(":common"))
 
     implementation(libs.hibernate.core)
