@@ -31,7 +31,7 @@ shadow = "9.4.0"
 hibernate = "7.3.0.Final"
 hibernate-reactive = "4.2.6.Final"
 
-testcontainers = "1.19.7"
+testcontainers = "1.20.1"
 mutiny = "3.1.1"
 mutiny-vertx = "3.21.5"
 
