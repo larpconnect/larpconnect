@@ -19,13 +19,13 @@ final class EntityTest {
     ExternalResource externalResourceVal = Mockito.mock(ExternalResource.class);
     entity.setExternalResource(externalResourceVal);
     assertThat(entity.getExternalResource()).isEqualTo(externalResourceVal);
-    OffsetDateTime createdOnVal = OffsetDateTime.now(java.time.ZoneId.systemDefault());
+    OffsetDateTime createdOnVal = OffsetDateTime.now(java.time.ZoneOffset.UTC);
     entity.setCreatedOn(createdOnVal);
     assertThat(entity.getCreatedOn()).isEqualTo(createdOnVal);
-    OffsetDateTime updatedOnVal = OffsetDateTime.now(java.time.ZoneId.systemDefault());
+    OffsetDateTime updatedOnVal = OffsetDateTime.now(java.time.ZoneOffset.UTC);
     entity.setUpdatedOn(updatedOnVal);
     assertThat(entity.getUpdatedOn()).isEqualTo(updatedOnVal);
-    OffsetDateTime deletedOnVal = OffsetDateTime.now(java.time.ZoneId.systemDefault());
+    OffsetDateTime deletedOnVal = OffsetDateTime.now(java.time.ZoneOffset.UTC);
     entity.setDeletedOn(deletedOnVal);
     assertThat(entity.getDeletedOn()).isEqualTo(deletedOnVal);
   }
