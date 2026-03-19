@@ -47,3 +47,13 @@ gradle-app.setting
 
 # Application Log
 *.log
+build/
+data/build/
+integration/build/
+api/build/
+server/build/
+init/build/
+proto/build/
+common/build/
+test/build/
+buildSrc/build/

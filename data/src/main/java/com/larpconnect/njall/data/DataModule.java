@@ -10,6 +10,7 @@ public final class DataModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    install(new DataBindingModule());
     install(new EntityModule());
     install(new DaoModule());
   }
