@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 final class UserTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     User entity = new User();
 
     String usernameVal = "test";

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 final class ExternalResourceTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     ExternalResource entity = new ExternalResource();
 
     UUID idVal = UUID.randomUUID();
@@ -21,7 +21,7 @@ final class ExternalResourceTest {
     String dataVal = "test";
     entity.setData(dataVal);
     assertThat(entity.getData()).isEqualTo(dataVal);
-    OffsetDateTime lastRefreshVal = OffsetDateTime.now();
+    OffsetDateTime lastRefreshVal = OffsetDateTime.now(java.time.ZoneId.systemDefault());
     entity.setLastRefresh(lastRefreshVal);
     assertThat(entity.getLastRefresh()).isEqualTo(lastRefreshVal);
     String hostnameVal = "test";

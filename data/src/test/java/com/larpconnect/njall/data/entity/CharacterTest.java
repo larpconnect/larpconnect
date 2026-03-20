@@ -9,7 +9,7 @@ import org.mockito.Mockito;
 final class CharacterTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     Character entity = new Character();
 
     Campaign campaignVal = Mockito.mock(Campaign.class);

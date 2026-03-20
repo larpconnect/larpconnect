@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 final class RoleTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     Role entity = new Role();
 
     String roleNameVal = "test";

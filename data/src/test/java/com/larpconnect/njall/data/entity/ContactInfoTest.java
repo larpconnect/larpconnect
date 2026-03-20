@@ -9,7 +9,7 @@ import org.mockito.Mockito;
 final class ContactInfoTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     ContactInfo entity = new ContactInfo();
 
     UUID idVal = UUID.randomUUID();
@@ -21,7 +21,7 @@ final class ContactInfoTest {
     Integer orderingVal = 1;
     entity.setOrdering(orderingVal);
     assertThat(entity.getOrdering()).isEqualTo(orderingVal);
-    ContactType contactTypeVal = ContactInfo.ContactType.email;
+    ContactInfo.ContactType contactTypeVal = ContactInfo.ContactType.email;
     entity.setContactType(contactTypeVal);
     assertThat(entity.getContactType()).isEqualTo(contactTypeVal);
     String contactVal = "test";

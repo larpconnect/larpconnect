@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 final class SecondaryTypeTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     SecondaryType entity = new SecondaryType();
 
     UUID idVal = UUID.randomUUID();

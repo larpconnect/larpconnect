@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 final class IndividualTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     Individual entity = new Individual();
 
     String nameVal = "test";

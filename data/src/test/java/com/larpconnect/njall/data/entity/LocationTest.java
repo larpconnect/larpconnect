@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 final class LocationTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     Location entity = new Location();
 
     String addressVal = "test";

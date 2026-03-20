@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 final class StudioTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     Studio entity = new Studio();
 
     String nameVal = "test";

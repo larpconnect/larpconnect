@@ -10,8 +10,8 @@ import org.mockito.Mockito;
 final class EntityTest {
 
   @Test
-  void testGettersAndSetters() {
-    Entity entity = new Entity();
+  void gettersAndSetters_validInput_returnsExpected() {
+    Entity entity = Mockito.mock(Entity.class, Mockito.CALLS_REAL_METHODS);
 
     UUID idVal = UUID.randomUUID();
     entity.setId(idVal);
@@ -19,17 +19,14 @@ final class EntityTest {
     ExternalResource externalResourceVal = Mockito.mock(ExternalResource.class);
     entity.setExternalResource(externalResourceVal);
     assertThat(entity.getExternalResource()).isEqualTo(externalResourceVal);
-    OffsetDateTime createdOnVal = OffsetDateTime.now();
+    OffsetDateTime createdOnVal = OffsetDateTime.now(java.time.ZoneOffset.UTC);
     entity.setCreatedOn(createdOnVal);
     assertThat(entity.getCreatedOn()).isEqualTo(createdOnVal);
-    OffsetDateTime updatedOnVal = OffsetDateTime.now();
+    OffsetDateTime updatedOnVal = OffsetDateTime.now(java.time.ZoneOffset.UTC);
     entity.setUpdatedOn(updatedOnVal);
     assertThat(entity.getUpdatedOn()).isEqualTo(updatedOnVal);
-    OffsetDateTime deletedOnVal = OffsetDateTime.now();
+    OffsetDateTime deletedOnVal = OffsetDateTime.now(java.time.ZoneOffset.UTC);
     entity.setDeletedOn(deletedOnVal);
     assertThat(entity.getDeletedOn()).isEqualTo(deletedOnVal);
-    UUID idVal = UUID.randomUUID();
-    entity.setId(idVal);
-    assertThat(entity.getId()).isEqualTo(idVal);
   }
 }
