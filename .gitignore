@@ -45,15 +45,5 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
-# Application Log
-*.log
 build/
-data/build/
-integration/build/
-api/build/
-server/build/
-init/build/
-proto/build/
-common/build/
-test/build/
-buildSrc/build/
+*.log

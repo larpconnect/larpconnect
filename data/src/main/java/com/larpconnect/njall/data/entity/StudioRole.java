@@ -25,7 +25,10 @@ public final class StudioRole {
 
     public StudioRoleId() {}
 
-    public StudioRoleId(UUID studio, UUID role, UUID individual) {
+    public StudioRoleId(
+        @javax.annotation.Nullable UUID studio,
+        @javax.annotation.Nullable UUID role,
+        @javax.annotation.Nullable UUID individual) {
       this.studio = studio;
       this.role = role;
       this.individual = individual;

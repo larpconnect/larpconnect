@@ -25,7 +25,7 @@ final class StudioRoleTest {
   }
 
   @Test
-  void studioRoleId_equalsAndHashCode_validInput_returnsExpected() {
+  void equalsAndHashCode_validInput_returnsExpected() {
     UUID studio = UUID.randomUUID();
     UUID role = UUID.randomUUID();
     UUID individual = UUID.randomUUID();
@@ -71,7 +71,7 @@ final class StudioRoleTest {
   }
 
   @Test
-  void studioRoleId_serialVersionUID_validInput_returnsExpected() {
+  void serialVersionUID_validInput_returnsExpected() {
     long serialVersionUID =
         ObjectStreamClass.lookup(StudioRole.StudioRoleId.class).getSerialVersionUID();
     assertThat(serialVersionUID).isEqualTo(1L);

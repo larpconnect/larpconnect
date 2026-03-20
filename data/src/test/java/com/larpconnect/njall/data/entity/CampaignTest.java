@@ -12,9 +12,9 @@ final class CampaignTest {
   void gettersAndSetters_validInput_returnsExpected() {
     Campaign entity = new Campaign();
 
-    System systemVal = Mockito.mock(System.class);
-    entity.setSystem(systemVal);
-    assertThat(entity.getSystem()).isEqualTo(systemVal);
+    LarpSystem systemVal = Mockito.mock(LarpSystem.class);
+    entity.setLarpSystem(systemVal);
+    assertThat(entity.getLarpSystem()).isEqualTo(systemVal);
     UUID idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);

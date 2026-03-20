@@ -22,7 +22,7 @@ final class DaoBindingModule extends AbstractModule {
     bind(RoleDao.class).to(DefaultRoleDao.class);
     bind(StudioRoleDao.class).to(DefaultStudioRoleDao.class);
     bind(LocationDao.class).to(DefaultLocationDao.class);
-    bind(SystemDao.class).to(DefaultSystemDao.class);
+    bind(LarpSystemDao.class).to(DefaultLarpSystemDao.class);
     bind(CampaignDao.class).to(DefaultCampaignDao.class);
     bind(GameDao.class).to(DefaultGameDao.class);
     bind(CharacterDao.class).to(DefaultCharacterDao.class);

@@ -9,7 +9,7 @@ final class SystemTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    System entity = new System();
+    LarpSystem entity = new LarpSystem();
 
     String nameVal = "test";
     entity.setName(nameVal);

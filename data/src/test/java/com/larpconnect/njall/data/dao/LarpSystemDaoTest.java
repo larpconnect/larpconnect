@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.larpconnect.njall.data.entity.System;
+import com.larpconnect.njall.data.entity.LarpSystem;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Provider;
 import java.util.UUID;
@@ -16,12 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("unchecked")
-final class SystemDaoTest {
+final class LarpSystemDaoTest {
 
   private Mutiny.SessionFactory sessionFactoryMock;
   private Mutiny.Session sessionMock;
   private Provider<Mutiny.SessionFactory> providerMock;
-  private DefaultSystemDao dao;
+  private DefaultLarpSystemDao dao;
 
   @BeforeEach
   void setUp() {
@@ -38,25 +38,25 @@ final class SystemDaoTest {
               return function.apply(sessionMock);
             });
 
-    dao = new DefaultSystemDao(providerMock);
+    dao = new DefaultLarpSystemDao(providerMock);
   }
 
   @Test
   void findById_validId_returnsEntity() {
     UUID id = UUID.randomUUID();
-    System expectedEntity = mock(System.class);
+    LarpSystem expectedEntity = mock(LarpSystem.class);
 
-    when(sessionMock.find(System.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
+    when(sessionMock.find(LarpSystem.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
 
-    System actualEntity = dao.findById(id).await().indefinitely();
+    LarpSystem actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
-    verify(sessionMock).find(System.class, id);
+    verify(sessionMock).find(LarpSystem.class, id);
   }
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    System entity = mock(System.class);
+    LarpSystem entity = mock(LarpSystem.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 
