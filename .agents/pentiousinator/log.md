@@ -26,6 +26,7 @@ focused on linting and analysis tools.
 **Learning:** SpotBugs exclusions must be centralized in the global `config/spotbugs/exclude.xml` file. Applying `excludeFilter.set(...)` in individual project build scripts (e.g., `server/build.gradle.kts` or `proto/build.gradle.kts`) drops the global exclusions defined in the `larpconnect.quality` convention plugin instead of merging with them.
 
 **Action:** Whenever a new SpotBugs exclusion is needed for a specific module, add it to the global `config/spotbugs/exclude.xml` with appropriate matchers (e.g., `<Package>` or `<Class>`) rather than creating a local exclusion file and overriding the filter.
+
 ## 2026-03-19 - Test Configuration and Compilation Improvements
 
 **Learning:** Found and fixed several issues, including bad imports, Mockito compilation errors due to mismatched UUIDs to Object conversions, generic matching syntax inside Mutiny block verification, and some invalid references. Removed redundant build entries in the gitignore file, and properly applied the Java spot check plugin with test names. Tests needed to be properly named avoiding `test...()` functions. The `Testcontainers` do not currently function natively inside of the sandbox space.
