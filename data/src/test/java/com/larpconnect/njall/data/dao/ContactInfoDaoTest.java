@@ -60,6 +60,6 @@ final class ContactInfoDaoTest {
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 
-    dao.persist(entity).await().indefinitely();
+    dao.persist(entity);
   }
 }

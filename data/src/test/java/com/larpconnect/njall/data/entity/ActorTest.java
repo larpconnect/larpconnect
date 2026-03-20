@@ -9,7 +9,7 @@ import org.mockito.Mockito;
 final class ActorTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     Actor entity = new Actor();
 
     Entity ownerVal = Mockito.mock(Entity.class);

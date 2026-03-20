@@ -9,7 +9,7 @@ import org.mockito.Mockito;
 final class CampaignTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     Campaign entity = new Campaign();
 
     System systemVal = Mockito.mock(System.class);

@@ -10,7 +10,7 @@ import org.mockito.Mockito;
 final class CollectionItemTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     CollectionItem entity = new CollectionItem();
 
     UUID idVal = UUID.randomUUID();
@@ -19,7 +19,7 @@ final class CollectionItemTest {
     Collection collectionVal = Mockito.mock(Collection.class);
     entity.setCollection(collectionVal);
     assertThat(entity.getCollection()).isEqualTo(collectionVal);
-    OffsetDateTime addedOnVal = OffsetDateTime.now();
+    OffsetDateTime addedOnVal = OffsetDateTime.now(java.time.ZoneId.systemDefault());
     entity.setAddedOn(addedOnVal);
     assertThat(entity.getAddedOn()).isEqualTo(addedOnVal);
     Entity refersToVal = Mockito.mock(Entity.class);

@@ -9,7 +9,7 @@ import org.mockito.Mockito;
 final class CollectionTest {
 
   @Test
-  void testGettersAndSetters() {
+  void gettersAndSetters_validInput_returnsExpected() {
     Collection entity = new Collection();
 
     Entity ownerVal = Mockito.mock(Entity.class);

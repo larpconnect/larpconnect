@@ -9,6 +9,8 @@ dependencies {
     testImplementation(project(":common"))
     testImplementation(project(":init"))
     testImplementation(project(":data"))
+    testImplementation(libs.mutiny.core)
+    testImplementation(libs.hibernate.core)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.junit.jupiter)
 
