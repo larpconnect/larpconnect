@@ -1,6 +1,7 @@
 package com.larpconnect.njall.data.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 
 import java.time.OffsetDateTime;
@@ -11,7 +12,7 @@ final class EntityTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Entity entity = mock(Entity.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+    Entity entity = mock(Entity.class, CALLS_REAL_METHODS);
 
     UUID idVal = UUID.randomUUID();
     entity.setId(idVal);
