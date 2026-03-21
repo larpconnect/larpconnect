@@ -45,5 +45,5 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
-# Application Log
+build/
 *.log

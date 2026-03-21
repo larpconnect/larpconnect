@@ -1,0 +1,41 @@
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+             version="3.0">
+
+    <persistence-unit name="njall-pu">
+        <provider>org.hibernate.reactive.provider.ReactivePersistenceProvider</provider>
+
+        <class>com.larpconnect.njall.data.entity.ExternalResource</class>
+        <class>com.larpconnect.njall.data.entity.Entity</class>
+        <class>com.larpconnect.njall.data.entity.SecondaryType</class>
+        <class>com.larpconnect.njall.data.entity.ContactInfo</class>
+        <class>com.larpconnect.njall.data.entity.ServerMetadata</class>
+        <class>com.larpconnect.njall.data.entity.Actor</class>
+        <class>com.larpconnect.njall.data.entity.ActorEndpoint</class>
+        <class>com.larpconnect.njall.data.entity.Collection</class>
+        <class>com.larpconnect.njall.data.entity.CollectionItem</class>
+        <class>com.larpconnect.njall.data.entity.Individual</class>
+        <class>com.larpconnect.njall.data.entity.User</class>
+        <class>com.larpconnect.njall.data.entity.Studio</class>
+        <class>com.larpconnect.njall.data.entity.Role</class>
+        <class>com.larpconnect.njall.data.entity.StudioRole</class>
+        <class>com.larpconnect.njall.data.entity.Location</class>
+        <class>com.larpconnect.njall.data.entity.LarpSystem</class>
+        <class>com.larpconnect.njall.data.entity.Campaign</class>
+        <class>com.larpconnect.njall.data.entity.Game</class>
+        <class>com.larpconnect.njall.data.entity.Character</class>
+        <class>com.larpconnect.njall.data.entity.CharacterInstance</class>
+
+        <properties>
+            <!-- PostgreSQL -->
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/njall"/>
+            <property name="jakarta.persistence.jdbc.user" value="test"/>
+            <property name="jakarta.persistence.jdbc.password" value="test"/>
+
+            <property name="hibernate.hbm2ddl.auto" value="none"/>
+        </properties>
+
+    </persistence-unit>
+
+</persistence>
