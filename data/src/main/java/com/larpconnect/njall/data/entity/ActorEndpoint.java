@@ -24,7 +24,8 @@ public final class ActorEndpoint {
 
     public ActorEndpointId() {}
 
-    public ActorEndpointId(UUID actor, String name) {
+    public ActorEndpointId(
+        @javax.annotation.Nullable UUID actor, @javax.annotation.Nullable String name) {
       this.actor = actor;
       this.name = name;
     }

@@ -6,13 +6,12 @@ import jakarta.persistence.Table;
 /** Represents a LARP system. */
 @jakarta.persistence.Entity
 @Table(name = "systems")
-@SuppressWarnings("JavaLangClash") // Intentional naming mirroring the schema
-public final class System extends Entity {
+public final class LarpSystem extends Entity {
 
   @Column(name = "name", nullable = false)
   private String name;
 
-  System() {}
+  LarpSystem() {}
 
   public String getName() {
     return name;

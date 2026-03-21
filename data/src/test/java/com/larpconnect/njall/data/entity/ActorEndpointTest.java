@@ -25,7 +25,7 @@ final class ActorEndpointTest {
   }
 
   @Test
-  void actorEndpointId_equalsAndHashCode_validInput_returnsExpected() {
+  void equalsAndHashCode_validInput_returnsExpected() {
     UUID actor = UUID.randomUUID();
     String name = "endpoint";
 
@@ -65,7 +65,7 @@ final class ActorEndpointTest {
   }
 
   @Test
-  void actorEndpointId_serialVersionUID_validInput_returnsExpected() {
+  void serialVersionUID_validInput_returnsExpected() {
     long serialVersionUID =
         ObjectStreamClass.lookup(ActorEndpoint.ActorEndpointId.class).getSerialVersionUID();
     assertThat(serialVersionUID).isEqualTo(1L);

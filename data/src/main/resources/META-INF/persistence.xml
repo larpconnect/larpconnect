@@ -21,7 +21,7 @@
         <class>com.larpconnect.njall.data.entity.Role</class>
         <class>com.larpconnect.njall.data.entity.StudioRole</class>
         <class>com.larpconnect.njall.data.entity.Location</class>
-        <class>com.larpconnect.njall.data.entity.System</class>
+        <class>com.larpconnect.njall.data.entity.LarpSystem</class>
         <class>com.larpconnect.njall.data.entity.Campaign</class>
         <class>com.larpconnect.njall.data.entity.Game</class>
         <class>com.larpconnect.njall.data.entity.Character</class>

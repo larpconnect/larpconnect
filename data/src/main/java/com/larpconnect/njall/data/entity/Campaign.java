@@ -11,15 +11,15 @@ public final class Campaign extends Entity {
 
   @ManyToOne
   @JoinColumn(name = "system_id")
-  private System system;
+  private LarpSystem system;
 
   Campaign() {}
 
-  public System getSystem() {
+  public LarpSystem getLarpSystem() {
     return system;
   }
 
-  public void setSystem(System system) {
+  public void setLarpSystem(LarpSystem system) {
     this.system = system;
   }
 }
