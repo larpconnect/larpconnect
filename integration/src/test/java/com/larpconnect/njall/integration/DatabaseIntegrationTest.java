@@ -14,18 +14,26 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Disabled("Testcontainers not working in sandbox")
+@Testcontainers
 final class DatabaseIntegrationTest {
+
+  @Container
+  private static final PostgreSQLContainer<?> postgres =
+      new PostgreSQLContainer<>("postgres:15-alpine");
 
   private static Injector injector;
   private static ExternalResourceDao dao;
 
   @BeforeAll
   static void setUp() {
-    System.setProperty("jakarta.persistence.jdbc.url", "jdbc:postgresql://localhost:5432/njall");
-    System.setProperty("jakarta.persistence.jdbc.user", "test");
-    System.setProperty("jakarta.persistence.jdbc.password", "test");
+    System.setProperty("jakarta.persistence.jdbc.url", postgres.getJdbcUrl());
+    System.setProperty("jakarta.persistence.jdbc.user", postgres.getUsername());
+    System.setProperty("jakarta.persistence.jdbc.password", postgres.getPassword());
     System.setProperty("hibernate.hbm2ddl.auto", "update");
 
     injector = Guice.createInjector(new DataModule());
