@@ -14,18 +14,16 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Disabled("Testcontainers not working in sandbox")
 @Testcontainers
 final class DatabaseIntegrationTest {
 
   @Container
-  @SuppressWarnings("deprecation")
-  private static final PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>("postgres:18-alpine");
+  private static final PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:18-alpine");
 
   private static Injector injector;
   private static ExternalResourceDao dao;
