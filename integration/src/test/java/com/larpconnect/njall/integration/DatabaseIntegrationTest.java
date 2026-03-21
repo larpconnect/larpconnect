@@ -24,7 +24,7 @@ final class DatabaseIntegrationTest {
 
   @Container
   private static final PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>("postgres:15-alpine");
+      new PostgreSQLContainer<>("postgres:18-alpine");
 
   private static Injector injector;
   private static ExternalResourceDao dao;
