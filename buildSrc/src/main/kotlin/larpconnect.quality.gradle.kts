@@ -85,10 +85,6 @@ tasks.named("check") {
 }
 
 dependencies {
-    add("compileOnly", libs.errorprone.annotations)
-    add("compileOnly", libs.jsr305)
-    add("compileOnly", libs.spotbugs.annotations)
-
     add("errorprone", libs.errorprone.core)
 }
 

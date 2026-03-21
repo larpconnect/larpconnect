@@ -32,3 +32,9 @@ focused on linting and analysis tools.
 **Learning:** Found and fixed several issues, including bad imports, Mockito compilation errors due to mismatched UUIDs to Object conversions, generic matching syntax inside Mutiny block verification, and some invalid references. Removed redundant build entries in the gitignore file, and properly applied the Java spot check plugin with test names. Tests needed to be properly named avoiding `test...()` functions. The `Testcontainers` do not currently function natively inside of the sandbox space.
 
 **Action:** Ensure tests are named accurately, use specific Matcher syntax for Mockito when verifying Uni methods, and ensure redundant folders inside `.gitignore` are trimmed if covered by top-level variables.
+
+## 2026-03-21 - Avoiding redundant dependency injection in convention plugins
+
+**Learning:** In Gradle build scripts, injecting compile-time dependencies like annotations globally via quality-focused convention plugins (e.g., `larpconnect.quality`) can be redundant and implicitly leak dependencies. In this project, these dependencies (`errorprone.annotations`, `jsr305`, `spotbugs.annotations`) were already being centrally managed and explicitly exported via the `:parent` module.
+
+**Action:** Remove redundant `compileOnly` dependency injections from quality convention plugins when they are already explicitly managed and provided by centralized modules like `:parent`.
