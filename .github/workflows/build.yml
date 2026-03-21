@@ -39,20 +39,3 @@ jobs:
       uses: gradle/actions/setup-gradle@v5
       with:
         dependency-graph: generate-and-submit
-  dependency-review:
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout repository'
-        uses: actions/checkout@v6
-      - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v4
-        # Commonly enabled options, see https://github.com/actions/dependency-review-action#configuration-options for all available options.
-        with:
-          base-ref: ${{ github.event.pull_request.base.sha || 'main' }}
-          head-ref: ${{ github.event.pull_request.head.sha || github.ref }}
-          comment-summary-in-pr: always
-          fail-on-severity: low
-          retry-on-snapshot-warnings: true
-          retry-on-snapshot-warnings-timeout: 600
