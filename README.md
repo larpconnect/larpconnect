@@ -71,7 +71,7 @@ configuration files, please refer to the
 [Configuration Guide](docs/configuration.md).
 
 > [!NOTE]
-> The standard `PORT` environment variable takes precedence over the `web.port`
+> The standard `PORT` environment variable takes precedence over the `webPort`
 > setting configured in `config.json`. This is implemented as a common pattern
 > for cloud deployments (such as Render or Heroku).
 
@@ -120,7 +120,7 @@ curl -v http://localhost:8080/v1/message
 * `:proto`: Protocol definition objects in protobuf.
 * `:data`: The data model and database handling system.
 * `:integration`: Integration and architecture tests.
-* `:bom`: The platform that defines the bill of materials for the project. 
+* `:bom`: The platform that defines the bill of materials for the project.
 
 ## Inators
 
