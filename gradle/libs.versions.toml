@@ -32,7 +32,7 @@ shadow = "9.4.0"
 hibernate = "7.3.0.Final"
 hibernate-reactive = "4.2.6.Final"
 
-testcontainers = "1.21.3"
+testcontainers = "2.0.4"
 mutiny = "3.1.1"
 mutiny-vertx = "3.21.5"
 
@@ -89,8 +89,8 @@ spotbugs-gradle-plugin = { module = "com.github.spotbugs.snom:spotbugs-gradle-pl
 spotless-gradle-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 
 
-testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
-testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
 mutiny-core = { module = "io.smallrye.reactive:mutiny", version.ref = "mutiny" }
 mutiny-vertx-core = { module = "io.smallrye.reactive:smallrye-mutiny-vertx-core", version.ref = "mutiny-vertx" }
 mutiny-vertx-pg-client = { module = "io.smallrye.reactive:smallrye-mutiny-vertx-pg-client", version.ref = "mutiny-vertx" }

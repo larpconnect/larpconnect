@@ -23,6 +23,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 final class DatabaseIntegrationTest {
 
   @Container
+  @SuppressWarnings("deprecation")
   private static final PostgreSQLContainer<?> postgres =
       new PostgreSQLContainer<>("postgres:18-alpine");
 
