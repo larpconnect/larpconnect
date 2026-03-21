@@ -1,4 +1,4 @@
-# LARPConnect: Connecting LARP Communities
+# LarpConnect: Connecting Larp Communities
 
 > [!CAUTION]
 > **DEVELOPMENT STATUS: PRE-ALPHA** This project is **not** ready
@@ -11,7 +11,7 @@
 
 ## Project Overview
 
-**LARPConnect** is a platform designed to bridge and federate Live Action
+**LarpConnect** is a platform designed to bridge and federate Live Action
 Role-Playing (LARP) communities. It allows for the creation of interconnected
 subcommunities that can communicate and share resources.
 
@@ -108,6 +108,19 @@ To verify the service is running:
 ```bash
 curl -v http://localhost:8080/v1/message
 ```
+
+## Software Layout
+
+* `:parent`: The central dependency object. Everything else inherits from this.
+* `:test`: Like `:parent` but exclusive to testing. Common testing utilities and dependencies.
+* `:common`: Common, central utilities.
+* `:server`: The main application. This is where the code for running the system lives.
+* `:init`: The lifecycle control section. `:server` uses this to bootstrap the system.
+* `:api`: The verticles that control the API's business logic.
+* `:proto`: Protocol definition objects in protobuf.
+* `:data`: The data model and database handling system.
+* `:integration`: Integration and architecture tests.
+* `:bom`: The platform that defines the bill of materials for the project. 
 
 ## Inators
 
