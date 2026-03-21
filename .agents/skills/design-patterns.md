@@ -152,7 +152,7 @@ public final Utility {
 }
 ```
 
-## Basic API Pattern
+### Basic API Pattern
 
 1. Create a protobuf that represents any JSON in the request and/or response.
 2. Modify the `openapi.yaml` file to add the endpoint
@@ -163,3 +163,15 @@ public final Utility {
 5. Write unit tests.
 6. Write integration tests.
 
+### Database modifications
+
+1. Add a file with an incrementing number in the `migrations` folder in `:data`, e.g., `00_migration_name.sql` or `01_migration_name_2.sql`
+2. In that file create an _idempotent_ SQL script making changes. It can be safely assumed that SQL changes will start with the `init` and then happen _in order_.
+
+### Standard Data Transfer Object Pattern
+
+1. Create the object using Hibernate annotations and register it appropriately
+2. If it is not part of another object's lifecycle then create a DAO for it
+3. Wire it together using guice
+4. Ensure that all branches are tested, especially equals functions
+5. Assume pgplsql as the dialect and target it accordingly
