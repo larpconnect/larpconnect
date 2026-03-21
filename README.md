@@ -120,7 +120,7 @@ curl -v http://localhost:8080/v1/message
 * `:proto`: Protocol definition objects in protobuf.
 * `:data`: The data model and database handling system.
 * `:integration`: Integration and architecture tests.
-* `:bom`: The platform that defines the bill of materials for the project. 
+* `:bom`: The platform that defines the bill of materials for the project.
 
 ## Inators
 

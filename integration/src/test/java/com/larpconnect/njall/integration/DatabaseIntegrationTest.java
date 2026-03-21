@@ -1,6 +1,7 @@
 package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -13,7 +14,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 @Disabled("Testcontainers not working in sandbox")
 final class DatabaseIntegrationTest {
@@ -37,7 +37,8 @@ final class DatabaseIntegrationTest {
 
   @Test
   void serializationAndDeserialization_validEntity_succeeds() {
-    ExternalResource resource = Mockito.mock(ExternalResource.class, Mockito.CALLS_REAL_METHODS);
+    ExternalResource resource =
+        mock(ExternalResource.class, org.mockito.Mockito.CALLS_REAL_METHODS);
     UUID id = UUID.randomUUID();
     resource.setId(id);
     resource.setExternalUri("https://example.com");
