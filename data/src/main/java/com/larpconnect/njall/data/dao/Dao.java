@@ -17,7 +17,7 @@ public interface Dao<T extends DatabaseObject, ID> {
    * @param id The identifier
    * @return A Uni containing the entity, or null if not found
    */
-  Uni<T> findById(ID id);
+  Uni<T> findById(String serverId, ID id);
 
   /**
    * Persists the given entity to the database.
@@ -25,5 +25,5 @@ public interface Dao<T extends DatabaseObject, ID> {
    * @param entity The entity to persist
    * @return A Uni representing the completion of the persistence operation
    */
-  Uni<Void> persist(T entity);
+  Uni<Void> persist(String serverId, T entity);
 }

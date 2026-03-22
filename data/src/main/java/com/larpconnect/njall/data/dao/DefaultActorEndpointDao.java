@@ -18,16 +18,16 @@ final class DefaultActorEndpointDao implements ActorEndpointDao {
   }
 
   @Override
-  public Uni<ActorEndpoint> findById(ActorEndpoint.ActorEndpointId id) {
+  public Uni<ActorEndpoint> findById(String serverId, ActorEndpoint.ActorEndpointId id) {
     return sessionFactoryProvider
         .get()
-        .withSession(session -> session.find(ActorEndpoint.class, id));
+        .withSession(serverId, session -> session.find(ActorEndpoint.class, id));
   }
 
   @Override
-  public Uni<Void> persist(ActorEndpoint entity) {
+  public Uni<Void> persist(String serverId, ActorEndpoint entity) {
     return sessionFactoryProvider
         .get()
-        .withSession(session -> session.persist(entity).call(session::flush));
+        .withSession(serverId, session -> session.persist(entity).call(session::flush));
   }
 }
