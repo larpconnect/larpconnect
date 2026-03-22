@@ -1,11 +1,13 @@
 package com.larpconnect.njall.data.dao;
 
+import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.data.entity.ActorEndpoint;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.hibernate.reactive.mutiny.Mutiny;
 
+@BuildWith(DaoModule.class)
 final class DefaultActorEndpointDao implements ActorEndpointDao {
 
   private final Provider<Mutiny.SessionFactory> sessionFactoryProvider;
