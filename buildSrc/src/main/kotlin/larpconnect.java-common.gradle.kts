@@ -37,6 +37,15 @@ dependencies {
         implementation(libs.log4j.core) {
             because("CVE-2025-68161")
         }
+        implementation(libs.jackson.core) {
+            because("GHSA-72hv-8253-57qq")
+        }
+        implementation(libs.jackson.databind) {
+            because("GHSA-72hv-8253-57qq")
+        }
+        implementation(libs.jackson.annotations) {
+            because("GHSA-72hv-8253-57qq")
+        }
     }
 
     testCompileOnly(libs.vertx.codegen)
