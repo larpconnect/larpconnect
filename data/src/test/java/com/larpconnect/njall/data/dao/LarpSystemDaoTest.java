@@ -43,12 +43,12 @@ final class LarpSystemDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    LarpSystem expectedEntity = mock(LarpSystem.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(LarpSystem.class);
 
     when(sessionMock.find(LarpSystem.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
 
-    LarpSystem actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(LarpSystem.class, id);
@@ -56,7 +56,7 @@ final class LarpSystemDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    LarpSystem entity = mock(LarpSystem.class);
+    var entity = mock(LarpSystem.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

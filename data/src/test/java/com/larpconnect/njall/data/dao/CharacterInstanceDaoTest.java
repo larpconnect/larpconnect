@@ -43,13 +43,13 @@ final class CharacterInstanceDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    CharacterInstance expectedEntity = mock(CharacterInstance.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(CharacterInstance.class);
 
     when(sessionMock.find(CharacterInstance.class, id))
         .thenReturn(Uni.createFrom().item(expectedEntity));
 
-    CharacterInstance actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(CharacterInstance.class, id);
@@ -57,7 +57,7 @@ final class CharacterInstanceDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    CharacterInstance entity = mock(CharacterInstance.class);
+    var entity = mock(CharacterInstance.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

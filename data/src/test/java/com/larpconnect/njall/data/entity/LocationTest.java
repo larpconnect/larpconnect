@@ -9,12 +9,12 @@ final class LocationTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Location entity = new Location();
+    var entity = new Location();
 
     String addressVal = "test";
     entity.setAddress(addressVal);
     assertThat(entity.getAddress()).isEqualTo(addressVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

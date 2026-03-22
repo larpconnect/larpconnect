@@ -10,9 +10,9 @@ final class ActorTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Actor entity = new Actor();
+    var entity = new Actor();
 
-    Entity ownerVal = mock(Entity.class);
+    var ownerVal = mock(Entity.class);
     entity.setOwner(ownerVal);
     assertThat(entity.getOwner()).isEqualTo(ownerVal);
     String summaryVal = "test";
@@ -21,7 +21,7 @@ final class ActorTest {
     String preferredUsernameVal = "test";
     entity.setPreferredUsername(preferredUsernameVal);
     assertThat(entity.getPreferredUsername()).isEqualTo(preferredUsernameVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

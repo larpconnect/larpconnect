@@ -3,6 +3,8 @@ package com.larpconnect.njall.server;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Nodeinfo22;
@@ -36,10 +38,7 @@ final class WebServerVerticleTest {
     var actualPort = new AtomicInteger();
     verticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
-                .setWebPort(0)
-                .setOpenapiSpec("openapi.yaml")
-                .build(),
+            LarpConnectConfig.newBuilder().setWebPort(0).setOpenapiSpec("openapi.yaml").build(),
             m -> "{\"test\":\"json\"}",
             Optional.of(actualPort::set));
 
@@ -138,8 +137,7 @@ final class WebServerVerticleTest {
                               .setMessage(
                                   Any.newBuilder()
                                       .setTypeUrl("type.googleapis.com/invalid")
-                                      .setValue(
-                                          com.google.protobuf.ByteString.copyFromUtf8("invalid"))
+                                      .setValue(ByteString.copyFromUtf8("invalid"))
                                       .build()))
                       .build());
             });
@@ -178,11 +176,8 @@ final class WebServerVerticleTest {
   void missingOpenApiSpec_failsDeployment(Vertx vertx, VertxTestContext testContext) {
     var badVerticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
-                .setWebPort(0)
-                .setOpenapiSpec("missing.yaml")
-                .build(),
-            java.util.Optional.empty());
+            LarpConnectConfig.newBuilder().setWebPort(0).setOpenapiSpec("missing.yaml").build(),
+            Optional.empty());
     vertx
         .deployVerticle(badVerticle)
         .onComplete(
@@ -204,10 +199,7 @@ final class WebServerVerticleTest {
     var actualPort = new AtomicInteger();
     var badVerticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
-                .setWebPort(0)
-                .setOpenapiSpec("openapi.yaml")
-                .build(),
+            LarpConnectConfig.newBuilder().setWebPort(0).setOpenapiSpec("openapi.yaml").build(),
             badSerializer,
             Optional.of(actualPort::set));
 
@@ -246,10 +238,7 @@ final class WebServerVerticleTest {
     var actualPort = new AtomicInteger();
     var badVerticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
-                .setWebPort(0)
-                .setOpenapiSpec("openapi.yaml")
-                .build(),
+            LarpConnectConfig.newBuilder().setWebPort(0).setOpenapiSpec("openapi.yaml").build(),
             badSerializer,
             Optional.of(actualPort::set));
 

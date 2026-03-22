@@ -10,12 +10,12 @@ final class CampaignTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Campaign entity = new Campaign();
+    var entity = new Campaign();
 
-    LarpSystem systemVal = mock(LarpSystem.class);
+    var systemVal = mock(LarpSystem.class);
     entity.setLarpSystem(systemVal);
     assertThat(entity.getLarpSystem()).isEqualTo(systemVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

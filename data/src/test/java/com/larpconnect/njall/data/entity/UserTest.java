@@ -9,12 +9,12 @@ final class UserTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    User entity = new User();
+    var entity = new User();
 
     String usernameVal = "test";
     entity.setUsername(usernameVal);
     assertThat(entity.getUsername()).isEqualTo(usernameVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

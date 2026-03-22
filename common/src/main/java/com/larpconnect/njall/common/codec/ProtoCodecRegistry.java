@@ -8,6 +8,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.buffer.impl.BufferImpl;
 
 /**
  * A message codec for transmitting Protocol Buffer {@link MessageRequest} objects over the Vert.x
@@ -51,10 +52,7 @@ final class ProtoCodecRegistry implements ProtoCodec {
     try {
       var message =
           MessageRequest.parseFrom(
-              io.vertx.core.buffer.impl.BufferImpl.class
-                  .cast(buffer)
-                  .byteBuf()
-                  .nioBuffer(currentPos, size));
+              BufferImpl.class.cast(buffer).byteBuf().nioBuffer(currentPos, size));
 
       if (message.hasProto()) {
         var typeUrl = message.getProto().getMessage().getTypeUrl();

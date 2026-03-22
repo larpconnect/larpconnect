@@ -43,13 +43,13 @@ final class ExternalResourceDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    ExternalResource expectedEntity = mock(ExternalResource.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(ExternalResource.class);
 
     when(sessionMock.find(ExternalResource.class, id))
         .thenReturn(Uni.createFrom().item(expectedEntity));
 
-    ExternalResource actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(ExternalResource.class, id);
@@ -57,7 +57,7 @@ final class ExternalResourceDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    ExternalResource entity = mock(ExternalResource.class);
+    var entity = mock(ExternalResource.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

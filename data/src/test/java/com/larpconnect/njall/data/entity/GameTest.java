@@ -10,12 +10,12 @@ final class GameTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Game entity = new Game();
+    var entity = new Game();
 
-    Campaign campaignVal = mock(Campaign.class);
+    var campaignVal = mock(Campaign.class);
     entity.setCampaign(campaignVal);
     assertThat(entity.getCampaign()).isEqualTo(campaignVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

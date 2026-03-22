@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.larpconnect.njall.data.entity.ActorEndpoint;
+import com.larpconnect.njall.data.entity.ActorEndpoint.ActorEndpointId;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Provider;
 import java.util.UUID;
@@ -43,15 +44,13 @@ final class ActorEndpointDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    com.larpconnect.njall.data.entity.ActorEndpoint.ActorEndpointId id =
-        new com.larpconnect.njall.data.entity.ActorEndpoint.ActorEndpointId(
-            UUID.randomUUID(), "test");
-    ActorEndpoint expectedEntity = mock(ActorEndpoint.class);
+    ActorEndpointId id = new ActorEndpointId(UUID.randomUUID(), "test");
+    var expectedEntity = mock(ActorEndpoint.class);
 
     when(sessionMock.find(ActorEndpoint.class, id))
         .thenReturn(Uni.createFrom().item(expectedEntity));
 
-    ActorEndpoint actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(ActorEndpoint.class, id);
@@ -59,7 +58,7 @@ final class ActorEndpointDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    ActorEndpoint entity = mock(ActorEndpoint.class);
+    var entity = mock(ActorEndpoint.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

@@ -43,12 +43,12 @@ final class StudioDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    Studio expectedEntity = mock(Studio.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(Studio.class);
 
     when(sessionMock.find(Studio.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
 
-    Studio actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(Studio.class, id);
@@ -56,7 +56,7 @@ final class StudioDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    Studio entity = mock(Studio.class);
+    var entity = mock(Studio.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

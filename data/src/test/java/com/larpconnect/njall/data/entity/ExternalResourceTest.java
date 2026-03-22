@@ -10,9 +10,9 @@ final class ExternalResourceTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    ExternalResource entity = new ExternalResource();
+    var entity = new ExternalResource();
 
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
     String externalUriVal = "test";

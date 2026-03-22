@@ -11,9 +11,9 @@ final class ActorEndpointTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    ActorEndpoint entity = new ActorEndpoint();
+    var entity = new ActorEndpoint();
 
-    Actor actorVal = mock(Actor.class);
+    var actorVal = mock(Actor.class);
     entity.setActor(actorVal);
     assertThat(entity.getActor()).isEqualTo(actorVal);
     String nameVal = "test";
@@ -26,7 +26,7 @@ final class ActorEndpointTest {
 
   @Test
   void equalsAndHashCode_validInput_returnsExpected() {
-    UUID actor = UUID.randomUUID();
+    var actor = UUID.randomUUID();
     String name = "endpoint";
 
     ActorEndpoint.ActorEndpointId id1 = new ActorEndpoint.ActorEndpointId();

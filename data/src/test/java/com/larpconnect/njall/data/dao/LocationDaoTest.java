@@ -43,12 +43,12 @@ final class LocationDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    Location expectedEntity = mock(Location.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(Location.class);
 
     when(sessionMock.find(Location.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
 
-    Location actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(Location.class, id);
@@ -56,7 +56,7 @@ final class LocationDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    Location entity = mock(Location.class);
+    var entity = mock(Location.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

@@ -74,8 +74,8 @@ final class DefaultMainVerticleTest {
     var testVerticle = new TestVerticle();
     var mainVerticle = new DefaultMainVerticle(ImmutableSet.of(testVerticle));
 
-    Vertx mockVertx = mock(Vertx.class);
-    Context mockContext = mock(Context.class);
+    var mockVertx = mock(Vertx.class);
+    var mockContext = mock(Context.class);
 
     var failure = new IllegalStateException("Deployment failed");
     when(mockVertx.deployVerticle(any(Verticle.class))).thenReturn(Future.failedFuture(failure));

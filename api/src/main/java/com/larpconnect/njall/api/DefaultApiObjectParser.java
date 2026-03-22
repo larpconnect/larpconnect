@@ -33,13 +33,12 @@ final class DefaultApiObjectParser implements ApiObjectParser {
       json.remove("extensions");
 
       if (extensions != null) {
-        for (String key : extensions.fieldNames()) {
-          var extMap = extensions.getJsonObject(key);
-          if (!extMap.isEmpty()) {
-            var innerKey = extMap.fieldNames().iterator().next();
-            json.mergeIn(extMap.getJsonObject(innerKey));
-          }
-        }
+        extensions.fieldNames().stream()
+            .map(extensions::getJsonObject)
+            .filter(extMap -> !extMap.isEmpty())
+            .forEach(
+                extMap ->
+                    json.mergeIn(extMap.getJsonObject(extMap.fieldNames().iterator().next())));
       }
 
       // Handle raw content override for Document

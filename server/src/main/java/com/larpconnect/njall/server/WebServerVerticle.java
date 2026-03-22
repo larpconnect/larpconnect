@@ -4,6 +4,7 @@ import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 
 import com.google.common.io.Resources;
 import com.google.protobuf.util.JsonFormat;
+import com.google.protobuf.util.JsonFormat.TypeRegistry;
 import com.larpconnect.njall.common.annotations.AiContract;
 import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.proto.LarpConnectConfig;
@@ -81,7 +82,7 @@ final class WebServerVerticle extends AbstractVerticle {
 
   private static JsonFormat.Printer createPrinter() {
     var registry =
-        com.google.protobuf.util.JsonFormat.TypeRegistry.newBuilder()
+        TypeRegistry.newBuilder()
             .add(WebfingerResponse.getDescriptor())
             .add(NodeinfoJrd.getDescriptor())
             .add(Nodeinfo22.getDescriptor())

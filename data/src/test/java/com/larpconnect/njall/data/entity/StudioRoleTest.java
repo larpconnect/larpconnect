@@ -11,24 +11,24 @@ final class StudioRoleTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    StudioRole entity = new StudioRole();
+    var entity = new StudioRole();
 
-    Studio studioVal = mock(Studio.class);
+    var studioVal = mock(Studio.class);
     entity.setStudio(studioVal);
     assertThat(entity.getStudio()).isEqualTo(studioVal);
-    Role roleVal = mock(Role.class);
+    var roleVal = mock(Role.class);
     entity.setRole(roleVal);
     assertThat(entity.getRole()).isEqualTo(roleVal);
-    Individual individualVal = mock(Individual.class);
+    var individualVal = mock(Individual.class);
     entity.setIndividual(individualVal);
     assertThat(entity.getIndividual()).isEqualTo(individualVal);
   }
 
   @Test
   void equalsAndHashCode_validInput_returnsExpected() {
-    UUID studio = UUID.randomUUID();
-    UUID role = UUID.randomUUID();
-    UUID individual = UUID.randomUUID();
+    var studio = UUID.randomUUID();
+    var role = UUID.randomUUID();
+    var individual = UUID.randomUUID();
 
     StudioRole.StudioRoleId id1 = new StudioRole.StudioRoleId();
     StudioRole.StudioRoleId id2 = new StudioRole.StudioRoleId(studio, role, individual);

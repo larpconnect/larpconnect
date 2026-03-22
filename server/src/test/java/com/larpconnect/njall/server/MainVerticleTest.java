@@ -8,6 +8,7 @@ import com.google.inject.Injector;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.common.time.TimeService;
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
@@ -46,9 +47,9 @@ final class MainVerticleTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bind(com.larpconnect.njall.proto.LarpConnectConfig.class)
+                        bind(LarpConnectConfig.class)
                             .toInstance(
-                                com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
+                                LarpConnectConfig.newBuilder()
                                     .setWebPort(0)
                                     .setOpenapiSpec("openapi.yaml")
                                     .build());
@@ -94,9 +95,9 @@ final class MainVerticleTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bind(com.larpconnect.njall.proto.LarpConnectConfig.class)
+                        bind(LarpConnectConfig.class)
                             .toInstance(
-                                com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
+                                LarpConnectConfig.newBuilder()
                                     .setWebPort(0)
                                     .setOpenapiSpec("openapi.yaml")
                                     .build());

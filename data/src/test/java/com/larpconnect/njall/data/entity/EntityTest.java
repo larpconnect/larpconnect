@@ -14,10 +14,10 @@ final class EntityTest {
   void gettersAndSetters_validInput_returnsExpected() {
     Entity entity = mock(Entity.class, CALLS_REAL_METHODS);
 
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
-    ExternalResource externalResourceVal = mock(ExternalResource.class);
+    var externalResourceVal = mock(ExternalResource.class);
     entity.setExternalResource(externalResourceVal);
     assertThat(entity.getExternalResource()).isEqualTo(externalResourceVal);
     OffsetDateTime createdOnVal = OffsetDateTime.now(java.time.ZoneOffset.UTC);
