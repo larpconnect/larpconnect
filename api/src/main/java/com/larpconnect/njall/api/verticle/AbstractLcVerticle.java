@@ -59,54 +59,50 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
           "Registers the verticle to handle messages on the configured event bus "
               + "channel, adding tracing headers if absent.")
   public void start(Promise<Void> startPromise) {
-    vertx
-        .eventBus()
-        .<MessageRequest>consumer(
-            channel,
-            msg -> {
-              MessageRequest message = msg.body();
-
-              byte[] newSpanId = new byte[SPAN_ID_BYTES];
-              randomProvider.get().nextBytes(newSpanId);
-
-              MessageRequest finalMessage = ensureObservability(message);
-              String traceIdStr =
-                  HEX.encode(finalMessage.getTraceparent().getTraceId().toByteArray());
-              String parentSpanIdStr =
-                  HEX.encode(finalMessage.getTraceparent().getSpanId().toByteArray());
-              String spanIdStr = HEX.encode(newSpanId);
-
-              try (Closer closer = Closer.create()) {
-                closer.register(MDC.putCloseable("trace_id", traceIdStr));
-                closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
-                closer.register(MDC.putCloseable("span_id", spanIdStr));
-
-                Promise<MessageReply> responsePromise = Promise.promise();
-                responsePromise
-                    .future()
-                    .onComplete(
-                        ar -> {
-                          if (ar.succeeded()) {
-                            msg.reply(ar.result());
-                          } else {
-                            log.error("Error handling message on channel: {}", channel, ar.cause());
-                            msg.fail(-1, "Internal Error");
-                          }
-                        });
-
-                MessageResponse response = handleMessage(newSpanId, finalMessage, responsePromise);
-                if (response == BasicResponse.SHUTDOWN) {
-                  vertx.eventBus().consumer(channel).unregister();
-                }
-              } catch (IOException e) {
-                throw new java.io.UncheckedIOException(e);
-              } catch (RuntimeException e) {
-                log.error("Error handling message on channel: {}", channel, e);
-                msg.fail(-1, "Internal Error");
-              }
-            });
+    vertx.eventBus().<MessageRequest>consumer(channel, this::processMessage);
 
     startPromise.complete();
+  }
+
+  private void processMessage(io.vertx.core.eventbus.Message<MessageRequest> msg) {
+    MessageRequest message = msg.body();
+
+    byte[] newSpanId = new byte[SPAN_ID_BYTES];
+    randomProvider.get().nextBytes(newSpanId);
+
+    MessageRequest finalMessage = ensureObservability(message);
+    String traceIdStr = HEX.encode(finalMessage.getTraceparent().getTraceId().toByteArray());
+    String parentSpanIdStr = HEX.encode(finalMessage.getTraceparent().getSpanId().toByteArray());
+    String spanIdStr = HEX.encode(newSpanId);
+
+    try (Closer closer = Closer.create()) {
+      closer.register(MDC.putCloseable("trace_id", traceIdStr));
+      closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
+      closer.register(MDC.putCloseable("span_id", spanIdStr));
+
+      Promise<MessageReply> responsePromise = Promise.promise();
+      responsePromise
+          .future()
+          .onComplete(
+              ar -> {
+                if (ar.succeeded()) {
+                  msg.reply(ar.result());
+                } else {
+                  log.error("Error handling message on channel: {}", channel, ar.cause());
+                  msg.fail(-1, "Internal Error");
+                }
+              });
+
+      MessageResponse response = handleMessage(newSpanId, finalMessage, responsePromise);
+      if (response == BasicResponse.SHUTDOWN) {
+        vertx.eventBus().consumer(channel).unregister();
+      }
+    } catch (IOException e) {
+      throw new java.io.UncheckedIOException(e);
+    } catch (RuntimeException e) {
+      log.error("Error handling message on channel: {}", channel, e);
+      msg.fail(-1, "Internal Error");
+    }
   }
 
   private MessageRequest ensureObservability(MessageRequest message) {
