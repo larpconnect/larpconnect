@@ -43,12 +43,12 @@ final class RoleDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    Role expectedEntity = mock(Role.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(Role.class);
 
     when(sessionMock.find(Role.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
 
-    Role actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(Role.class, id);
@@ -56,7 +56,7 @@ final class RoleDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    Role entity = mock(Role.class);
+    var entity = mock(Role.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

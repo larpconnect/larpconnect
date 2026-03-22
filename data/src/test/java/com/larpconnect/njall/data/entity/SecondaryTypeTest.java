@@ -9,9 +9,9 @@ final class SecondaryTypeTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    SecondaryType entity = new SecondaryType();
+    var entity = new SecondaryType();
 
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
     String[] typesListVal = new String[] {"test"};

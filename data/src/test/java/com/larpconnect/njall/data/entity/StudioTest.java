@@ -9,12 +9,12 @@ final class StudioTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Studio entity = new Studio();
+    var entity = new Studio();
 
     String nameVal = "test";
     entity.setName(nameVal);
     assertThat(entity.getName()).isEqualTo(nameVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

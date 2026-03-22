@@ -43,13 +43,13 @@ final class ServerMetadataDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    ServerMetadata expectedEntity = mock(ServerMetadata.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(ServerMetadata.class);
 
     when(sessionMock.find(ServerMetadata.class, id))
         .thenReturn(Uni.createFrom().item(expectedEntity));
 
-    ServerMetadata actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(ServerMetadata.class, id);
@@ -57,7 +57,7 @@ final class ServerMetadataDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    ServerMetadata entity = mock(ServerMetadata.class);
+    var entity = mock(ServerMetadata.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

@@ -10,12 +10,12 @@ final class ContactInfoTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    ContactInfo entity = new ContactInfo();
+    var entity = new ContactInfo();
 
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
-    Entity ownerVal = mock(Entity.class);
+    var ownerVal = mock(Entity.class);
     entity.setOwner(ownerVal);
     assertThat(entity.getOwner()).isEqualTo(ownerVal);
     Integer orderingVal = 1;

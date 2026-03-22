@@ -10,15 +10,15 @@ final class CharacterTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Character entity = new Character();
+    var entity = new Character();
 
-    Campaign campaignVal = mock(Campaign.class);
+    var campaignVal = mock(Campaign.class);
     entity.setCampaign(campaignVal);
     assertThat(entity.getCampaign()).isEqualTo(campaignVal);
     String nameTemplateVal = "test";
     entity.setNameTemplate(nameTemplateVal);
     assertThat(entity.getNameTemplate()).isEqualTo(nameTemplateVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

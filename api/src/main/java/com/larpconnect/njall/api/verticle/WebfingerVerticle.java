@@ -4,7 +4,6 @@ import com.google.protobuf.Any;
 import com.larpconnect.njall.common.id.IdGenerator;
 import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
-import com.larpconnect.njall.proto.Parameter;
 import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Promise;
@@ -23,14 +22,12 @@ final class WebfingerVerticle extends AbstractLcVerticle {
   @Override
   protected MessageResponse handleMessage(
       byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
-    String resource = null;
-    var params = message.getParametersList();
-
-    for (Parameter p : params) {
-      if ("resource".equals(p.getKey()) && p.hasStringValue()) {
-        resource = sanitize(p.getStringValue());
-      }
-    }
+    String resource =
+        message.getParametersList().stream()
+            .filter(p -> "resource".equals(p.getKey()) && p.hasStringValue())
+            .map(p -> sanitize(p.getStringValue()))
+            .reduce((first, second) -> second)
+            .orElse(null);
 
     if (resource == null) {
       // Return a basic empty response rather than fake data if it's missing or invalid

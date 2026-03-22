@@ -9,12 +9,12 @@ final class SystemTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    LarpSystem entity = new LarpSystem();
+    var entity = new LarpSystem();
 
     String nameVal = "test";
     entity.setName(nameVal);
     assertThat(entity.getName()).isEqualTo(nameVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

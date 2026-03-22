@@ -11,18 +11,18 @@ final class CollectionItemTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    CollectionItem entity = new CollectionItem();
+    var entity = new CollectionItem();
 
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
-    Collection collectionVal = mock(Collection.class);
+    var collectionVal = mock(Collection.class);
     entity.setCollection(collectionVal);
     assertThat(entity.getCollection()).isEqualTo(collectionVal);
     OffsetDateTime addedOnVal = OffsetDateTime.now(java.time.ZoneId.systemDefault());
     entity.setAddedOn(addedOnVal);
     assertThat(entity.getAddedOn()).isEqualTo(addedOnVal);
-    Entity refersToVal = mock(Entity.class);
+    var refersToVal = mock(Entity.class);
     entity.setRefersTo(refersToVal);
     assertThat(entity.getRefersTo()).isEqualTo(refersToVal);
   }

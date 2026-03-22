@@ -9,12 +9,12 @@ final class IndividualTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Individual entity = new Individual();
+    var entity = new Individual();
 
     String nameVal = "test";
     entity.setName(nameVal);
     assertThat(entity.getName()).isEqualTo(nameVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.larpconnect.njall.data.entity.StudioRole;
+import com.larpconnect.njall.data.entity.StudioRole.StudioRoleId;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Provider;
 import java.util.UUID;
@@ -43,14 +44,12 @@ final class StudioRoleDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    com.larpconnect.njall.data.entity.StudioRole.StudioRoleId id =
-        new com.larpconnect.njall.data.entity.StudioRole.StudioRoleId(
-            UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
-    StudioRole expectedEntity = mock(StudioRole.class);
+    StudioRoleId id = new StudioRoleId(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var expectedEntity = mock(StudioRole.class);
 
     when(sessionMock.find(StudioRole.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
 
-    StudioRole actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(StudioRole.class, id);
@@ -58,7 +57,7 @@ final class StudioRoleDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    StudioRole entity = mock(StudioRole.class);
+    var entity = mock(StudioRole.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

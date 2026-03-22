@@ -43,12 +43,12 @@ final class GameDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    Game expectedEntity = mock(Game.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(Game.class);
 
     when(sessionMock.find(Game.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
 
-    Game actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(Game.class, id);
@@ -56,7 +56,7 @@ final class GameDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    Game entity = mock(Game.class);
+    var entity = mock(Game.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

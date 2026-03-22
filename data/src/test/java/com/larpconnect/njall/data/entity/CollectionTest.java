@@ -10,15 +10,15 @@ final class CollectionTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Collection entity = new Collection();
+    var entity = new Collection();
 
-    Entity ownerVal = mock(Entity.class);
+    var ownerVal = mock(Entity.class);
     entity.setOwner(ownerVal);
     assertThat(entity.getOwner()).isEqualTo(ownerVal);
     String nameVal = "test";
     entity.setName(nameVal);
     assertThat(entity.getName()).isEqualTo(nameVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

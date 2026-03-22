@@ -9,12 +9,12 @@ final class ServerMetadataTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    ServerMetadata entity = new ServerMetadata();
+    var entity = new ServerMetadata();
 
     String nameVal = "test";
     entity.setName(nameVal);
     assertThat(entity.getName()).isEqualTo(nameVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

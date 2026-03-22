@@ -43,12 +43,12 @@ final class ContactInfoDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    UUID id = UUID.randomUUID();
-    ContactInfo expectedEntity = mock(ContactInfo.class);
+    var id = UUID.randomUUID();
+    var expectedEntity = mock(ContactInfo.class);
 
     when(sessionMock.find(ContactInfo.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
 
-    ContactInfo actualEntity = dao.findById(id).await().indefinitely();
+    var actualEntity = dao.findById(id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(ContactInfo.class, id);
@@ -56,7 +56,7 @@ final class ContactInfoDaoTest {
 
   @Test
   void persist_validEntity_callsSessionPersist() {
-    ContactInfo entity = mock(ContactInfo.class);
+    var entity = mock(ContactInfo.class);
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 

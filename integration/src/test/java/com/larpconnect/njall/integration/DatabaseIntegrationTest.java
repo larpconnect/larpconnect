@@ -39,7 +39,7 @@ final class DatabaseIntegrationTest {
   @Test
   void serializationAndDeserialization_validEntity_succeeds() {
     ExternalResource resource = mock(ExternalResource.class, CALLS_REAL_METHODS);
-    UUID id = UUID.randomUUID();
+    var id = UUID.randomUUID();
     resource.setId(id);
     resource.setExternalUri("https://example.com");
     resource.setData("{\"key\": \"value\"}");
@@ -47,7 +47,7 @@ final class DatabaseIntegrationTest {
 
     dao.persist(resource).await().indefinitely();
 
-    ExternalResource fetched = dao.findById(id).await().indefinitely();
+    var fetched = dao.findById(id).await().indefinitely();
     assertThat(fetched).isNotNull();
     assertThat(fetched.getId()).isEqualTo(id);
     assertThat(fetched.getExternalUri()).isEqualTo("https://example.com");

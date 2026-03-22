@@ -10,6 +10,7 @@ import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import jakarta.inject.Provider;
@@ -158,8 +159,7 @@ final class AbstractLcVerticleTest {
                               err ->
                                   testContext.verify(
                                       () -> {
-                                        io.vertx.core.eventbus.ReplyException re =
-                                            (io.vertx.core.eventbus.ReplyException) err;
+                                        ReplyException re = (ReplyException) err;
                                         assertThat(re.failureCode()).isEqualTo(-1);
                                         assertThat(re.getMessage()).isEqualTo("Internal Error");
                                         assertThat(handled.get()).isTrue();
@@ -217,8 +217,7 @@ final class AbstractLcVerticleTest {
                               err ->
                                   testContext.verify(
                                       () -> {
-                                        io.vertx.core.eventbus.ReplyException re =
-                                            (io.vertx.core.eventbus.ReplyException) err;
+                                        ReplyException re = (ReplyException) err;
                                         assertThat(re.failureCode()).isEqualTo(-1);
                                         assertThat(re.getMessage()).isEqualTo("Internal Error");
                                         assertThat(handled.get()).isTrue();

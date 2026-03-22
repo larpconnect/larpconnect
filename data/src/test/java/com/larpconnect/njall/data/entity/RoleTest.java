@@ -9,12 +9,12 @@ final class RoleTest {
 
   @Test
   void gettersAndSetters_validInput_returnsExpected() {
-    Role entity = new Role();
+    var entity = new Role();
 
     String roleNameVal = "test";
     entity.setRoleName(roleNameVal);
     assertThat(entity.getRoleName()).isEqualTo(roleNameVal);
-    UUID idVal = UUID.randomUUID();
+    var idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
   }

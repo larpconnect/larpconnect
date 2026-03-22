@@ -168,13 +168,16 @@ public final class ServerStartupSteps {
                   var actual = response.bodyAsJsonObject();
                   var expected = new JsonObject(expectedJson);
                   // Verify expected fields exist in actual
-                  for (String key : expected.fieldNames()) {
-                    if (!actual.containsKey(key)
-                        || !actual.getValue(key).equals(expected.getValue(key))) {
-                      logger.error(
-                          "Mismatch. Expected: {} but got: {}", expectedJson, actual.encode());
-                      return;
-                    }
+                  boolean match =
+                      expected.fieldNames().stream()
+                          .allMatch(
+                              key ->
+                                  actual.containsKey(key)
+                                      && actual.getValue(key).equals(expected.getValue(key)));
+                  if (!match) {
+                    logger.error(
+                        "Mismatch. Expected: {} but got: {}", expectedJson, actual.encode());
+                    return;
                   }
                   success.set(true);
                 } else {

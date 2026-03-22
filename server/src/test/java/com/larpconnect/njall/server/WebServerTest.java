@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.larpconnect.njall.proto.LarpConnectConfig;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.client.WebClient;
@@ -31,10 +32,7 @@ final class WebServerTest {
     var capturedPort = new AtomicInteger();
     var verticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
-                .setWebPort(0)
-                .setOpenapiSpec("openapi.yaml")
-                .build(),
+            LarpConnectConfig.newBuilder().setWebPort(0).setOpenapiSpec("openapi.yaml").build(),
             Optional.of(port -> capturedPort.set(port)));
 
     vertx
@@ -115,14 +113,11 @@ final class WebServerTest {
 
   @Test
   void handleGetMessage_handlesSerializationFailure(Vertx vertx, VertxTestContext testContext) {
-    RoutingContext ctx = mock(RoutingContext.class);
+    var ctx = mock(RoutingContext.class);
 
     var verticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
-                .setWebPort(8080)
-                .setOpenapiSpec("openapi.yaml")
-                .build(),
+            LarpConnectConfig.newBuilder().setWebPort(8080).setOpenapiSpec("openapi.yaml").build(),
             m -> {
               throw new java.io.IOException("Serialization failed");
             },
@@ -136,14 +131,11 @@ final class WebServerTest {
 
   @Test
   void handleGetMessage_handlesRuntimeException(Vertx vertx, VertxTestContext testContext) {
-    RoutingContext ctx = mock(RoutingContext.class);
+    var ctx = mock(RoutingContext.class);
 
     var verticle =
         new WebServerVerticle(
-            com.larpconnect.njall.proto.LarpConnectConfig.newBuilder()
-                .setWebPort(8080)
-                .setOpenapiSpec("openapi.yaml")
-                .build(),
+            LarpConnectConfig.newBuilder().setWebPort(8080).setOpenapiSpec("openapi.yaml").build(),
             m -> {
               throw new IllegalStateException("Unexpected error");
             },
