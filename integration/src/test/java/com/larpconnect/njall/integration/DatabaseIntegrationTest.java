@@ -1,6 +1,8 @@
 package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -13,26 +15,18 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Disabled("Testcontainers not working in sandbox")
-@Testcontainers
 final class DatabaseIntegrationTest {
-
-  @Container
-  private static final PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:18-alpine");
 
   private static Injector injector;
   private static ExternalResourceDao dao;
 
   @BeforeAll
   static void setUp() {
-    System.setProperty("jakarta.persistence.jdbc.url", postgres.getJdbcUrl());
-    System.setProperty("jakarta.persistence.jdbc.user", postgres.getUsername());
-    System.setProperty("jakarta.persistence.jdbc.password", postgres.getPassword());
+    System.setProperty("jakarta.persistence.jdbc.url", "jdbc:postgresql://localhost:5432/njall");
+    System.setProperty("jakarta.persistence.jdbc.user", "test");
+    System.setProperty("jakarta.persistence.jdbc.password", "test");
     System.setProperty("hibernate.hbm2ddl.auto", "update");
 
     injector = Guice.createInjector(new DataModule());
@@ -44,7 +38,7 @@ final class DatabaseIntegrationTest {
 
   @Test
   void serializationAndDeserialization_validEntity_succeeds() {
-    ExternalResource resource = Mockito.mock(ExternalResource.class, Mockito.CALLS_REAL_METHODS);
+    ExternalResource resource = mock(ExternalResource.class, CALLS_REAL_METHODS);
     UUID id = UUID.randomUUID();
     resource.setId(id);
     resource.setExternalUri("https://example.com");

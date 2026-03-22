@@ -71,7 +71,7 @@ configuration files, please refer to the
 [Configuration Guide](docs/configuration.md).
 
 > [!NOTE]
-> The standard `PORT` environment variable takes precedence over the `webPort`
+> The standard `PORT` environment variable takes precedence over the `web.port`
 > setting configured in `config.json`. This is implemented as a common pattern
 > for cloud deployments (such as Render or Heroku).
 

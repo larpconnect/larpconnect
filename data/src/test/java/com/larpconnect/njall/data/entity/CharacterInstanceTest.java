@@ -1,10 +1,10 @@
 package com.larpconnect.njall.data.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 final class CharacterInstanceTest {
 
@@ -12,13 +12,13 @@ final class CharacterInstanceTest {
   void gettersAndSetters_validInput_returnsExpected() {
     CharacterInstance entity = new CharacterInstance();
 
-    Character characterVal = Mockito.mock(Character.class);
+    Character characterVal = mock(Character.class);
     entity.setCharacter(characterVal);
     assertThat(entity.getCharacter()).isEqualTo(characterVal);
-    Individual playerVal = Mockito.mock(Individual.class);
+    Individual playerVal = mock(Individual.class);
     entity.setPlayer(playerVal);
     assertThat(entity.getPlayer()).isEqualTo(playerVal);
-    Game gameVal = Mockito.mock(Game.class);
+    Game gameVal = mock(Game.class);
     entity.setGame(gameVal);
     assertThat(entity.getGame()).isEqualTo(gameVal);
     String individualNameVal = "test";

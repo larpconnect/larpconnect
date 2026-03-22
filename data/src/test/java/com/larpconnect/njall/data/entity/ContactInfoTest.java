@@ -1,10 +1,10 @@
 package com.larpconnect.njall.data.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 final class ContactInfoTest {
 
@@ -15,7 +15,7 @@ final class ContactInfoTest {
     UUID idVal = UUID.randomUUID();
     entity.setId(idVal);
     assertThat(entity.getId()).isEqualTo(idVal);
-    Entity ownerVal = Mockito.mock(Entity.class);
+    Entity ownerVal = mock(Entity.class);
     entity.setOwner(ownerVal);
     assertThat(entity.getOwner()).isEqualTo(ownerVal);
     Integer orderingVal = 1;

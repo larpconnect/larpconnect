@@ -40,7 +40,6 @@ jobs:
       with:
         dependency-graph: generate-and-submit
   dependency-review:
-    needs: dependency-submission
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     runs-on: ubuntu-latest
