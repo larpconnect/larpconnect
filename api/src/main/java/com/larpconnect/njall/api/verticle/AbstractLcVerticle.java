@@ -9,9 +9,12 @@ import com.larpconnect.njall.proto.MessageReply;
 import com.larpconnect.njall.proto.MessageRequest;
 import com.larpconnect.njall.proto.Observability;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Promise;
+import io.vertx.core.eventbus.Message;
 import jakarta.inject.Provider;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -64,7 +67,7 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
     startPromise.complete();
   }
 
-  private void processMessage(io.vertx.core.eventbus.Message<MessageRequest> msg) {
+  private void processMessage(Message<MessageRequest> msg) {
     MessageRequest message = msg.body();
 
     byte[] newSpanId = new byte[SPAN_ID_BYTES];
@@ -81,27 +84,30 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
       closer.register(MDC.putCloseable("span_id", spanIdStr));
 
       Promise<MessageReply> responsePromise = Promise.promise();
-      responsePromise
-          .future()
-          .onComplete(
-              ar -> {
-                if (ar.succeeded()) {
-                  msg.reply(ar.result());
-                } else {
-                  log.error("Error handling message on channel: {}", channel, ar.cause());
-                  msg.fail(-1, "Internal Error");
-                }
-              });
+      responsePromise.future().onComplete(ar -> completeResponse(ar, msg));
 
       MessageResponse response = handleMessage(newSpanId, finalMessage, responsePromise);
-      if (response == BasicResponse.SHUTDOWN) {
-        vertx.eventBus().consumer(channel).unregister();
-      }
+      handleResponse(response);
     } catch (IOException e) {
-      throw new java.io.UncheckedIOException(e);
+      throw new UncheckedIOException(e);
     } catch (RuntimeException e) {
       log.error("Error handling message on channel: {}", channel, e);
       msg.fail(-1, "Internal Error");
+    }
+  }
+
+  private void completeResponse(AsyncResult<MessageReply> ar, Message<MessageRequest> msg) {
+    if (ar.succeeded()) {
+      msg.reply(ar.result());
+    } else {
+      log.error("Error handling message on channel: {}", channel, ar.cause());
+      msg.fail(-1, "Internal Error");
+    }
+  }
+
+  private void handleResponse(MessageResponse response) {
+    if (response == BasicResponse.SHUTDOWN) {
+      vertx.eventBus().consumer(channel).unregister();
     }
   }
 
