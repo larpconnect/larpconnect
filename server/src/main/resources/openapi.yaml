@@ -38,7 +38,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/WebfingerResponse'
   /.well-known/nodeinfo:
     get:
       operationId: nodeinfoWellKnown
@@ -48,7 +48,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/NodeinfoJrd'
   /admin/nodeinfo:
     get:
       operationId: nodeinfoAdmin
@@ -58,9 +58,127 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/Nodeinfo22'
 components:
   schemas:
+    Nodeinfo22:
+      type: object
+      properties:
+        version:
+          type: string
+        instance:
+          $ref: '#/components/schemas/NodeinfoInstance'
+        software:
+          $ref: '#/components/schemas/NodeinfoSoftware'
+        protocols:
+          type: array
+          items:
+            type: string
+        services:
+          $ref: '#/components/schemas/NodeinfoServices'
+        open_registrations:
+          type: boolean
+        usage:
+          $ref: '#/components/schemas/NodeinfoUsage'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    NodeinfoInstance:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    NodeinfoJrd:
+      type: object
+      properties:
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeinfoJrdLink'
+    NodeinfoJrdLink:
+      type: object
+      properties:
+        rel:
+          type: string
+        href:
+          type: string
+    NodeinfoServices:
+      type: object
+      properties:
+        inbound:
+          type: array
+          items:
+            type: string
+        outbound:
+          type: array
+          items:
+            type: string
+    NodeinfoSoftware:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        repository:
+          type: string
+        homepage:
+          type: string
+    NodeinfoUsage:
+      type: object
+      properties:
+        users:
+          $ref: '#/components/schemas/NodeinfoUsageUsers'
+        local_posts:
+          type: integer
+          format: uint32
+        local_comments:
+          type: integer
+          format: uint32
+    NodeinfoUsageUsers:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: uint32
+        active_halfyear:
+          type: integer
+          format: uint32
+        active_month:
+          type: integer
+          format: uint32
+        active_week:
+          type: integer
+          format: uint32
+    WebfingerLink:
+      type: object
+      properties:
+        rel:
+          type: string
+        type:
+          type: string
+        href:
+          type: string
+    WebfingerResponse:
+      type: object
+      properties:
+        subject:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebfingerLink'
     Authentication:
       type: object
       properties:
