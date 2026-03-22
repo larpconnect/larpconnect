@@ -77,15 +77,11 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
     String traceIdStr = HEX.encode(finalMessage.getTraceparent().getTraceId().toByteArray());
     String parentSpanIdStr = HEX.encode(finalMessage.getTraceparent().getSpanId().toByteArray());
     String spanIdStr = HEX.encode(newSpanId);
-    String serverStr = finalMessage.getServer();
 
     try (Closer closer = Closer.create()) {
       closer.register(MDC.putCloseable("trace_id", traceIdStr));
       closer.register(MDC.putCloseable("parent_span_id", parentSpanIdStr));
       closer.register(MDC.putCloseable("span_id", spanIdStr));
-      if (!serverStr.isEmpty()) {
-        closer.register(MDC.putCloseable("server", serverStr));
-      }
 
       Promise<MessageReply> responsePromise = Promise.promise();
       responsePromise.future().onComplete(ar -> completeResponse(ar, msg));
@@ -102,12 +98,7 @@ abstract class AbstractLcVerticle extends AbstractVerticle {
 
   private void completeResponse(AsyncResult<MessageReply> ar, Message<MessageRequest> msg) {
     if (ar.succeeded()) {
-      MessageReply reply = ar.result();
-      String server = msg.body().getServer();
-      if (!server.isEmpty() && reply.getServer().isEmpty()) {
-        reply = reply.toBuilder().setServer(server).build();
-      }
-      msg.reply(reply);
+      msg.reply(ar.result());
     } else {
       log.error("Error handling message on channel: {}", channel, ar.cause());
       msg.fail(-1, "Internal Error");
