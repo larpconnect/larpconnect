@@ -13,4 +13,4 @@ import com.larpconnect.njall.common.annotations.AiContract;
 @AiContract(
     implementationHint =
         "Sealed interface representing the outcome of handling a message over the Vert.x EventBus.")
-public sealed interface MessageResponse permits BasicResponse, ReplyResponse {}
+public sealed interface MessageResponse permits BasicResponse {}
