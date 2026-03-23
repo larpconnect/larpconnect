@@ -30,7 +30,7 @@ archunit = "1.4.1"
 google-common-protos = "2.67.0"
 shadow = "9.4.0"
 hibernate = "7.3.0.Final"
-hibernate-reactive = "4.2.6.Final"
+hibernate-reactive = "4.3.0.Final"
 
 testcontainers = "1.20.4"
 mutiny = "3.1.1"
