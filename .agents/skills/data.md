@@ -19,6 +19,26 @@ such formats.
 ## Specific Guidance
 
 - Use Guava IO when possible for data reading and writing.
-- If the tool doesn't exist in guava, Apache Commons IO can be used.
-- If JSON must be parsed independently from Protobuf, use Gson.
-
+- If the tool doesn't exist in guava, Apache Commons IO, Mutiny, and Mug can be used.
+- If JSON must be parsed independently from Protobuf, use Jackson.
+- When writing protocols emphasize having objects contain _either_
+  objects **or** primtiive types at a given level. So rather than:
+  ```json
+  {
+    "name": "foo",
+    "configuration": {
+      // Other configuration elements
+    }
+  }
+  ```
+  We would prefer:
+  ```json
+  {
+    "header": {
+      "name": "foo"
+    },
+    "configuration": {
+      // Other configuration elements
+    }
+  }
+  ```
