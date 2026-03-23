@@ -39,6 +39,18 @@ modularity, your technical capabilities are partitioned into "skills":
 - This is a system that values correctness, completeness, and flexibility.
 - Vert.x is the base build system. Injection is handled by Guice.
 
+## Relevant Documents
+
+1. `AGENTS.md`, `CONTRIBUTING.md`, and `README.md`. These are the basic ground rules for the system.
+2. `.agents/SKILLS.md` and any linked-to skills. These provide contextual information and often direct
+   the agent to load specific resource documentation from context7.
+3. `.cursorrules`. This contains general guidance for coding assistance IDEs and tools that integrate with
+   IDEs.
+4. Any `docs/`. These provide additional contextual information on how to use the system.
+
+Some specific named agents have logs in the `.agents` directory. These should not be paid attention to unless
+coding under that persona/agent.
+
 ## Definition of Done
 
 This system uses a robust set of automated tests to ensure compliance with
@@ -53,6 +65,9 @@ quality checks.
    cannot be merged and will not be reviewed to be merged.
 5. `./gradlew build` has been run and passes. If this is not done then the code
    cannot be merged and will not be reviewed to be merged.
+
+An internal code review before asking a human to review is always appropriate for
+code and config changes.
 
 Once these criteria are met then the code may be pushed. You do not need to
 confirm readiness to push if these criteria are met.
@@ -80,6 +95,7 @@ confirm readiness to push if these criteria are met.
     for other modules to import.
   - `:common` Basic utilities and objects that are not central to the core logic
     of the system.
+  - `:data` The database interface layer. Includes DTOs and configuration.
   - `:proto` The wire protocol objects. Serialized with protobuf. Library.
   - `:api` The basic API for the REST service. Library.
   - `:init` Initialization code for the vert.x system and guice bindings.
@@ -142,6 +158,9 @@ response.
 - API Documentation: Publicly accessible types and methods require comprehensive
   Javadoc documentation. Brief descriptions may be omitted only if the
   functionality is inherently self-evident from the identifier naming.
+- Review code yourself or with the help of an AI agent before submitting the code
+  for a human review. Ensure in particular that there are no extraneous files
+  (e.g., `.diff` files or arbitrary python files) before submitting.
 
 ## Critical Infrastructure
 
