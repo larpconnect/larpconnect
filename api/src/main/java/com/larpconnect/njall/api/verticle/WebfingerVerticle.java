@@ -8,6 +8,7 @@ import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.Promise;
 import jakarta.inject.Inject;
+import java.util.Optional;
 
 /** Verticle handling Webfinger requests from the /.well-known/webfinger endpoint. */
 final class WebfingerVerticle extends AbstractLcVerticle {
@@ -22,14 +23,13 @@ final class WebfingerVerticle extends AbstractLcVerticle {
   @Override
   protected MessageResponse handleMessage(
       byte[] spanId, MessageRequest message, Promise<MessageReply> responsePromise) {
-    String resource =
+    var resourceOpt =
         message.getParametersList().stream()
             .filter(p -> "resource".equals(p.getKey()) && p.hasStringValue())
             .map(p -> sanitize(p.getStringValue()))
-            .reduce((first, second) -> second)
-            .orElse(null);
+            .reduce((first, second) -> second);
 
-    if (resource == null) {
+    if (resourceOpt.isEmpty()) {
       // Return a basic empty response rather than fake data if it's missing or invalid
       WebfingerResponse wfResp = WebfingerResponse.newBuilder().build();
       responsePromise.complete(
@@ -44,7 +44,7 @@ final class WebfingerVerticle extends AbstractLcVerticle {
     }
 
     // Do not return made-up data. Just echo the subject without fake data.
-    var response = WebfingerResponse.newBuilder().setSubject(resource).build();
+    var response = WebfingerResponse.newBuilder().setSubject(resourceOpt.get()).build();
     responsePromise.complete(
         MessageReply.newBuilder()
             .setProto(
@@ -58,10 +58,6 @@ final class WebfingerVerticle extends AbstractLcVerticle {
   }
 
   private String sanitize(String input) {
-    if (input == null) {
-      return "";
-    }
-    // Strip all characters that aren't a-zA-Z, ., :, -, or @
-    return input.replaceAll("[^a-zA-Z.:\\-@]", "");
+    return Optional.ofNullable(input).map(i -> i.replaceAll("[^a-zA-Z.:\\-@]", "")).orElse("");
   }
 }
