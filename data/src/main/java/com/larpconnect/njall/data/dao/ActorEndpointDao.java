@@ -8,7 +8,7 @@ import io.smallrye.mutiny.Uni;
 @DefaultImplementation(DefaultActorEndpointDao.class)
 public interface ActorEndpointDao {
 
-  Uni<ActorEndpoint> findById(ActorEndpoint.ActorEndpointId id);
+  Uni<ActorEndpoint> findById(String serverId, ActorEndpoint.ActorEndpointId id);
 
-  Uni<Void> persist(ActorEndpoint entity);
+  Uni<Void> persist(String serverId, ActorEndpoint entity);
 }

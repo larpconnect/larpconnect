@@ -7,7 +7,7 @@ import io.smallrye.mutiny.Uni;
 /** DAO for StudioRole. */
 @DefaultImplementation(DefaultStudioRoleDao.class)
 public interface StudioRoleDao {
-  Uni<StudioRole> findById(StudioRole.StudioRoleId id);
+  Uni<StudioRole> findById(String serverId, StudioRole.StudioRoleId id);
 
-  Uni<Void> persist(StudioRole entity);
+  Uni<Void> persist(String serverId, StudioRole entity);
 }

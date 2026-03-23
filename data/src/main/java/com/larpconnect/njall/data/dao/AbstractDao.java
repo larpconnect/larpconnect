@@ -27,12 +27,13 @@ abstract class AbstractDao<T extends DatabaseObject, ID> implements Dao<T, ID> {
   }
 
   @Override
-  public Uni<T> findById(ID id) {
-    return getSessionFactory().withSession(session -> session.find(entityClass, id));
+  public Uni<T> findById(String serverId, ID id) {
+    return getSessionFactory().withSession(serverId, session -> session.find(entityClass, id));
   }
 
   @Override
-  public Uni<Void> persist(T entity) {
-    return getSessionFactory().withSession(session -> session.persist(entity).call(session::flush));
+  public Uni<Void> persist(String serverId, T entity) {
+    return getSessionFactory()
+        .withSession(serverId, session -> session.persist(entity).call(session::flush));
   }
 }

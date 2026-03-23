@@ -17,14 +17,16 @@ final class DefaultStudioRoleDao implements StudioRoleDao {
   }
 
   @Override
-  public Uni<StudioRole> findById(StudioRole.StudioRoleId id) {
-    return sessionFactoryProvider.get().withSession(session -> session.find(StudioRole.class, id));
+  public Uni<StudioRole> findById(String serverId, StudioRole.StudioRoleId id) {
+    return sessionFactoryProvider
+        .get()
+        .withSession(serverId, session -> session.find(StudioRole.class, id));
   }
 
   @Override
-  public Uni<Void> persist(StudioRole entity) {
+  public Uni<Void> persist(String serverId, StudioRole entity) {
     return sessionFactoryProvider
         .get()
-        .withSession(session -> session.persist(entity).call(session::flush));
+        .withSession(serverId, session -> session.persist(entity).call(session::flush));
   }
 }
