@@ -1,4 +1,4 @@
-# LARPConnect Development Project
+# LarpConnect Development Project
 
 # Java Project Development Guidelines: Technical Standards and Best Practices
 
@@ -76,6 +76,9 @@ confirm readiness to push if these criteria are met.
 
 - `AGENTS.md`: You are here. A guide for agent development, also lays out
   broader coding standards.
+- `<module name>/AGENTS.md`: Some directories have separate `AGENTS` files,
+  these work **in addition** to the root `AGENTS.md` file and add supplementary
+  information and link to relevant skills.
 - `.agents/SKILLS.md`: A routing file for determining which skills are needed
   and which files to load as a result. The skills themselves are stored in
   `.agents/skills/` files.
