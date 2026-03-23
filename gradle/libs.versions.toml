@@ -36,7 +36,7 @@ testcontainers = "1.20.4"
 mutiny = "3.1.1"
 mutiny-vertx = "3.21.5"
 
-jackson = "2.18.6"
+jackson = "2.21"
 
 [libraries]
 commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commons-compress" }
