@@ -117,5 +117,5 @@ highlights include:
 
 ---
 
-For more details, please refer to the [README.md](README.md) and
-[AGENTS.md](AGENTS.md).
+For more details, please refer to the [README.md](README.md),
+[AGENTS.md](AGENTS.md), and the [Architecture Guide](docs/architecture.md).

@@ -37,6 +37,9 @@ type safety.
 - **Build System:** Gradle (Multi-module)
 - **Main Entry Point:** `:server`
 
+For detailed information regarding the architectural decisions behind these
+choices, please consult the [Architecture Guide](docs/architecture.md).
+
 ---
 
 ## Getting Started
