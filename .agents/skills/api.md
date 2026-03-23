@@ -7,7 +7,7 @@ This skill provides guidance on how to write effective APIs.
 ## Technical Constraints
 
 - APIs are managed using OpenAPI (version 3) but otherwise follow the guidance of the [AIPs](https://google.aip.dev). Load documentation on AIP and on OpenAPI from context7 when interacting with the `openapi.yaml` file.
-- Payloads are specified using protobuf.
+- Payloads are specified using protobuf and then documented using OpenAPI.
 - Security is paramount when writing good APIs. Everything needs to be sanitized and validated.
 - Everything should be both unit tested and (separately) integration tested. Integration tests should be written using
   cucumber.
@@ -34,6 +34,11 @@ The system uses a standard _telemetry_ pattern where requests have three parts:
 
 These are preserved in the logs via MDC and are used to trace requests through the system.
 
+### Tenancy
+
+This system is a multi-single tenant design and uses the `server` object to differentiate payloads. The
+`server` is also logged. 
+
 ### Base Paths
 
 There are four fundamental "base paths" used by the system.
@@ -44,7 +49,12 @@ There are four fundamental "base paths" used by the system.
    with a separate `schema` in the database and should have its own set of verticles for working with the various paths.
 4. `/tools`: Represents generally useful functionality that is not tied to specific servers.
 
-If a `v1` is used for versioning it generally comes _after_ the base path.
+If a `v1` is used for versioning it generally comes _after_ the base path. So therefore:
+
+* `/v1/nodeinfo`
+* `/admin/v1/accounts`
+* `/servers/{server-id}/v1/nodeinfo`
+* `/tools/v1`
 
 Responses are by default in JSON unless otherwise documented/requested.
 
