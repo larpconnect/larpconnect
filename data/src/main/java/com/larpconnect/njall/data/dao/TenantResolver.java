@@ -8,7 +8,8 @@ final class TenantResolver implements CurrentTenantIdentifierResolver<String> {
 
   @Override
   public String resolveCurrentTenantIdentifier() {
-    return "njall";
+    String currentTenant = TenantContext.getCurrentTenant();
+    return currentTenant == null ? "njall_base" : currentTenant;
   }
 
   @Override

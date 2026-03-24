@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 final class TenantResolverTest {
 
   @Test
-  void resolveCurrentTenantIdentifier_returnsNjall() {
+  void resolveCurrentTenantIdentifier_returnsNjallBase() {
     var resolver = new TenantResolver();
-    assertThat(resolver.resolveCurrentTenantIdentifier()).isEqualTo("njall");
+    assertThat(resolver.resolveCurrentTenantIdentifier()).isEqualTo("njall_base");
   }
 
   @Test
