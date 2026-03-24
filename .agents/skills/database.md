@@ -27,13 +27,13 @@ The system is a multi-single-tenant design, with the `tenantId` associated with 
 
 The following schemas are allowed and will ultimately have their own initializations.
 
-* `base` represents the core utilities and common functions that are shared between tenants.
-* `admin` represents the basic administrative functions for the server. Things like spinning up and tearing down
+* `njall_base` represents the core utilities and common functions that are shared between tenants.
+* `njall_admin` represents the basic administrative functions for the server. Things like spinning up and tearing down
   tenants.
-* `server_{server-id}` are a set of schemas (one for each `{server-id}`) that represent indivdiual tenants. These
+* `njall_server_{server-id}` are a set of schemas (one for each `{server-id}`) that represent indivdiual tenants. These
   should all be kept up to date with the same database schema and have the same migrations applied. Server ids here are limited to
   the following regex: `^([a-z]+[a-z0-9]+){3,32}`
-* `analytics` represents common data analysis across the server as a whole.
+* `njall_analytics` represents common data analysis across the server as a whole.
  
 ### Pattern for Objects
 
