@@ -8,7 +8,7 @@ final class TenantResolver implements CurrentTenantIdentifierResolver<String> {
 
   @Override
   public String resolveCurrentTenantIdentifier() {
-    return "public";
+    return "njall";
   }
 
   @Override

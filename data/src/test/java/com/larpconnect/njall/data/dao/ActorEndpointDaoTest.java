@@ -51,7 +51,7 @@ final class ActorEndpointDaoTest {
     when(sessionMock.find(ActorEndpoint.class, id))
         .thenReturn(Uni.createFrom().item(expectedEntity));
 
-    var actualEntity = dao.findById("test-server", id).await().indefinitely();
+    var actualEntity = dao.findById("testserver", id).await().indefinitely();
 
     assertThat(actualEntity).isSameAs(expectedEntity);
     verify(sessionMock).find(ActorEndpoint.class, id);
@@ -63,6 +63,6 @@ final class ActorEndpointDaoTest {
 
     when(sessionMock.persist(any())).thenReturn(Uni.createFrom().voidItem());
 
-    dao.persist("test-server", entity);
+    dao.persist("testserver", entity);
   }
 }

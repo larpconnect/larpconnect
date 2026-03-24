@@ -45,9 +45,9 @@ final class DatabaseIntegrationTest {
     resource.setData("{\"key\": \"value\"}");
     resource.setLastRefresh(OffsetDateTime.now(java.time.ZoneId.systemDefault()));
 
-    dao.persist("test-server", resource).await().indefinitely();
+    dao.persist("testserver", resource).await().indefinitely();
 
-    var fetched = dao.findById("test-server", id).await().indefinitely();
+    var fetched = dao.findById("testserver", id).await().indefinitely();
     assertThat(fetched).isNotNull();
     assertThat(fetched.getId()).isEqualTo(id);
     assertThat(fetched.getExternalUri()).isEqualTo("https://example.com");
