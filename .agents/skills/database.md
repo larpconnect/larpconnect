@@ -23,7 +23,7 @@ This skill provides guidance on how to manage the database layer.
 
 ### Multitenancy
 
-The system is a multi-single-tenant design, with the `tenantId` associated with the PSQL _schema_. 
+The system is a multi-single-tenant design, with the `tenantId` associated with the PSQL _schema_.
 
 The following schemas are allowed and will ultimately have their own initializations.
 
@@ -34,7 +34,7 @@ The following schemas are allowed and will ultimately have their own initializat
   should all be kept up to date with the same database schema and have the same migrations applied. Server ids here are limited to
   the following regex: `^([a-z]+[a-z0-9]+){3,32}`
 * `njall_analytics` represents common data analysis across the server as a whole.
- 
+
 ### Pattern for Objects
 
 Objects generally will have:
@@ -43,4 +43,4 @@ Objects generally will have:
    well as an implementation.
 2. A DAO that allows loading and writing a given object. These include both an interface
    as well as an implementation.
-3. Bindings in Guice. 
+3. Bindings in Guice.

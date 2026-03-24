@@ -37,7 +37,7 @@ These are preserved in the logs via MDC and are used to trace requests through t
 ### Tenancy
 
 This system is a multi-single tenant design and uses the `server` object to differentiate payloads. The
-`server` is also logged. 
+`server` is also logged.
 
 ### Base Paths
 
