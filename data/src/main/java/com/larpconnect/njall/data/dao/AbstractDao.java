@@ -3,14 +3,9 @@ package com.larpconnect.njall.data.dao;
 import com.larpconnect.njall.data.entity.DatabaseObject;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Provider;
+import javax.annotation.Nullable;
 import org.hibernate.reactive.mutiny.Mutiny;
 
-/**
- * Base implementation of the Dao interface.
- *
- * @param <T> The entity type
- * @param <ID> The type of the identifier
- */
 abstract class AbstractDao<T extends DatabaseObject, ID> implements Dao<T, ID> {
 
   private final Provider<Mutiny.SessionFactory> sessionFactoryProvider;
@@ -27,12 +22,17 @@ abstract class AbstractDao<T extends DatabaseObject, ID> implements Dao<T, ID> {
   }
 
   @Override
-  public Uni<T> findById(ID id) {
-    return getSessionFactory().withSession(session -> session.find(entityClass, id));
+  public Uni<T> findById(@Nullable String serverId, ID id) {
+    return getSessionFactory()
+        .withSession(
+            TenantContext.formatTenantId(serverId), session -> session.find(entityClass, id));
   }
 
   @Override
-  public Uni<Void> persist(T entity) {
-    return getSessionFactory().withSession(session -> session.persist(entity).call(session::flush));
+  public Uni<Void> persist(@Nullable String serverId, T entity) {
+    return getSessionFactory()
+        .withSession(
+            TenantContext.formatTenantId(serverId),
+            session -> session.persist(entity).call(session::flush));
   }
 }

@@ -5,6 +5,7 @@ import com.larpconnect.njall.data.entity.ActorEndpoint;
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import javax.annotation.Nullable;
 import org.hibernate.reactive.mutiny.Mutiny;
 
 @BuildWith(DaoModule.class)
@@ -18,16 +19,20 @@ final class DefaultActorEndpointDao implements ActorEndpointDao {
   }
 
   @Override
-  public Uni<ActorEndpoint> findById(ActorEndpoint.ActorEndpointId id) {
+  public Uni<ActorEndpoint> findById(@Nullable String serverId, ActorEndpoint.ActorEndpointId id) {
     return sessionFactoryProvider
         .get()
-        .withSession(session -> session.find(ActorEndpoint.class, id));
+        .withSession(
+            TenantContext.formatTenantId(serverId),
+            session -> session.find(ActorEndpoint.class, id));
   }
 
   @Override
-  public Uni<Void> persist(ActorEndpoint entity) {
+  public Uni<Void> persist(@Nullable String serverId, ActorEndpoint entity) {
     return sessionFactoryProvider
         .get()
-        .withSession(session -> session.persist(entity).call(session::flush));
+        .withSession(
+            TenantContext.formatTenantId(serverId),
+            session -> session.persist(entity).call(session::flush));
   }
 }
