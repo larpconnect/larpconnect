@@ -23,22 +23,25 @@ such formats.
 - If JSON must be parsed independently from Protobuf, use Jackson.
 - When writing protocols emphasize having objects contain _either_
   objects **or** primtiive types at a given level. So rather than:
+
   ```json
   {
     "name": "foo",
     "configuration": {
-      // Other configuration elements
+    // Other configuration elements
     }
   }
   ```
+
   We would prefer:
+
   ```json
   {
     "header": {
-      "name": "foo"
+    "name": "foo"
     },
     "configuration": {
-      // Other configuration elements
+    // Other configuration elements
     }
   }
   ```
