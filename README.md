@@ -77,6 +77,11 @@ configuration files, please refer to the
 > The standard `PORT` environment variable takes precedence over the `webPort`
 > setting configured in `config.json`. This is implemented as a common pattern
 > for cloud deployments (such as Render or Heroku).
+>
+> [!WARNING]
+> When configuring the application via `config.json`, the configuration keys must map
+> to the standard Protobuf JSON representation of the properties defined in the `.proto`
+> files (e.g., `webPort` instead of `web.port`). Unknown fields are silently ignored.
 
 ### Creating a Fatjar
 

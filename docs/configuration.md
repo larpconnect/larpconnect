@@ -63,6 +63,11 @@ Currently, LarpConnect supports the following configuration properties:
 
 ## Configuration Example
 
+> [!WARNING]
+> Configuration keys in this JSON file must match the standard Protobuf JSON representation
+> (e.g., camelCase like `webPort` and `openapiSpec`). Due to the underlying serialization
+> process, standard property formats like `web.port` are silently ignored.
+
 Here is an example of a valid `config.json` file that sets the web server to run
 on port 9000 and uses a custom OpenAPI specification file:
 
