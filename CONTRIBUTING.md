@@ -104,7 +104,7 @@ highlights include:
 - **Null Safety:** Use `Optional<T>` for potentially absent values. No direct
   `.get()`.
 - **Dependency Injection:** Use Guice with constructor injection.
-- **Testing:** JUnit 5, AssertJ, and Mockito. Follow the naming pattern:
+- **Testing:** JUnit 6, AssertJ, and Mockito. Follow the naming pattern:
   `<method>_<what is being tested>_<expected outcome>`.
 - **Immutability:** Prefer immutable collections and final variables.
 - **Logging:** Use SLF4J.

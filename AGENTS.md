@@ -28,7 +28,7 @@ modularity, your technical capabilities are partitioned into "skills":
     `stream().collect(ImmutableList.toImmutableList())`
   - Address all warnings immediately. Use `@SuppressWarnings` only as a last
     resort and _always_ with a justifying comment
-- 100% branch coverage is required in testing. Testing is based on JUnit 5,
+- 100% branch coverage is required in testing. Testing is based on JUnit 6,
   AssertJ, and Cucumber.
 - This is a Gradle project using the Kotlin DSL. Do not use groovy.
 - This is a high complexity project that demands adherence to rigid coding
