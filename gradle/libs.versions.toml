@@ -34,7 +34,7 @@ hibernate-reactive = "4.3.0.Final"
 
 testcontainers = "1.21.4"
 mutiny = "3.1.1"
-mutiny-vertx = "3.21.5"
+mutiny-vertx = "3.21.6"
 
 jackson = "2.18.6"
 
