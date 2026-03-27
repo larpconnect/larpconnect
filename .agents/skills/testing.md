@@ -6,7 +6,7 @@ This skill handles writing tests.
 
 ## Technical Constraints
 
-- Tests are written with JUnit5, AssertJ, and Mockito. They optionally (in
+- Tests are written with JUnit 6, AssertJ, and Mockito. They optionally (in
   `:integration`) use cucumber
 - 100% branch coverage is required in testing
 - `:test` contains centralized test logic and dependencies, `:integration`
@@ -23,7 +23,7 @@ This skill handles writing tests.
 - Test-Driven Development (TDD): The adoption of TDD is strongly encouraged.
   Developers should implement tests prior to writing functional code to ensure
   requirement alignment and incremental progress.
-- Unit Testing: JUnit 5 and AssertJ are the standard frameworks for unit
+- Unit Testing: JUnit 6 and AssertJ are the standard frameworks for unit
   verification. Test classes must be located in `<module>/src/test/java` and
   follow the package structure of the target source.
 - Integration Testing: Cucumber shall be employed for behavior-driven
