@@ -18,7 +18,7 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
-    jvmArgs("-XX:+IgnoreUnrecognizedVMOptions", "--illegal-access=deny", "--illegal-final-field-mutation=deny")
+    jvmArgs("-XX:+IgnoreUnrecognizedVMOptions", "--illegal-final-field-mutation=deny")
     useJUnitPlatform()
     testLogging {
         events("passed", "skipped", "failed")
