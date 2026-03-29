@@ -10,6 +10,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import jakarta.inject.Inject;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ import org.slf4j.LoggerFactory;
 final class DefaultMainVerticle extends AbstractVerticle implements MainVerticle {
   private final Logger logger = LoggerFactory.getLogger(DefaultMainVerticle.class);
   private final ImmutableSet<Verticle> verticles;
-  private final ConcurrentHashMap<Verticle, String> deploymentIds = new ConcurrentHashMap<>();
+  private final Map<Verticle, String> deploymentIds = new ConcurrentHashMap<>();
 
   @Inject
   DefaultMainVerticle(Set<Verticle> verticles) {
