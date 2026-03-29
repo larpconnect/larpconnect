@@ -4,11 +4,13 @@ import com.google.common.base.Stopwatch;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.protobuf.util.JsonFormat;
+import com.larpconnect.njall.common.annotations.InstallInstead;
 import jakarta.inject.Singleton;
 import java.time.Clock;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
 
+@InstallInstead(CommonModule.class)
 final class CommonBindingModule extends AbstractModule {
   CommonBindingModule() {}
 
