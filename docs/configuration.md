@@ -19,6 +19,11 @@ If a setting is not found within the namespace, the application will attempt to
 fall back to the root level of the configuration file, though placing settings
 in the namespace is strongly recommended.
 
+> [!IMPORTANT]
+> When configuring the application via `config.json`, the configuration keys must map
+> to the standard Protobuf JSON representation of the properties defined in `.proto` files
+> (e.g., `webPort` or `web_port` instead of `web.port`). Unknown fields are silently ignored.
+
 ### Specifying the Configuration File
 
 By default, LarpConnect attempts to load the configuration from a file named
