@@ -16,7 +16,3 @@ dependencies {
     testImplementation(project(":proto"))
     testImplementation(project(":server"))
 }
-
-tasks.withType<Test> {
-    systemProperty("testcontainers.ryuk.disabled", "true")
-}
