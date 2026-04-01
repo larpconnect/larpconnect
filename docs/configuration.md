@@ -38,22 +38,22 @@ The specified resource must be available on the classpath.
 
 Currently, LarpConnect supports the following configuration properties:
 
-### `webPort`
+### `web_port`
 
 - **Type:** Integer
 - **Default Value:** 8080
 - **Description:** This property specifies the network port that the LarpConnect
   web server will bind to and listen on for incoming HTTP requests. You can
   change this if port 8080 is already in use by another application on your
-  system.
+  system. Note that JSON configuration keys must match the Protobuf definitions.
 
   > [!NOTE]
-  > The standard `PORT` environment variable takes precedence over the `webPort` setting
+  > The standard `PORT` environment variable takes precedence over the `web_port` setting
   > configured in `config.json`. This is implemented in `ServerBindingModule.java` and serves
   > as a common pattern for cloud deployments (such as Render or Heroku). If `PORT` is not set
-  > or is not a valid integer, the application falls back to the `webPort` setting.
+  > or is not a valid integer, the application falls back to the `web_port` setting.
 
-### `openapiSpec`
+### `openapi_spec`
 
 - **Type:** String
 - **Default Value:** `openapi.yaml`
@@ -69,8 +69,8 @@ on port 9000 and uses a custom OpenAPI specification file:
 ```json
 {
   "larpconnect": {
-    "webPort": 9000,
-    "openapiSpec": "custom_openapi.yaml"
+    "web_port": 9000,
+    "openapi_spec": "custom_openapi.yaml"
   }
 }
 ```
@@ -85,4 +85,4 @@ When LarpConnect starts, the entry point initializes the Vert.x framework and
 Guice dependency injection. The configuration file is read and passed into the
 Guice `ServerModule`. This module is responsible for providing the configuration
 values to the various parts of the application, such as the `WebServerVerticle`,
-which uses the `webPort` and `openapiSpec` settings to start the HTTP server.
+which uses the `web_port` and `openapi_spec` settings to start the HTTP server.
