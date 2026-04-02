@@ -54,7 +54,7 @@ These are libraries that are basically required from the start of the project.
 - Mug
 - Guava
 - Mockito in tests
-- Junit5 in tests. Do not use JUnit asserts
+- JUnit 6 in tests. Do not use JUnit asserts
 - AssertJ in tests, including the module for Guava
 - Cucumber in integration tests
 - Protobuf
