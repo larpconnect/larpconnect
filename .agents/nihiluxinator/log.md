@@ -19,3 +19,9 @@ set the `web.port` and takes precedence over `config.json` values.
 **Learning:** Documentation across `CONTRIBUTING.md`, `AGENTS.md` and `.agents/skills/testing.md` stated that the project uses JUnit 5. However, `gradle/libs.versions.toml` specifies JUnit 6 (`6.0.3`) and Pentiousinator explicitly enforced JUnit 6. The documentation was factually out of date.
 
 **Action:** Always ensure documentation referencing testing libraries correctly states "JUnit 6" to avoid confusing contributors with outdated major versions.
+
+## 2026-04-02 - Do not document incorrect configuration key formats
+
+**Learning:** A PR to document incorrect JSON configuration keys (like `web.port` or `web_port`) was rejected because it is assumed developers understand basic JSON and the expected format is already specified in a protobuf. Documenting "millions of ways it could be done but that won't work" is discouraged.
+
+**Action:** When documenting configuration, focus only on how to do it correctly and rely on existing authoritative documentation (like protobufs) rather than enumerating negative examples.
