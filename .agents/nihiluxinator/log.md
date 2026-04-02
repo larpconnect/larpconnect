@@ -20,7 +20,7 @@ set the `web.port` and takes precedence over `config.json` values.
 
 **Action:** Always ensure documentation referencing testing libraries correctly states "JUnit 6" to avoid confusing contributors with outdated major versions.
 
-## 2024-05-19 - Do not document incorrect configuration key formats
+## 2026-04-02 - Do not document incorrect configuration key formats
 
 **Learning:** A PR to document incorrect JSON configuration keys (like `web.port` or `web_port`) was rejected because it is assumed developers understand basic JSON and the expected format is already specified in a protobuf. Documenting "millions of ways it could be done but that won't work" is discouraged.
 
