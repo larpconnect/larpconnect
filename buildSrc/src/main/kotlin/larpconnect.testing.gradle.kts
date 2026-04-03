@@ -18,7 +18,6 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
-    jvmArgs("-XX:+IgnoreUnrecognizedVMOptions", "--illegal-final-field-mutation=deny")
     systemProperty("testcontainers.ryuk.disabled", "true")
     useJUnitPlatform()
     testLogging {
