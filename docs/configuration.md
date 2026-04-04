@@ -36,7 +36,14 @@ The specified resource must be available on the classpath.
 
 ## Supported Properties
 
-Currently, LarpConnect supports the following configuration properties:
+The configuration settings are backed by the `LarpConnectConfig` Protobuf message defined
+in `config.proto`. Therefore, configuration keys must map to the standard Protobuf JSON
+representation of these properties (typically `camelCase` or `snake_case`). The system
+deserializes the JSON configuration directly into this Protobuf message, and any unrecognized
+keys will be silently ignored.
+
+For the most authoritative list of available settings, always refer to the `LarpConnectConfig`
+definition in `config.proto`. Currently, the core properties include:
 
 ### `webPort`
 
@@ -83,6 +90,7 @@ properties, the application will start using the default values (port 8080 and
 
 When LarpConnect starts, the entry point initializes the Vert.x framework and
 Guice dependency injection. The configuration file is read and passed into the
-Guice `ServerModule`. This module is responsible for providing the configuration
-values to the various parts of the application, such as the `WebServerVerticle`,
-which uses the `webPort` and `openapiSpec` settings to start the HTTP server.
+Guice `ServerModule`. Behind the scenes, the configuration JSON is parsed and merged into a
+strongly-typed `LarpConnectConfig` Protobuf object. This object is then injected throughout the
+application, ensuring that components like the `WebServerVerticle` receive validated `webPort` and
+`openapiSpec` settings to start the HTTP server safely.
