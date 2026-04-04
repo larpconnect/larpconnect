@@ -1,5 +1,6 @@
 plugins {
     id("larpconnect.library")
+    id("larpconnect.testing")
 }
 
 dependencies {

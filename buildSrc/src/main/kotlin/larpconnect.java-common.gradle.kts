@@ -46,6 +46,9 @@ dependencies {
         implementation(libs.jackson.annotations) {
             because("GHSA-72hv-8253-57qq")
         }
+        implementation(libs.commons.compress) {
+            because("GHSA-4265-ccf5-phj5")
+        }
     }
 
     testCompileOnly(libs.vertx.codegen)
