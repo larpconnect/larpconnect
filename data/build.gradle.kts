@@ -13,6 +13,4 @@ dependencies {
     implementation(libs.vertx.pg.client)
 
     testImplementation(libs.commons.compress)
-    testImplementation(libs.testcontainers.junit.jupiter)
-    testImplementation(libs.testcontainers.postgresql)
 }
