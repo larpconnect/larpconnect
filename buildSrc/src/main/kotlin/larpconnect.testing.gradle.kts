@@ -18,6 +18,7 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
+    // --illegal-final-field-mutation=deny is part of JDK 26 and is here to support forward migration.
     jvmArgs("-XX:+IgnoreUnrecognizedVMOptions", "--illegal-final-field-mutation=deny")
     systemProperty("testcontainers.ryuk.disabled", "true")
     useJUnitPlatform()
