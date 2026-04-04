@@ -11,8 +11,6 @@ dependencies {
     api(libs.junit.platform.suite)
     api(libs.mockito.core)
     api(libs.mockito.junit.jupiter)
-    api(libs.testcontainers.junit.jupiter)
-    api(libs.testcontainers.postgresql)
     api(libs.vertx.junit5)
     api(libs.vertx.web.client)
 }
