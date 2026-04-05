@@ -1,5 +1,6 @@
 package com.larpconnect.njall.common.codec;
 
+import com.larpconnect.njall.common.annotations.DefaultImplementation;
 import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.eventbus.MessageCodec;
 
@@ -12,4 +13,5 @@ import io.vertx.core.eventbus.MessageCodec;
  * requiring the ability to serialize, deserialize, or transform protocol buffer messages has a
  * clear, type-safe dependency.
  */
+@DefaultImplementation(ProtoCodecRegistry.class)
 public interface ProtoCodec extends MessageCodec<MessageRequest, MessageRequest> {}

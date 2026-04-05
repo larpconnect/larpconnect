@@ -6,6 +6,7 @@ import static com.larpconnect.njall.common.annotations.ContractTag.PURE;
 import com.google.errorprone.annotations.Immutable;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.larpconnect.njall.common.annotations.AiContract;
+import com.larpconnect.njall.common.annotations.BuildWith;
 import com.larpconnect.njall.proto.MessageRequest;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.buffer.impl.BufferImpl;
@@ -20,6 +21,7 @@ import io.vertx.core.buffer.impl.BufferImpl;
  * using protobuf rather than JSON to minimize payload size and reduce bandwidth consumption.
  */
 @Immutable
+@BuildWith(CodecModule.class)
 final class ProtoCodecRegistry implements ProtoCodec {
   private static final short VERSION = 0x01;
   private static final int INT_SIZE = 4;
