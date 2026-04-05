@@ -16,6 +16,13 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Verticle responsible for handling requests to the NodeInfo 2.2 endpoint.
+ *
+ * <p>This verticle responds to queries over the internal event bus for the {@code
+ * http.admin.nodeinfo.request} channel, returning standard NodeInfo data regarding the server's
+ * capabilities, usage, and software version.
+ */
 final class NodeinfoVerticle extends AbstractLcVerticle {
   private final Logger logger = LoggerFactory.getLogger(NodeinfoVerticle.class);
 

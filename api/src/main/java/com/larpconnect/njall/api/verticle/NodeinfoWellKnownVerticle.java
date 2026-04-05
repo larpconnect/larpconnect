@@ -12,6 +12,12 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Verticle handling requests to the /.well-known/nodeinfo endpoint.
+ *
+ * <p>This verticle routes incoming well-known NodeInfo requests to the appropriate NodeInfo
+ * protocol version handler (e.g., 2.2) and returns the JRD discovery document.
+ */
 final class NodeinfoWellKnownVerticle extends AbstractLcVerticle {
   private final Logger logger = LoggerFactory.getLogger(NodeinfoWellKnownVerticle.class);
 
