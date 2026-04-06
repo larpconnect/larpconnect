@@ -1,3 +1,4 @@
+/** Common utilities and core infrastructure for the system. */
 @ParametersAreNonnullByDefault
 @ReturnValuesAreNonnullByDefault
 package com.larpconnect.njall.common;
