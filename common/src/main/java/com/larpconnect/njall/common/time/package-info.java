@@ -1,3 +1,4 @@
+/** Time services and clocks for deterministic and monotonic time tracking. */
 @ParametersAreNonnullByDefault
 @ReturnValuesAreNonnullByDefault
 package com.larpconnect.njall.common.time;

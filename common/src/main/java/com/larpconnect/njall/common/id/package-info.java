@@ -1,3 +1,4 @@
+/** ID generation utilities, including UUIDv7 support. */
 @ParametersAreNonnullByDefault
 @ReturnValuesAreNonnullByDefault
 package com.larpconnect.njall.common.id;
