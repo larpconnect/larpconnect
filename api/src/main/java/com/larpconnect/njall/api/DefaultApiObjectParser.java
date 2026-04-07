@@ -13,6 +13,16 @@ import com.larpconnect.njall.proto.OrderedCollectionPage;
 import io.vertx.core.json.JsonObject;
 import jakarta.inject.Inject;
 
+/**
+ * Translates between generic ActivityPub JSON structures and strongly-typed Protobuf
+ * representations.
+ *
+ * <p>This parser exists to bridge the gap between the dynamic nature of ActivityPub payloads (which
+ * frequently use polymorphic arrays for 'type' and open-ended property maps) and the strict type
+ * safety required by the internal Protobuf domain models. It extracts known extensions (like Event,
+ * Link, or Document) into distinct proto fields while correctly handling polymorphic flattening
+ * during JSON serialization to ensure wire compatibility.
+ */
 @BuildWith(ApiModule.class)
 final class DefaultApiObjectParser implements ApiObjectParser {
 
