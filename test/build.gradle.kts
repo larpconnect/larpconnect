@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api(libs.assertj.core)
     api(libs.assertj.guava)
+    api(libs.commons.compress)
     api(libs.cucumber.java)
     api(libs.junit.api)
     api(libs.junit.params)

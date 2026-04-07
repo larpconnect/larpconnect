@@ -4,7 +4,6 @@ plugins {
 
 dependencies {
     testImplementation(libs.archunit.junit5)
-    testImplementation(libs.commons.compress)
     testImplementation(libs.hibernate.core)
     testImplementation(libs.mutiny.core)
     testImplementation(project(":api"))
