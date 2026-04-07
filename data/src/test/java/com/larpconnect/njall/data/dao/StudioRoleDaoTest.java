@@ -44,7 +44,7 @@ final class StudioRoleDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    StudioRoleId id = new StudioRoleId(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var id = new StudioRoleId(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
     var expectedEntity = mock(StudioRole.class);
 
     when(sessionMock.find(StudioRole.class, id)).thenReturn(Uni.createFrom().item(expectedEntity));
