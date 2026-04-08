@@ -15,4 +15,10 @@ dependencies {
     api(libs.testcontainers.postgresql)
     api(libs.vertx.junit5)
     api(libs.vertx.web.client)
+
+    constraints {
+        api(libs.commons.compress) {
+            because("Vulnerability in 1.24.0 pulled by testcontainers")
+        }
+    }
 }
