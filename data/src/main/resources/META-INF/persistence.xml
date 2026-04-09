@@ -34,6 +34,8 @@
             <property name="jakarta.persistence.jdbc.password" value="test"/>
 
             <property name="hibernate.hbm2ddl.auto" value="none"/>
+            <property name="hibernate.tenant_identifier_resolver" value="com.larpconnect.njall.data.dao.TenantResolver"/>
+            <property name="hibernate.multi_tenant_connection_provider" value="com.larpconnect.njall.data.dao.SchemaSelectionConnectionProvider"/>
         </properties>
 
     </persistence-unit>
