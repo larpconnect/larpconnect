@@ -9,3 +9,4 @@
 **Learning:** There was a double DefaultImplementation annotation resulting in compile-time errors. Multiple `.java` test files needed to be run against spotlessApply for syntax.
 
 **Action:** Check that annotations are only applied once to classes, especially in DAO patterns, and apply Spotless to enforce standard format.
+## 2026-04-11 - Static import cleanups\n\n**Learning:** Using regex or automated scripts to clean up java static imports globally leads to compilation errors because it often causes duplicated or incorrectly formatted import statements. \n\n**Action:** Avoid using naive regex replacements to fix Java imports in a large number of files. Only make precise replacements manually and always verify the build afterwards.
