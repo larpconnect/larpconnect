@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.common.time.TimeService;
@@ -40,7 +39,7 @@ final class MainVerticleTest {
   void mainVerticle_startsAndStopsChildren(Vertx vertx, VertxTestContext testContext) {
     var testVerticle = new TestVerticle();
 
-    Injector injector =
+    var injector =
         Guice.createInjector(
             Modules.override(new ServerModule())
                 .with(
@@ -88,7 +87,7 @@ final class MainVerticleTest {
 
   @Test
   void mainVerticle_failsIfChildFails(Vertx vertx, VertxTestContext testContext) {
-    Injector injector =
+    var injector =
         Guice.createInjector(
             Modules.override(new ServerModule())
                 .with(

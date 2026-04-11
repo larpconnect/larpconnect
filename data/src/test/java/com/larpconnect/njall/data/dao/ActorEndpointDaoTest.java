@@ -44,7 +44,7 @@ final class ActorEndpointDaoTest {
 
   @Test
   void findById_validId_returnsEntity() {
-    ActorEndpointId id = new ActorEndpointId(UUID.randomUUID(), "test");
+    var id = new ActorEndpointId(UUID.randomUUID(), "test");
     var expectedEntity = mock(ActorEndpoint.class);
 
     when(sessionMock.find(ActorEndpoint.class, id))

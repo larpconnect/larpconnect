@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Deployable;
@@ -25,7 +24,7 @@ final class GuiceVerticleFactoryTest {
 
   @Test
   public void createVerticle_validClass_success(VertxTestContext testContext) {
-    Injector injector =
+    var injector =
         Guice.createInjector(
             new com.larpconnect.njall.common.CommonModule(),
             new AbstractModule() {
@@ -59,7 +58,7 @@ final class GuiceVerticleFactoryTest {
 
   @Test
   public void createVerticle_classNotFoundException_failure(VertxTestContext testContext) {
-    Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
+    var injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var factory = new GuiceVerticleFactory(injector);
 
     Promise<Callable<? extends Deployable>> promise = Promise.promise();
@@ -87,7 +86,7 @@ final class GuiceVerticleFactoryTest {
 
   @Test
   public void createVerticle_classCastException_failure(VertxTestContext testContext) {
-    Injector injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
+    var injector = Guice.createInjector(new com.larpconnect.njall.common.CommonModule());
     var factory = new GuiceVerticleFactory(injector);
 
     Promise<Callable<? extends Deployable>> promise = Promise.promise();
