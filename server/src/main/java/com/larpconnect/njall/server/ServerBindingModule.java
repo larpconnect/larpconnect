@@ -15,6 +15,14 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * Binds internal dependencies and configuration for the server context.
+ *
+ * <p>This module exists to isolate bindings that should not be directly exposed or customized by
+ * external modules, ensuring that critical configurations like {@link LarpConnectConfig} and the
+ * core {@link WebServerVerticle} are wired up correctly and deterministically for the application's
+ * runtime.
+ */
 @InstallInstead(ServerModule.class)
 final class ServerBindingModule extends AbstractModule {
   private final Function<String, String> getenv;
