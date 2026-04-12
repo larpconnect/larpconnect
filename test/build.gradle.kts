@@ -13,4 +13,13 @@ dependencies {
     api(libs.mockito.junit.jupiter)
     api(libs.vertx.junit5)
     api(libs.vertx.web.client)
+
+    api(libs.testcontainers.junit.jupiter)
+    api(libs.testcontainers.postgresql)
+
+    constraints {
+        api(libs.commons.compress) {
+            because("vulnerabilities in commons-compress")
+        }
+    }
 }
