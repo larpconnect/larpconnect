@@ -98,8 +98,8 @@ final class ArchitectureTest {
   public static final ArchRule loggers_should_not_be_static =
       fields().that().haveRawType(Logger.class).should().notBeStatic();
 
-  // 5. `Default<InterfaceName>` should mean that `<InterfaceName>` is annotated with
-  // `@DefaultImplementation`
+  /* 5. `Default<InterfaceName>` should mean that `<InterfaceName>` is annotated with
+   * `@DefaultImplementation` */
   @ArchTest
   public static final ArchRule default_impl_naming_convention =
       classes()
@@ -167,8 +167,8 @@ final class ArchitectureTest {
           .beAssignableTo(Module.class)
           .allowEmptyShould(true);
 
-  // 7. Dependencies must form a directed acyclic graph that mirrors the package layout.
-  // Classes in a package cannot depend on classes in any ancestor package.
+  /* 7. Dependencies must form a directed acyclic graph that mirrors the package layout.
+   * Classes in a package cannot depend on classes in any ancestor package. */
   @ArchTest
   public static final ArchRule no_dependencies_on_parent_packages =
       classes()
@@ -188,8 +188,8 @@ final class ArchitectureTest {
                             String currentPackage = item.getPackageName();
                             String targetPackage = targetClass.getPackageName();
 
-                            // Check if target package is a parent of current package
-                            // Parent package logic: current starts with target + "."
+                            /* Check if target package is a parent of current package
+                             * Parent package logic: current starts with target + "." */
                             if (currentPackage.startsWith(targetPackage + ".")) {
                               String message =
                                   String.format(
