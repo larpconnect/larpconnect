@@ -17,8 +17,8 @@ import com.larpconnect.njall.proto.ProtoDef;
 import com.larpconnect.njall.proto.WebfingerResponse;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.openapi.router.RouterBuilder;
@@ -173,7 +173,7 @@ final class WebServerVerticle extends AbstractVerticle {
             .build();
     try {
       var json = serializer.print(message);
-      ctx.json(new JsonObject(json));
+      ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(json);
     } catch (RuntimeException | IOException e) {
       logger.error("Failed to convert message to JSON", e);
       ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
@@ -201,7 +201,7 @@ final class WebServerVerticle extends AbstractVerticle {
                 var replyResponse = msg.body();
                 var proto = replyResponse.getProto();
                 var json = printer.print(proto.getMessage());
-                ctx.json(new JsonObject(json));
+                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(json);
               } catch (RuntimeException | IOException e) {
                 logger.error("Failed to serialize webfinger response", e);
                 ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
@@ -228,7 +228,7 @@ final class WebServerVerticle extends AbstractVerticle {
                 var replyResponse = msg.body();
                 var proto = replyResponse.getProto();
                 var json = printer.print(proto.getMessage());
-                ctx.json(new JsonObject(json));
+                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(json);
               } catch (RuntimeException | IOException e) {
                 logger.error("Failed to serialize nodeinfo JRD response", e);
                 ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);
@@ -254,7 +254,7 @@ final class WebServerVerticle extends AbstractVerticle {
                 var replyResponse = msg.body();
                 var proto = replyResponse.getProto();
                 var json = printer.print(proto.getMessage());
-                ctx.json(new JsonObject(json));
+                ctx.response().putHeader(HttpHeaders.CONTENT_TYPE, "application/json").end(json);
               } catch (RuntimeException | IOException e) {
                 logger.error("Failed to serialize nodeinfo 2.2 response", e);
                 ctx.fail(HttpURLConnection.HTTP_INTERNAL_ERROR, e);

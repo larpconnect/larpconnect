@@ -38,7 +38,6 @@ final class BootstrapVerticleService extends AbstractIdleService implements Vert
   protected void startUp() {
     logger.info("Starting BootstrapVerticleService...");
 
-    // Load default config
     JsonObject defaultConfig;
     try {
       var configResource = System.getProperty("njall.config.resource", "config.json");
@@ -48,7 +47,6 @@ final class BootstrapVerticleService extends AbstractIdleService implements Vert
       throw new IllegalStateException("Failed to load default config", e);
     }
 
-    // Create temp Vertx for config loading
     var tempVertx = Vertx.vertx();
     JsonObject config;
     try {
@@ -72,16 +70,13 @@ final class BootstrapVerticleService extends AbstractIdleService implements Vert
       tempVertx.close();
     }
 
-    // Create a mutable list to add our internal modules
     var builder = ImmutableList.<Module>builder();
     builder.addAll(modules);
     builder.add(new VertxModule());
     builder.add(new ConfigModule(config));
 
-    // Create Guice Injector
     var injector = Guice.createInjector(builder.build());
 
-    // Initialize Vertx and setup service via the lifecycle instance injected
     var delegate = injector.getInstance(VerticleService.class);
     delegateRef.set(delegate);
     delegate.startAsync().awaitRunning();
