@@ -21,8 +21,7 @@ public interface Dao<T extends DatabaseObject, ID> {
    */
   @AiContract(
       require = {"$id \\neq \\bot$"},
-      ensure = {"$res \\neq \\bot$"},
-      tags = {ContractTag.PURE},
+      tags = {ContractTag.IDEMPOTENT},
       implementationHint = "Finds an entity by its identifier.")
   Uni<T> findById(ID id);
 
