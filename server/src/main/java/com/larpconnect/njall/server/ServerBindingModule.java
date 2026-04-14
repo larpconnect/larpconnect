@@ -19,8 +19,8 @@ import java.util.function.Function;
  * Binds internal dependencies and configuration for the server context.
  *
  * <p>This module exists to isolate bindings that should not be directly exposed or customized by
- * external modules, ensuring that critical configurations like {@link LarpConnectConfig} and the
- * core {@link WebServerVerticle} are wired up correctly and deterministically for the application's
+ * external modules, ensuring that critical configurations like {@link LarpConnectConfig} and core
+ * components like {@link WebServerVerticle} are wired up correctly and deterministically for the application's
  * runtime.
  */
 @InstallInstead(ServerModule.class)
