@@ -34,7 +34,15 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Web server verticle that serves OpenAPI specification. */
+/**
+ * Handles incoming HTTP traffic and routes it to the appropriate event bus addresses.
+ *
+ * <p>This verticle serves as the external boundary for the application, mapping HTTP requests
+ * (validated against an OpenAPI specification) to internal asynchronous messages. By keeping HTTP
+ * parsing and routing strictly within this verticle, the rest of the application can remain
+ * entirely agnostic of transport protocols, focusing solely on processing standard message
+ * payloads.
+ */
 @BuildWith(ServerModule.class)
 final class WebServerVerticle extends AbstractVerticle {
   private static final int DEFAULT_PORT = 8080;
