@@ -20,7 +20,7 @@ final class BootstrapVerticleServiceTest {
 
   @Test
   public void startUp_validConfig_success() throws Exception {
-    BootstrapVerticleService lifecycle =
+    var lifecycle =
         new BootstrapVerticleService(
             ImmutableList.of(
                 new com.larpconnect.njall.common.CommonModule(),

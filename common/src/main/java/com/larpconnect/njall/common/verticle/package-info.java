@@ -1,3 +1,4 @@
+/** Common verticle utilities. */
 @ParametersAreNonnullByDefault
 @ReturnValuesAreNonnullByDefault
 package com.larpconnect.njall.common.verticle;
