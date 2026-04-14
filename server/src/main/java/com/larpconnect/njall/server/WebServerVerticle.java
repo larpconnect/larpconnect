@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Handles incoming HTTP traffic and routes it to the appropriate event bus destinations.
+ * Handles incoming HTTP traffic and routes it to the appropriate event bus addresses.
  *
  * <p>This verticle serves as the external boundary for the application, mapping HTTP requests
  * (validated against an OpenAPI specification) to internal asynchronous messages. By keeping HTTP
