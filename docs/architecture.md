@@ -11,8 +11,9 @@ LarpConnect uses a multi-module Gradle build. This separation enforces strict ar
 boundaries between different parts of the system.
 
 - **Isolation of Concerns:** By splitting the project into modules like `:api`, `:common`,
-  `:server`, and `:init`, we ensure that low-level domain logic (like protocol definitions)
-  remains entirely unaware of high-level runtime mechanics (like HTTP routing).
+  `:server`, `:init`, `:parent`, `:test`, `:proto`, `:data`, `:integration`, and `:bom`, we ensure
+  that low-level domain logic (like protocol definitions) remains entirely unaware of high-level
+  runtime mechanics (like HTTP routing).
 - **Compile-Time Enforcement:** Instead of relying on discipline to avoid cyclic dependencies or
   leaking abstractions, the build system enforces these rules. If a class in `:common` tries to
   import a class from `:server`, it simply will not compile.
