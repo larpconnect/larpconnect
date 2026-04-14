@@ -33,7 +33,6 @@ public interface Dao<T extends DatabaseObject, ID> {
    */
   @AiContract(
       require = {"$entity \\neq \\bot$"},
-      ensure = {"$res \\neq \\bot$"},
       implementationHint = "Persists the given entity to the database.")
   Uni<Void> persist(T entity);
 }
