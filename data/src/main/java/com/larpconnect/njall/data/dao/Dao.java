@@ -9,8 +9,7 @@ import io.smallrye.mutiny.Uni;
  * <p>By abstracting data access behind this interface, the business logic remains entirely
  * decoupled from the specific mechanics of Hibernate Reactive or the underlying PostgreSQL schema.
  * This separation of concerns allows for independent testing of the API layer via mocked DAOs and
- * ensures that database interactions remain consistently reactive and bounded within Mutiny {@link
- * Uni} pipelines to prevent event loop blocking.
+ * ensures that database interactions remain consistently reactive and bounded within Mutiny {@link Uni} pipelines to prevent event loop blocking.
  *
  * @param <T> The entity type
  * @param <ID> The type of the identifier
