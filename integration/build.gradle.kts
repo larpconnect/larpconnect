@@ -4,7 +4,6 @@ plugins {
 
 dependencies {
     testImplementation(libs.archunit.junit5)
-    testImplementation(libs.commons.compress)
     testImplementation(libs.hibernate.core)
     testImplementation(libs.mutiny.core)
     testImplementation(libs.testcontainers.junit.jupiter)
@@ -15,4 +14,10 @@ dependencies {
     testImplementation(project(":init"))
     testImplementation(project(":proto"))
     testImplementation(project(":server"))
+
+    constraints {
+        testImplementation(libs.commons.compress) {
+            because("vulnerabilities in commons-compress pulled by testcontainers")
+        }
+    }
 }

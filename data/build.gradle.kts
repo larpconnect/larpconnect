@@ -12,7 +12,12 @@ dependencies {
     implementation(libs.mutiny.vertx.pg.client)
     implementation(libs.vertx.pg.client)
 
-    testImplementation(libs.commons.compress)
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.postgresql)
+
+    constraints {
+        testImplementation(libs.commons.compress) {
+            because("vulnerabilities in commons-compress pulled by testcontainers")
+        }
+    }
 }
