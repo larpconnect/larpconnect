@@ -5,7 +5,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-/** Represents a character in a campaign. */
+/**
+ * Represents a character in a campaign.
+ *
+ * <p>Characters are distinct from {@link Individual} entities as they represent a fictional persona
+ * within a specific game or campaign context, rather than the physical player themselves.
+ */
 @jakarta.persistence.Entity
 @Table(name = "characters")
 @SuppressWarnings("JavaLangClash") // Intentional naming mirroring the schema
