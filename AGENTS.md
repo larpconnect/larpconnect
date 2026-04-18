@@ -38,6 +38,7 @@ modularity, your technical capabilities are partitioned into "skills":
     violations or potential bugs
 - This is a system that values correctness, completeness, and flexibility.
 - Vert.x is the base build system. Injection is handled by Guice.
+  - See the Architecture Guide for the specific Untangling Dependencies rules. Every package gets one public module, dependencies go down/out, bindings are explicit, and modules either bind or install, not both.
 
 ## Relevant Documents
 
