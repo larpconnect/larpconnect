@@ -25,3 +25,9 @@ set the `web.port` and takes precedence over `config.json` values.
 **Learning:** A PR to document incorrect JSON configuration keys (like `web.port` or `web_port`) was rejected because it is assumed developers understand basic JSON and the expected format is already specified in a protobuf. Documenting "millions of ways it could be done but that won't work" is discouraged.
 
 **Action:** When documenting configuration, focus only on how to do it correctly and rely on existing authoritative documentation (like protobufs) rather than enumerating negative examples.
+
+## 2026-04-18 - Untangling Dependencies Guice Rules
+
+**Learning:** There is a very specific, undocumented pattern regarding the rules for how Guice is set up in order to manage complexity: 'Every package can have at most one public module', 'Every package's Module is responsible for installing the modules of the subpackages', 'Dependencies may only go down or out within the package hierarchy', 'All bindings are declared explicitly and within the modules', and 'Modules may either install other modules or they can do bindings, not both'.
+
+**Action:** Ensure the 'Untangling Dependencies' rules in `docs/architecture.md` are known to agents and consider documenting them in `CONTRIBUTING.md` or `AGENTS.md`.

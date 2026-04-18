@@ -103,7 +103,7 @@ highlights include:
   Matching.
 - **Null Safety:** Use `Optional<T>` for potentially absent values. No direct
   `.get()`.
-- **Dependency Injection:** Use Guice with constructor injection.
+- **Dependency Injection:** Use Guice with constructor injection. Adhere to the "Untangling Dependencies" rules (one public module per package, downward dependencies, explicit bindings, exclusive bind or install).
 - **Testing:** JUnit 6, AssertJ, and Mockito. Follow the naming pattern:
   `<method>_<what is being tested>_<expected outcome>`.
 - **Immutability:** Prefer immutable collections and final variables.
