@@ -10,6 +10,12 @@ import com.larpconnect.njall.common.time.TimeModule;
  * time services, ID generation, and EventBus codecs.
  */
 public final class CommonModule extends AbstractModule {
+  /**
+   * Constructs a new {@link CommonModule}.
+   *
+   * <p>This constructor is intentionally public to allow cross-package installation while
+   * encapsulating internal package-private bindings.
+   */
   public CommonModule() {}
 
   @Override

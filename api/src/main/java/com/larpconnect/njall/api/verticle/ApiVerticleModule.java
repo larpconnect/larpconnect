@@ -9,6 +9,12 @@ import io.vertx.core.Verticle;
  * to bypass visibility issues.
  */
 public final class ApiVerticleModule extends AbstractModule {
+  /**
+   * Constructs a new {@link ApiVerticleModule}.
+   *
+   * <p>This constructor is intentionally public to allow cross-package installation while
+   * encapsulating internal package-private bindings.
+   */
   public ApiVerticleModule() {}
 
   @Override

@@ -6,6 +6,12 @@ import com.larpconnect.njall.data.entity.EntityModule;
 
 /** Guice module for configuring data access layer dependencies. */
 public final class DataModule extends AbstractModule {
+  /**
+   * Constructs a new {@link DataModule}.
+   *
+   * <p>This constructor is intentionally public to allow cross-package installation while
+   * encapsulating internal package-private bindings.
+   */
   public DataModule() {}
 
   @Override

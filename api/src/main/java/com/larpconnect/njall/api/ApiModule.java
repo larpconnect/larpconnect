@@ -8,6 +8,12 @@ import com.larpconnect.njall.api.verticle.ApiVerticleModule;
  * ArchUnit public class restriction which permits Modules to be public.
  */
 public final class ApiModule extends AbstractModule {
+  /**
+   * Constructs a new {@link ApiModule}.
+   *
+   * <p>This constructor is intentionally public to allow cross-package installation while
+   * encapsulating internal package-private bindings.
+   */
   public ApiModule() {}
 
   @Override
