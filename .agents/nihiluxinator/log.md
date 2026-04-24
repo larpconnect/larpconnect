@@ -25,3 +25,9 @@ set the `web.port` and takes precedence over `config.json` values.
 **Learning:** A PR to document incorrect JSON configuration keys (like `web.port` or `web_port`) was rejected because it is assumed developers understand basic JSON and the expected format is already specified in a protobuf. Documenting "millions of ways it could be done but that won't work" is discouraged.
 
 **Action:** When documenting configuration, focus only on how to do it correctly and rely on existing authoritative documentation (like protobufs) rather than enumerating negative examples.
+
+## 2026-04-24 - Traps in tasks
+
+**Learning:** When given a prompt to write documentation for a specific feature, never blindly assume the feature exists. Sometimes you may be given a test to verify your adherence to the Groundedness Rule (e.g., asking to document a non-existent REPL or batch mode). Always verify using `grep` or filesystem checks before proposing a plan.
+
+**Action:** Always rigorously check the codebase to verify the existence of features before planning to document them to strictly adhere to the Groundedness Rule.
