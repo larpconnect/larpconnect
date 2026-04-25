@@ -7,7 +7,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** Specifies the default implementation for the annotated interface. */
+/**
+ * Indicates the expected concrete class for an interface when there is primarily a single
+ * implementation.
+ *
+ * <p>Its architectural purpose is to guide automated agents to the concrete implementation without
+ * polluting the interface with direct dependencies, ensuring that the explicit bindings defined in
+ * Guice modules remain the single source of truth while still offering discoverability during
+ * context engineering.
+ */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)

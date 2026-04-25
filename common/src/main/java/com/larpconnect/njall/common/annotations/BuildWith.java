@@ -8,7 +8,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** Specifies the "Source of Truth" public Guice module for this class. */
+/**
+ * Directs automated agents to the Guice module required to instantiate a class that has a private
+ * or package-private constructor.
+ *
+ * <p>Its architectural purpose is to signal to agents that they cannot directly instantiate the
+ * target object and must instead rely on the specified Guice module to obtain it, preserving
+ * encapsulation while enabling dependency injection.
+ */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)

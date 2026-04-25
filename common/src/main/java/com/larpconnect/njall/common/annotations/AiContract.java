@@ -7,7 +7,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** Defines the "Logical Physics" of a method. This annotation is a Hard Invariant. */
+/**
+ * Defines the "Logical Physics" of a method or component using mathematical or logical notation.
+ *
+ * <p>This annotation acts as an ersatz form of Design by Contract. It explicitly outlines the
+ * preconditions, postconditions, and invariants of a method or class. Its primary architectural
+ * purpose is to guarantee what must be true before and after execution, thereby providing a robust
+ * context for AI agents that might otherwise struggle to trace execution flows or trust system
+ * invariants in a highly asynchronous, event-driven architecture.
+ */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
