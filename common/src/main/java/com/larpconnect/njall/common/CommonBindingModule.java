@@ -10,6 +10,15 @@ import java.time.Clock;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.random.RandomGenerator;
 
+/**
+ * Binds internal dependencies for common utilities like random number generators, JSON formatters,
+ * and timing facilities.
+ *
+ * <p>This module encapsulates the package-private bindings of the common infrastructure, preventing
+ * external packages from depending directly on implementation details. It is intended to be
+ * installed exclusively by the public {@link CommonModule}. The package-private constructor ensures
+ * that cross-package installation routes through the correct, explicit boundary.
+ */
 @InstallInstead(CommonModule.class)
 final class CommonBindingModule extends AbstractModule {
   CommonBindingModule() {}
