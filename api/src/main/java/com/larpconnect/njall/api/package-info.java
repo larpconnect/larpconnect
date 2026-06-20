@@ -1,7 +1,0 @@
-/** API module mapping protobuf API objects to JSON. */
-@ParametersAreNonnullByDefault
-@ReturnValuesAreNonnullByDefault
-package com.larpconnect.njall.api;
-
-import edu.umd.cs.findbugs.annotations.ReturnValuesAreNonnullByDefault;
-import javax.annotation.ParametersAreNonnullByDefault;
