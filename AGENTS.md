@@ -1,177 +1,84 @@
-# LarpConnect Development Project
+# LarpConnect Agent Governance and Execution Protocol (AGENTS.md)
 
-# Java Project Development Guidelines: Technical Standards and Best Practices
+This document establishes the binding execution constraints, architectural invariants, and development workflows for all AI agents operating on the LarpConnect repository. All code modifications, module creations, and testing strategies must conform to these definitions.
 
-You are a Senior Java engineer working on the project `metonomy`. To maintain
-modularity, your technical capabilities are partitioned into "skills":
+---
 
-- **Discovery**: Upon initialization, you must read `.agents/SKILLS.md` to
-  identify active capabilities. You must then load the file you are directed to
-  based on the capabilities you need for a given project. When you use a skill,
-  add it's name to your commit message.
-- **Delegation**: When a task falls within a skill's domain, defer to the
-  specific constraints in that module.
-- **Conflicts**: If a skill constraint conflicts with a core `AGENTS.md` rule,
-  the specific skill constraint takes precedence.
+## 1. Agent Workspace and State Trackers
 
-## Key Points
+Agents must maintain operational state, skill definitions, and execution logs within the `.agents` root directory.
 
-- Always check `.agents/SKILLS.md` at the start of a task and load the relevant
-  skill files. Load relevant skill files as you need them or if you anticipate
-  needing them.
-- This is a Java 25 project that uses Java 25 idioms and features. Including but
-  not limited to virtual threads, the streaming api, sealed interfaces, and
-  record classes. The structured concurrency experiment is enabled and free to
-  use as well. use context7 to get the documentation for JDK 25.
-  - Use records for data carriers and sealed interfaces for closed hierarchies
-  - Always prefer `ImmutableList.of()`, `ImmutableList.builder()`, or
-    `stream().collect(ImmutableList.toImmutableList())`
-  - Address all warnings immediately. Use `@SuppressWarnings` only as a last
-    resort and _always_ with a justifying comment
-- 100% branch coverage is required in testing. Testing is based on JUnit 6,
-  AssertJ, and Cucumber.
-- This is a Gradle project using the Kotlin DSL. Do not use groovy.
-- This is a high complexity project that demands adherence to rigid coding
-  standards and makes heavy use of abstractions.
-  - Run `./gradlew spotlessApply` before every commit or check
-  - Read the error messages carefully. They usually point to specific style
-    violations or potential bugs
-- This is a system that values correctness, completeness, and flexibility.
-- Vert.x is the base build system. Injection is handled by Guice.
+* **`.agents/skills/`**: Storage for specific functional capabilities. Every capability must occupy a distinct sub-folder with a `SKILL.md` file establishing its operational context (e.g., `.agents/skills/<skill name>/SKILL.md`).
+* **`.agents/logs/`**: Structured markdown execution logs where agents record step-by-step reasoning, static analysis outcomes, and architectural assessment findings during a task.
 
-## Relevant Documents
+---
 
-1. `AGENTS.md`, `CONTRIBUTING.md`, and `README.md`. These are the basic ground rules for the system.
-2. `.agents/SKILLS.md` and any linked-to skills. These provide contextual information and often direct
-   the agent to load specific resource documentation from context7.
-3. `.cursorrules`. This contains general guidance for coding assistance IDEs and tools that integrate with
-   IDEs.
-4. Any `docs/`. These provide additional contextual information on how to use the system.
+## 2. Lingua-Franca and API Contracts
 
-Some specific named agents have logs in the `.agents` directory. These should not be paid attention to unless
-coding under that persona/agent.
+* **JSON Definition**: The universal payload communication format across all application layers (API, Queue, and Internal State) is JSON. Other formats may be supported, but they start as JSON.
+* **Spec-First Contract Definition**: No feature implementation may begin without establishing or updating the OpenAPI specification and behavioral cucumber tests. The OpenAPI spec dictates the exact structural shape of payload objects.
 
-## Definition of Done
+---
 
-This system uses a robust set of automated tests to ensure compliance with
-quality standards. In order for a patch to be merged, it must first pass those
-quality checks.
+## 3. Dependency Management and Library Ecosystem
 
-1. Logic is complete
-2. Tests are written, including integration tests in cucumber if appropriate
-3. `./gradlew spotlessApply` has been run. If this is not done then spontaneous
-   failurs will hapepn in other parts of the pipeline.
-4. `./gradlew check` has been run and passes. If this is not done then the code
-   cannot be merged and will not be reviewed to be merged.
-5. `./gradlew build` has been run and passes. If this is not done then the code
-   cannot be merged and will not be reviewed to be merged.
+* **Version Upgradability**: Always declare and utilize the most recent stable versions for all third-party libraries. Centralize versions inside the `buildSrc` configuration layer using a registry. 
+* **Ecosystem Preferences**: Maximize usage of standard utility and performance libraries. Do not reinvent core utilities; leverage the following preferentially:
+    * **mug**: For clean, modern Java extensions and pattern matching.
+    * **Google Guava**: For advanced collections, graph structures, and primitives.
+    * **Jackson**: For lightning-fast, highly accurate JSON parsing and serialization configurations.
+    * **Caffeine**: For high-performance, in-memory caching strategies.
+    * **Vert.x**: For event-driven architecture.
 
-An internal code review before asking a human to review is always appropriate for
-code and config changes.
+---
 
-Once these criteria are met then the code may be pushed. You do not need to
-confirm readiness to push if these criteria are met.
+## 4. Code Architecture and Quality Constraints
 
-## Core Documents
+Agents must ensure the codebase remains a clean, highly trackable Directed Acyclic Graph (DAG) using Java 25 LTS, Vert.x 5, Guice, and Hibernate.
 
-- `AGENTS.md`: You are here. A guide for agent development, also lays out
-  broader coding standards.
-- `<module name>/AGENTS.md`: Some directories have separate `AGENTS` files,
-  these work **in addition** to the root `AGENTS.md` file and add supplementary
-  information and link to relevant skills.
-- `.agents/SKILLS.md`: A routing file for determining which skills are needed
-  and which files to load as a result. The skills themselves are stored in
-  `.agents/skills/` files.
-- [CONTRIBUTING.md](./CONTRIBUTING.md): Guide for getting started on and
-  contributing to this project. Intended for humans.
-- [README.md](./README.md): Guide for using this project, getting it trunning,
-  and understanding the basic layout and features. Intended for humans though
-  useful for agents.
+### Structural Topology
+* **Strict DAG Enforcements**: Circular dependencies between packages or Gradle modules are absolutely forbidden.
+* **Package-to-Module Parity**: Exactly one top-level package is allowed per Gradle module.
+* **Guice Configuration**: Every package layer must expose exactly one public Guice module. This module is exclusively responsible for running `install` on subpackage modules exactly one layer down. 
+* **Application Composition**: Individual library modules must never install subpackage modules outside of test scopes. Full dependency compilation happens inside the application modules (e.g., `:server`).
 
-## Technical Configuration
+### Code Quality Metrics
+* **Class File Limit**: Maximum 500 Source Lines of Code (SLOC).
+* **Function Limit**: Maximum 50 Source Lines of Code (SLOC).
+* **Cyclomatic Complexity**: Strict maximum of 10 per method.
+* **NPath Complexity**: Strict maximum of 200 per method.
+* **Line Length**: Hard wrapping at 100 characters following Google Java Formatting standards.
 
-- Multi-Module Architecture: To ensure separation of concerns, the project is
-  organized into distinct modules:
-  - `:parent` Contains the central dependencies. All modules within the system
-    inherit `:parent`. Java library.
-  - `:test` Contains the common test dependencies and some additional utilities
-    for other modules to import.
-  - `:common` Basic utilities and objects that are not central to the core logic
-    of the system.
-  - `:data` The database interface layer. Includes DTOs and configuration.
-  - `:proto` The wire protocol objects. Serialized with protobuf. Library.
-  - `:api` The basic API for the REST service. Library.
-  - `:init` Initialization code for the vert.x system and guice bindings.
-    Library.
-  - `:server` The server and main entry point. Application.
-  - `:integration` Contains archunit tests and also cucumber integration tests.
-  - `:bom` Applies the java-platform plugin and pulls in all of the other
-    modules and dependencies.
+### Behavioral Isolation (IOSP-Lite)
+* **Logic vs. Integration Separation**: A function may either call other class functions OR it may contain internal execution logic and external calls (e.g., repository interactions, external service hits). It may never do both.
+* **Pure Factory Isolation**: If a function instantiates objects via the `new` keyword, object creation must be the *only* operation that function performs.
 
-## Workflow
+---
 
-Act as a senior Java developer. Before outputting the code, mentally verify it
-against the Checkstyle and Spotbugs configurations. If a line exceeds 100
-characters or lacks a proper Javadoc, rewrite it before sending the final
-response.
+## 5. Dual-Layer Testing Strategy
 
-- Before writing the implementation for a feature, write a comprehensive test
-  suite in `:integration` that covers edge cases, null handling, and happy
-  paths. Ensure the tests follow our Checkstyle rules for naming conventions.
-  Only after the tests are written, provide the implementation code that
-  satisfies them.
-- Before writing a class that has any non-storage functionality, write a
-  comprehensive junit test suite that covers edge cases, null handling, and
-  happy paths. Ensure the tests follow our Checkstyle rules for naming
-  conventions. Only after the tests are written, provide the implementation code
-  that satisfies them.
-- Version Control Standards:
-  - Feature branches must be prefixed with `<agent name>/`, so `jules/` for
-    jules.
-  - A linear commit history is required; developers must rebase on the main
-    branch rather than performing merge commits.
-- Do not seek validation of if there is "any more work left to do" unless work
-  has already been specified for you. Always favor getting the code compliant
-  with checks.
-- There is a github action that will run on every commit. It _must_ pass in
-  order for the PR to be merged.
-- If a commit looks like it will be greater than 500 lines, try to split it into
-  multiple independent commits within the same PR. Some pieces of work that
-  should generally almost always be split off into independent commits:
-  - Adding a new module
-  - Any changes to code quality checks that goes in alongside other work
-  - Significant refactoring of old code
-  - Cleanly separable "units of work" that take place in different modules (so
-    doing the cli work separate from the configuration work).
-- Execution Order:
-  - Step 1: List the edge cases you will test.
-  - Step 2: Write the Test class.
-  - Step 3: Write the Implementation class.
+No code modification is complete without hitting the project verification gates: a minimum of **85% line coverage** and **90% branch coverage** via JaCoCo, verified by SpotBugs, ErrorProne, and Checkstyle.
 
-## Code Quality and Static Analysis
+### Layer 1: Unit Tests
+* Must be colocated with the implementation module inside the `src/test` directory.
+* Focus heavily on testing pure functions, isolated factories, mapping layers, and domain entities.
 
-- Formatting Standards: The Spotless plugin, configured with Google Java Format,
-  shall be used to enforce a uniform coding style.
-- Static Analysis: Developers must utilize Checkstyle, SpotBugs, and ErrorProne
-  to identify and rectify potential defects and stylistic inconsistencies during
-  the build process.
-- Warning Mitigation: Compilation warnings must be resolved. The use of
-  `@SuppressWarnings` is permitted only when accompanied by thorough
-  documentation justifying the exception.
-- API Documentation: Publicly accessible types and methods require comprehensive
-  Javadoc documentation. Brief descriptions may be omitted only if the
-  functionality is inherently self-evident from the identifier naming.
-- Review code yourself or with the help of an AI agent before submitting the code
-  for a human review. Ensure in particular that there are no extraneous files
-  (e.g., `.diff` files or arbitrary python files) before submitting.
+### Layer 2: Cucumber Integration Tests
+* All integration and End-to-End (E2E) tests must live exclusively inside the `:integration` module.
+* Integration tests must explicitly target the boundaries established by the asynchronous architecture using distinct Cucumber features:
 
-## Critical Infrastructure
+1.  **API to Queue Boundary**: Assert that incoming HTTP/REST requests hitting the Vert.x API layer validate against the OpenAPI specification, serialize properly to JSON, and emit the expected message structures onto the AMQP 1.0 queue system.
+2.  **Queue to Data Boundary**: Assert that processing an inbound AMQP 1.0 queue message through the server agents results in the appropriate state modifications. Database operations must be verified against a synthesized or mock database response layer to keep tests deterministic and isolated from external infrastructure flakiness.
 
-LarpConnect depends on the following:
+### Versions
+
+Always favor using the most recent versions of libraries and infrastructure that are available and in long-term-support.
+
+This means:
 
 * Java 25+
-* PostgreSQL 18+
-  * Extension: `uuid-ossp`
-  * Extension: `citext`
-* RabbitMQ 4.2+ (using AMQP 1.0)
-
+* PSQL 17+
+* RabbitMQ 4.3+
+* HornetQ 2.4.11.Final+
+* Vert.x 5.1+
+* Junit (Jupiter) 6.1+
