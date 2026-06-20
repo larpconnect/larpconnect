@@ -1,4 +1,4 @@
-# LarpConnect Agent Governance and Execution Protocol (AGENTS.md)
+# LarpConnect (Njall) Agent Instructions
 
 This document establishes the binding execution constraints, architectural invariants, and development workflows for all AI agents operating on the LarpConnect repository. All code modifications, module creations, and testing strategies must conform to these definitions.
 
@@ -15,7 +15,7 @@ Agents must maintain operational state, skill definitions, and execution logs wi
 
 ## 2. Lingua-Franca and API Contracts
 
-* **JSON Definition**: The universal payload communication format across all application layers (API, Queue, and Internal State) is JSON. Other formats may be supported, but they start as JSON.
+* **JSON Definition**: The universal payload communication format across all application layers (API, Queue, and Internal State) is JSON. Other formats may be supported, but they should always include JSON as an option and be able to be specified in JSON.
 * **Spec-First Contract Definition**: No feature implementation may begin without establishing or updating the OpenAPI specification and behavioral cucumber tests. The OpenAPI spec dictates the exact structural shape of payload objects.
 
 ---
@@ -25,10 +25,18 @@ Agents must maintain operational state, skill definitions, and execution logs wi
 * **Version Upgradability**: Always declare and utilize the most recent stable versions for all third-party libraries. Centralize versions inside the `buildSrc` configuration layer using a registry. 
 * **Ecosystem Preferences**: Maximize usage of standard utility and performance libraries. Do not reinvent core utilities; leverage the following preferentially:
     * **mug**: For clean, modern Java extensions and pattern matching.
-    * **Google Guava**: For advanced collections, graph structures, and primitives.
-    * **Jackson**: For lightning-fast, highly accurate JSON parsing and serialization configurations.
+    * **Google Guice**: For dependency injection / inversion of control.
     * **Caffeine**: For high-performance, in-memory caching strategies.
+    * **Google Guava**: For advanced collections, graph structures, and primitives.
     * **Vert.x**: For event-driven architecture.
+    * **Jackson**: For lightning-fast, highly accurate JSON parsing and serialization configurations.
+    * **SLF4J** and **Logback**: For logging
+    * **JUnit** (Jupiter): For unit testing
+    * **Mockito**: For unit testing with mocks and stubs
+    * **Testcontainers**: For integration testing against a live database.
+    * **Apache Commons**: For utilities not covered by any of the above.
+
+For our purposes here the ecosystem preferences are _ordered_, meaning that if a problem can be solved with a higher item, use it in preference to the lower item. So if, for example, a utility exists in both `mug` and `guava` then prefer the `mug` version. If one exists in both `vert.x` and `jackson`, then prefer the `vert.x` version. 
 
 ---
 
@@ -47,7 +55,7 @@ Agents must ensure the codebase remains a clean, highly trackable Directed Acycl
 * **Function Limit**: Maximum 50 Source Lines of Code (SLOC).
 * **Cyclomatic Complexity**: Strict maximum of 10 per method.
 * **NPath Complexity**: Strict maximum of 200 per method.
-* **Line Length**: Hard wrapping at 100 characters following Google Java Formatting standards.
+* **Line Length**: Hard wrapping at 100 characters following Google Java Formatting standards. This is enforced by Spotless.
 
 ### Behavioral Isolation (IOSP-Lite)
 * **Logic vs. Integration Separation**: A function may either call other class functions OR it may contain internal execution logic and external calls (e.g., repository interactions, external service hits). It may never do both.
@@ -57,7 +65,7 @@ Agents must ensure the codebase remains a clean, highly trackable Directed Acycl
 
 ## 5. Dual-Layer Testing Strategy
 
-No code modification is complete without hitting the project verification gates: a minimum of **85% line coverage** and **90% branch coverage** via JaCoCo, verified by SpotBugs, ErrorProne, and Checkstyle.
+No code modification is complete without hitting the project verification gates: a minimum of **85% line coverage** and **90% branch coverage** via JaCoCo, verified by Spotless, SpotBugs, ErrorProne, and Checkstyle.
 
 ### Layer 1: Unit Tests
 * Must be colocated with the implementation module inside the `src/test` directory.
