@@ -47,3 +47,9 @@ gradle-app.setting
 
 build/
 *.log
+
+# Ignore Gradle build output directory
+build
+
+# Ignore Kotlin plugin data
+.kotlin
