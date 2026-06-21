@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude any classes containing 'Generated' in their names -->
+    <Match>
+        <Class name="~.*Generated.*"/>
+    </Match>
+    <!-- Exclude any classes in a package named 'generated' -->
+    <Match>
+        <Class name="~.*\.generated\..*"/>
+    </Match>
+</FindBugsFilter>
