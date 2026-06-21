@@ -27,6 +27,16 @@ for the needs of LARPers, with a heavy focus on:
 
 ---
 
+## Development
+
+To build the project run:
+
+```java
+./gradlew build
+```
+
+---
+
 ## Technical Specifications
 
 The project is a multi-module Gradle build designed for high performance and
@@ -37,123 +47,8 @@ type safety.
 - **Build System:** Gradle (Multi-module)
 - **Main Entry Point:** `:server`
 
-For detailed information regarding the architectural decisions behind these
-choices, please consult the [Architecture Guide](docs/architecture.md).
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- **JDK 25** or higher.
-- **Gradle 9.3+** (via the included wrapper).
-
-### Build Instructions
-
-To compile the project and run the test suite:
-
-```bash
-./gradlew build
-```
-
-### Running Locally
-
-To run the server directly via Gradle:
-
-```bash
-./gradlew :server:run
-```
-
-### Configuration
-
-LarpConnect's configuration can be modified through `config.json`. For detailed
-information on configuration settings, environment variables (like `PORT`),
-namespacing, and specifying custom
-configuration files, please refer to the
-[Configuration Guide](docs/configuration.md).
-
-> [!NOTE]
-> The standard `PORT` environment variable takes precedence over the `webPort`
-> setting configured in `config.json`. This is implemented as a common pattern
-> for cloud deployments (such as Render or Heroku).
-
-### Creating a Fatjar
-
-To create a standalone executable jar (fatjar):
-
-```bash
-./gradlew :server:shadowJar
-```
-
-To run the resulting fatjar:
-
-```bash
-java -jar server/build/libs/larpconnect.jar
-```
-
-### Running with Docker
-
-To build the Docker image:
-
-```bash
-docker build -t larpconnect-server .
-```
-
-To run the container:
-
-```bash
-docker run -d -p 8080:8080 --name larpconnect larpconnect-server
-```
-
-To verify the service is running:
-
-```bash
-curl -v http://localhost:8080/v1/message
-```
-
-## Software Layout
-
-* `:parent`: The central dependency object. Everything else inherits from this.
-* `:test`: Like `:parent` but exclusive to testing. Common testing utilities and dependencies.
-* `:common`: Common, central utilities.
-* `:server`: The main application. This is where the code for running the system lives.
-* `:init`: The lifecycle control section. `:server` uses this to bootstrap the system.
-* `:api`: The verticles that control the API's business logic.
-* `:proto`: Protocol definition objects in protobuf.
-* `:data`: The data model and database handling system.
-* `:integration`: Integration and architecture tests.
-* `:bom`: The platform that defines the bill of materials for the project.
-
-## Inators
-
-To maintain code health this project uses a series of automatic agents that run periodically. These are:
-
-1. Pentiousinator: A build improvement agent that helps improve the gradle system.
-2. Nifftyinator: A cleanup agent that has a detailed list of things to do based on common problems in AI contributions.
-3. Zhongliinator: A contract agent that focuses on keeping the `AiContract` and annotative elements up to date.
-4. Nihiluxinator: A documentation agent tasked with improving and updating the documentation for the project.
-
-These obey the same [AI Policy Restrictions](./AI_POLICY.md) as other agents in this system: everything they do is human reviewed, etc.
-
-They mostly exist to handle the aspects that _other agents_ find difficult. For example, Nifftyinator was built because a lot of
-older java patterns kept showing up and policing them (or getting agents to respect them) was getting exhausting. So Nifftyinator
-goes and formulaicly applies these, reducing the load a bit on reviewers.
-
 ## License
 
 All source code and comments licensed under Apache 2.0
 
 See [LICENSE](./LICENSE) for more details.
-
-Not affiliated with or endorsed by Google LLC in any way.
-
-Exceptions are as follows:
-
-- Use of Generative AI in Contributions is licensed under Creative Commons
-  Attribution-ShareAlike 4.0 International. To view a copy of this license,
-  visit https://creativecommons.org/licenses/by-sa/4.0/
-- The contents of the `docs/` folder is licensed under Creative Commons
-  Attribution 4.0 International. To view a copy of this license, visit
-  https://creativecommons.org/licenses/by/4.0/.
-
