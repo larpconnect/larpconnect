@@ -1,3 +1,8 @@
+---
+name: guice
+description: Guidance for interacting with Guice
+---
+
 # Skill: Common Design Patterns
 
 ## Purpose
@@ -19,12 +24,10 @@ interface is often the right strategy.
 ```java
 Foo.java:
 
-@DefaultImplementation(DefaultFoo.class)
 interface Foo {}
 
 DefaultFoo.java:
 
-@BuildWith(LocalModule.class)
 final class DefaultFoo implements Foo {
    @Inject
    DefaultFoo() {}
@@ -51,7 +54,7 @@ BarModule.java:
 package foo.bar;
 
 import foo.bar.baz.BazModule;
-// … other imports
+// … other imports
 
 public class BarModule extends AbstractModule {
    void configure() {
@@ -67,7 +70,6 @@ package foo.bar;
 
 // … other imports
 
-@InstallInstead(BarModule.class)
 public class BarBindingModule extends AbstractModule {
    void configure() {
      bind(Bar.class).to(DefaultBar.class);
@@ -137,7 +139,6 @@ Strongly prefer, however, writing this as a Guice object that can be injected:
 Utility.java:
 
 @Immutable
-@DefaultImplementation(DefaultUtility.class)
 public interface Utility {
    String escape(String arg);
 }
@@ -151,27 +152,3 @@ public final Utility {
    public String escape(String arg) { /* code here */ }
 }
 ```
-
-### Basic API Pattern
-
-1. Create a protobuf that represents any JSON in the request and/or response.
-2. Modify the `openapi.yaml` file to add the endpoint
-3. Add the verticle to handle the JSON version of the request in `:api`. It MAY delegate
-   to some other location or it may solve it locally. If it delegates then it SHOULD
-   convert the JSON into a protobuf and convert any replies payload into JSON.
-4. Wire it in the `:server` module.
-5. Write unit tests.
-6. Write integration tests.
-
-### Database modifications
-
-1. Add a file with an incrementing number in the `migrations` folder in `:data`, e.g., `00_migration_name.sql` or `01_migration_name_2.sql`
-2. In that file create an _idempotent_ SQL script making changes. It can be safely assumed that SQL changes will start with the `init` and then happen _in order_.
-
-### Standard Data Transfer Object Pattern
-
-1. Create the object using Hibernate annotations and register it appropriately
-2. If it is not part of another object's lifecycle then create a DAO for it
-3. Wire it together using guice
-4. Ensure that all branches are tested, especially equals functions
-5. Assume pgplsql as the dialect and target it accordingly

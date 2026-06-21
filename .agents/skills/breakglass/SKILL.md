@@ -1,29 +1,9 @@
+---
+name: breakglass
+description: If stuck on how to resolve code quality issues from Spotless, Checkstyle, SpotBugs, JaCoCo, ErrorProne, PMD, ArchUnit, user requests, or any other source.
+---
+
 # Skill: Handling being Stuck
-
-## Domain Context
-
-This skill handles specific problem cases that you may be encountering.
-
-## Technical Constraints
-
-There are several technical constraints in this project that we have found AI
-agents consistently have trouble with. This is a guide to help you navigate
-those.
-
-To start:
-
-If your problem is related to:
-
-- **Instantiation**: Read `.agents/skills/guice_di.md`
-- **Test Coverage**: Read `.agents/skills/testing.md`
-- **Context Annotations**: Read `.agents/skills/context.md`
-- **Data Files**: Read `.agents/skills/data.md`
-
-Read these regardless of if you have met the trigger conditions specified in
-`.jules/SKILLS.md`
-
-If none of the above apply or if your problem is still not solved, move to
-**Specific Guidance** here.
 
 ## Specific Guidance
 
@@ -77,8 +57,10 @@ Strategies:
     }
   ```
 
-  Note that this doesn't usually apply when working with **record** objects, but
+  Note that this doesn't usually apply when working with **record** objects or other kinds of DTO, but
   it does apply when working when objects that involve actual application logic.
+
+- **Use Guice**: Do not use `new` if you can avoid it, instead inject the dependency, or a factory to build the dependency, via Guice. Use `AssistedInject` and guice factories for constructing more complex objects at runtime. These factories can then be mocked. 
 
 ### Cannot Instantiate Package-Private Constructor
 
@@ -87,14 +69,11 @@ Almost always in these cases it is because you are expected to either:
 1. `install` a different `Module` than this one (if this is a module)
 2. Get this object strictly from an injector (via guice).
 
-Either way, read `.agents/skills/guice_di.md` and either use (or, in tests, create)
-an injector.
-
 DO NOT UNDER ANY CIRCUMSTANCES use reflection to create the object instead.
 
 ### Public constructor is disallowed
 
-You are expected to bind this class to an interface using guice. In some rare circumstances
+You are expected to bind this class to an interface using guice. In some circumstances
 a factory pattern may be correct, in which case use `FactoryModuleBuilder`.
 
 ### Test Coverage Too Low

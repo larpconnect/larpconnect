@@ -1,8 +1,9 @@
+---
+name: njall-java
+description: Guidance for high quality java code. 
+---
+
 # Skill: Modern Java (JDK 25)
-
-## Domain Context
-
-This skill handles working in the modern Java 25 environment.
 
 ## Technical Constraints
 
@@ -191,11 +192,9 @@ prefer instead:
 | `private static final Logger`           | `private final Logger`               | Static is unnecessary here                   |
 | `new NonRecordClass(…)`                 | Use guice injection and/or a factory | Easier to test and coherent with the system  |
 | `@Named("…")`                           | Use a custom qualifier annotation    | Easier to track across the entire codebase   |
-| `PrivateModule`                         | Use a custom qualifier annotation    | Easier to debug and reason about             |
 | `method(arg1, inOutParameter)`          | `var retval = method(arg1)`          | Prefer modern java idioms                    |
 
 ## Miscellaneous
 
 - When it is not contradicted by other instructions, use the
   [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
-
