@@ -54,7 +54,7 @@ If you're new to open source, here are some helpful resources:
 
 1. **Fork the repository** and create your branch from `main`.
 2. **Branch naming:** Feature branches created by AIs must prefixed with
-   `<ai name>/`, e.g., `jules/`. This does not apply to humans.
+   `<ai name>/`, e.g., `jules/`. This does not apply to humans or commits where you work on it locally: only where an agent is acting autonomously with only a code review.
 3. **Set up your environment:** Ensure you have Java 25 installed.
 4. **Make your changes.**
 5. **Format your code:** Run `./gradlew spotlessApply` before committing.
