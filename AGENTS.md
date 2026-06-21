@@ -31,6 +31,7 @@ Agents must maintain operational state, skill definitions, and execution logs wi
     * **Vert.x**: For event-driven architecture.
     * **Jackson**: For lightning-fast, highly accurate JSON parsing and serialization configurations.
     * **SLF4J** and **Logback**: For logging
+    * **AssertJ**: Use this for assertions in preference to the built-in JUnit assertion framework.
     * **JUnit** (Jupiter): For unit testing
     * **Mockito**: For unit testing with mocks and stubs
     * **Testcontainers**: For integration testing against a live database.
