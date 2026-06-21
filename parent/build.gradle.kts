@@ -23,11 +23,4 @@ dependencies {
     }
 }
 
-// Share compiler arguments with subprojects via extra properties
-extra["compilerArgs"] = listOf(
-    "-Xlint:all",
-    "-Werror",
-    "-Xlint:-processing",
-    "-Xlint:-classfile",
-    "-parameters"
-)
+// Compiler arguments are managed by the common convention plugin.

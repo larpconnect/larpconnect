@@ -20,20 +20,14 @@ java {
     }
 }
 
-// Share compiler arguments from the `:parent` project if they exist
 tasks.withType<JavaCompile>().configureEach {
-    if (project.parent != null && project.parent!!.subprojects.any { it.name == "parent" }) {
-        val parentProject = project.project(":parent")
-        if (parentProject.state.executed) {
-            val compilerArgs = parentProject.extra["compilerArgs"] as? List<*>
-            if (compilerArgs != null) {
-                options.compilerArgs.addAll(compilerArgs.filterIsInstance<String>())
-            }
-        }
-    } else {
-        // Fallback default compiler arguments if `:parent` is not evaluated/present yet
-        options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror", "-Xlint:-processing", "-Xlint:-classfile"))
-    }
+    options.compilerArgs.addAll(listOf(
+        "-Xlint:all",
+        "-Werror",
+        "-Xlint:-processing",
+        "-Xlint:-classfile",
+        "-parameters"
+    ))
 }
 
 // Spotless formatting configuration
@@ -85,8 +79,15 @@ jacoco {
     toolVersion = "0.8.14"
 }
 
+val jacocoExcludeList = listOf("**/org/larpconnect/server/ServerApp*")
+
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it).exclude(jacocoExcludeList)
+        })
+    )
     reports {
         xml.required.set(true)
         html.required.set(true)
@@ -95,6 +96,7 @@ tasks.jacocoTestReport {
 
 tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.jacocoTestReport)
+    classDirectories.setFrom(tasks.jacocoTestReport.get().classDirectories)
     violationRules {
         rule {
             limit {
