@@ -41,6 +41,12 @@ Vert.x 5 toolkit.
 Initialization of the application Vert.x should be delayed until after the Guice
 injector has been fully created.
 
+### Interactions With Guice
+
+Whenever creating an object that needs vertx, inject a `Provider<Vertx>` instead of
+`Vertx` proper. Then delay calling `.get()` on that provider until vertx is
+actually needed in practice (and outside of the constructor).
+
 ### Context7 Directives
 
 Always query `Context7` for the most up-to-date Vert.x 5 API documentation,
