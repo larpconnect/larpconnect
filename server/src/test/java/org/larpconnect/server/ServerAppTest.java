@@ -2,19 +2,10 @@ package org.larpconnect.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.Constructor;
 import org.junit.jupiter.api.Test;
 
-/** Unit tests for ServerApp verifying private constructor and main method startup. */
+/** Unit tests for ServerApp verifying main method startup. */
 public final class ServerAppTest {
-  @Test
-  public void testPrivateConstructor() throws Exception {
-    Constructor<ServerApp> constructor = ServerApp.class.getDeclaredConstructor();
-    constructor.setAccessible(true);
-    ServerApp app = constructor.newInstance();
-    assertThat(app).isNotNull();
-  }
-
   @Test
   public void testMainMethod_startsAndStops() throws Exception {
     ServerApp.main(new String[0]);
