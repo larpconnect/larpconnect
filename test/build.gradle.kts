@@ -16,6 +16,6 @@ dependencies {
     api(libs.cucumber.junit.platform.engine)
     api(libs.guice)
     api(libs.assertj.core)
-
-    implementation(libs.slf4j.api)
+    api(libs.slf4j.api)
+    api(libs.logback.classic)
 }

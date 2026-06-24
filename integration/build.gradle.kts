@@ -20,4 +20,6 @@ dependencies {
     testImplementation(project(":data"))
     testImplementation(project(":base"))
     testImplementation(project(":api"))
+
+    testImplementation(libs.archunit.junit5)
 }

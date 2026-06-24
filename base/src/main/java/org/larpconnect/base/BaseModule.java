@@ -1,11 +1,19 @@
 package org.larpconnect.base;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provider;
+import com.google.inject.multibindings.ProvidesIntoSet;
+import org.larpconnect.events.VerticleProvider;
 
-/** Exposes bindings for the database-to-Vert.x worker bridge. */
+/** Configures DI components for the base package. */
 public final class BaseModule extends AbstractModule {
   @Override
   protected void configure() {
-    // Bindings mapping blocking database calls to Vert.x worker executors
+    bind(BaseVerticle.class);
+  }
+
+  @ProvidesIntoSet
+  VerticleProvider provideBaseVerticle(Provider<BaseVerticle> verticleProvider) {
+    return verticleProvider::get;
   }
 }

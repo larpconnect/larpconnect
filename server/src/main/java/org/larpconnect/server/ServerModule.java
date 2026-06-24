@@ -1,6 +1,7 @@
 package org.larpconnect.server;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Singleton;
 import org.larpconnect.api.ApiModule;
 import org.larpconnect.base.BaseModule;
 import org.larpconnect.common.CommonModule;
@@ -18,5 +19,7 @@ public final class ServerModule extends AbstractModule {
     install(new DataModule());
     install(new BaseModule());
     install(new ApiModule());
+
+    bind(ServerService.class).in(Singleton.class);
   }
 }
