@@ -14,4 +14,6 @@ dependencies {
 
     // Expose Vert.x core as permitted
     api(libs.vertx.core)
+
+    implementation(libs.slf4j.api)
 }

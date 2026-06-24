@@ -13,4 +13,6 @@ dependencies {
     // Grows out of :events and depends on :data
     implementation(project(":events"))
     implementation(project(":data"))
+
+    implementation(libs.slf4j.api)
 }

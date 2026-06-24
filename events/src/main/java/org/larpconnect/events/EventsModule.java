@@ -1,11 +1,12 @@
 package org.larpconnect.events;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
-/** Exposes bindings for core event and Vert.x infrastructure. */
+/** Configures DI components for the events package. */
 public final class EventsModule extends AbstractModule {
   @Override
   protected void configure() {
-    // Bindings for verticles and Vert.x event handlers
+    Multibinder.newSetBinder(binder(), VerticleProvider.class);
   }
 }
