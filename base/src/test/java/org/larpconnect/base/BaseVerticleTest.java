@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.vertx.core.Promise;
 import org.junit.jupiter.api.Test;
 
-/** Unit tests for BaseVerticle and BaseVerticleProvider. */
+/** Unit tests for BaseVerticle. */
 public final class BaseVerticleTest {
   @Test
   public void start_whenInvoked_completesPromise() {
@@ -16,9 +16,19 @@ public final class BaseVerticleTest {
   }
 
   @Test
-  public void getVerticle_whenCalled_returnsInstance() {
-    BaseVerticle verticle = new BaseVerticle();
-    BaseVerticleProvider provider = new BaseVerticleProvider(verticle);
-    assertThat(provider.getVerticle()).isSameAs(verticle);
+  public void testBaseModule_bindings() {
+    com.google.inject.Injector injector =
+        com.google.inject.Guice.createInjector(
+            new org.larpconnect.events.EventsModule(), new BaseModule());
+    java.util.Set<org.larpconnect.events.VerticleProvider> providers =
+        injector.getInstance(
+            com.google.inject.Key.get(
+                new com.google.inject.TypeLiteral<
+                    java.util.Set<org.larpconnect.events.VerticleProvider>>() {}));
+    assertThat(providers).isNotEmpty();
+
+    org.larpconnect.events.VerticleProvider provider = providers.iterator().next();
+    io.vertx.core.Verticle verticle = provider.get();
+    assertThat(verticle).isInstanceOf(BaseVerticle.class);
   }
 }

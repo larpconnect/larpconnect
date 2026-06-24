@@ -2,16 +2,25 @@ package org.larpconnect.server;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.vertx.core.Vertx;
-import org.larpconnect.events.MainVerticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Main entry point for the LarpConnect application. */
 public final class ServerApp {
-  private final Logger logger = LoggerFactory.getLogger(ServerApp.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerApp.class);
+
+  private static volatile ServerService runningService;
 
   private ServerApp() {}
+
+  /**
+   * Returns the currently running ServerService instance, if any.
+   *
+   * @return The running ServerService or null.
+   */
+  static ServerService getRunningService() {
+    return runningService;
+  }
 
   /**
    * Main execution method.
@@ -19,23 +28,35 @@ public final class ServerApp {
    * @param args Command line arguments.
    */
   public static void main(String[] args) {
-    new ServerApp().run();
+    try {
+      logger.info("Starting LarpConnect Server...");
+      Injector injector = Guice.createInjector(new ServerModule());
+      logger.info("Injector configured successfully.");
+
+      ServerService service = injector.getInstance(ServerService.class);
+      runningService = service;
+
+      Runtime.getRuntime()
+          .addShutdownHook(new Thread(createShutdownHookRunnable(service), "shutdown-hook"));
+
+      logger.info("Starting ServerService...");
+      service.startAsync().awaitRunning();
+      logger.info("LarpConnect Server is running.");
+    } catch (Exception e) {
+      logger.error("Fatal error starting ServerApp", e);
+      System.exit(1);
+    }
   }
 
-  private void run() {
-    logger.info("Starting LarpConnect Server...");
-    Injector injector = Guice.createInjector(new ServerModule());
-    logger.info("Injector configured successfully.");
-
-    Vertx vertx = Vertx.vertx();
-    MainVerticle mainVerticle = injector.getInstance(MainVerticle.class);
-    vertx
-        .deployVerticle(mainVerticle)
-        .onSuccess(id -> logger.info("MainVerticle deployed successfully with ID: {}", id))
-        .onFailure(
-            err -> {
-              logger.error("Failed to deploy MainVerticle", err);
-              vertx.close();
-            });
+  static Runnable createShutdownHookRunnable(ServerService service) {
+    return () -> {
+      logger.info("Shutdown hook triggered. Stopping ServerService...");
+      try {
+        service.stopAsync().awaitTerminated();
+        logger.info("ServerService terminated successfully.");
+      } catch (Exception e) {
+        logger.error("Error during server shutdown", e);
+      }
+    };
   }
 }

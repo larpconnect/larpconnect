@@ -18,5 +18,7 @@ public final class ServerModule extends AbstractModule {
     install(new DataModule());
     install(new BaseModule());
     install(new ApiModule());
+
+    bind(ServerService.class).in(com.google.inject.Singleton.class);
   }
 }

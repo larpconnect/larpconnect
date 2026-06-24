@@ -8,4 +8,9 @@
     <Match>
         <Class name="~.*\.generated\..*"/>
     </Match>
+    <!-- Exclude VertxProvider from EI_EXPOSE_REP and EI_EXPOSE_REP2 -->
+    <Match>
+        <Class name="org.larpconnect.events.VertxProvider"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>
