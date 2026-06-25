@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 /** Dynamic schema routing service using Caffeine caching. */
 final class DefaultStudioRoutingService implements StudioRoutingService {
-  private static final Logger logger = LoggerFactory.getLogger(DefaultStudioRoutingService.class);
+  private final Logger logger = LoggerFactory.getLogger(DefaultStudioRoutingService.class);
 
   private final Provider<SessionFactory> sessionFactoryProvider;
   private final LoadingCache<String, StudioMappings> cache;

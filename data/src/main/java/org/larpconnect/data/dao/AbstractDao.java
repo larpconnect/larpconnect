@@ -10,7 +10,7 @@ import java.util.UUID;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.larpconnect.data.entity.NjallEntity;
-import org.larpconnect.data.entity.Studio;
+import org.larpconnect.data.entity.SoftDeletable;
 import org.larpconnect.data.entity.TenantEntity;
 
 /**
@@ -38,10 +38,7 @@ abstract class AbstractDao<E extends NjallEntity, D extends BaseDao<E, D>> {
     if (entity == null) {
       return Optional.empty();
     }
-    if (entity instanceof TenantEntity tenantEntity && tenantEntity.getDeletedOn() != null) {
-      return Optional.empty();
-    }
-    if (entity instanceof Studio studio && studio.getDeletedAt() != null) {
+    if (((SoftDeletable) entity).getDeletedTime() != null) {
       return Optional.empty();
     }
     return Optional.of(entity);
@@ -54,14 +51,9 @@ abstract class AbstractDao<E extends NjallEntity, D extends BaseDao<E, D>> {
 
   public final void delete(String schema, E entity) {
     checkSchema(schema);
-    if (entity instanceof TenantEntity tenantEntity) {
-      tenantEntity.setDeletedOn(Instant.now());
-      currentSession().merge(tenantEntity);
-    } else {
-      Studio studio = (Studio) entity;
-      studio.setDeletedAt(Instant.now());
-      currentSession().merge(studio);
-    }
+    SoftDeletable softDeletable = (SoftDeletable) entity;
+    softDeletable.setDeletedTime(Instant.now());
+    currentSession().merge(entity);
   }
 
   public final List<E> findAll(String schema) {
@@ -71,11 +63,9 @@ abstract class AbstractDao<E extends NjallEntity, D extends BaseDao<E, D>> {
     Root<E> root = query.from(entityClass);
     query.select(root);
 
-    if (TenantEntity.class.isAssignableFrom(entityClass)) {
-      query.where(cb.isNull(root.get("deletedOn")));
-    } else {
-      query.where(cb.isNull(root.get("deletedAt")));
-    }
+    String propertyName =
+        TenantEntity.class.isAssignableFrom(entityClass) ? "deletedOn" : "deletedAt";
+    query.where(cb.isNull(root.get(propertyName)));
 
     return currentSession().createQuery(query).getResultList();
   }

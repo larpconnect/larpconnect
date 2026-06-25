@@ -79,12 +79,17 @@ public final class StudioRoutingServiceTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
-  public void loadMappings_databaseThrowsException_returnsEmptyMappings() {
-    when(sessionFactory.openSession()).thenThrow(new RuntimeException("DB Connection failed"));
+  public void loadMappings_databaseThrowsException_propagatesException() {
+    org.hibernate.SessionBuilder sessionBuilder = mock(org.hibernate.SessionBuilder.class);
+    when(sessionFactory.withOptions()).thenReturn(sessionBuilder);
+    when(sessionBuilder.tenantIdentifier(org.mockito.ArgumentMatchers.any(Object.class)))
+        .thenReturn(sessionBuilder);
+    when(sessionBuilder.openSession()).thenThrow(new RuntimeException("DB Connection failed"));
 
     service = new DefaultStudioRoutingService(sessionFactoryProvider);
-    Optional<String> schema = service.getSchemaName(UUID.randomUUID());
-    assertThat(schema).isEmpty();
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> service.getSchemaName(UUID.randomUUID()))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Failed to load studio routing mappings");
   }
 }

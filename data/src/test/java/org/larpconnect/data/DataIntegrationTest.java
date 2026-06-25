@@ -119,7 +119,10 @@ public final class DataIntegrationTest {
 
   private static void executeSqlScript(Connection conn, String schema, String path)
       throws Exception {
-    if (schema == null || !schema.matches("^[a-z_]{6,64}$")) {
+    if (schema == null
+        || !schema.matches(
+            "^(njall_core_admin|njall_core_default|njall_testtenant"
+                + "|njall_[a-z0-9]{26}|njall_tenant_[a-z0-9]{26})$")) {
       throw new IllegalArgumentException("Invalid schema name: " + schema);
     }
     try (var is = DataIntegrationTest.class.getClassLoader().getResourceAsStream(path)) {

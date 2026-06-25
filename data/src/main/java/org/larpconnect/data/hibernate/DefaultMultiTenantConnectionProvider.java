@@ -11,7 +11,10 @@ import org.larpconnect.data.schema.StudioRoutingService;
 public final class DefaultMultiTenantConnectionProvider
     extends AbstractMultiTenantConnectionProvider<String> {
   private static final long serialVersionUID = 1L;
-  private static final Pattern SCHEMA_PATTERN = Pattern.compile("^[a-z_]{6,64}$");
+  private static final Pattern SCHEMA_PATTERN =
+      Pattern.compile(
+          "^(njall_core_admin|njall_core_default|njall_testtenant"
+              + "|njall_[a-z0-9]{26}|njall_tenant_[a-z0-9]{26})$");
 
   private final transient ConnectionProvider connectionProvider;
   private final transient StudioRoutingService routingService;

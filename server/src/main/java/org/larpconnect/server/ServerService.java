@@ -5,9 +5,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import io.vertx.core.Vertx;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import org.larpconnect.data.hibernate.HibernateService;
 import org.larpconnect.events.MainVerticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,17 +17,25 @@ final class ServerService extends AbstractIdleService {
 
   private final Provider<Vertx> vertxProvider;
   private final Provider<MainVerticle> mainVerticleProvider;
+  private final HibernateService hibernateService;
   private volatile String deploymentId;
 
   @Inject
-  ServerService(Provider<Vertx> vertxProvider, Provider<MainVerticle> mainVerticleProvider) {
+  ServerService(
+      Provider<Vertx> vertxProvider,
+      Provider<MainVerticle> mainVerticleProvider,
+      HibernateService hibernateService) {
     this.vertxProvider = vertxProvider;
     this.mainVerticleProvider = mainVerticleProvider;
+    this.hibernateService = hibernateService;
   }
 
   @Override
   protected void startUp() throws Exception {
     logger.info("Starting ServerService...");
+    logger.info("Starting HibernateService...");
+    hibernateService.startAsync().awaitRunning();
+
     Vertx vertx = vertxProvider.get();
     MainVerticle mainVerticle = mainVerticleProvider.get();
 
@@ -48,7 +55,7 @@ final class ServerService extends AbstractIdleService {
 
     try {
       deploymentId = future.get(30, TimeUnit.SECONDS);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+    } catch (Exception e) {
       logger.error("Timeout or failure during MainVerticle deployment", e);
       throw new RuntimeException("Failed to start server", e);
     }
@@ -74,9 +81,12 @@ final class ServerService extends AbstractIdleService {
 
     try {
       future.get(30, TimeUnit.SECONDS);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+    } catch (Exception e) {
       logger.error("Timeout or failure during Vert.x shutdown", e);
       throw new RuntimeException("Failed to stop server", e);
+    } finally {
+      logger.info("Stopping HibernateService...");
+      hibernateService.stopAsync().awaitTerminated();
     }
   }
 

@@ -7,11 +7,20 @@ import static org.mockito.Mockito.when;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.larpconnect.data.hibernate.HibernateService;
 import org.larpconnect.events.MainVerticle;
 
 /** Unit tests for the ServerService lifecycle manager. */
 public final class ServerServiceTest {
+  private HibernateService mockHibernate;
+
+  @BeforeEach
+  public void setUp() {
+    mockHibernate = new DummyHibernateService();
+  }
+
   @Test
   public void startUp_deploysMainVerticle() throws Exception {
     Vertx vertx = mock(Vertx.class);
@@ -19,7 +28,7 @@ public final class ServerServiceTest {
     when(vertx.deployVerticle(mainVerticle)).thenReturn(Future.succeededFuture("deploymentId"));
     when(vertx.close()).thenReturn(Future.succeededFuture());
 
-    ServerService service = new ServerService(() -> vertx, () -> mainVerticle);
+    ServerService service = new ServerService(() -> vertx, () -> mainVerticle, mockHibernate);
     service.startAsync().awaitRunning();
 
     try {
@@ -38,7 +47,7 @@ public final class ServerServiceTest {
     when(vertx.deployVerticle(mainVerticle)).thenReturn(Future.succeededFuture("deploymentId"));
     when(vertx.close()).thenReturn(Future.succeededFuture());
 
-    ServerService service = new ServerService(() -> vertx, () -> mainVerticle);
+    ServerService service = new ServerService(() -> vertx, () -> mainVerticle, mockHibernate);
     service.startAsync().awaitRunning();
     service.stopAsync().awaitTerminated();
 
@@ -52,7 +61,7 @@ public final class ServerServiceTest {
     when(vertx.deployVerticle(mainVerticle))
         .thenReturn(Future.failedFuture(new RuntimeException("Simulated deploy error")));
 
-    ServerService service = new ServerService(() -> vertx, () -> mainVerticle);
+    ServerService service = new ServerService(() -> vertx, () -> mainVerticle, mockHibernate);
 
     org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.startAsync().awaitRunning())
         .isInstanceOf(IllegalStateException.class)
@@ -67,11 +76,25 @@ public final class ServerServiceTest {
     when(vertx.close())
         .thenReturn(Future.failedFuture(new RuntimeException("Simulated close error")));
 
-    ServerService service = new ServerService(() -> vertx, () -> mainVerticle);
+    ServerService service = new ServerService(() -> vertx, () -> mainVerticle, mockHibernate);
     service.startAsync().awaitRunning();
 
     org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.stopAsync().awaitTerminated())
         .isInstanceOf(IllegalStateException.class)
         .hasCauseInstanceOf(RuntimeException.class);
+  }
+
+  private static final class DummyHibernateService
+      extends com.google.common.util.concurrent.AbstractIdleService implements HibernateService {
+    @Override
+    public org.hibernate.SessionFactory getSessionFactory() {
+      return null;
+    }
+
+    @Override
+    protected void startUp() {}
+
+    @Override
+    protected void shutDown() {}
   }
 }

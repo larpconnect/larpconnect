@@ -14,9 +14,9 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
-import org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
+import org.hibernate.hikaricp.internal.HikariCPConnectionProvider;
 import org.larpconnect.data.entity.Actor;
 import org.larpconnect.data.entity.Campaign;
 import org.larpconnect.data.entity.CharacterInstance;
@@ -64,7 +64,6 @@ class DefaultHibernateService extends AbstractIdleService implements HibernateSe
   }
 
   @Override
-  @SuppressWarnings("removal")
   protected void startUp() throws Exception {
     logger.info("Starting DefaultHibernateService...");
 
@@ -83,6 +82,9 @@ class DefaultHibernateService extends AbstractIdleService implements HibernateSe
     props.put("hibernate.connection.url", url);
     props.put("hibernate.connection.username", user);
     props.put("hibernate.connection.password", pass);
+    props.put("hibernate.hikari.minimumIdle", "2");
+    props.put("hibernate.hikari.maximumPoolSize", "10");
+    props.put("hibernate.hikari.idleTimeout", "30000");
     ConnectionProvider connectionProvider = createConnectionProvider(props);
 
     MultiTenantConnectionProvider<String> multiTenantProvider =
@@ -105,9 +107,8 @@ class DefaultHibernateService extends AbstractIdleService implements HibernateSe
     logger.info("Hibernate SessionFactory initialized successfully.");
   }
 
-  @SuppressWarnings("removal")
   ConnectionProvider createConnectionProvider(Map<String, Object> props) {
-    DriverManagerConnectionProviderImpl provider = new DriverManagerConnectionProviderImpl();
+    HikariCPConnectionProvider provider = new HikariCPConnectionProvider();
     provider.configure(props);
     return provider;
   }

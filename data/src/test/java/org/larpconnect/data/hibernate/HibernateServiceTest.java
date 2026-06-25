@@ -38,9 +38,10 @@ public final class HibernateServiceTest {
         mock(org.larpconnect.data.schema.StudioRoutingService.class);
 
     when(mockProvider.getConnection()).thenReturn(mockConn);
-    when(mockRouting.getSchemaName("njall_tenant"))
-        .thenReturn(java.util.Optional.of("njall_tenant"));
-    when(mockRouting.getSchemaName("njall_error")).thenReturn(java.util.Optional.of("njall_error"));
+    when(mockRouting.getSchemaName("njall_testtenant"))
+        .thenReturn(java.util.Optional.of("njall_testtenant"));
+    when(mockRouting.getSchemaName("njall_core_default"))
+        .thenReturn(java.util.Optional.of("njall_core_default"));
 
     DefaultMultiTenantConnectionProvider provider =
         new DefaultMultiTenantConnectionProvider(mockProvider, mockRouting);
@@ -51,18 +52,18 @@ public final class HibernateServiceTest {
     verify(mockProvider, times(1)).closeConnection(mockConn);
 
     // getConnection
-    Connection resultConn = provider.getConnection("njall_tenant");
+    Connection resultConn = provider.getConnection("njall_testtenant");
     assertThat(resultConn).isEqualTo(mockConn);
-    verify(mockConn, times(1)).setSchema("njall_tenant");
+    verify(mockConn, times(1)).setSchema("njall_testtenant");
 
     // getConnection exception handling
-    doThrow(new SQLException("Mock DB error")).when(mockConn).setSchema("njall_error");
-    assertThatThrownBy(() -> provider.getConnection("njall_error"))
+    doThrow(new SQLException("Mock DB error")).when(mockConn).setSchema("njall_core_default");
+    assertThatThrownBy(() -> provider.getConnection("njall_core_default"))
         .isInstanceOf(SQLException.class);
     verify(mockProvider, times(2)).closeConnection(mockConn);
 
     // releaseConnection
-    provider.releaseConnection("njall_tenant", mockConn);
+    provider.releaseConnection("njall_testtenant", mockConn);
     verify(mockProvider, times(3)).closeConnection(mockConn);
   }
 

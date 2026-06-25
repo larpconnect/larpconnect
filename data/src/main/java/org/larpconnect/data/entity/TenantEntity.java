@@ -15,7 +15,7 @@ import org.hibernate.annotations.Generated;
 @Table(name = "entities")
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "entity_type")
-public abstract sealed class TenantEntity extends AbstractEntity
+public abstract sealed class TenantEntity extends AbstractEntity implements SoftDeletable
     permits Campaign,
         LarpSystem,
         Game,
@@ -56,5 +56,15 @@ public abstract sealed class TenantEntity extends AbstractEntity
 
   public final void setDeletedOn(Instant deletedOn) {
     this.deletedOn = deletedOn;
+  }
+
+  @Override
+  public final Instant getDeletedTime() {
+    return getDeletedOn();
+  }
+
+  @Override
+  public final void setDeletedTime(Instant deletedTime) {
+    setDeletedOn(deletedTime);
   }
 }

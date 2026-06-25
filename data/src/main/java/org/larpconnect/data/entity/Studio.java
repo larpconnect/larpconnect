@@ -10,7 +10,7 @@ import org.hibernate.annotations.Generated;
 /** Studio entity mapping the admin studios table. */
 @Entity
 @Table(name = "studios")
-public final class Studio extends AbstractEntity {
+public final class Studio extends AbstractEntity implements SoftDeletable {
   @Column(name = "name", nullable = false)
   private String name;
 
@@ -66,5 +66,15 @@ public final class Studio extends AbstractEntity {
 
   public void setDeletedAt(Instant deletedAt) {
     this.deletedAt = deletedAt;
+  }
+
+  @Override
+  public Instant getDeletedTime() {
+    return getDeletedAt();
+  }
+
+  @Override
+  public void setDeletedTime(Instant deletedTime) {
+    setDeletedAt(deletedTime);
   }
 }
