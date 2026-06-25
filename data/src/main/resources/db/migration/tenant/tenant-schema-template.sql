@@ -1,25 +1,3 @@
--- Define uuidv7 generator function if not exists in the schema
-CREATE OR REPLACE FUNCTION uuidv7()
-RETURNS uuid AS $$
-DECLARE
-    timestamp_ms bigint;
-    timestamp_hex text;
-    random_hex text;
-    uuid_string text;
-BEGIN
-    timestamp_ms := floor(extract(epoch from clock_timestamp()) * 1000)::bigint;
-    timestamp_hex := lpad(to_hex(timestamp_ms), 12, '0');
-    random_hex := lpad(to_hex(floor(random() * 4503599627370496)::bigint), 12, '0') 
-                  || lpad(to_hex(floor(random() * 4503599627370496)::bigint), 4, '0');
-    uuid_string := substring(timestamp_hex from 1 for 8) || '-' ||
-                   substring(timestamp_hex from 9 for 4) || '-' ||
-                   '7' || substring(random_hex from 2 for 3) || '-' ||
-                   to_hex((8 + floor(random() * 4)::int)) || substring(random_hex from 6 for 3) || '-' ||
-                   substring(random_hex from 9 for 12);
-    RETURN uuid_string::uuid;
-END;
-$$ LANGUAGE plpgsql;
-
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tcontact') THEN

@@ -23,11 +23,12 @@ public final class DaoTest {
     sessionFactory = mock(SessionFactory.class);
     session = mock(Session.class);
     when(sessionFactory.getCurrentSession()).thenReturn(session);
+    when(session.getTenantIdentifier()).thenReturn("schema");
   }
 
   @Test
   @SuppressWarnings({"rawtypes", "unchecked"})
-  public void testStudioDao() {
+  public void findByIdAndSaveAndDelete_studioEntities_managesLifecycleCorrectly() {
     StudioDao dao = new DefaultStudioDao(sessionFactory);
     UUID id = UUID.randomUUID();
     Studio studio = new Studio(id, "Studio Name", "schema");
@@ -50,17 +51,17 @@ public final class DaoTest {
 
     // save
     dao.save("schema", studio);
-    verify(session, times(1)).persist(studio);
+    verify(session, times(1)).merge(studio);
 
     // delete (soft delete for Studio)
     dao.delete("schema", studio);
     assertThat(studio.getDeletedAt()).isNotNull();
-    verify(session, times(1)).merge(studio);
+    verify(session, times(2)).merge(studio);
   }
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testCampaignDao() {
+  public void findByIdAndDelete_campaignEntities_managesLifecycleCorrectly() {
     CampaignDao dao = new DefaultCampaignDao(sessionFactory);
     UUID id = UUID.randomUUID();
     Campaign campaign = new Campaign(id, null);
@@ -82,7 +83,7 @@ public final class DaoTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testFindAll() {
+  public void findAll_entityTypes_queriesAndReturnsEntities() {
     StudioDao studioDao = new DefaultStudioDao(sessionFactory);
     org.hibernate.query.criteria.HibernateCriteriaBuilder cb =
         mock(org.hibernate.query.criteria.HibernateCriteriaBuilder.class);
@@ -123,7 +124,7 @@ public final class DaoTest {
   }
 
   @Test
-  public void testAllOtherConcreteDaosInstantiation() {
+  public void instantiation_allConcreteDaos_instantiatesSuccessfully() {
     // Basic coverage for instantiation of other concrete DAOs
     assertThat(new DefaultLarpSystemDao(sessionFactory)).isNotNull();
     assertThat(new DefaultGameDao(sessionFactory)).isNotNull();

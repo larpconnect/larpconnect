@@ -32,8 +32,14 @@ public final class StudioRoutingServiceTest {
     session = mock(Session.class);
     transaction = mock(Transaction.class);
     nativeQuery = mock(NativeQuery.class);
+    org.hibernate.SessionBuilder sessionBuilder = mock(org.hibernate.SessionBuilder.class);
 
     when(sessionFactory.openSession()).thenReturn(session);
+    when(sessionFactory.withOptions()).thenReturn(sessionBuilder);
+    when(sessionBuilder.tenantIdentifier(org.mockito.ArgumentMatchers.any(Object.class)))
+        .thenReturn(sessionBuilder);
+    when(sessionBuilder.openSession()).thenReturn(session);
+
     when(session.beginTransaction()).thenReturn(transaction);
     when(session.getTransaction()).thenReturn(transaction);
     when(session.createNativeQuery(anyString(), org.mockito.ArgumentMatchers.any(Class.class)))
@@ -80,23 +86,5 @@ public final class StudioRoutingServiceTest {
     service = new DefaultStudioRoutingService(sessionFactoryProvider);
     Optional<String> schema = service.getSchemaName(UUID.randomUUID());
     assertThat(schema).isEmpty();
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void loadMappings_withPreviousTenantSchema_restoresTenantSchema() {
-    org.larpconnect.data.context.TenantContext.setTenantSchema("njall_existing");
-    try {
-      Object[] row = new Object[] {UUID.randomUUID(), "mystudio", "njall_encodeduuid"};
-      org.mockito.Mockito.doReturn(List.of(new Object[][] {row})).when(nativeQuery).getResultList();
-
-      service = new DefaultStudioRoutingService(sessionFactoryProvider);
-      service.getSchemaName("mystudio");
-
-      assertThat(org.larpconnect.data.context.TenantContext.getTenantSchema())
-          .isEqualTo("njall_existing");
-    } finally {
-      org.larpconnect.data.context.TenantContext.clear();
-    }
   }
 }

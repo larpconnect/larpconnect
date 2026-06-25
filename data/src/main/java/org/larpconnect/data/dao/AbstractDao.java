@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.larpconnect.data.context.TenantContext;
 import org.larpconnect.data.entity.NjallEntity;
 import org.larpconnect.data.entity.Studio;
 import org.larpconnect.data.entity.TenantEntity;
@@ -34,78 +33,58 @@ abstract class AbstractDao<E extends NjallEntity, D extends BaseDao<E, D>> {
     if (id == null) {
       return Optional.empty();
     }
-    String oldSchema = TenantContext.getTenantSchema();
-    TenantContext.setTenantSchema(schema);
-    try {
-      E entity = currentSession().find(entityClass, id);
-      if (entity == null) {
-        return Optional.empty();
-      }
-      if (entity instanceof TenantEntity tenantEntity && tenantEntity.getDeletedOn() != null) {
-        return Optional.empty();
-      }
-      if (entity instanceof Studio studio && studio.getDeletedAt() != null) {
-        return Optional.empty();
-      }
-      return Optional.of(entity);
-    } finally {
-      restoreSchema(oldSchema);
+    checkSchema(schema);
+    E entity = currentSession().find(entityClass, id);
+    if (entity == null) {
+      return Optional.empty();
     }
+    if (entity instanceof TenantEntity tenantEntity && tenantEntity.getDeletedOn() != null) {
+      return Optional.empty();
+    }
+    if (entity instanceof Studio studio && studio.getDeletedAt() != null) {
+      return Optional.empty();
+    }
+    return Optional.of(entity);
   }
 
   public final void save(String schema, E entity) {
-    String oldSchema = TenantContext.getTenantSchema();
-    TenantContext.setTenantSchema(schema);
-    try {
-      currentSession().persist(entity);
-    } finally {
-      restoreSchema(oldSchema);
-    }
+    checkSchema(schema);
+    currentSession().merge(entity);
   }
 
   public final void delete(String schema, E entity) {
-    String oldSchema = TenantContext.getTenantSchema();
-    TenantContext.setTenantSchema(schema);
-    try {
-      if (entity instanceof TenantEntity tenantEntity) {
-        tenantEntity.setDeletedOn(Instant.now());
-        currentSession().merge(tenantEntity);
-      } else {
-        Studio studio = (Studio) entity;
-        studio.setDeletedAt(Instant.now());
-        currentSession().merge(studio);
-      }
-    } finally {
-      restoreSchema(oldSchema);
+    checkSchema(schema);
+    if (entity instanceof TenantEntity tenantEntity) {
+      tenantEntity.setDeletedOn(Instant.now());
+      currentSession().merge(tenantEntity);
+    } else {
+      Studio studio = (Studio) entity;
+      studio.setDeletedAt(Instant.now());
+      currentSession().merge(studio);
     }
   }
 
   public final List<E> findAll(String schema) {
-    String oldSchema = TenantContext.getTenantSchema();
-    TenantContext.setTenantSchema(schema);
-    try {
-      CriteriaBuilder cb = currentSession().getCriteriaBuilder();
-      CriteriaQuery<E> query = cb.createQuery(entityClass);
-      Root<E> root = query.from(entityClass);
-      query.select(root);
+    checkSchema(schema);
+    CriteriaBuilder cb = currentSession().getCriteriaBuilder();
+    CriteriaQuery<E> query = cb.createQuery(entityClass);
+    Root<E> root = query.from(entityClass);
+    query.select(root);
 
-      if (TenantEntity.class.isAssignableFrom(entityClass)) {
-        query.where(cb.isNull(root.get("deletedOn")));
-      } else {
-        query.where(cb.isNull(root.get("deletedAt")));
-      }
-
-      return currentSession().createQuery(query).getResultList();
-    } finally {
-      restoreSchema(oldSchema);
+    if (TenantEntity.class.isAssignableFrom(entityClass)) {
+      query.where(cb.isNull(root.get("deletedOn")));
+    } else {
+      query.where(cb.isNull(root.get("deletedAt")));
     }
+
+    return currentSession().createQuery(query).getResultList();
   }
 
-  private void restoreSchema(String oldSchema) {
-    if (oldSchema == null) {
-      TenantContext.clear();
-    } else {
-      TenantContext.setTenantSchema(oldSchema);
+  private void checkSchema(String schema) {
+    Object tenantId = currentSession().getTenantIdentifier();
+    if (!java.util.Objects.equals(schema, tenantId)) {
+      throw new IllegalArgumentException(
+          String.format("Schema '%s' does not match session tenant '%s'", schema, tenantId));
     }
   }
 }

@@ -12,10 +12,13 @@ import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.larpconnect.data.context.TenantContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Dynamic schema routing service using Caffeine caching. */
 final class DefaultStudioRoutingService implements StudioRoutingService {
+  private static final Logger logger = LoggerFactory.getLogger(DefaultStudioRoutingService.class);
+
   private final Provider<SessionFactory> sessionFactoryProvider;
   private final LoadingCache<String, StudioMappings> cache;
 
@@ -51,11 +54,10 @@ final class DefaultStudioRoutingService implements StudioRoutingService {
   }
 
   private StudioMappings loadMappings() {
-    String previousTenant = TenantContext.getTenantSchema();
-    TenantContext.setTenantSchema("njall_core_admin");
     try {
       SessionFactory sf = sessionFactoryProvider.get();
-      try (Session session = sf.openSession()) {
+      try (Session session =
+          sf.withOptions().tenantIdentifier((Object) "njall_core_admin").openSession()) {
         session.beginTransaction();
         List<Object[]> results =
             session
@@ -79,13 +81,8 @@ final class DefaultStudioRoutingService implements StudioRoutingService {
         return new StudioMappings(idToSchema, nameToSchema);
       }
     } catch (Exception e) {
-      return new StudioMappings(Map.of(), Map.of());
-    } finally {
-      if (previousTenant != null) {
-        TenantContext.setTenantSchema(previousTenant);
-      } else {
-        TenantContext.clear();
-      }
+      logger.error("Failed to load studio routing mappings from database", e);
+      throw new RuntimeException("Failed to load studio routing mappings", e);
     }
   }
 }

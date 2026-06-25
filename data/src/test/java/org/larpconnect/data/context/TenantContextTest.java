@@ -2,26 +2,23 @@ package org.larpconnect.data.context;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.Constructor;
 import org.junit.jupiter.api.Test;
 
 public final class TenantContextTest {
 
   @Test
-  public void testTenantContext() throws Exception {
-    // Cover private constructor
-    Constructor<TenantContext> constructor = TenantContext.class.getDeclaredConstructor();
-    constructor.setAccessible(true);
-    assertThat(constructor.newInstance()).isNotNull();
+  public void getTenantSchema_defaultSupplier_returnsDefaultSchema() {
+    assertThat(TenantContext.getTenantSchema()).isEqualTo("njall_core_default");
+  }
 
-    // Test ThreadLocal behavior
-    TenantContext.clear();
-    assertThat(TenantContext.getTenantSchema()).isNull();
-
-    TenantContext.setTenantSchema("schema1");
-    assertThat(TenantContext.getTenantSchema()).isEqualTo("schema1");
-
-    TenantContext.clear();
-    assertThat(TenantContext.getTenantSchema()).isNull();
+  @Test
+  public void getTenantSchema_customSupplier_returnsCustomSchema() {
+    TenantContext.setTenantSupplier(() -> "custom_schema");
+    try {
+      assertThat(TenantContext.getTenantSchema()).isEqualTo("custom_schema");
+    } finally {
+      // Restore default
+      TenantContext.setTenantSupplier(() -> "njall_core_default");
+    }
   }
 }

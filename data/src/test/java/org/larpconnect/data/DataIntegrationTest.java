@@ -119,13 +119,16 @@ public final class DataIntegrationTest {
 
   private static void executeSqlScript(Connection conn, String schema, String path)
       throws Exception {
+    if (schema == null || !schema.matches("^[a-z_]{6,64}$")) {
+      throw new IllegalArgumentException("Invalid schema name: " + schema);
+    }
     try (var is = DataIntegrationTest.class.getClassLoader().getResourceAsStream(path)) {
       if (is == null) {
         throw new IllegalArgumentException("Script not found: " + path);
       }
       String content = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+      conn.setSchema(schema);
       try (Statement stmt = conn.createStatement()) {
-        stmt.execute("SET SCHEMA '" + schema + "'");
         stmt.execute(content);
       }
     }
@@ -144,17 +147,17 @@ public final class DataIntegrationTest {
     actorDao = injector.getInstance(ActorDao.class);
     collectionDao = injector.getInstance(CollectionDao.class);
 
-    TenantContext.setTenantSchema("njall_core_admin");
+    TenantContext.setTenantSupplier(() -> "njall_core_admin");
   }
 
   @AfterEach
   public void tearDown() {
-    TenantContext.clear();
+    TenantContext.setTenantSupplier(() -> "njall_core_default");
   }
 
   private void runInTransaction(String tenantSchema, Runnable runnable) {
     String previousTenant = TenantContext.getTenantSchema();
-    TenantContext.setTenantSchema(tenantSchema);
+    TenantContext.setTenantSupplier(() -> tenantSchema);
     Session session = sessionFactory.openSession();
     org.hibernate.context.internal.ThreadLocalSessionContext.bind(session);
     session.beginTransaction();
@@ -169,11 +172,7 @@ public final class DataIntegrationTest {
     } finally {
       org.hibernate.context.internal.ThreadLocalSessionContext.unbind(sessionFactory);
       session.close();
-      if (previousTenant != null) {
-        TenantContext.setTenantSchema(previousTenant);
-      } else {
-        TenantContext.clear();
-      }
+      TenantContext.setTenantSupplier(() -> previousTenant);
     }
   }
 
@@ -216,61 +215,53 @@ public final class DataIntegrationTest {
 
   @Test
   public void tenantDaos_tenantEntitiesLifecycle_savesFindsAndSoftDeletesSuccessfully() {
-    UUID systemId = UUID.randomUUID();
-    UUID campaignId = UUID.randomUUID();
-    UUID gameId = UUID.randomUUID();
-    UUID charId = UUID.randomUUID();
-    UUID playerId = UUID.randomUUID();
-    UUID userId = UUID.randomUUID();
-    UUID instId = UUID.randomUUID();
-    UUID actorId = UUID.randomUUID();
-    UUID collId = UUID.randomUUID();
+    TenantTestContext context =
+        new TenantTestContext(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID());
 
-    saveTenantEntities(
-        systemId, campaignId, gameId, charId, playerId, userId, instId, actorId, collId);
-    verifyTenantEntitiesSaved(systemId, userId);
-    deleteCampaignAndVerify(campaignId);
+    saveTenantEntities(context);
+    verifyTenantEntitiesSaved(context.systemId(), context.userId());
+    deleteCampaignAndVerify(context.campaignId());
   }
 
-  private void saveTenantEntities(
-      UUID systemId,
-      UUID campaignId,
-      UUID gameId,
-      UUID charId,
-      UUID playerId,
-      UUID userId,
-      UUID instId,
-      UUID actorId,
-      UUID collId) {
+  private void saveTenantEntities(TenantTestContext context) {
     runInTransaction(
         "njall_testtenant",
         () -> {
-          LarpSystem system = new LarpSystem(systemId, "D&D 5e");
+          LarpSystem system = new LarpSystem(context.systemId(), "Amtgard");
           systemDao.save("njall_testtenant", system);
 
-          Campaign campaign = new Campaign(campaignId, system);
+          Campaign campaign = new Campaign(context.campaignId(), system);
           campaignDao.save("njall_testtenant", campaign);
 
-          Game game = new Game(gameId, campaign);
+          Game game = new Game(context.gameId(), campaign);
           gameDao.save("njall_testtenant", game);
 
-          LarpCharacter character = new LarpCharacter(charId, campaign, "Hero Template");
+          LarpCharacter character = new LarpCharacter(context.charId(), campaign, "Hero Template");
           characterDao.save("njall_testtenant", character);
 
-          Individual player = new Individual(playerId, "Alice");
+          Individual player = new Individual(context.playerId(), "Alice");
           individualDao.save("njall_testtenant", player);
 
-          User user = new User(userId, "Bob", "bob123");
+          User user = new User(context.userId(), "Bob", "bob123");
           userDao.save("njall_testtenant", user);
 
           CharacterInstance instance =
-              new CharacterInstance(instId, character, player, game, "Alice's Mage");
+              new CharacterInstance(context.instId(), character, player, game, "Alice's Mage");
           characterInstanceDao.save("njall_testtenant", instance);
 
-          Actor actor = new Actor(actorId, campaign, "Campaign Actor", "preferred_alice");
+          Actor actor = new Actor(context.actorId(), campaign, "Campaign Actor", "preferred_alice");
           actorDao.save("njall_testtenant", actor);
 
-          Collection collection = new Collection(collId, campaign, "Campaign Items");
+          Collection collection = new Collection(context.collId(), campaign, "Campaign Items");
           collectionDao.save("njall_testtenant", collection);
         });
   }
@@ -286,7 +277,7 @@ public final class DataIntegrationTest {
         });
 
     assertThat(foundSysRef.get()).isPresent();
-    assertThat(foundSysRef.get().get().getName()).isEqualTo("D&D 5e");
+    assertThat(foundSysRef.get().get().getName()).isEqualTo("Amtgard");
     assertThat(foundUserRef.get()).isPresent();
     assertThat(foundUserRef.get().get().getUsername()).isEqualTo("bob123");
   }
@@ -307,3 +298,14 @@ public final class DataIntegrationTest {
         });
   }
 }
+
+record TenantTestContext(
+    UUID systemId,
+    UUID campaignId,
+    UUID gameId,
+    UUID charId,
+    UUID playerId,
+    UUID userId,
+    UUID instId,
+    UUID actorId,
+    UUID collId) {}

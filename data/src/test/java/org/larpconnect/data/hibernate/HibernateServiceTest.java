@@ -18,28 +18,26 @@ import org.larpconnect.data.context.TenantContext;
 public final class HibernateServiceTest {
 
   @Test
-  public void testCurrentTenantIdentifierResolver() {
+  public void resolveCurrentTenantIdentifier_tenantState_resolvesExpectedSchemas() {
     CurrentTenantIdentifierResolverImpl resolver = new CurrentTenantIdentifierResolverImpl();
     assertThat(resolver.validateExistingCurrentSessions()).isTrue();
 
-    TenantContext.clear();
+    TenantContext.setTenantSupplier(() -> null);
     assertThat(resolver.resolveCurrentTenantIdentifier()).isEqualTo("njall_core_default");
 
-    TenantContext.setTenantSchema("njall_test_schema");
+    TenantContext.setTenantSupplier(() -> "njall_test_schema");
     assertThat(resolver.resolveCurrentTenantIdentifier()).isEqualTo("njall_test_schema");
-    TenantContext.clear();
+    TenantContext.setTenantSupplier(() -> "njall_core_default");
   }
 
   @Test
-  public void testMultiTenantConnectionProvider() throws SQLException {
+  public void getConnection_tenantIdentifiers_configuresSchemaOrThrows() throws SQLException {
     ConnectionProvider mockProvider = mock(ConnectionProvider.class);
     Connection mockConn = mock(Connection.class);
-    Statement mockStatement = mock(Statement.class);
     org.larpconnect.data.schema.StudioRoutingService mockRouting =
         mock(org.larpconnect.data.schema.StudioRoutingService.class);
 
     when(mockProvider.getConnection()).thenReturn(mockConn);
-    when(mockConn.createStatement()).thenReturn(mockStatement);
     when(mockRouting.getSchemaName("njall_tenant"))
         .thenReturn(java.util.Optional.of("njall_tenant"));
     when(mockRouting.getSchemaName("njall_error")).thenReturn(java.util.Optional.of("njall_error"));
@@ -55,12 +53,10 @@ public final class HibernateServiceTest {
     // getConnection
     Connection resultConn = provider.getConnection("njall_tenant");
     assertThat(resultConn).isEqualTo(mockConn);
-    verify(mockStatement, times(1)).execute("SET SCHEMA 'njall_tenant'");
+    verify(mockConn, times(1)).setSchema("njall_tenant");
 
     // getConnection exception handling
-    doThrow(new SQLException("Mock DB error"))
-        .when(mockStatement)
-        .execute("SET SCHEMA 'njall_error'");
+    doThrow(new SQLException("Mock DB error")).when(mockConn).setSchema("njall_error");
     assertThatThrownBy(() -> provider.getConnection("njall_error"))
         .isInstanceOf(SQLException.class);
     verify(mockProvider, times(2)).closeConnection(mockConn);
@@ -71,7 +67,7 @@ public final class HibernateServiceTest {
   }
 
   @Test
-  public void testMultiTenantConnectionProviderUnwrap() {
+  public void unwrap_wrapperTypes_unwrapsOrChecksCorrectly() {
     ConnectionProvider mockProvider = mock(ConnectionProvider.class);
     org.larpconnect.data.schema.StudioRoutingService mockRouting =
         mock(org.larpconnect.data.schema.StudioRoutingService.class);
@@ -95,7 +91,7 @@ public final class HibernateServiceTest {
   }
 
   @Test
-  public void testDefaultHibernateService() throws Exception {
+  public void getSessionFactory_beforeStartup_returnsNull() throws Exception {
     org.larpconnect.data.schema.StudioRoutingService mockRouting =
         mock(org.larpconnect.data.schema.StudioRoutingService.class);
     DefaultHibernateService service = new DefaultHibernateService(mockRouting);
@@ -104,7 +100,7 @@ public final class HibernateServiceTest {
   }
 
   @Test
-  public void testDefaultHibernateServiceLifecycle() throws Exception {
+  public void startUpAndShutDown_lifecycleEvents_managesSessionFactory() throws Exception {
     Connection mockConn = mock(Connection.class);
     DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
     Statement mockStatement = mock(Statement.class);
@@ -144,7 +140,7 @@ public final class HibernateServiceTest {
   }
 
   @Test
-  public void testHibernateModule() {
+  public void provideSessionFactory_validHibernateService_returnsSessionFactory() {
     HibernateModule module = new HibernateModule();
     SessionFactory mockFactory = mock(SessionFactory.class);
     HibernateService dummyService = new DummyHibernateService(mockFactory);
