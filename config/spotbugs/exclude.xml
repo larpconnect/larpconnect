@@ -1,16 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
-    <!-- Exclude any classes containing 'Generated' in their names -->
+    <!-- Exclude generated classes from analysis as they are not subject to check style and spotbugs. -->
     <Match>
         <Class name="~.*Generated.*"/>
     </Match>
-    <!-- Exclude any classes in a package named 'generated' -->
+    <!-- Exclude package-level generated files from analysis. -->
     <Match>
         <Class name="~.*\.generated\..*"/>
     </Match>
-    <!-- Exclude VertxProvider from EI_EXPOSE_REP and EI_EXPOSE_REP2 -->
+    <!-- Exclude VertxProvider from representation exposure checking. Exposing the underlying Vert.x instance is part of its core utility contract. -->
     <Match>
         <Class name="org.larpconnect.events.VertxProvider"/>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- Exclude data entities from representation checking. Entities require mutable getter/setter access for date/relationship fields. -->
+    <Match>
+        <Class name="~org\.larpconnect\.data\.entity\..*"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- Exclude integration tests from SQL injection check. The test queries construct dynamically mapped tenant table/schema paths. -->
+    <Match>
+        <Class name="org.larpconnect.data.DataIntegrationTest"/>
+        <Bug pattern="SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE"/>
+    </Match>
+    <!-- Exclude DefaultMultiTenantConnectionProvider from SQL injection check. Changing schemas dynamically using "SET SCHEMA" requires constructing a dynamic string. -->
+    <Match>
+        <Class name="org.larpconnect.data.hibernate.DefaultMultiTenantConnectionProvider"/>
+        <Bug pattern="SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE"/>
+    </Match>
+    <!-- Exclude HibernateServiceTest from resource warnings. The test mocks JVM database classes (DriverManager, Connection) where no physical connection needs to be closed. -->
+    <Match>
+        <Class name="org.larpconnect.data.hibernate.HibernateServiceTest"/>
+        <Bug pattern="OBL_UNSATISFIED_OBLIGATION,ODR_OPEN_DATABASE_RESOURCE"/>
+    </Match>
+    <!-- Exclude EntityTest from unrelated type comparison check. This test explicitly asserts that comparing entities to string types returns false. -->
+    <Match>
+        <Class name="org.larpconnect.data.entity.EntityTest"/>
+        <Bug pattern="EC_UNRELATED_TYPES"/>
+    </Match>
+    <!-- Exclude DefaultMultiTenantConnectionProvider from serialization warning. This Guice-managed provider is not serialized/deserialized across the network. -->
+    <Match>
+        <Class name="org.larpconnect.data.hibernate.DefaultMultiTenantConnectionProvider"/>
+        <Bug pattern="SE_TRANSIENT_FIELD_NOT_RESTORED"/>
     </Match>
 </FindBugsFilter>

@@ -21,6 +21,7 @@ junit = "6.1.0"
 mockito = "5.23.0"
 cucumber = "7.34.3"
 archunit = "1.4.2"
+testcontainers = "1.20.2"
 
 # Build Quality Plugins
 spotless = "8.7.0"
@@ -34,6 +35,7 @@ mug = { group = "com.google.mug", name = "mug", version.ref = "mug" }
 vertx-core = { group = "io.vertx", name = "vertx-core", version.ref = "vertx" }
 vertx-web = { group = "io.vertx", name = "vertx-web", version.ref = "vertx" }
 hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core", version.ref = "hibernate" }
+hibernate-hikaricp = { group = "org.hibernate.orm", name = "hibernate-hikaricp", version.ref = "hibernate" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 rabbitmq-amqp = { group = "com.rabbitmq", name = "amqp-client", version.ref = "rabbitmq" }
@@ -48,6 +50,10 @@ mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mo
 cucumber-java = { group = "io.cucumber", name = "cucumber-java", version.ref = "cucumber" }
 cucumber-junit-platform-engine = { group = "io.cucumber", name = "cucumber-junit-platform-engine", version.ref = "cucumber" }
 archunit-junit5 = { group = "com.tngtech.archunit", name = "archunit-junit5", version.ref = "archunit" }
+testcontainers-core = { group = "org.testcontainers", name = "testcontainers", version.ref = "testcontainers" }
+testcontainers-postgresql = { group = "org.testcontainers", name = "postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { group = "org.testcontainers", name = "junit-jupiter", version.ref = "testcontainers" }
+
 
 
 # Plugin artifacts for build-logic dependencies

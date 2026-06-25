@@ -16,6 +16,7 @@ dependencies {
         api(libs.vertx.core)
         api(libs.vertx.web)
         api(libs.hibernate.core)
+        api(libs.hibernate.hikaricp)
         api(libs.postgresql)
         api(libs.caffeine)
         api(libs.rabbitmq.amqp)

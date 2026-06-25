@@ -1,0 +1,171 @@
+package org.larpconnect.data.hibernate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import org.hibernate.SessionFactory;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
+import org.junit.jupiter.api.Test;
+import org.larpconnect.data.context.TenantContext;
+
+public final class HibernateServiceTest {
+
+  @Test
+  public void resolveCurrentTenantIdentifier_tenantState_resolvesExpectedSchemas() {
+    CurrentTenantIdentifierResolverImpl resolver = new CurrentTenantIdentifierResolverImpl();
+    assertThat(resolver.validateExistingCurrentSessions()).isTrue();
+
+    TenantContext.setTenantSupplier(() -> null);
+    assertThat(resolver.resolveCurrentTenantIdentifier()).isEqualTo("njall_core_default");
+
+    TenantContext.setTenantSupplier(() -> "njall_test_schema");
+    assertThat(resolver.resolveCurrentTenantIdentifier()).isEqualTo("njall_test_schema");
+    TenantContext.setTenantSupplier(() -> "njall_core_default");
+  }
+
+  @Test
+  public void getConnection_tenantIdentifiers_configuresSchemaOrThrows() throws SQLException {
+    ConnectionProvider mockProvider = mock(ConnectionProvider.class);
+    Connection mockConn = mock(Connection.class);
+    org.larpconnect.data.schema.StudioRoutingService mockRouting =
+        mock(org.larpconnect.data.schema.StudioRoutingService.class);
+
+    when(mockProvider.getConnection()).thenReturn(mockConn);
+    when(mockRouting.getSchemaName("njall_testtenant"))
+        .thenReturn(java.util.Optional.of("njall_testtenant"));
+    when(mockRouting.getSchemaName("njall_core_default"))
+        .thenReturn(java.util.Optional.of("njall_core_default"));
+
+    DefaultMultiTenantConnectionProvider provider =
+        new DefaultMultiTenantConnectionProvider(mockProvider, mockRouting);
+
+    // getAnyConnection / releaseAnyConnection
+    assertThat(provider.getAnyConnection()).isEqualTo(mockConn);
+    provider.releaseAnyConnection(mockConn);
+    verify(mockProvider, times(1)).closeConnection(mockConn);
+
+    // getConnection
+    Connection resultConn = provider.getConnection("njall_testtenant");
+    assertThat(resultConn).isEqualTo(mockConn);
+    verify(mockConn, times(1)).setSchema("njall_testtenant");
+
+    // getConnection exception handling
+    doThrow(new SQLException("Mock DB error")).when(mockConn).setSchema("njall_core_default");
+    assertThatThrownBy(() -> provider.getConnection("njall_core_default"))
+        .isInstanceOf(SQLException.class);
+    verify(mockProvider, times(2)).closeConnection(mockConn);
+
+    // releaseConnection
+    provider.releaseConnection("njall_testtenant", mockConn);
+    verify(mockProvider, times(3)).closeConnection(mockConn);
+  }
+
+  @Test
+  public void unwrap_wrapperTypes_unwrapsOrChecksCorrectly() {
+    ConnectionProvider mockProvider = mock(ConnectionProvider.class);
+    org.larpconnect.data.schema.StudioRoutingService mockRouting =
+        mock(org.larpconnect.data.schema.StudioRoutingService.class);
+    DefaultMultiTenantConnectionProvider provider =
+        new DefaultMultiTenantConnectionProvider(mockProvider, mockRouting);
+
+    // supportsAggressiveRelease
+    assertThat(provider.supportsAggressiveRelease()).isFalse();
+
+    // isUnwrappableAs
+    assertThat(provider.isUnwrappableAs(MultiTenantConnectionProvider.class)).isTrue();
+    when(mockProvider.isUnwrappableAs(ConnectionProvider.class)).thenReturn(true);
+    assertThat(provider.isUnwrappableAs(ConnectionProvider.class)).isTrue();
+    when(mockProvider.isUnwrappableAs(String.class)).thenReturn(false);
+    assertThat(provider.isUnwrappableAs(String.class)).isFalse();
+
+    // unwrap
+    assertThat(provider.unwrap(MultiTenantConnectionProvider.class)).isEqualTo(provider);
+    when(mockProvider.unwrap(ConnectionProvider.class)).thenReturn(mockProvider);
+    assertThat(provider.unwrap(ConnectionProvider.class)).isEqualTo(mockProvider);
+  }
+
+  @Test
+  public void getSessionFactory_beforeStartup_returnsNull() throws Exception {
+    org.larpconnect.data.schema.StudioRoutingService mockRouting =
+        mock(org.larpconnect.data.schema.StudioRoutingService.class);
+    DefaultHibernateService service = new DefaultHibernateService(mockRouting);
+    assertThat(service.getSessionFactory()).isNull();
+    service.shutDown();
+  }
+
+  @Test
+  public void startUpAndShutDown_lifecycleEvents_managesSessionFactory() throws Exception {
+    Connection mockConn = mock(Connection.class);
+    DatabaseMetaData mockMetaData = mock(DatabaseMetaData.class);
+    Statement mockStatement = mock(Statement.class);
+    ResultSet mockResultSet = mock(ResultSet.class);
+
+    when(mockConn.getMetaData()).thenReturn(mockMetaData);
+    when(mockMetaData.getDatabaseProductName()).thenReturn("PostgreSQL");
+    when(mockMetaData.getDatabaseProductVersion()).thenReturn("17.0.0");
+    when(mockMetaData.getDatabaseMajorVersion()).thenReturn(17);
+    when(mockMetaData.getDatabaseMinorVersion()).thenReturn(0);
+    when(mockMetaData.getConnection()).thenReturn(mockConn);
+    when(mockMetaData.getTypeInfo()).thenReturn(mockResultSet);
+    when(mockMetaData.getIdentifierQuoteString()).thenReturn("\"");
+    when(mockMetaData.getExtraNameCharacters()).thenReturn("");
+    when(mockConn.createStatement()).thenReturn(mockStatement);
+
+    org.hibernate.engine.jdbc.connections.spi.ConnectionProvider mockProvider =
+        mock(org.hibernate.engine.jdbc.connections.spi.ConnectionProvider.class);
+    when(mockProvider.getConnection()).thenReturn(mockConn);
+
+    org.larpconnect.data.schema.StudioRoutingService mockRouting =
+        mock(org.larpconnect.data.schema.StudioRoutingService.class);
+    DefaultHibernateService service =
+        new DefaultHibernateService(mockRouting) {
+          @Override
+          org.hibernate.engine.jdbc.connections.spi.ConnectionProvider createConnectionProvider(
+              java.util.Map<String, Object> props) {
+            return mockProvider;
+          }
+        };
+
+    service.startUp();
+    assertThat(service.getSessionFactory()).isNotNull();
+
+    service.shutDown();
+    assertThat(service.getSessionFactory().isClosed()).isTrue();
+  }
+
+  @Test
+  public void provideSessionFactory_validHibernateService_returnsSessionFactory() {
+    HibernateModule module = new HibernateModule();
+    SessionFactory mockFactory = mock(SessionFactory.class);
+    HibernateService dummyService = new DummyHibernateService(mockFactory);
+
+    assertThat(module.provideSessionFactory(dummyService)).isEqualTo(mockFactory);
+  }
+
+  private static final class DummyHibernateService
+      extends com.google.common.util.concurrent.AbstractIdleService implements HibernateService {
+    private final SessionFactory sessionFactory;
+
+    DummyHibernateService(SessionFactory sessionFactory) {
+      this.sessionFactory = sessionFactory;
+    }
+
+    @Override
+    public SessionFactory getSessionFactory() {
+      return sessionFactory;
+    }
+
+    @Override
+    protected void startUp() {}
+
+    @Override
+    protected void shutDown() {}
+  }
+}

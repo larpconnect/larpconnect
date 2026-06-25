@@ -14,7 +14,16 @@ dependencies {
     implementation(project(":common"))
 
     // Database access dependencies
-    implementation(libs.hibernate.core)
+    api(libs.hibernate.core)
+    implementation(libs.hibernate.hikaricp)
     implementation(libs.postgresql)
     implementation(libs.caffeine)
+    implementation(libs.slf4j.api)
+
+    // Test dependencies
+    testImplementation(project(":test"))
+    testImplementation(libs.testcontainers.core)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.junit.jupiter)
 }
+
