@@ -19,7 +19,7 @@ errorprone-core = "2.50.0"
 assertj = "3.27.7"
 junit = "6.1.0"
 mockito = "5.23.0"
-cucumber = "7.34.3"
+cucumber = "7.34.4"
 archunit = "1.4.2"
 
 # Build Quality Plugins
