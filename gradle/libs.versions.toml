@@ -12,7 +12,7 @@ postgresql = "42.7.11"
 caffeine = "3.2.4"
 rabbitmq = "5.32.0"
 slf4j = "2.0.18"
-logback = "1.5.35"
+logback = "1.5.37"
 errorprone-core = "2.50.0"
 
 # Testing Frameworks
