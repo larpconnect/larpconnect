@@ -8,7 +8,7 @@ description: Guidance on how to manage the data layer
 
 ## Technical Constraints
 
-- Use PSQL 17+
+- Use PSQL 18+
 - All SQL should be written using either `HQL` (for inline code) or `pgplsql` (in scripts).
 - The database interaction layer is stored in `:data`.
 - We use a multi-single-tenant system. The tenant id is associated with a specific table and column. 
