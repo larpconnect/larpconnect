@@ -11,7 +11,7 @@ description: Guidance on how to manage the data layer
 - Use PSQL 17+
 - All SQL should be written using either `HQL` (for inline code) or `pgplsql` (in scripts).
 - The database interaction layer is stored in `:data`.
-- We use a multi-single-tenant system. The tenant id is associated with a specific database schema.
+- We use a multi-single-tenant system. The tenant id is associated with a specific table and column. 
 - Use `flyway` for database management. 
 
 ## Specific Guidance
@@ -25,17 +25,7 @@ description: Guidance on how to manage the data layer
 
 ### Multitenancy
 
-The system is a multi-single-tenant design, with the `tenantId` associated with the PSQL _schema_.
-
-The following schemas are allowed and will ultimately have their own initializations.
-
-* `njall_base` represents the core utilities and common functions that are shared between tenants.
-* `njall_admin` represents the basic administrative functions for the server. Things like spinning up and tearing down
-  tenants.
-* `njall_studio_{studio-id}` are a set of schemas (one for each `{studio-id}`) that represent indivdiual tenants. These
-  should all be kept up to date with the same database schema and have the same migrations applied. Server ids here are limited to
-  the following regex: `^([a-z]+[a-z0-9]+){3,32}`
-* `njall_analytics` represents common data analysis across the server as a whole.
+The system is a multi-single-tenant design, with the `tenantId` associated with the column. Enforcement is via row level security.
 
 ### Pattern for Objects
 
