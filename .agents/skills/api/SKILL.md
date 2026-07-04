@@ -50,7 +50,7 @@ There are four fundamental "base paths" used by the system.
 1. `/`: Used for `.well-known` and a variety of other useful endpoints.
 2. `/admin/v1`: Used for administrative things that affect the entire system.
 3. `/studios/{studio-id}/v1`: Represents paths associated with a multi-single-tenant design. Each `{studio-id}` is associated
-   with a separate `schema` in the database and should have its own set of verticles for working with the various paths.
+   with a separate `tenant-id` in the database and should have its own set of verticles for working with the various paths.
 
 If a `v1` is used for versioning it generally comes _after_ the base path. So therefore:
 
