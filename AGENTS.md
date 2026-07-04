@@ -86,7 +86,7 @@ Always favor using the most recent versions of libraries and infrastructure that
 This means:
 
 * Java 25+
-* PSQL 17+
+* PSQL 18+
 * RabbitMQ 4.3+
 * HornetQ 2.4.11.Final+
 * Vert.x 5.1+
