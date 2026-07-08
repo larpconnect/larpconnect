@@ -2,6 +2,9 @@
 **/build/
 !**/src/**/build/
 
+# Development Environment
+.vscode/
+
 # Compiled class file
 *.class
 
