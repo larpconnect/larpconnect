@@ -105,7 +105,7 @@ Commons utilities where available. Use context7 to get the latest documentation.
 - Classes should be either abstract or final.
 - Abstract classes should be named `Abstract<ClassName>`. They should typically
   be package protected.
-- Thread safety should always be documented using JSR305 annotations.
+- Thread safety should always be documented using ErrorProne/JSR305 annotations.
 - For non-record classes: Prefer using factories or factory methods to using
   `new <ClassName>(<args>)`. The best case is to inject them with guice.
 - Dependencies may only reach _down_ or _out_ in the package hierarchy. They may
@@ -123,6 +123,10 @@ Commons utilities where available. Use context7 to get the latest documentation.
   - Performance. `FooPerformanceTest`, used to check for performance
     regressions. Should typically use Gatling or the Java Microbenchmark
     Harness.
+  - Do not use Fully Qualified Names (FQNs) for class or static references. Always
+    import.
+  - Do not suppress warnings. If you _must_ suppress a warning, leave documentation
+    as to why it needs to be suppressed.
 
 ### Logging with SLF4J
 
@@ -162,6 +166,7 @@ functionality should be employed freely.
   - Immutable collections, Joiner, and Splitter.
   - `com.google.common.io`
   - `com.google.common.graph`
+- The Mutiny reactive library.
 - Caffeine for caching, if caches are needed. Use this in preference to Guava
   caches.
 - Apache Commons libraries where the functionality does not exist in Mug, Guava,
