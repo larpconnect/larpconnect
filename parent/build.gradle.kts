@@ -20,6 +20,12 @@ dependencies {
         api(libs.caffeine)
         api(libs.rabbitmq.amqp)
         api(libs.slf4j.api)
+        api(libs.flyway.core)
+        api(libs.flyway.database.postgresql)
+        api(libs.testcontainers)
+        api(libs.testcontainers.postgresql)
+        api(libs.testcontainers.junit.jupiter)
+        api(libs.jsr305)
     }
 }
 
