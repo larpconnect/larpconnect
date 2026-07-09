@@ -119,13 +119,13 @@ Commons utilities where available. Use context7 to get the latest documentation.
   but should not be used to mark just plain unit tests. Example test types:
   - None. The default. `FooTest`
   - Integration. `FooIntegrationTest`, typically written with cucumber, though
-    may be written with other tooling.
+    may be written with other tooling. These go in `:integration`.
   - Performance. `FooPerformanceTest`, used to check for performance
     regressions. Should typically use Gatling or the Java Microbenchmark
     Harness.
-  - Do not use Fully Qualified Names (FQNs) for class or static references. Always
+- Do not use Fully Qualified Names (FQNs) for class or static references. Always
     import.
-  - Do not suppress warnings. If you _must_ suppress a warning, leave documentation
+- Do not suppress warnings. If you _must_ suppress a warning, leave documentation
     as to why it needs to be suppressed.
 
 ### Logging with SLF4J
