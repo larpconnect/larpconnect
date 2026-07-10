@@ -15,6 +15,9 @@
       "installGradle": true,
       "gradleVersion": "latest"
     },
-    "ghcr.io/itsmechlark/features/postgresql:1": {}
+    "ghcr.io/itsmechlark/features/postgresql:1": {},
+    "features": {
+      "ghcr.io/devcontainers/features/docker-in-docker:4": {}
+    }
   }
 }
