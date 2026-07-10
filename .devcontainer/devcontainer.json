@@ -16,8 +16,6 @@
       "gradleVersion": "latest"
     },
     "ghcr.io/itsmechlark/features/postgresql:1": {},
-    "features": {
-      "ghcr.io/devcontainers/features/docker-in-docker:4": {}
-    }
+    "ghcr.io/devcontainers/features/docker-in-docker:4": {}
   }
 }
