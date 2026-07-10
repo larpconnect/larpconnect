@@ -9,6 +9,7 @@ import com.google.inject.util.Modules;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.larpconnect.data.DataModule;
@@ -16,6 +17,7 @@ import org.larpconnect.data.DatabaseConfiguration;
 import org.larpconnect.data.DatabaseInitializer;
 import org.larpconnect.data.TestTableDao;
 import org.larpconnect.data.TestTableEntity;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /** Integration test for verifying Flyway migrations and Hibernate operations with PostgreSQL. */
@@ -27,8 +29,8 @@ public final class DatabaseInitializerTest {
 
   @BeforeAll
   public static void setUp() {
-    org.junit.jupiter.api.Assumptions.assumeTrue(
-        org.testcontainers.DockerClientFactory.instance().isDockerAvailable(),
+    Assumptions.assumeTrue(
+        DockerClientFactory.instance().isDockerAvailable(),
         "Docker is not available. Skipping database integration tests.");
 
     postgres.start();
