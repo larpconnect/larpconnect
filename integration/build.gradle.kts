@@ -22,7 +22,4 @@ dependencies {
     testImplementation(project(":api"))
 
     testImplementation(libs.archunit.junit5)
-    testImplementation(libs.testcontainers)
-    testImplementation(libs.testcontainers.postgresql)
-    testImplementation(libs.testcontainers.junit.jupiter)
 }
