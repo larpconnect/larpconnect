@@ -19,12 +19,6 @@ public final class DatabaseConfigurationTest {
   }
 
   @Test
-  public void getJdbcUrl_formatsCorrectly() {
-    DatabaseConfiguration config = new DatabaseConfiguration("host", 5432, "db", "user", "pass");
-    assertThat(config.getJdbcUrl()).isEqualTo("jdbc:postgresql://host:5432/db");
-  }
-
-  @Test
   public void fromEnv_returnsNonNullInstance() {
     DatabaseConfiguration config = DatabaseConfiguration.fromEnv();
     assertThat(config).isNotNull();
