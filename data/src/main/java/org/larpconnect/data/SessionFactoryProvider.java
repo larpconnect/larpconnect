@@ -24,7 +24,7 @@ class SessionFactoryProvider implements Provider<SessionFactory> {
     Map<String, Object> settings =
         Map.of(
             AvailableSettings.JAKARTA_JDBC_DRIVER,
-            "org.postgresql.Driver",
+            "org.testcontainers.jdbc.ContainerDatabaseDriver",
             AvailableSettings.JAKARTA_JDBC_URL,
             config.getJdbcUrl(),
             AvailableSettings.JAKARTA_JDBC_USER,
