@@ -30,6 +30,6 @@ public record DatabaseConfiguration(
    * @return JDBC URL string.
    */
   public String getJdbcUrl() {
-    return String.format("jdbc:postgresql://%s:%d/%s", host, port, database);
+    return String.format("jdbc:tc:postgresql://%s:%d/%s", host, port, database);
   }
 }
