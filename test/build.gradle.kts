@@ -12,6 +12,7 @@ dependencies {
     // Expose testing and core libraries
     api(libs.junit.jupiter)
     api(libs.mockito.core)
+    api(libs.mockito.junit.jupiter)
     api(libs.cucumber.java)
     api(libs.cucumber.junit.platform.engine)
     api(libs.guice)
