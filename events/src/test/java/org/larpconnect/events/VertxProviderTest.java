@@ -17,7 +17,7 @@ public final class VertxProviderTest {
   @Test
   public void get_returnsNonNullInstance() {
     GuiceVerticleFactory factory = mock(GuiceVerticleFactory.class);
-    when(factory.prefix()).thenReturn("java-guice");
+    when(factory.prefix()).thenReturn(GuiceVerticleFactory.PREFIX);
 
     VertxProvider provider = new VertxProvider(() -> factory);
     Vertx vertx = provider.get();
@@ -31,7 +31,7 @@ public final class VertxProviderTest {
   @Test
   public void get_subsequentCalls_returnSameInstance() {
     GuiceVerticleFactory factory = mock(GuiceVerticleFactory.class);
-    when(factory.prefix()).thenReturn("java-guice");
+    when(factory.prefix()).thenReturn(GuiceVerticleFactory.PREFIX);
 
     VertxProvider provider = new VertxProvider(() -> factory);
     Vertx vertx1 = provider.get();
@@ -46,7 +46,7 @@ public final class VertxProviderTest {
   @Test
   public void get_isThreadSafe() throws InterruptedException {
     GuiceVerticleFactory factory = mock(GuiceVerticleFactory.class);
-    when(factory.prefix()).thenReturn("java-guice");
+    when(factory.prefix()).thenReturn(GuiceVerticleFactory.PREFIX);
 
     VertxProvider provider = new VertxProvider(() -> factory);
     int threadCount = 10;

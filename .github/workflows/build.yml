@@ -8,6 +8,8 @@ on:
 
 jobs:
   build:
+    env:
+      JAVA_TOOL_OPTIONS: "-Djava.net.preferIPv4Stack=true"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -20,6 +22,14 @@ jobs:
       uses: gradle/actions/setup-gradle@v5
     - name: Build with Gradle
       run: ./gradlew check build
+    - name: Upload Test Results Artifact
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: gradle-test-results
+        path: |
+          **/build/test-results/test/
+          **/build/reports/tests/test/
   dependency-submission:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

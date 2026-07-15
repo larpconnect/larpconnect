@@ -8,6 +8,9 @@
       ]
     }
   },
+  "runArgs": [
+    "--privileged"
+  ],
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "25",
@@ -15,6 +18,10 @@
       "installGradle": true,
       "gradleVersion": "latest"
     },
-    "ghcr.io/itsmechlark/features/postgresql:1": {}
+    "ghcr.io/itsmechlark/features/postgresql:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:4": {
+      "moby": false,
+      "version": "latest"
+    }
   }
 }

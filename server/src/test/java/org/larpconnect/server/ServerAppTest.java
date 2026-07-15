@@ -1,59 +1,77 @@
 package org.larpconnect.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.google.common.util.concurrent.Service.State;
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
 import org.junit.jupiter.api.Test;
+import org.larpconnect.data.DatabaseMigrator;
+import org.larpconnect.events.MainVerticle;
 
 /** Unit tests for ServerApp verifying main method startup. */
 public final class ServerAppTest {
   @Test
   public void testMainMethod_startsAndStops() throws Exception {
-    ServerApp.main(new String[0]);
+    Module mockModule =
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(DatabaseMigrator.class).toInstance(mock(DatabaseMigrator.class));
+          }
+        };
 
-    ServerService service = ServerApp.getRunningService();
-    assertThat(service).isNotNull();
-    assertThat(service.isRunning()).isTrue();
+    ServerApp.setOverrideModule(mockModule);
+    try {
+      ServerApp.main(new String[0]);
 
-    service.stopAsync().awaitTerminated();
-    assertThat(service.isRunning()).isFalse();
+      ServerService service = ServerApp.getRunningService();
+      assertThat(service).isNotNull();
+      assertThat(service.isRunning()).isTrue();
+
+      service.stopAsync().awaitTerminated();
+      assertThat(service.isRunning()).isFalse();
+    } finally {
+      ServerApp.setOverrideModule(null);
+    }
   }
 
   @Test
   public void testShutdownHookRunnable_success() {
-    io.vertx.core.Vertx mockVertx = org.mockito.Mockito.mock(io.vertx.core.Vertx.class);
-    org.mockito.Mockito.when(mockVertx.close()).thenReturn(io.vertx.core.Future.succeededFuture());
-    org.larpconnect.events.MainVerticle mockMain =
-        org.mockito.Mockito.mock(org.larpconnect.events.MainVerticle.class);
-    org.mockito.Mockito.when(mockVertx.deployVerticle(mockMain))
-        .thenReturn(io.vertx.core.Future.succeededFuture("deploymentId"));
+    Vertx mockVertx = mock(Vertx.class);
+    when(mockVertx.close()).thenReturn(Future.succeededFuture());
+    MainVerticle mockMain = mock(MainVerticle.class);
+    when(mockVertx.deployVerticle(mockMain)).thenReturn(Future.succeededFuture("deploymentId"));
 
-    ServerService service = new ServerService(() -> mockVertx, () -> mockMain);
+    DatabaseMigrator mockInitializer = mock(DatabaseMigrator.class);
+    ServerService service = new ServerService(() -> mockVertx, () -> mockMain, mockInitializer);
     service.startAsync().awaitRunning();
 
     Runnable hook = ServerApp.createShutdownHookRunnable(service);
     hook.run();
 
-    assertThat(service.state())
-        .isEqualTo(com.google.common.util.concurrent.Service.State.TERMINATED);
+    assertThat(service.state()).isEqualTo(State.TERMINATED);
   }
 
   @Test
   public void testShutdownHookRunnable_failure() {
-    io.vertx.core.Vertx mockVertx = org.mockito.Mockito.mock(io.vertx.core.Vertx.class);
-    org.mockito.Mockito.when(mockVertx.close())
-        .thenReturn(
-            io.vertx.core.Future.failedFuture(new RuntimeException("Simulated shutdown error")));
-    org.larpconnect.events.MainVerticle mockMain =
-        org.mockito.Mockito.mock(org.larpconnect.events.MainVerticle.class);
-    org.mockito.Mockito.when(mockVertx.deployVerticle(mockMain))
-        .thenReturn(io.vertx.core.Future.succeededFuture("deploymentId"));
+    Vertx mockVertx = mock(Vertx.class);
+    when(mockVertx.close())
+        .thenReturn(Future.failedFuture(new RuntimeException("Simulated shutdown error")));
+    MainVerticle mockMain = mock(MainVerticle.class);
+    when(mockVertx.deployVerticle(mockMain)).thenReturn(Future.succeededFuture("deploymentId"));
 
-    ServerService service = new ServerService(() -> mockVertx, () -> mockMain);
+    DatabaseMigrator mockInitializer = mock(DatabaseMigrator.class);
+    ServerService service = new ServerService(() -> mockVertx, () -> mockMain, mockInitializer);
     service.startAsync().awaitRunning();
 
     Runnable hook = ServerApp.createShutdownHookRunnable(service);
     hook.run();
 
-    assertThat(service.state()).isEqualTo(com.google.common.util.concurrent.Service.State.FAILED);
+    assertThat(service.state()).isEqualTo(State.FAILED);
   }
 }

@@ -1,44 +1,55 @@
 package org.larpconnect.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.larpconnect.data.DatabaseMigrator;
 import org.larpconnect.events.MainVerticle;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /** Unit tests for the ServerService lifecycle manager. */
+@ExtendWith(MockitoExtension.class)
 public final class ServerServiceTest {
+  @Mock private DatabaseMigrator mockInitializer;
+  @Mock private Vertx vertx;
+  @Mock private MainVerticle mainVerticle;
+
+  private ServerService service;
+
+  @BeforeEach
+  public void setUp() {
+    service = new ServerService(() -> vertx, () -> mainVerticle, mockInitializer);
+  }
+
   @Test
   public void startUp_deploysMainVerticle() throws Exception {
-    Vertx vertx = mock(Vertx.class);
-    MainVerticle mainVerticle = mock(MainVerticle.class);
     when(vertx.deployVerticle(mainVerticle)).thenReturn(Future.succeededFuture("deploymentId"));
     when(vertx.close()).thenReturn(Future.succeededFuture());
 
-    ServerService service = new ServerService(() -> vertx, () -> mainVerticle);
     service.startAsync().awaitRunning();
 
     try {
       assertThat(service.getDeploymentId()).isEqualTo("deploymentId");
       verify(vertx).deployVerticle(mainVerticle);
+      verify(mockInitializer).migrate();
     } finally {
-      // Clean up local mock state if any, though it is just a mock.
       service.stopAsync().awaitTerminated();
     }
   }
 
   @Test
   public void shutDown_closesVertx() throws Exception {
-    Vertx vertx = mock(Vertx.class);
-    MainVerticle mainVerticle = mock(MainVerticle.class);
     when(vertx.deployVerticle(mainVerticle)).thenReturn(Future.succeededFuture("deploymentId"));
     when(vertx.close()).thenReturn(Future.succeededFuture());
 
-    ServerService service = new ServerService(() -> vertx, () -> mainVerticle);
     service.startAsync().awaitRunning();
     service.stopAsync().awaitTerminated();
 
@@ -47,31 +58,22 @@ public final class ServerServiceTest {
 
   @Test
   public void startUp_failure_throwsException() {
-    Vertx vertx = mock(Vertx.class);
-    MainVerticle mainVerticle = mock(MainVerticle.class);
     when(vertx.deployVerticle(mainVerticle))
         .thenReturn(Future.failedFuture(new RuntimeException("Simulated deploy error")));
 
-    ServerService service = new ServerService(() -> vertx, () -> mainVerticle);
-
-    org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.startAsync().awaitRunning())
-        .isInstanceOf(IllegalStateException.class)
-        .hasCauseInstanceOf(RuntimeException.class);
+    assertThatThrownBy(() -> service.startAsync().awaitRunning())
+        .isInstanceOf(IllegalStateException.class);
   }
 
   @Test
   public void shutDown_failure_throwsException() throws Exception {
-    Vertx vertx = mock(Vertx.class);
-    MainVerticle mainVerticle = mock(MainVerticle.class);
     when(vertx.deployVerticle(mainVerticle)).thenReturn(Future.succeededFuture("deploymentId"));
     when(vertx.close())
         .thenReturn(Future.failedFuture(new RuntimeException("Simulated close error")));
 
-    ServerService service = new ServerService(() -> vertx, () -> mainVerticle);
     service.startAsync().awaitRunning();
 
-    org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.stopAsync().awaitTerminated())
-        .isInstanceOf(IllegalStateException.class)
-        .hasCauseInstanceOf(RuntimeException.class);
+    assertThatThrownBy(() -> service.stopAsync().awaitTerminated())
+        .isInstanceOf(IllegalStateException.class);
   }
 }

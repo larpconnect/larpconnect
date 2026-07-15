@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Deployable;
 import io.vertx.core.Promise;
-import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -97,22 +97,24 @@ public final class EventsModuleTest {
   @Test
   public void guiceVerticleFactory_prefix_returnsJavaGuice() {
     GuiceVerticleFactory factory = new GuiceVerticleFactory(() -> null);
-    assertThat(factory.prefix()).isEqualTo("java-guice");
+    assertThat(factory.prefix()).isEqualTo(GuiceVerticleFactory.PREFIX);
   }
 
   @Test
   public void guiceVerticleFactory_createVerticle_resolvesAndInstantiates() {
     Injector injector = Guice.createInjector(new EventsModule());
     GuiceVerticleFactory factory = new GuiceVerticleFactory(() -> injector);
-    Promise<Callable<Verticle>> promise = Promise.promise();
+    Promise<Callable<? extends Deployable>> promise = Promise.promise();
 
-    factory.createVerticle(
-        "java-guice:" + MainVerticle.class.getName(), getClass().getClassLoader(), promise);
+    factory.createVerticle2(
+        GuiceVerticleFactory.PREFIX + ":" + MainVerticle.class.getName(),
+        getClass().getClassLoader(),
+        promise);
 
     assertThat(promise.future().succeeded()).isTrue();
     try {
-      Verticle verticle = promise.future().result().call();
-      assertThat(verticle).isInstanceOf(MainVerticle.class);
+      Deployable deployable = promise.future().result().call();
+      assertThat(deployable).isInstanceOf(MainVerticle.class);
     } catch (Exception e) {
       throw new AssertionError(e);
     }
@@ -121,9 +123,10 @@ public final class EventsModuleTest {
   @Test
   public void guiceVerticleFactory_createVerticle_withInvalidClass_fails() {
     GuiceVerticleFactory factory = new GuiceVerticleFactory(() -> null);
-    Promise<Callable<Verticle>> promise = Promise.promise();
+    Promise<Callable<? extends Deployable>> promise = Promise.promise();
 
-    factory.createVerticle("java-guice:invalid.ClassName", getClass().getClassLoader(), promise);
+    factory.createVerticle2(
+        GuiceVerticleFactory.PREFIX + ":invalid.ClassName", getClass().getClassLoader(), promise);
 
     assertThat(promise.future().failed()).isTrue();
   }

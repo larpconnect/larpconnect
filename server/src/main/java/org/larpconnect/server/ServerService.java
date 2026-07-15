@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.larpconnect.data.DatabaseMigrator;
 import org.larpconnect.events.MainVerticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,17 +19,26 @@ final class ServerService extends AbstractIdleService {
 
   private final Provider<Vertx> vertxProvider;
   private final Provider<MainVerticle> mainVerticleProvider;
+  private final DatabaseMigrator databaseMigrator;
   private volatile String deploymentId;
 
   @Inject
-  ServerService(Provider<Vertx> vertxProvider, Provider<MainVerticle> mainVerticleProvider) {
+  ServerService(
+      Provider<Vertx> vertxProvider,
+      Provider<MainVerticle> mainVerticleProvider,
+      DatabaseMigrator databaseMigrator) {
     this.vertxProvider = vertxProvider;
     this.mainVerticleProvider = mainVerticleProvider;
+    this.databaseMigrator = databaseMigrator;
   }
 
   @Override
   protected void startUp() throws Exception {
     logger.info("Starting ServerService...");
+
+    logger.info("Running database migrations...");
+    databaseMigrator.migrate();
+
     Vertx vertx = vertxProvider.get();
     MainVerticle mainVerticle = mainVerticleProvider.get();
 
