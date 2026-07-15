@@ -17,6 +17,7 @@ public final class DataModule extends AbstractModule {
     bind(HibernateFactory.class).to(DefaultHibernateFactory.class).in(Singleton.class);
     bind(TestTableDao.class).to(DefaultTestTableDao.class).in(Singleton.class);
 
+    // TODO: Separate DAOs from DTOs in separate packages.
     bind(SessionFactory.class).toProvider(SessionFactoryProvider.class).in(Singleton.class);
   }
 

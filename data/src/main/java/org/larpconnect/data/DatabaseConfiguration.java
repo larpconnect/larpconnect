@@ -5,6 +5,7 @@ public record DatabaseConfiguration(
     String host, int port, String database, String username, String password) {
 
   public static DatabaseConfiguration fromEnv() {
+    // TODO: Replace with proper configuration loading that is fully injected.
     return create(
         System.getenv().getOrDefault("DB_HOST", "localhost"),
         parsePort(System.getenv().get("DB_PORT")),
@@ -24,7 +25,6 @@ public record DatabaseConfiguration(
     }
   }
 
-  /** Helper factory that isolates the `new` keyword to satisfy Pure Factory Isolation. */
   private static DatabaseConfiguration create(
       String host, int port, String database, String username, String password) {
     return new DatabaseConfiguration(host, port, database, username, password);
