@@ -8,6 +8,8 @@ Implement tasks from an OpenSpec change.
 
 **Input**: Optionally specify a change name (e.g., `/opsx:apply add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+**Before beginning**: Read `AGENTS.md`
+
 **Steps**
 
 1. **Select the change**
@@ -51,6 +53,8 @@ Implement tasks from an OpenSpec change.
    The files depend on the schema being used:
    - **spec-driven**: proposal, specs, design, tasks
    - Other schemas: follow the contextFiles from CLI output
+
+   If any skills listed in `.agents/skills` are relevant, load them.
 
 5. **Show current progress**
 
