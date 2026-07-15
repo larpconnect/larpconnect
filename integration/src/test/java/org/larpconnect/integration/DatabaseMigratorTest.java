@@ -6,14 +6,16 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.larpconnect.common.Environment;
+import org.larpconnect.common.MapEnvironment;
 import org.larpconnect.data.DataModule;
-import org.larpconnect.data.DatabaseConfiguration;
 import org.larpconnect.data.DatabaseMigrator;
 import org.larpconnect.data.TestTable;
 import org.larpconnect.data.TestTableDao;
@@ -35,13 +37,14 @@ public final class DatabaseMigratorTest {
 
     postgres.start();
 
-    DatabaseConfiguration testConfig =
-        new DatabaseConfiguration(
-            postgres.getHost(),
-            postgres.getMappedPort(5432),
-            postgres.getDatabaseName(),
-            postgres.getUsername(),
-            postgres.getPassword());
+    MapEnvironment testEnv =
+        new MapEnvironment(
+            Map.of(
+                "DB_HOST", postgres.getHost(),
+                "DB_PORT", String.valueOf(postgres.getMappedPort(5432)),
+                "DB_DATABASE", postgres.getDatabaseName(),
+                "DB_USERNAME", postgres.getUsername(),
+                "DB_PASSWORD", postgres.getPassword()));
 
     injector =
         Guice.createInjector(
@@ -50,7 +53,7 @@ public final class DatabaseMigratorTest {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bind(DatabaseConfiguration.class).toInstance(testConfig);
+                        bind(Environment.class).toInstance(testEnv);
                       }
                     }));
   }

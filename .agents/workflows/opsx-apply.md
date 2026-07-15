@@ -8,6 +8,8 @@ Implement tasks from an OpenSpec change.
 
 **Input**: Optionally specify a change name (e.g., `/opsx:apply add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+**Before beginning**: Read `AGENTS.md`
+
 **Steps**
 
 1. **Select the change**
@@ -52,6 +54,8 @@ Implement tasks from an OpenSpec change.
    - **spec-driven**: proposal, specs, design, tasks
    - Other schemas: follow the contextFiles from CLI output
 
+   If any skills listed in `.agents/skills` are relevant, load them.
+
 5. **Show current progress**
 
    Display:
@@ -66,6 +70,7 @@ Implement tasks from an OpenSpec change.
    - Show which task is being worked on
    - Make the code changes required
    - Keep changes minimal and focused
+   - Ensure adequate testing
    - Mark task complete in the tasks file: `- [ ]` → `- [x]`
    - Continue to next task
 
@@ -76,7 +81,13 @@ Implement tasks from an OpenSpec change.
    - User interrupts
 
 7. **On completion or pause, show status**
+   Overall:
+   - Run `./gradlew spotlessApply`
 
+   If done:
+   - Run `./gradlew check build`
+   - Fix any errors
+   
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"

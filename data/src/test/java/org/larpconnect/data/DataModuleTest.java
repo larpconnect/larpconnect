@@ -5,9 +5,11 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import java.util.Map;
 import org.flywaydb.core.Flyway;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -18,6 +20,8 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.larpconnect.common.Environment;
+import org.larpconnect.common.MapEnvironment;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -43,7 +47,15 @@ public final class DataModuleTest {
 
   @Test
   public void createInjector_withModule_resolvesBindings() {
-    Guice.createInjector(new DataModule()).injectMembers(this);
+    Guice.createInjector(
+            new DataModule(),
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(Environment.class).toInstance(new MapEnvironment(Map.of()));
+              }
+            })
+        .injectMembers(this);
 
     assertThat(databaseMigrator).isNotNull();
     assertThat(flywayMigrator).isNotNull();

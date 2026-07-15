@@ -19,7 +19,7 @@ public record DatabaseConfiguration(
       return 5432;
     }
     try {
-      return Integer.parseInt(portStr);
+      return Integer.parseInt(portStr.trim());
     } catch (NumberFormatException e) {
       return 5432;
     }

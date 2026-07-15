@@ -10,7 +10,9 @@ import org.hibernate.SessionFactory;
 public final class DataModule extends AbstractModule {
   @Override
   protected void configure() {
-    bind(DatabaseConfiguration.class).toInstance(DatabaseConfiguration.fromEnv());
+    bind(DatabaseConfiguration.class)
+        .toProvider(DatabaseConfigurationProvider.class)
+        .in(Singleton.class);
 
     bind(DatabaseMigrator.class).to(DefaultDatabaseMigrator.class).in(Singleton.class);
     bind(FlywayMigrator.class).to(DefaultFlywayMigrator.class).in(Singleton.class);
