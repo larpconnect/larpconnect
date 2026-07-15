@@ -24,8 +24,7 @@ class SessionFactoryProvider implements Provider<SessionFactory> {
   @Override
   public SessionFactory get() {
     Map<String, Object> settings = new HashMap<>();
-    settings.put(
-        AvailableSettings.JAKARTA_JDBC_DRIVER, "org.testcontainers.jdbc.ContainerDatabaseDriver");
+    settings.put(AvailableSettings.JAKARTA_JDBC_DRIVER, "org.postgresql.Driver");
     settings.put(AvailableSettings.JAKARTA_JDBC_URL, config.getJdbcUrl());
     settings.put(AvailableSettings.JAKARTA_JDBC_USER, config.username());
     if (config.password() != null) {

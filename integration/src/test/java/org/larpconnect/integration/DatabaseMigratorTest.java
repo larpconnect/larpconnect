@@ -28,6 +28,7 @@ public final class DatabaseMigratorTest {
 
   @BeforeAll
   public static void setUp() {
+    System.setProperty("api.version", "1.44");
     Assumptions.assumeTrue(
         DockerClientFactory.instance().isDockerAvailable(),
         "Docker is not available. Skipping database integration tests.");
