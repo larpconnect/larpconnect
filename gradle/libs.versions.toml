@@ -50,16 +50,19 @@ jsr305 = { group = "com.google.code.findbugs", name = "jsr305", version.ref = "j
 
 # Test dependencies
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
-junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
-mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
-mockito-junit-jupiter = { group = "org.mockito", name = "mockito-junit-jupiter", version.ref = "mockito" }
+junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
+mockito-bom = { group = "org.mockito", name = "mockito-bom", version.ref = "mockito" }
+mockito-core = { group = "org.mockito", name = "mockito-core" }
+mockito-junit-jupiter = { group = "org.mockito", name = "mockito-junit-jupiter" }
 cucumber-java = { group = "io.cucumber", name = "cucumber-java", version.ref = "cucumber" }
 cucumber-junit-platform-engine = { group = "io.cucumber", name = "cucumber-junit-platform-engine", version.ref = "cucumber" }
 archunit-junit5 = { group = "com.tngtech.archunit", name = "archunit-junit5", version.ref = "archunit" }
-testcontainers = { group = "org.testcontainers", name = "testcontainers", version.ref = "testcontainers" }
-testcontainers-postgresql = { group = "org.testcontainers", name = "testcontainers-postgresql", version.ref = "testcontainers" }
-testcontainers-jdbc = { group = "org.testcontainers", name = "testcontainers-jdbc", version.ref = "testcontainers" }
-testcontainers-junit-jupiter = { group = "org.testcontainers", name = "testcontainers-junit-jupiter", version.ref = "testcontainers" }
+testcontainers = { group = "org.testcontainers", name = "testcontainers" }
+testcontainers-bom = { group = "org.testcontainers", name = "testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-postgresql = { group = "org.testcontainers", name = "testcontainers-postgresql" }
+testcontainers-jdbc = { group = "org.testcontainers", name = "testcontainers-jdbc"}
+testcontainers-junit-jupiter = { group = "org.testcontainers", name = "testcontainers-junit-jupiter" }
 
 # Plugin artifacts for build-logic dependencies
 spotless-plugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }

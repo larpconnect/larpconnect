@@ -7,7 +7,14 @@ plugins {
     id("njall.java-platform-conventions")
 }
 
+javaPlatform {
+    allowDependencies()
+}
+
 dependencies {
+    api(platform(libs.junit.bom))
+    api(platform(libs.mockito.bom))
+    api(platform(libs.testcontainers.bom))
     constraints {
         // Core libraries version constraints exported via java-platform
         api(libs.guava)
@@ -22,10 +29,6 @@ dependencies {
         api(libs.slf4j.api)
         api(libs.flyway.core)
         api(libs.flyway.database.postgresql)
-        api(libs.testcontainers)
-        api(libs.testcontainers.postgresql)
-        api(libs.testcontainers.jdbc)
-        api(libs.testcontainers.junit.jupiter)
         api(libs.jsr305)
     }
 }
