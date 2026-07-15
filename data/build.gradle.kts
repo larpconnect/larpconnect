@@ -20,5 +20,6 @@ dependencies {
     implementation(libs.flyway.core)
     implementation(libs.flyway.database.postgresql)
     implementation(libs.jsr305)
+    implementation(libs.errorprone.annotations)
     implementation(libs.slf4j.api)
 }

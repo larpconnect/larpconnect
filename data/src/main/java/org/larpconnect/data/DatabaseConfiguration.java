@@ -4,18 +4,24 @@ package org.larpconnect.data;
 public record DatabaseConfiguration(
     String host, int port, String database, String username, String password) {
 
-  /**
-   * Factory method to load the configuration from environment variables with defaults.
-   *
-   * @return A DatabaseConfiguration instance.
-   */
   public static DatabaseConfiguration fromEnv() {
     return create(
         System.getenv().getOrDefault("DB_HOST", "localhost"),
-        Integer.parseInt(System.getenv().getOrDefault("DB_PORT", "5432")),
+        parsePort(System.getenv().get("DB_PORT")),
         System.getenv().getOrDefault("DB_DATABASE", "larpconnect"),
         System.getenv().getOrDefault("DB_USERNAME", "postgres"),
         System.getenv().getOrDefault("DB_PASSWORD", "postgres"));
+  }
+
+  static int parsePort(String portStr) {
+    if (portStr == null || portStr.isBlank()) {
+      return 5432;
+    }
+    try {
+      return Integer.parseInt(portStr);
+    } catch (NumberFormatException e) {
+      return 5432;
+    }
   }
 
   /** Helper factory that isolates the `new` keyword to satisfy Pure Factory Isolation. */

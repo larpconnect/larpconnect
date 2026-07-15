@@ -1,9 +1,10 @@
 package org.larpconnect.data;
 
+import com.google.errorprone.annotations.ThreadSafe;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.concurrent.ThreadSafe;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -11,32 +12,38 @@ import org.hibernate.Transaction;
 /** Hibernate-backed implementation of {@link TestTableDao}. */
 @ThreadSafe
 final class DefaultTestTableDao implements TestTableDao {
-  private final SessionFactory sessionFactory;
+  private final Provider<SessionFactory> sessionFactoryProvider;
 
   @Inject
-  DefaultTestTableDao(SessionFactory sessionFactory) {
-    this.sessionFactory = sessionFactory;
+  DefaultTestTableDao(Provider<SessionFactory> sessionFactoryProvider) {
+    this.sessionFactoryProvider = sessionFactoryProvider;
   }
 
   @Override
-  public void save(TestTableEntity entity) {
+  public void save(TestTable entity) {
     Transaction transaction = null;
-    try (Session session = sessionFactory.openSession()) {
+    try (Session session = sessionFactoryProvider.get().openSession()) {
       transaction = session.beginTransaction();
       session.merge(entity);
       transaction.commit();
     } catch (Exception e) {
       if (transaction != null) {
-        transaction.rollback();
+        try {
+          if (transaction.isActive()) {
+            transaction.rollback();
+          }
+        } catch (Exception rollbackEx) {
+          e.addSuppressed(rollbackEx);
+        }
       }
       throw e;
     }
   }
 
   @Override
-  public Optional<TestTableEntity> findById(UUID id) {
-    try (Session session = sessionFactory.openSession()) {
-      return Optional.ofNullable(session.find(TestTableEntity.class, id));
+  public Optional<TestTable> findById(UUID id) {
+    try (Session session = sessionFactoryProvider.get().openSession()) {
+      return Optional.ofNullable(session.find(TestTable.class, id));
     }
   }
 }

@@ -14,16 +14,18 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.larpconnect.data.DataModule;
 import org.larpconnect.data.DatabaseConfiguration;
-import org.larpconnect.data.DatabaseInitializer;
+import org.larpconnect.data.DatabaseMigrator;
+import org.larpconnect.data.TestTable;
 import org.larpconnect.data.TestTableDao;
-import org.larpconnect.data.TestTableEntity;
 import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /** Integration test for verifying Flyway migrations and Hibernate operations with PostgreSQL. */
-public final class DatabaseInitializerTest {
-  private static final PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>("postgres:18-alpine");
+// Suppressed deprecation warning because Testcontainers 2.x's PostgreSQLContainer
+// internally triggers deprecation warnings from its legacy parent class.
+@SuppressWarnings("deprecation")
+public final class DatabaseMigratorTest {
+  private static final PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:18-alpine");
 
   private static Injector injector;
 
@@ -62,15 +64,15 @@ public final class DatabaseInitializerTest {
 
   @Test
   public void migrateAndAccess_withTestcontainers_succeeds() {
-    DatabaseInitializer initializer = injector.getInstance(DatabaseInitializer.class);
+    DatabaseMigrator initializer = injector.getInstance(DatabaseMigrator.class);
     initializer.migrate();
 
     TestTableDao dao = injector.getInstance(TestTableDao.class);
     UUID id = UUID.randomUUID();
-    TestTableEntity entity = new TestTableEntity(id, "Verification Value");
+    TestTable entity = new TestTable(id, "Verification Value");
     dao.save(entity);
 
-    Optional<TestTableEntity> retrieved = dao.findById(id);
+    Optional<TestTable> retrieved = dao.findById(id);
     assertThat(retrieved).hasValue(entity);
   }
 }

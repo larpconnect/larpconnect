@@ -24,6 +24,7 @@ dependencies {
         api(libs.flyway.database.postgresql)
         api(libs.testcontainers)
         api(libs.testcontainers.postgresql)
+        api(libs.testcontainers.jdbc)
         api(libs.testcontainers.junit.jupiter)
         api(libs.jsr305)
     }

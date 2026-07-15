@@ -12,7 +12,7 @@ public final class ServerApp {
   private static final Logger logger = LoggerFactory.getLogger(ServerApp.class);
 
   private static volatile ServerService runningService;
-  private static Module overrideModule;
+  private static volatile Module overrideModule;
 
   private ServerApp() {}
 

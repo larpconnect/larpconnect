@@ -7,10 +7,10 @@ import jakarta.persistence.Table;
 import java.util.Objects;
 import java.util.UUID;
 
-/** Entity representing the TESTTABLE for integration verification. */
+/** Entity representing the test_table for integration verification. */
 @Entity
-@Table(name = "TESTTABLE")
-public final class TestTableEntity {
+@Table(name = "test_table", schema = "public")
+public final class TestTable {
   @Id
   @Column(name = "id")
   private UUID id;
@@ -19,9 +19,9 @@ public final class TestTableEntity {
   private String name;
 
   /** Required by Hibernate. */
-  TestTableEntity() {}
+  TestTable() {}
 
-  public TestTableEntity(UUID id, String name) {
+  public TestTable(UUID id, String name) {
     this.id = id;
     this.name = name;
   }
@@ -47,14 +47,14 @@ public final class TestTableEntity {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof TestTableEntity that)) {
+    if (!(o instanceof TestTable that)) {
       return false;
     }
-    return Objects.equals(id, that.id) && Objects.equals(name, that.name);
+    return Objects.equals(id, that.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name);
+    return Objects.hash(id);
   }
 }
