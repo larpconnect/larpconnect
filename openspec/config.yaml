@@ -1,20 +1,23 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Project: Modular, tenanted, federated server platform for connecting larpers and larp studios
+  Tech stack: Java 25, Gradle w/ Kotlin DSL, OpenAPI, PSQL 18+, RabbitMQ, memcached, HAProxy, S3
+  Core libraries: Vert.x, Hibernate, Guice, Guava, Mug, Caffeine, Jackson, slf4j + logback
+  Testing: JUnit 6, Mockito, Testcontainers, Cucumber, AssertJ
+  Context for agents: AGENTS.md, DESIGN.md, README.md, CONTRIBUTING.md, .agents/skill/**
+  Policies:
+    - High code coverage requirements. All code must be unit tested and, if applicable, integration tested
+    - Significant use of code quality tools, including archunit, checkstyle, spotless, and errorprone
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  specs:
+     - Use GIVEN/WHEN/THEN
+     - Use RFC 2119 (MUST, SHOULD, MAY)
+  design:
+     - Where applicable, include any observability, security, or migration considerations.
+  tasks:
+    - Include explicit tasks for unit and integration tests
+    - Include explicit `./gradlew spotlessApply` and `./gradlew check build` tasks
+  verify:
+    - ./gradlew check build
