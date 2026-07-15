@@ -66,6 +66,7 @@ Implement tasks from an OpenSpec change.
    - Show which task is being worked on
    - Make the code changes required
    - Keep changes minimal and focused
+   - Ensure adequate testing
    - Mark task complete in the tasks file: `- [ ]` → `- [x]`
    - Continue to next task
 
@@ -76,7 +77,13 @@ Implement tasks from an OpenSpec change.
    - User interrupts
 
 7. **On completion or pause, show status**
+   Overall:
+   - Run `./gradlew spotlessApply`
 
+   If done:
+   - Run `./gradlew check build`
+   - Fix any errors
+   
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
