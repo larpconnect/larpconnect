@@ -45,6 +45,8 @@ public final class DefaultTestTableDaoTest {
     when(session.beginTransaction()).thenReturn(transaction);
     dao.save(entity);
 
+    // TODO: This test is too brittle for how little value it provides. We can
+    // either remove it or add ordering to make it more valuable.
     verify(sessionFactoryProvider).get();
     verify(sessionFactory).openSession();
     verify(session).beginTransaction();

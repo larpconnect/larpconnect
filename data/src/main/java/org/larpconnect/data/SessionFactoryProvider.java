@@ -38,6 +38,8 @@ class SessionFactoryProvider implements Provider<SessionFactory> {
     sources.addAnnotatedClass(TestTable.class);
 
     Metadata metadata = sources.getMetadataBuilder().build();
+    // TODO: Create an initializer service that can be responsible for _closing
+    // this_ when the application shuts down.
     return metadata.getSessionFactoryBuilder().build();
   }
 }
