@@ -41,6 +41,7 @@ public final class DatabaseConfigurationTest {
 
   @Test
   public void parsePort_validNumber_returnsParsedPort() {
+    assertThat(DatabaseConfiguration.parsePort(" 5433 ")).isEqualTo(5433);
     assertThat(DatabaseConfiguration.parsePort("5433")).isEqualTo(5433);
     assertThat(DatabaseConfiguration.parsePort("8080")).isEqualTo(8080);
   }
