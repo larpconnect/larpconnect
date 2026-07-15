@@ -21,9 +21,6 @@ import org.testcontainers.DockerClientFactory;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /** Integration test for verifying Flyway migrations and Hibernate operations with PostgreSQL. */
-// Suppressed deprecation warning because Testcontainers 2.x's PostgreSQLContainer
-// internally triggers deprecation warnings from its legacy parent class.
-@SuppressWarnings("deprecation")
 public final class DatabaseMigratorTest {
   private static final PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:18-alpine");
 
