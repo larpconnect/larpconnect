@@ -14,7 +14,7 @@ rabbitmq = "5.34.0"
 slf4j = "2.0.18"
 logback = "1.5.38"
 errorprone-core = "2.50.0"
-flyway = "12.10.0"
+flyway = "12.11.0"
 testcontainers = "2.0.5"
 jsr305 = "3.0.2"
 
