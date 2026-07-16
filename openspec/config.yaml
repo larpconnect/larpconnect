@@ -5,19 +5,37 @@ context: |
   Tech stack: Java 25, Gradle w/ Kotlin DSL, OpenAPI, PSQL 18+, RabbitMQ, memcached, HAProxy, S3
   Core libraries: Vert.x, Hibernate, Guice, Guava, Mug, Caffeine, Jackson, slf4j + logback
   Testing: JUnit 6, Mockito, Testcontainers, Cucumber, AssertJ
-  Context for agents: AGENTS.md, DESIGN.md, README.md, CONTRIBUTING.md, .agents/skill/**
+  Documents: AGENTS.md, DESIGN.md, README.md, CONTRIBUTING.md, .agents/skill/**
+  Style standards:
+    - Google Java Standards
+    - No FQNs in source files (except imports)
+    - Use modern java conventions (var, streaming api, etc)
+    - Use `<method>_<scenario>_<expectedOutcome>` for unit test names
   Policies:
     - High code coverage requirements. All code must be unit tested and, if applicable, integration tested
     - Significant use of code quality tools, including archunit, checkstyle, spotless, and errorprone
+    - Always use Providers when injecting Guice, DatabaseConfig, or Vert.x to prevent early initialization
+    - Unit tests are in the same modules as the code they test, integration tests are in :integration 
+  Layout guide:
+    - :parent (platform) is a platform definition for the project, including the dependency constraints and any injected BOMs used by the project.
+    - :bom (platform) is the output BOM for the project, providing versions for only the artifacts the module declares
+    - :common (library) are basic, non-vert.x shared utilities that will be used by other modules
+    - :events (library) is "common but for vert.x": common utilities for the event-driven framework
+    - :data (library) is for the database interaction tooling, separate from vert.x
+    - :base (library) is the bridge between :events and :data, providing base implementations of shared utilities
+    - :queue (library) is for queue integration, integrated with vert.x
+    - :api (library) is for the API definition and verticles
+    - :server (application) is the actual launcher and the main entry point of the application
+    - :integration (technically a library) is for integration tests, which will be run against a real database and message queue
 
 rules:
   specs:
      - Use GIVEN/WHEN/THEN
      - Use RFC 2119 (MUST, SHOULD, MAY)
   design:
-     - Where applicable, include any observability, security, or migration considerations.
+     - Include observability, security, or migration considerations when applicable
   tasks:
-    - Include explicit tasks for unit and integration tests
+    - Include explicit tasks for unit and, where applicable, integration tests
     - Include explicit `./gradlew spotlessApply` and `./gradlew check build` tasks
   verify:
     - ./gradlew check build
