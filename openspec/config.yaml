@@ -27,6 +27,10 @@ context: |
     - :api (library) is for the API definition and verticles
     - :server (application) is the actual launcher and the main entry point of the application
     - :integration (technically a library) is for integration tests, which will be run against a real database and message queue
+    - :build-logic (gradle) is for custom gradle plugins and conventions.
+    - config/ is for code quality configuration
+    - .agents/ is for agent-related configuration and documentation
+    - docs/ is for general documentation about the project, for system administrators, developers, or eventually users
 
 rules:
   specs:
