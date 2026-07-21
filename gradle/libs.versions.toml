@@ -5,7 +5,7 @@
 # Core Runtime Libraries
 guava = "33.6.0-jre"
 guice = "7.0.0"
-mug = "10.6"
+mug = "10.7"
 vertx = "5.1.5"
 hibernate = "7.4.5.Final"
 postgresql = "42.7.13"
