@@ -19,7 +19,7 @@ jobs:
         java-version: '25'
         distribution: 'temurin'
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v5
+      uses: gradle/actions/setup-gradle@v6.2.0
     - name: Build with Gradle
       run: ./gradlew check build
     - name: Upload Test Results Artifact
@@ -46,7 +46,7 @@ jobs:
         distribution: 'temurin'
 
     - name: Generate and submit dependency graph
-      uses: gradle/actions/setup-gradle@v5
+      uses: gradle/actions/setup-gradle@v6.2.0
       with:
         dependency-graph: generate-and-submit
   dependency-review:
