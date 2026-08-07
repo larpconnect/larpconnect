@@ -23,7 +23,7 @@ assertj = "3.27.7"
 junit = "6.1.2"
 mockito = "5.23.0"
 cucumber = "7.34.4"
-archunit = "1.4.2"
+archunit = "1.5.0"
 
 # Build Quality Plugins
 spotless = "8.8.0"
