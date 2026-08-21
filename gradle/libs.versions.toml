@@ -3,7 +3,7 @@
 
 [versions]
 # Core Runtime Libraries
-guava = "33.6.0-jre"
+guava = "33.7.1-jre"
 guice = "7.0.0"
 mug = "10.8.1"
 vertx = "5.1.6"
