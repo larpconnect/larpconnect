@@ -40,6 +40,15 @@ context: |
     - `parent` (java platform) sets the versions for all of the modules
     - `build-logic` contains core gradle patterns
 
+
+rules:
+  proposal:
+    - Use the grill-me skill for all proposals that will affect java code.
+  design:
+    - Use the c4-diagrams skill
+  adr:
+    - Use the architectural-decision-records skill
+  
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.
