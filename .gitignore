@@ -56,3 +56,7 @@ build
 
 # Ignore Kotlin plugin data
 .kotlin
+
+
+# Code Reviews
+.agents/logs/reviews/
