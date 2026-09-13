@@ -15,11 +15,11 @@ This skill handles the creation of markdown documents to document the system.
    subdirectories.
 2. Markdown files are properly formatted using a structured document format (so
    favoring headers to represent document structure).
-3. Write at a 10th—12th grade level.
+3. Write at a 9-10th grade level.
 4. Assume a knowledge base of a person with a bachelors-level understanding of
    of theoretical computer science and a familiarity with LARP concepts.
 5. Limit line length to 100 characters. Run `./gradlew spotlessApply` before finalizing.
-6. Unless otherwise directed the ideal document length is around 512±128 words.
+6. Unless otherwise directed the ideal document length is around 1024±256 words.
    This does not apply to code, typeset mathematics, or mermaid.js diagrams that
    may be included.
 
@@ -32,3 +32,4 @@ This skill handles the creation of markdown documents to document the system.
 - Files should always be UTF-8
 - Try to break up large amounts of text with bullet points, code snippets,
   multiple sections, or diagrams.
+- **DO NOT** _ever_ use unqualified, static paths to files (e.g., `file:///Users/...`). Always use relative paths. Remember: we should be able to check out the project on a brand new system and have all of the links still work.

@@ -17,6 +17,7 @@ dependencies {
         api(libs.caffeine)
         api(libs.slf4j.api)
         api(libs.jsr305)
+        api(libs.metrics.healthchecks)
 
         // Asynchronous runtime & HTTP (Pekko)
         api(libs.pekko.actor.typed)

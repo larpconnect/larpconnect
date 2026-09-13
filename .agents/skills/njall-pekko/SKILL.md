@@ -47,7 +47,7 @@ All messages (commands, events, and replies) must form closed Algebraic Data Typ
   compile-time exhaustiveness over all permitted variants.
 
 ```java
-package org.larpconnect.character.protocol;
+package org.larpconnect.njall.character.protocol;
 
 import org.apache.pekko.actor.typed.ActorRef;
 
@@ -68,7 +68,7 @@ public sealed interface CharacterCommand {
 Response protocols follow the identical sealed record pattern:
 
 ```java
-package org.larpconnect.character.protocol;
+package org.larpconnect.njall.character.protocol;
 
 public sealed interface CharacterResponse {
     record CharacterRegistered(String characterId) implements CharacterResponse {}
@@ -197,10 +197,10 @@ dedicated Guice factories:
 
 #### Step 1: Define the Factory Interface
 ```java
-package org.larpconnect.character.actor;
+package org.larpconnect.njall.character.actor;
 
 import org.apache.pekko.actor.typed.Behavior;
-import org.larpconnect.character.protocol.CharacterCommand;
+import org.larpconnect.njall.character.protocol.CharacterCommand;
 
 public interface CharacterWorkerFactory {
     Behavior<CharacterCommand> create();
@@ -209,12 +209,12 @@ public interface CharacterWorkerFactory {
 
 #### Step 2: Implement Factory with Guice Injection
 ```java
-package org.larpconnect.character.actor;
+package org.larpconnect.njall.character.actor;
 
 import com.google.inject.Inject;
 import org.apache.pekko.actor.typed.Behavior;
-import org.larpconnect.character.domain.CharacterValidator;
-import org.larpconnect.character.protocol.CharacterCommand;
+import org.larpconnect.njall.character.domain.CharacterValidator;
+import org.larpconnect.njall.character.protocol.CharacterCommand;
 
 final class DefaultCharacterWorkerFactory implements CharacterWorkerFactory {
     private final CharacterValidator validator;
@@ -254,7 +254,7 @@ All unit tests in implementation modules (`src/test`) must use `BehaviorTestKit`
 deterministic execution without spinning up background actor threads or triggering async timeouts:
 
 ```java
-package org.larpconnect.character.actor;
+package org.larpconnect.njall.character.actor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -264,9 +264,9 @@ import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestInbox;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.larpconnect.character.domain.CharacterValidator;
-import org.larpconnect.character.protocol.CharacterCommand;
-import org.larpconnect.character.protocol.CharacterResponse;
+import org.larpconnect.njall.character.domain.CharacterValidator;
+import org.larpconnect.njall.character.protocol.CharacterCommand;
+import org.larpconnect.njall.character.protocol.CharacterResponse;
 
 final class CharacterWorkerTest {
 
@@ -298,7 +298,7 @@ final class CharacterWorkerTest {
 All multi-actor lifecycle and boundary tests in `:integration` use `ActorTestKit` and `TestProbe`:
 
 ```java
-package org.larpconnect.integration.character;
+package org.larpconnect.njall.integration.character;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

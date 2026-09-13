@@ -1,14 +1,16 @@
-package com.larpconnect.njall.api;
+package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
-import com.larpconnect.njall.api.admin.AdminRoute;
-import com.larpconnect.njall.api.http.RootRoute;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.junit.jupiter.api.AfterAll;
@@ -16,13 +18,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-final class ApiModuleTest {
+final class AdminModuleTest {
 
   private static ActorSystem<Void> system;
 
   @BeforeAll
   static void setUp() {
-    system = ActorSystem.create(Behaviors.empty(), "api-module-test");
+    system = ActorSystem.create(Behaviors.empty(), "admin-module-test");
   }
 
   @AfterAll
@@ -32,8 +34,8 @@ final class ApiModuleTest {
   }
 
   @Test
-  @DisplayName("configure installs HttpModule and AdminModule binding RootRoute and AdminRoute")
-  void configure_createsInjector_bindsRoutes() {
+  @DisplayName("AdminModule binds AdminRoute, actor, and PekkoHealthCheck into multibinder")
+  void configure_bindsAdminComponents() {
     var testModule =
         new AbstractModule() {
           @Override
@@ -43,11 +45,15 @@ final class ApiModuleTest {
           }
         };
 
-    var injector = Guice.createInjector(new ApiModule(), testModule);
-    var rootRoute = injector.getInstance(RootRoute.class);
-    var adminRoute = injector.getInstance(AdminRoute.class);
+    var injector = Guice.createInjector(new AdminModule(), testModule);
 
-    assertThat(rootRoute).isNotNull();
-    assertThat(adminRoute).isNotNull();
+    var adminRoute = injector.getInstance(AdminRoute.class);
+    var actorRef =
+        injector.getInstance(Key.get(new TypeLiteral<ActorRef<HealthCheckCommand>>() {}));
+    var healthChecks = injector.getInstance(Key.get(new TypeLiteral<Set<HealthCheck>>() {}));
+
+    assertThat(adminRoute).isInstanceOf(DefaultAdminRoute.class);
+    assertThat(actorRef).isNotNull();
+    assertThat(healthChecks).hasAtLeastOneElementOfType(PekkoHealthCheck.class);
   }
 }

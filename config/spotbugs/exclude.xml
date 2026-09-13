@@ -8,4 +8,9 @@
     <Match>
         <Class name="~.*\.generated\..*"/>
     </Match>
+    <!-- Exclude SpotBugs false positives on Pekko message protocols containing actor references -->
+    <Match>
+        <Class name="~.*Command.*"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

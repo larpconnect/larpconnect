@@ -1,13 +1,16 @@
 package com.larpconnect.njall.api.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
+import com.larpconnect.njall.api.admin.AdminRoute;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Directives;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.Test;
 final class RootRouteTest {
 
   private static ActorSystem<Void> system;
+  private static final AdminRoute REJECTING_ADMIN_ROUTE = Directives::reject;
 
   @BeforeAll
   static void setUp() {
@@ -31,7 +35,7 @@ final class RootRouteTest {
   @Test
   @DisplayName("route returns 200 OK with blank entity for GET /")
   void route_getSlash_returnsOkWithBlankEntity() throws Exception {
-    var rootRoute = new DefaultRootRoute();
+    var rootRoute = new DefaultRootRoute(REJECTING_ADMIN_ROUTE);
     var handler = rootRoute.route().seal().function(system);
 
     var response =
@@ -48,14 +52,42 @@ final class RootRouteTest {
   }
 
   @Test
+  @DisplayName("route concatenates and delegates to AdminRoute")
+  void route_delegatesToAdminRoute() throws Exception {
+    AdminRoute customAdminRoute =
+        () ->
+            Directives.path(
+                "custom-admin",
+                () -> Directives.get(() -> Directives.complete(StatusCodes.ACCEPTED, "custom")));
+    var rootRoute = new DefaultRootRoute(customAdminRoute);
+    var handler = rootRoute.route().seal().function(system);
+
+    var response =
+        handler
+            .apply(HttpRequest.GET("/custom-admin"))
+            .toCompletableFuture()
+            .get(5, TimeUnit.SECONDS);
+
+    assertThat(response.status()).isEqualTo(StatusCodes.ACCEPTED);
+  }
+
+  @Test
   @DisplayName("route rejects POST request to /")
   void route_postSlash_isRejected() throws Exception {
-    var rootRoute = new DefaultRootRoute();
+    var rootRoute = new DefaultRootRoute(REJECTING_ADMIN_ROUTE);
     var handler = rootRoute.route().seal().function(system);
 
     var response =
         handler.apply(HttpRequest.POST("/")).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
     assertThat(response.status()).isEqualTo(StatusCodes.METHOD_NOT_ALLOWED);
+  }
+
+  @Test
+  @DisplayName("DefaultRootRoute constructor throws NullPointerException for null adminRoute")
+  void constructor_nullAdminRoute_throwsNullPointerException() {
+    assertThatNullPointerException()
+        .isThrownBy(() -> new DefaultRootRoute(null))
+        .withMessage("adminRoute must not be null");
   }
 }
