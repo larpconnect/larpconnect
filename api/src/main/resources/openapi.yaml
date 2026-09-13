@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: LarpConnect Root API
+  version: 0.1.0
+  description: Root entrypoint and health probe for Project Njall
+paths:
+  /:
+    get:
+      summary: Root health check / empty response
+      description: Returns HTTP 200 OK with an empty response body
+      responses:
+        '200':
+          description: Service is reachable
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ""

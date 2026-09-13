@@ -14,17 +14,13 @@ plugins {
 
 rootProject.name = "larpconnect"
 
-// // Subprojects topological layout
-// include(
-//     "parent",
-//     "bom",
-//     "common",
-//     "events",
-//     "test",
-//     "queue",
-//     "data",
-//     "base",
-//     "api",
-//     "server",
-//     "integration"
-// )
+// Subprojects topological layout
+include(
+    "parent",
+    "bom",
+    "test",
+    "common",
+    "api",
+    "server",
+    "integration"
+)
