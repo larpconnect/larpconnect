@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+          "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+          "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java, properties, xml"/>
+
+    <!-- Enforce class file limit: Maximum 500 Source Lines of Code -->
+    <module name="FileLength">
+        <property name="max" value="500"/>
+    </module>
+
+    <!-- Enforce line length: Hard wrapping at 100 characters -->
+    <module name="LineLength">
+        <property name="max" value="100"/>
+        <property name="ignorePattern" value="^package.*|^import.*"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Enforce function limit: Maximum 50 Source Lines of Code -->
+        <module name="MethodLength">
+            <property name="max" value="50"/>
+            <property name="tokens" value="METHOD_DEF, CTOR_DEF"/>
+        </module>
+
+        <!-- Enforce cyclomatic complexity: Strict maximum of 10 per method -->
+        <module name="CyclomaticComplexity">
+            <property name="max" value="10"/>
+        </module>
+
+        <!-- Enforce NPath complexity: Strict maximum of 200 per method -->
+        <module name="NPathComplexity">
+            <property name="max" value="200"/>
+        </module>
+    </module>
+</module>

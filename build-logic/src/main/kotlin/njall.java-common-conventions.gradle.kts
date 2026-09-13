@@ -79,7 +79,7 @@ jacoco {
     toolVersion = "0.8.14"
 }
 
-val jacocoExcludeList = listOf("**/org/larpconnect/server/ServerApp*")
+val jacocoExcludeList = listOf("**/com/larpconnect/njall/server/ServerApp*")
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
@@ -133,8 +133,3 @@ testing {
     }
 }
 
-if (project.name != "test") {
-    dependencies {
-        "testImplementation"(project(":test"))
-    }
-}

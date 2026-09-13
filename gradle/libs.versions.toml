@@ -6,7 +6,9 @@
 guava = "33.6.0-jre"
 guice = "7.0.0"
 mug = "10.8.1"
-vertx = "5.1.6"
+pekko = "2.0.0-M4"
+pekko-http = "2.0.0-M1"
+typesafe-config = "1.4.3"
 hibernate = "7.4.5.Final"
 postgresql = "42.7.13"
 caffeine = "3.2.4"
@@ -34,8 +36,13 @@ errorprone-plugin = "5.1.0"
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 mug = { group = "com.google.mug", name = "mug", version.ref = "mug" }
-vertx-core = { group = "io.vertx", name = "vertx-core", version.ref = "vertx" }
-vertx-web = { group = "io.vertx", name = "vertx-web", version.ref = "vertx" }
+typesafe-config = { group = "com.typesafe", name = "config", version.ref = "typesafe-config" }
+pekko-actor-typed = { group = "org.apache.pekko", name = "pekko-actor-typed_3", version.ref = "pekko" }
+pekko-actor-testkit-typed = { group = "org.apache.pekko", name = "pekko-actor-testkit-typed_3", version.ref = "pekko" }
+pekko-stream = { group = "org.apache.pekko", name = "pekko-stream_3", version.ref = "pekko" }
+pekko-stream-testkit = { group = "org.apache.pekko", name = "pekko-stream-testkit_3", version.ref = "pekko" }
+pekko-http = { group = "org.apache.pekko", name = "pekko-http_3", version.ref = "pekko-http" }
+pekko-http-testkit = { group = "org.apache.pekko", name = "pekko-http-testkit_3", version.ref = "pekko-http" }
 hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core", version.ref = "hibernate" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
@@ -52,6 +59,7 @@ jsr305 = { group = "com.google.code.findbugs", name = "jsr305", version.ref = "j
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 junit-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
+junit-platform-suite = { group = "org.junit.platform", name = "junit-platform-suite" }
 mockito-bom = { group = "org.mockito", name = "mockito-bom", version.ref = "mockito" }
 mockito-core = { group = "org.mockito", name = "mockito-core" }
 mockito-junit-jupiter = { group = "org.mockito", name = "mockito-junit-jupiter" }
