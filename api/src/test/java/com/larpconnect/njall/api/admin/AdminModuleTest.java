@@ -8,6 +8,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
+import com.larpconnect.njall.api.RouteProvider;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -34,7 +35,8 @@ final class AdminModuleTest {
   }
 
   @Test
-  @DisplayName("AdminModule binds AdminRoute, actor, and PekkoHealthCheck into multibinder")
+  @DisplayName(
+      "AdminModule binds AdminRoute, RouteProvider, actor, and PekkoHealthCheck into multibinder")
   void configure_bindsAdminComponents() {
     var testModule =
         new AbstractModule() {
@@ -52,10 +54,12 @@ final class AdminModuleTest {
         injector.getInstance(Key.get(new TypeLiteral<ActorRef<HealthCheckCommand>>() {}));
     var healthChecks = injector.getInstance(Key.get(new TypeLiteral<Set<HealthCheck>>() {}));
     var actorFactory = injector.getInstance(HealthCheckActorFactory.class);
+    var routeProviders = injector.getInstance(Key.get(new TypeLiteral<Set<RouteProvider>>() {}));
 
     assertThat(adminRoute).isInstanceOf(DefaultAdminRoute.class);
     assertThat(actorRef).isNotNull();
     assertThat(healthChecks).hasAtLeastOneElementOfType(PekkoHealthCheck.class);
     assertThat(actorFactory).isInstanceOf(DefaultHealthCheckActorFactory.class);
+    assertThat(routeProviders).hasAtLeastOneElementOfType(DefaultAdminRoute.class);
   }
 }

@@ -35,17 +35,22 @@ public final class HealthCheckActor extends AbstractBehavior<HealthCheckCommand>
   }
 
   private HealthCheckResponse evaluateResults(Map<String, HealthCheck.Result> results) {
-    for (var entry : results.entrySet()) {
-      if (!entry.getValue().isHealthy()) {
-        var reason = formatFailure(entry.getKey(), entry.getValue());
-        return HealthCheckResponse.unhealthy(reason);
-      }
-    }
-    return HealthCheckResponse.healthy();
+    return results.entrySet().stream()
+        .filter(entry -> !entry.getValue().isHealthy())
+        .findFirst()
+        .map(
+            entry -> HealthCheckResponse.unhealthy(formatFailure(entry.getKey(), entry.getValue())))
+        .orElseGet(HealthCheckResponse::healthy);
   }
 
   private static String formatFailure(String name, HealthCheck.Result result) {
     var message = result.getMessage();
-    return name + ": " + (message != null ? message : "unhealthy");
+    if (message != null && !message.isBlank()) {
+      return name + ": " + message;
+    }
+    if (result.getError() != null) {
+      return name + ": " + result.getError();
+    }
+    return name + ": unhealthy";
   }
 }

@@ -41,7 +41,6 @@ public final class HealthModule extends AbstractModule {
   }
 
   private static String resolveName(HealthCheck healthCheck) {
-    var simpleName = healthCheck.getClass().getSimpleName();
-    return simpleName.isEmpty() ? healthCheck.getClass().getName() : simpleName;
+    return healthCheck.getClass().getName();
   }
 }

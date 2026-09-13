@@ -39,7 +39,7 @@ final class AdminRouteTest {
             Behaviors.receiveMessage(
                 msg -> {
                   if (msg instanceof HealthCheckCommand.CheckHealth cmd) {
-                    cmd.replyTo().tell(new HealthCheckResponse.Healthy());
+                    cmd.replyTo().tell(HealthCheckResponse.healthy());
                   }
                   return Behaviors.same();
                 }),
@@ -133,7 +133,7 @@ final class AdminRouteTest {
             Behaviors.receiveMessage(
                 msg -> {
                   if (msg instanceof HealthCheckCommand.CheckHealth cmd) {
-                    cmd.replyTo().tell(new HealthCheckResponse.Healthy());
+                    cmd.replyTo().tell(HealthCheckResponse.healthy());
                   }
                   return Behaviors.same();
                 }),

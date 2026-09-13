@@ -89,6 +89,32 @@ final class HealthCheckActorTest {
   }
 
   @Test
+  @DisplayName(
+      "HealthCheckActor responds with Unhealthy containing error when check fails with exception")
+  void onCheckHealth_unhealthyWithException_emitsUnhealthyResponse() {
+    var registry = new HealthCheckRegistry();
+    var exception = new IllegalStateException();
+    registry.register(
+        "errorCheck",
+        new HealthCheck() {
+          @Override
+          protected Result check() {
+            return Result.unhealthy(exception);
+          }
+        });
+
+    var testKit = BehaviorTestKit.create(createBehavior(registry));
+    TestInbox<HealthCheckResponse> inbox = TestInbox.create();
+
+    testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(HealthCheckResponse.Unhealthy.class);
+    assertThat(((HealthCheckResponse.Unhealthy) response).reason())
+        .isEqualTo("errorCheck: " + exception);
+  }
+
+  @Test
   @DisplayName("HealthCheckActor constructor throws NullPointerException when registry is null")
   void constructor_nullRegistry_throwsNullPointerException() {
     assertThatNullPointerException()

@@ -31,7 +31,7 @@ final class HealthModuleTest {
   }
 
   @Test
-  @DisplayName("HealthModule registers multibound health checks by class simple name")
+  @DisplayName("HealthModule registers multibound health checks by full class name")
   void provideHealthCheckRegistry_withNamedCheck_registersCorrectly() {
     var injector =
         Guice.createInjector(
@@ -48,8 +48,9 @@ final class HealthModuleTest {
     var registry = injector.getInstance(HealthCheckRegistry.class);
     var results = registry.runHealthChecks();
 
-    assertThat(results).containsKey("SampleHealthCheck");
-    assertThat(results.get("SampleHealthCheck").isHealthy()).isTrue();
+    var expectedName = SampleHealthCheck.class.getName();
+    assertThat(results).containsKey(expectedName);
+    assertThat(results.get(expectedName).isHealthy()).isTrue();
   }
 
   @Test

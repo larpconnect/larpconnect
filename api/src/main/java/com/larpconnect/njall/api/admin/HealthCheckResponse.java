@@ -4,7 +4,9 @@ package com.larpconnect.njall.api.admin;
 public sealed interface HealthCheckResponse {
 
   /** Indicates all evaluated health checks succeeded. */
-  record Healthy() implements HealthCheckResponse {}
+  record Healthy() implements HealthCheckResponse {
+    private static final Healthy INSTANCE = new Healthy();
+  }
 
   /**
    * Indicates at least one health check failed or encountered an error.
@@ -19,7 +21,7 @@ public sealed interface HealthCheckResponse {
    * @return A {@link Healthy} response instance.
    */
   static HealthCheckResponse healthy() {
-    return new Healthy();
+    return Healthy.INSTANCE;
   }
 
   /**

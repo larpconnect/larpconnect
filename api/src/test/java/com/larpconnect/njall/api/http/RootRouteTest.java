@@ -3,8 +3,9 @@ package com.larpconnect.njall.api.http;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
-import com.larpconnect.njall.api.admin.AdminRoute;
+import com.larpconnect.njall.api.RouteProvider;
 import java.time.Duration;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
@@ -19,7 +20,7 @@ import org.junit.jupiter.api.Test;
 final class RootRouteTest {
 
   private static ActorSystem<Void> system;
-  private static final AdminRoute REJECTING_ADMIN_ROUTE = Directives::reject;
+  private static final RouteProvider REJECTING_ROUTE_PROVIDER = Directives::reject;
 
   @BeforeAll
   static void setUp() {
@@ -35,7 +36,7 @@ final class RootRouteTest {
   @Test
   @DisplayName("route returns 200 OK with blank entity for GET /")
   void route_getSlash_returnsOkWithBlankEntity() throws Exception {
-    var rootRoute = new DefaultRootRoute(REJECTING_ADMIN_ROUTE);
+    var rootRoute = new DefaultRootRoute(Set.of(REJECTING_ROUTE_PROVIDER));
     var handler = rootRoute.route().seal().function(system);
 
     var response =
@@ -52,19 +53,19 @@ final class RootRouteTest {
   }
 
   @Test
-  @DisplayName("route concatenates and delegates to AdminRoute")
-  void route_delegatesToAdminRoute() throws Exception {
-    AdminRoute customAdminRoute =
+  @DisplayName("route concatenates and delegates to registered RouteProvider")
+  void route_delegatesToRouteProvider() throws Exception {
+    RouteProvider customProvider =
         () ->
             Directives.path(
-                "custom-admin",
+                "custom-subroute",
                 () -> Directives.get(() -> Directives.complete(StatusCodes.ACCEPTED, "custom")));
-    var rootRoute = new DefaultRootRoute(customAdminRoute);
+    var rootRoute = new DefaultRootRoute(Set.of(customProvider));
     var handler = rootRoute.route().seal().function(system);
 
     var response =
         handler
-            .apply(HttpRequest.GET("/custom-admin"))
+            .apply(HttpRequest.GET("/custom-subroute"))
             .toCompletableFuture()
             .get(5, TimeUnit.SECONDS);
 
@@ -74,7 +75,7 @@ final class RootRouteTest {
   @Test
   @DisplayName("route rejects POST request to /")
   void route_postSlash_isRejected() throws Exception {
-    var rootRoute = new DefaultRootRoute(REJECTING_ADMIN_ROUTE);
+    var rootRoute = new DefaultRootRoute(Set.of(REJECTING_ROUTE_PROVIDER));
     var handler = rootRoute.route().seal().function(system);
 
     var response =
@@ -84,10 +85,10 @@ final class RootRouteTest {
   }
 
   @Test
-  @DisplayName("DefaultRootRoute constructor throws NullPointerException for null adminRoute")
-  void constructor_nullAdminRoute_throwsNullPointerException() {
+  @DisplayName("DefaultRootRoute constructor throws NullPointerException for null routeProviders")
+  void constructor_nullRouteProviders_throwsNullPointerException() {
     assertThatNullPointerException()
         .isThrownBy(() -> new DefaultRootRoute(null))
-        .withMessage("adminRoute must not be null");
+        .withMessage("routeProviders must not be null");
   }
 }
