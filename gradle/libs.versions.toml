@@ -24,7 +24,7 @@ jsr305 = "3.0.2"
 assertj = "3.27.7"
 junit = "6.1.3"
 mockito = "5.23.0"
-cucumber = "7.34.7"
+cucumber = "7.34.8"
 archunit = "1.5.0"
 
 # Build Quality Plugins
