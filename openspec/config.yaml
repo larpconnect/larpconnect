@@ -48,6 +48,9 @@ rules:
     - Use the c4-diagrams skill
   adr:
     - Use the architectural-decision-records skill
+  tasks:
+    - The implementation is not complete until `./gradlew check build` passes
+    - When making changes in one module ensure that tests pass before making changes in another module
   
 # Project context (optional)
 # This is shown to AI when creating artifacts.
