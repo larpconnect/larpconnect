@@ -127,6 +127,16 @@ Commons utilities where available. Use context7 to get the latest documentation.
     import.
 - Do not suppress warnings. If you _must_ suppress a warning, leave documentation
     as to why it needs to be suppressed.
+- The following should always use static imports unless there is a naming conflict:
+  - `java.util.Objects.*`
+  - `java.util.Arrays.*`
+  - `java.util.Collections.*`
+  - `java.util.stream.Collectors.*`
+  - `java.util.stream.Stream.*`
+  - `org.apache.pekko.actor.typed.javadsl.AskPattern`
+  - AssertJ assertions
+  - Mockito matchers
+  - Other extremely well known and established methods where there is little ambiguity
 
 ### Logging with SLF4J
 

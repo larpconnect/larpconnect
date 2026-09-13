@@ -11,6 +11,7 @@ dependencies {
 
     api(libs.typesafe.config)
     api(libs.guice)
+    api(libs.metrics.healthchecks)
 
     testImplementation(project(":test"))
 }

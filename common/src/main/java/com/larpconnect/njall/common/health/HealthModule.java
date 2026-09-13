@@ -1,0 +1,46 @@
+package com.larpconnect.njall.common.health;
+
+import static java.util.Objects.requireNonNull;
+
+import com.codahale.metrics.health.HealthCheck;
+import com.codahale.metrics.health.HealthCheckRegistry;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
+import java.util.Set;
+
+/**
+ * Guice module configuring the Dropwizard {@link HealthCheckRegistry} and health check multibinder.
+ */
+public final class HealthModule extends AbstractModule {
+
+  @Override
+  protected void configure() {
+    Multibinder.newSetBinder(binder(), HealthCheck.class);
+  }
+
+  @Provides
+  @Singleton
+  HealthCheckRegistry provideHealthCheckRegistry(Set<HealthCheck> healthChecks) {
+    requireNonNull(healthChecks, "healthChecks must not be null");
+    var registry = newRegistry();
+    registerAll(registry, healthChecks);
+    return registry;
+  }
+
+  private HealthCheckRegistry newRegistry() {
+    return new HealthCheckRegistry();
+  }
+
+  private void registerAll(HealthCheckRegistry registry, Set<HealthCheck> healthChecks) {
+    for (var healthCheck : healthChecks) {
+      var name = resolveName(healthCheck);
+      registry.register(name, healthCheck);
+    }
+  }
+
+  private static String resolveName(HealthCheck healthCheck) {
+    return healthCheck.getClass().getName();
+  }
+}

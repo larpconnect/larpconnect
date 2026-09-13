@@ -16,3 +16,22 @@ paths:
               schema:
                 type: string
                 example: ""
+  /api/admin/v1/health:
+    get:
+      summary: Administrative runtime health probe
+      description: Returns HTTP 200 OK when healthy and HTTP 500 when unhealthy or timed out, both with empty body
+      responses:
+        '200':
+          description: System runtime is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ""
+        '500':
+          description: System runtime is unhealthy or probe timed out
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ""
