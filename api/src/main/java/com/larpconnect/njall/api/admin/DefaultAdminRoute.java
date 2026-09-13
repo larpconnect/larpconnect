@@ -1,12 +1,13 @@
 package com.larpconnect.njall.api.admin;
 
+import static java.util.Objects.requireNonNull;
+import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
+
 import com.google.inject.Inject;
 import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
-import org.apache.pekko.actor.typed.javadsl.AskPattern;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
@@ -21,9 +22,8 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
 
   @Inject
   DefaultAdminRoute(ActorRef<HealthCheckCommand> healthCheckActor, ActorSystem<Void> system) {
-    this.healthCheckActor =
-        Objects.requireNonNull(healthCheckActor, "healthCheckActor must not be null");
-    this.system = Objects.requireNonNull(system, "system must not be null");
+    this.healthCheckActor = requireNonNull(healthCheckActor, "healthCheckActor must not be null");
+    this.system = requireNonNull(system, "system must not be null");
   }
 
   @Override
@@ -47,7 +47,7 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
   }
 
   private CompletionStage<HealthCheckResponse> askHealthCheck() {
-    return AskPattern.ask(
+    return ask(
         healthCheckActor, HealthCheckCommand.CheckHealth::new, ASK_TIMEOUT, system.scheduler());
   }
 

@@ -7,10 +7,16 @@ import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestInbox;
+import org.apache.pekko.actor.typed.Behavior;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 final class HealthCheckActorTest {
+
+  private static Behavior<HealthCheckCommand> createBehavior(HealthCheckRegistry registry) {
+    return Behaviors.setup(context -> new HealthCheckActor(context, registry));
+  }
 
   @Test
   @DisplayName("HealthCheckActor responds with Healthy when all registry checks pass")
@@ -25,7 +31,7 @@ final class HealthCheckActorTest {
           }
         });
 
-    var testKit = BehaviorTestKit.create(HealthCheckActor.create(registry));
+    var testKit = BehaviorTestKit.create(createBehavior(registry));
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
 
     testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
@@ -47,7 +53,7 @@ final class HealthCheckActorTest {
           }
         });
 
-    var testKit = BehaviorTestKit.create(HealthCheckActor.create(registry));
+    var testKit = BehaviorTestKit.create(createBehavior(registry));
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
 
     testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
@@ -71,7 +77,7 @@ final class HealthCheckActorTest {
           }
         });
 
-    var testKit = BehaviorTestKit.create(HealthCheckActor.create(registry));
+    var testKit = BehaviorTestKit.create(createBehavior(registry));
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
 
     testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
@@ -83,10 +89,14 @@ final class HealthCheckActorTest {
   }
 
   @Test
-  @DisplayName("HealthCheckActor.create throws NullPointerException when registry is null")
-  void create_nullRegistry_throwsNullPointerException() {
+  @DisplayName("HealthCheckActor constructor throws NullPointerException when registry is null")
+  void constructor_nullRegistry_throwsNullPointerException() {
     assertThatNullPointerException()
-        .isThrownBy(() -> HealthCheckActor.create(null))
+        .isThrownBy(
+            () ->
+                BehaviorTestKit.create(
+                    Behaviors.<HealthCheckCommand>setup(
+                        context -> new HealthCheckActor(context, null))))
         .withMessage("registry must not be null");
   }
 }

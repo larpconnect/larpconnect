@@ -1,8 +1,9 @@
 package com.larpconnect.njall.api.admin;
 
+import static java.util.Objects.requireNonNull;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.google.inject.Inject;
-import java.util.Objects;
 import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.actor.typed.ActorSystem;
 
@@ -13,7 +14,7 @@ public final class PekkoHealthCheck extends HealthCheck {
 
   @Inject
   public PekkoHealthCheck(ActorSystem<Void> system) {
-    this.system = Objects.requireNonNull(system, "system must not be null");
+    this.system = requireNonNull(system, "system must not be null");
   }
 
   @Override

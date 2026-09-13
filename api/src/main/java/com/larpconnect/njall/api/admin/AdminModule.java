@@ -1,7 +1,8 @@
 package com.larpconnect.njall.api.admin;
 
+import static java.util.Objects.requireNonNull;
+
 import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -17,13 +18,15 @@ public final class AdminModule extends AbstractModule {
   protected void configure() {
     Multibinder.newSetBinder(binder(), HealthCheck.class).addBinding().to(PekkoHealthCheck.class);
     bind(AdminRoute.class).to(DefaultAdminRoute.class);
+    bind(HealthCheckActorFactory.class).to(DefaultHealthCheckActorFactory.class);
   }
 
   @Provides
   @Singleton
   ActorRef<HealthCheckCommand> provideHealthCheckActor(
-      ActorSystem<Void> system, HealthCheckRegistry registry) {
-    return system.systemActorOf(
-        HealthCheckActor.create(registry), "healthCheckActor", Props.empty());
+      ActorSystem<Void> system, HealthCheckActorFactory factory) {
+    requireNonNull(system, "system must not be null");
+    requireNonNull(factory, "factory must not be null");
+    return system.systemActorOf(factory.create(), "healthCheckActor", Props.empty());
   }
 }

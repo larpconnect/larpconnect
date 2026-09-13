@@ -1,12 +1,13 @@
 package com.larpconnect.njall.common.health;
 
+import static java.util.Objects.requireNonNull;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -22,7 +23,7 @@ public final class HealthModule extends AbstractModule {
   @Provides
   @Singleton
   HealthCheckRegistry provideHealthCheckRegistry(Set<HealthCheck> healthChecks) {
-    Objects.requireNonNull(healthChecks, "healthChecks must not be null");
+    requireNonNull(healthChecks, "healthChecks must not be null");
     var registry = newRegistry();
     registerAll(registry, healthChecks);
     return registry;

@@ -51,9 +51,11 @@ final class AdminModuleTest {
     var actorRef =
         injector.getInstance(Key.get(new TypeLiteral<ActorRef<HealthCheckCommand>>() {}));
     var healthChecks = injector.getInstance(Key.get(new TypeLiteral<Set<HealthCheck>>() {}));
+    var actorFactory = injector.getInstance(HealthCheckActorFactory.class);
 
     assertThat(adminRoute).isInstanceOf(DefaultAdminRoute.class);
     assertThat(actorRef).isNotNull();
     assertThat(healthChecks).hasAtLeastOneElementOfType(PekkoHealthCheck.class);
+    assertThat(actorFactory).isInstanceOf(DefaultHealthCheckActorFactory.class);
   }
 }

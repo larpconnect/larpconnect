@@ -22,7 +22,7 @@ Project Njall requires an administrative health check endpoint (`/api/admin/v1/h
 
 We will standardize subsystem health reporting using Dropwizard Metrics `HealthCheck` integrated via Google Guice and Apache Pekko Typed:
 1. **Centralized Health Multibinder in `:common`**: `:common` manages a Guice `Multibinder<HealthCheck>` and provides a centralized `HealthCheckRegistry`. Any module can contribute a `HealthCheck` implementation to this multibinder.
-2. **Active Actor Probe in `:api`**: `:api` implements `PekkoHealthCheck` and wraps registry evaluation inside a stateless `HealthCheckActor` (Pekko Typed). The HTTP route executes an active `AskPattern.ask(...)` with a 2-second timeout, ensuring the actor system is responsive.
+2. **Active Actor Probe in `:api`**: `:api` implements `PekkoHealthCheck` and wraps registry evaluation inside `HealthCheckActor` (extending Pekko Typed's `AbstractBehavior`) managed via a Guice `HealthCheckActorFactory`. The HTTP route executes an active `ask(...)` with a 2-second timeout, ensuring the actor system is responsive.
 3. **Base Path Routing**: The route is mounted under `/api/admin/v1/health`, establishing the `/api/admin` base path convention for operational and administrative endpoints.
 
 ## Consequences

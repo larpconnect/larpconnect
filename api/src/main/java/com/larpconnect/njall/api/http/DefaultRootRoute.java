@@ -1,8 +1,9 @@
 package com.larpconnect.njall.api.http;
 
+import static java.util.Objects.requireNonNull;
+
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.admin.AdminRoute;
-import java.util.Objects;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.Route;
@@ -13,7 +14,7 @@ final class DefaultRootRoute extends AllDirectives implements RootRoute {
 
   @Inject
   DefaultRootRoute(AdminRoute adminRoute) {
-    this.adminRoute = Objects.requireNonNull(adminRoute, "adminRoute must not be null");
+    this.adminRoute = requireNonNull(adminRoute, "adminRoute must not be null");
   }
 
   @Override

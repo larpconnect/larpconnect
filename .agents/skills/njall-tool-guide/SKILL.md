@@ -217,7 +217,7 @@ WSL automatically inherits the Windows current working directory when invoked:
    sandbox violations.
 
 2. **Prefix-Matchable Command Shapes**:
-   Keep command shapes clean and static so the user's approval whitelist remains valid:
+   Keep command shapes clean and static so the user's approval allowlist remains valid:
    - Prefer literal arguments over shell expansions.
    - Avoid wrapper binaries (`eval`, `sudo`, `env`).
    - Split multi-stage commands into sequential tool calls rather than giant chained strings where

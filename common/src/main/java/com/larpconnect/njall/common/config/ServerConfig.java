@@ -1,7 +1,8 @@
 package com.larpconnect.njall.common.config;
 
+import static java.util.Objects.requireNonNull;
+
 import com.typesafe.config.Config;
-import java.util.Objects;
 
 /**
  * Server network configuration.
@@ -15,7 +16,7 @@ public record ServerConfig(String host, int port) {
   private static final int MAX_PORT = 65535;
 
   public ServerConfig {
-    Objects.requireNonNull(host, "host cannot be null");
+    requireNonNull(host, "host cannot be null");
     if (port < MIN_PORT || port > MAX_PORT) {
       throw new IllegalArgumentException("Port must be between 0 and 65535, got: " + port);
     }
@@ -39,7 +40,7 @@ public record ServerConfig(String host, int port) {
    * @return The parsed {@link ServerConfig}.
    */
   public static ServerConfig fromConfig(Config config) {
-    Objects.requireNonNull(config, "config cannot be null");
+    requireNonNull(config, "config cannot be null");
     var host = config.getString("larpconnect.server.host");
     var port = config.getInt("larpconnect.server.port");
     return of(host, port);
