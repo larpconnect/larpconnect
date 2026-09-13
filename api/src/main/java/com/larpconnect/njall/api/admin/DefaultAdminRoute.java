@@ -18,7 +18,7 @@ import scala.util.Try;
 
 final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultAdminRoute.class);
+  private final Logger logger = LoggerFactory.getLogger(DefaultAdminRoute.class);
   private static final Duration ASK_TIMEOUT = Duration.ofSeconds(2);
 
   private final ActorRef<HealthCheckCommand> healthCheckActor;
@@ -48,13 +48,13 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
 
   private Route mapResponseToRoute(Try<HealthCheckResponse> responseTry) {
     if (responseTry.isFailure()) {
-      LOGGER.error("Health check probe failed or timed out", responseTry.failed().get());
+      logger.error("Health check probe failed or timed out", responseTry.failed().get());
       return complete(StatusCodes.INTERNAL_SERVER_ERROR, "");
     }
     return switch (responseTry.get()) {
       case HealthCheckResponse.Healthy _ -> complete(StatusCodes.OK, "");
       case HealthCheckResponse.Unhealthy u -> {
-        LOGGER.warn("Health check probe reported unhealthy: {}", u.reason());
+        logger.warn("Health check probe reported unhealthy: {}", u.reason());
         yield complete(StatusCodes.INTERNAL_SERVER_ERROR, "");
       }
     };

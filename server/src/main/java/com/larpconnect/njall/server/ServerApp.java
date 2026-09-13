@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 /** Main entry point for the Project Njall HTTP application. */
 public final class ServerApp {
 
-  private final Logger logger = LoggerFactory.getLogger(getClass());
+  private final Logger logger = LoggerFactory.getLogger(ServerApp.class);
 
   private ServerApp() {}
 

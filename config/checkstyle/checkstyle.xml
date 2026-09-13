@@ -34,5 +34,13 @@
         <module name="NPathComplexity">
             <property name="max" value="200"/>
         </module>
+
+        <!-- Forbid naming Logger variables 'LOGGER' or 'LOG' -->
+        <module name="MatchXpath">
+            <property name="query"
+                      value="//VARIABLE_DEF[./TYPE//IDENT[@text='Logger'] and ./IDENT[@text='LOGGER' or @text='LOG']]"/>
+            <message key="matchxpath.match"
+                     value="Logger variable must not be named 'LOGGER' or 'LOG'. Use 'logger' instead."/>
+        </module>
     </module>
 </module>

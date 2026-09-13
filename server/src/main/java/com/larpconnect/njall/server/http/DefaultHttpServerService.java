@@ -22,7 +22,7 @@ final class DefaultHttpServerService implements HttpServerService {
 
   private static final Duration TERMINATION_TIMEOUT = Duration.ofSeconds(10);
 
-  private final Logger logger = LoggerFactory.getLogger(getClass());
+  private final Logger logger = LoggerFactory.getLogger(DefaultHttpServerService.class);
   private final ActorSystem<Void> system;
   private final ServerConfig config;
   private final RootRoute rootRoute;
