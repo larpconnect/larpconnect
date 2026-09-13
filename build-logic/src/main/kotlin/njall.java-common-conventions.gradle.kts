@@ -33,7 +33,7 @@ tasks.withType<JavaCompile>().configureEach {
 // Spotless formatting configuration
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
     java {
-        googleJavaFormat("1.27.0")
+        googleJavaFormat("1.36.1")
         target("src/**/*.java")
     }
 }
