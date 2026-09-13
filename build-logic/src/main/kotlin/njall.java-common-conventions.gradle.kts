@@ -40,7 +40,7 @@ configure<com.diffplug.gradle.spotless.SpotlessExtension> {
 
 // Checkstyle static analysis configuration
 checkstyle {
-    toolVersion = "10.21.2"
+    toolVersion = "14.1.0"
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
     isIgnoreFailures = false
 }
