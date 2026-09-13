@@ -61,7 +61,7 @@ before submission.
      changes.
 8. **Branch Naming and Grouping**: Agent contributions **SHOULD** as a best
    effort name their branches as `<agent name>/<branch name>`, e.g.,
-   `jules/my-feature-change`. This is an easy one to miss, but check for it the
+   `antigravity/my-feature-change`. This is an easy one to miss, but check for it the
    best you can.
 9. **Security and Privacy**: You **MUST NOT** include credentials,
    non-anonymized production data, or proprietary logic in prompts to AI agents

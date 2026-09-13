@@ -28,8 +28,8 @@ Agents must maintain operational state, skill definitions, and execution logs wi
     * **Google Guice**: For dependency injection / inversion of control.
     * **Caffeine**: For high-performance, in-memory caching strategies.
     * **Google Guava**: For advanced collections, graph structures, and primitives.
-    * **Vert.x**: For event-driven architecture.
-    * **Jackson**: For lightning-fast, highly accurate JSON parsing and serialization configurations.
+    * **Apache Pekko**: For agent-based architecture.
+    * **Jackson**: For JSON parsing and serialization configurations.
     * **SLF4J** and **Logback**: For logging
     * **AssertJ**: Use this for assertions in preference to the built-in JUnit assertion framework.
     * **JUnit** (Jupiter): For unit testing
@@ -37,13 +37,13 @@ Agents must maintain operational state, skill definitions, and execution logs wi
     * **Testcontainers**: For integration testing against a live database.
     * **Apache Commons**: For utilities not covered by any of the above.
 
-For our purposes here the ecosystem preferences are _ordered_, meaning that if a problem can be solved with a higher item, use it in preference to the lower item. So if, for example, a utility exists in both `mug` and `guava` then prefer the `mug` version. If one exists in both `vert.x` and `jackson`, then prefer the `vert.x` version. 
+For our purposes here the ecosystem preferences are _ordered_, meaning that if a problem can be solved with a higher item, use it in preference to the lower item. So if, for example, a utility exists in both `mug` and `guava` then prefer the `mug` version. If one exists in both `pekko` and `jackson`, then prefer the `pekko` version. 
 
 ---
 
 ## 4. Code Architecture and Quality Constraints
 
-Agents must ensure the codebase remains a clean, highly trackable Directed Acyclic Graph (DAG) using Java 25 LTS, Vert.x 5, Guice, and Hibernate.
+Agents must ensure the codebase remains a clean, highly trackable Directed Acyclic Graph (DAG) using Java 25 LTS, Apache Pekko, Guice, and Hibernate.
 
 ### Structural Topology
 * **Strict DAG Enforcements**: Circular dependencies between packages or Gradle modules are absolutely forbidden.
@@ -76,7 +76,7 @@ No code modification is complete without hitting the project verification gates:
 * All integration and End-to-End (E2E) tests must live exclusively inside the `:integration` module.
 * Integration tests must explicitly target the boundaries established by the asynchronous architecture using distinct Cucumber features:
 
-1.  **API to Queue Boundary**: Assert that incoming HTTP/REST requests hitting the Vert.x API layer validate against the OpenAPI specification, serialize properly to JSON, and emit the expected message structures onto the AMQP 1.0 queue system.
+1.  **API to Queue Boundary**: Assert that incoming HTTP/REST requests hitting the Pekko API layer validate against the OpenAPI specification, serialize properly to JSON, and emit the expected message structures onto the AMQP 1.0 queue system.
 2.  **Queue to Data Boundary**: Assert that processing an inbound AMQP 1.0 queue message through the server agents results in the appropriate state modifications. Database operations must be verified against a synthesized or mock database response layer to keep tests deterministic and isolated from external infrastructure flakiness.
 
 ### Versions
@@ -89,5 +89,5 @@ This means:
 * PSQL 18+
 * RabbitMQ 4.3+
 * HornetQ 2.4.11.Final+
-* Vert.x 5.1+
+* Apache Pekko 2.0-M4+ (Scala Version 3)
 * Junit (Jupiter) 6.1+

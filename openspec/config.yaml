@@ -1,0 +1,72 @@
+schema: intent-driven
+
+
+context: |
+  Project Code Name: Njall (used for all internal name references)
+  Project Published Name: LarpConnect
+  
+  Tech Stack:
+    - Java 25 LTS
+    - HA Proxy
+    - Gradle (Kotlin DSL)
+    - PostgreSQL 18+
+    - RabbitMQ
+    - Memcached 
+  Core Libraries:
+    - SLF4J
+    - Logback
+    - Apache Pekko (2.0-M4+, Scala 3)
+    - Hibernate
+    - Guava
+    - Mug
+    - Guice
+    - Caffeine
+    - Apache Commons
+  Testing:
+    - Cucumber
+    - AssertJ 
+    - JUnit 6+
+    - Mockito
+    - Testcontainers
+    - Jacoco
+  Linting:
+    - Spotless
+    - SpotBugs
+    - ErrorProne
+    - Checkstyle
+  Project Layout:
+    - Gradle multi-module project
+    - `bom` (java platform) depends on all of the local modules
+    - `parent` (java platform) sets the versions for all of the modules
+    - `build-logic` contains core gradle patterns
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
