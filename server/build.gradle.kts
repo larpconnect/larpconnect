@@ -14,6 +14,7 @@ dependencies {
     implementation(platform(project(":parent")))
 
     implementation(project(":common"))
+    implementation(project(":data"))
     implementation(project(":api"))
     implementation(libs.pekko.http)
     implementation(libs.pekko.actor.typed)

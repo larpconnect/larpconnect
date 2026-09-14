@@ -19,6 +19,7 @@ errorprone-core = "2.50.0"
 flyway = "13.5.0"
 testcontainers = "2.0.5"
 jsr305 = "3.0.2"
+checker-qual = "3.49.1"
 metrics-healthchecks = "4.2.30"
 
 # Testing Frameworks
@@ -55,6 +56,7 @@ errorprone-annotations = { group = "com.google.errorprone", name = "error_prone_
 flyway-core = { group = "org.flywaydb", name = "flyway-core", version.ref = "flyway" }
 flyway-database-postgresql = { group = "org.flywaydb", name = "flyway-database-postgresql", version.ref = "flyway" }
 jsr305 = { group = "com.google.code.findbugs", name = "jsr305", version.ref = "jsr305" }
+checker-qual = { group = "org.checkerframework", name = "checker-qual", version.ref = "checker-qual" }
 metrics-healthchecks = { group = "io.dropwizard.metrics", name = "metrics-healthchecks", version.ref = "metrics-healthchecks" }
 
 # Test dependencies

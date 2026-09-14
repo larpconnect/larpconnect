@@ -20,6 +20,7 @@ include(
     "bom",
     "test",
     "common",
+    "data",
     "api",
     "server",
     "integration"
