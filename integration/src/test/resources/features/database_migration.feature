@@ -16,9 +16,15 @@ Feature: Flyway Database Migration and Bootstrap Provisioning
     Then table "njall.servers" contains a server with name "alpha-node" and primary domain "larpconnect.test"
     And table "njall.server_contacts" contains an ADMIN contact with email "ops@larpconnect.test"
 
-  Scenario: Server application executes migration and exits when --migrate is provided
-    Given the server application is started with argument "--migrate"
+  Scenario: Server application executes migration and exits when migrate subcommand is provided
+    Given the server application is started with argument "migrate"
     When the server execution completes
+    Then database migrations are executed to completion
+    And the application process terminates with exit status 0
+
+  Scenario: Server application executes migration with custom database parameters
+    Given the server application is started with custom database migration arguments
+    When the server execution completes with custom arguments
     Then database migrations are executed to completion
     And the application process terminates with exit status 0
 

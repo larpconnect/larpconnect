@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":data"))
     implementation(project(":api"))
+    implementation(libs.picocli)
     implementation(libs.pekko.http)
     implementation(libs.pekko.actor.typed)
     implementation(libs.pekko.stream)

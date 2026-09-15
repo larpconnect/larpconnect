@@ -19,6 +19,7 @@ dependencies {
         api(libs.jsr305)
         api(libs.checker.qual)
         api(libs.metrics.healthchecks)
+        api(libs.picocli)
 
         // Asynchronous runtime & HTTP (Pekko)
         api(libs.pekko.actor.typed)
