@@ -12,6 +12,7 @@ dependencies {
         // Declare active submodules of LarpConnect in the BOM
         api(project(":test"))
         api(project(":common"))
+        api(project(":data"))
         api(project(":api"))
         api(project(":server"))
         api(project(":integration"))

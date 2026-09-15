@@ -10,9 +10,12 @@ dependencies {
     api(platform(project(":parent")))
 
     testImplementation(project(":common"))
+    testImplementation(project(":data"))
     testImplementation(project(":api"))
     testImplementation(project(":server"))
     testImplementation(project(":test"))
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.jdbc)
     testImplementation(libs.pekko.actor.typed)
     testImplementation(libs.cucumber.java)
     testImplementation(libs.cucumber.junit.platform.engine)

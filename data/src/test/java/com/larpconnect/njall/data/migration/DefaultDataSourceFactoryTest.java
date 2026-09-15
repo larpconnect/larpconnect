@@ -1,0 +1,45 @@
+package com.larpconnect.njall.data.migration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import com.larpconnect.njall.data.config.MigrationConfig;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.postgresql.ds.PGSimpleDataSource;
+
+final class DefaultDataSourceFactoryTest {
+
+  @Test
+  @DisplayName("create returns configured PGSimpleDataSource")
+  void create_validConfig_returnsDataSource() {
+    var config =
+        MigrationConfig.of(
+            "jdbc:postgresql://localhost:5432/app",
+            "njall",
+            "pass",
+            List.of("njall"),
+            "njall",
+            Map.of());
+
+    var factory = new DefaultDataSourceFactory();
+    var ds = factory.create(config);
+
+    assertThat(ds).isInstanceOf(PGSimpleDataSource.class);
+    var pgDs = (PGSimpleDataSource) ds;
+    assertThat(pgDs.getUrl()).startsWith("jdbc:postgresql://localhost:5432/app");
+    assertThat(pgDs.getUser()).isEqualTo("njall");
+    assertThat(pgDs.getPassword()).isEqualTo("pass");
+  }
+
+  @Test
+  @DisplayName("create throws NullPointerException when config is null")
+  void create_nullConfig_throwsNullPointerException() {
+    var factory = new DefaultDataSourceFactory();
+    assertThatThrownBy(() -> factory.create(null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("config cannot be null");
+  }
+}
