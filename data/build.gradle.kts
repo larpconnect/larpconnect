@@ -13,6 +13,7 @@ dependencies {
     api(libs.guice)
     api(libs.flyway.core)
     api(libs.flyway.database.postgresql)
+    api(libs.hibernate.core)
     api(libs.postgresql)
     api(libs.slf4j.api)
     compileOnly(libs.checker.qual)

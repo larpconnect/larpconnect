@@ -35,3 +35,78 @@ paths:
               schema:
                 type: string
                 example: ""
+  /api/admin/v1/servers:
+    get:
+      summary: List registered servers and contacts
+      description: Returns a list of all registered servers and their associated contact information
+      responses:
+        '200':
+          description: List of registered servers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Server'
+        '500':
+          description: Internal server error while querying servers
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    ServerContact:
+      type: object
+      required:
+        - id
+        - roleType
+        - contactType
+        - contact
+        - ordering
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "00000000-0000-0000-0000-000000000001"
+        roleType:
+          type: string
+          enum: [NONE, ADMIN, MODERATOR, SECURITY]
+          example: "ADMIN"
+        contactType:
+          type: string
+          enum: [EMAIL, ACTOR, PHONE, OTHER]
+          example: "EMAIL"
+        contact:
+          type: string
+          example: "admin@larpconnect.com"
+        ordering:
+          type: integer
+          example: 0
+    Server:
+      type: object
+      required:
+        - id
+        - name
+        - primaryDomain
+        - createdOn
+        - contacts
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "00000000-0000-0000-0000-000000000001"
+        name:
+          type: string
+          example: "Njall Primary Server"
+        primaryDomain:
+          type: string
+          example: "larpconnect.com"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-01-01T00:00:00Z"
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServerContact'

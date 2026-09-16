@@ -1,6 +1,9 @@
 package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -8,6 +11,7 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.common.config.ServerConfig;
+import com.larpconnect.njall.data.session.SessionFactoryFactory;
 import com.larpconnect.njall.server.ServerModule;
 import com.larpconnect.njall.server.http.HttpServerService;
 import io.cucumber.java.After;
@@ -21,6 +25,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
+import org.hibernate.SessionFactory;
 
 public final class RootEndpointSteps {
 
@@ -31,6 +36,11 @@ public final class RootEndpointSteps {
 
   @Given("the HTTP server is running on an ephemeral port")
   public void theHttpServerIsRunningOnAnEphemeralPort() throws Exception {
+    var mockSessionFactory = mock(SessionFactory.class);
+    when(mockSessionFactory.isClosed()).thenReturn(false);
+    var mockFactory = mock(SessionFactoryFactory.class);
+    when(mockFactory.create(any(), any())).thenReturn(mockSessionFactory);
+
     var injector =
         Guice.createInjector(
             Modules.override(new ServerModule())
@@ -40,6 +50,7 @@ public final class RootEndpointSteps {
                       protected void configure() {
                         // Bind to ephemeral port 0 for test isolation
                         bind(ServerConfig.class).toInstance(ServerConfig.of("127.0.0.1", 0));
+                        bind(SessionFactoryFactory.class).toInstance(mockFactory);
                       }
                     }));
 

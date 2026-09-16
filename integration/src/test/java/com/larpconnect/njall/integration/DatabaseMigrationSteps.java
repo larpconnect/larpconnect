@@ -46,8 +46,21 @@ public final class DatabaseMigrationSteps {
 
   @BeforeAll
   public static void setUpContainer() throws Exception {
-    POSTGRES.start();
-    provisionRoles();
+    if (!POSTGRES.isRunning()) {
+      POSTGRES.start();
+      provisionRoles();
+    }
+  }
+
+  public static void ensureStartedAndMigrated() throws Exception {
+    setUpContainer();
+    var injector = createInjector(createDefaultConfig());
+    var migrator = injector.getInstance(DatabaseMigrator.class);
+    migrator.migrate();
+  }
+
+  public static String getJdbcUrl() {
+    return POSTGRES.getJdbcUrl();
   }
 
   @AfterAll
@@ -56,12 +69,27 @@ public final class DatabaseMigrationSteps {
   }
 
   private static void provisionRoles() throws Exception {
+    var sql =
+        """
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall') THEN
+            CREATE ROLE njall WITH LOGIN SUPERUSER PASSWORD 'njall';
+          END IF;
+          IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_admin') THEN
+            CREATE ROLE njall_admin WITH LOGIN PASSWORD 'njall_admin';
+          END IF;
+          IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_users') THEN
+            CREATE ROLE njall_users WITH LOGIN PASSWORD 'njall_users';
+          END IF;
+          IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_system') THEN
+            CREATE ROLE njall_system WITH LOGIN PASSWORD 'njall_system';
+          END IF;
+        END $$;
+        """;
     try (var conn = openConnection("postgres", "postgres");
         var stmt = conn.createStatement()) {
-      stmt.execute("CREATE ROLE njall WITH LOGIN SUPERUSER PASSWORD 'njall';");
-      stmt.execute("CREATE ROLE njall_admin WITH LOGIN PASSWORD 'njall_admin';");
-      stmt.execute("CREATE ROLE njall_users WITH LOGIN PASSWORD 'njall_users';");
-      stmt.execute("CREATE ROLE njall_system WITH LOGIN PASSWORD 'njall_system';");
+      stmt.execute(sql);
     }
   }
 
@@ -280,19 +308,30 @@ public final class DatabaseMigrationSteps {
   private static Injector createInjector(MigrationConfig migrationConfig) {
     var customConfig =
         ConfigFactory.parseMap(
-                Map.of(
-                    "larpconnect.data.database.migration.jdbc-url",
-                    migrationConfig.jdbcUrl(),
-                    "larpconnect.data.database.migration.username",
-                    migrationConfig.username(),
-                    "larpconnect.data.database.migration.password",
-                    migrationConfig.password(),
-                    "larpconnect.server.name",
-                    migrationConfig.placeholders().get("server_name"),
-                    "larpconnect.server.primary-domain",
-                    migrationConfig.placeholders().get("primary_domain"),
-                    "larpconnect.server.admin-contact",
-                    migrationConfig.placeholders().get("admin_contact")))
+                Map.ofEntries(
+                    Map.entry(
+                        "larpconnect.data.database.migration.jdbc-url", migrationConfig.jdbcUrl()),
+                    Map.entry(
+                        "larpconnect.data.database.migration.username", migrationConfig.username()),
+                    Map.entry(
+                        "larpconnect.data.database.migration.password", migrationConfig.password()),
+                    Map.entry(
+                        "larpconnect.data.database.admin.jdbc-url", migrationConfig.jdbcUrl()),
+                    Map.entry("larpconnect.data.database.admin.username", "njall_admin"),
+                    Map.entry("larpconnect.data.database.admin.password", "njall_admin"),
+                    Map.entry(
+                        "larpconnect.data.database.users.jdbc-url", migrationConfig.jdbcUrl()),
+                    Map.entry("larpconnect.data.database.users.username", "njall_users"),
+                    Map.entry("larpconnect.data.database.users.password", "njall_users"),
+                    Map.entry(
+                        "larpconnect.server.name",
+                        migrationConfig.placeholders().get("server_name")),
+                    Map.entry(
+                        "larpconnect.server.primary-domain",
+                        migrationConfig.placeholders().get("primary_domain")),
+                    Map.entry(
+                        "larpconnect.server.admin-contact",
+                        migrationConfig.placeholders().get("admin_contact"))))
             .withFallback(ConfigFactory.load());
 
     return Guice.createInjector(new ServerModule(customConfig));

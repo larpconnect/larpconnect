@@ -7,7 +7,14 @@ plugins {
     id("njall.java-platform-conventions")
 }
 
+javaPlatform {
+    allowDependencies()
+}
+
 dependencies {
+    api(platform(libs.jackson.bom))
+    api(platform(libs.slf4j.bom))
+    
     constraints {
         // Core runtime and ecosystem libraries
         api(libs.guava)
@@ -15,7 +22,6 @@ dependencies {
         api(libs.mug)
         api(libs.typesafe.config)
         api(libs.caffeine)
-        api(libs.slf4j.api)
         api(libs.jsr305)
         api(libs.checker.qual)
         api(libs.metrics.healthchecks)
@@ -28,6 +34,7 @@ dependencies {
         api(libs.pekko.stream.testkit)
         api(libs.pekko.http)
         api(libs.pekko.http.testkit)
+        api(libs.pekko.http.jackson)
 
         // Persistence & Messaging
         api(libs.hibernate.core)

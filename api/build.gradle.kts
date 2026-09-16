@@ -10,7 +10,10 @@ dependencies {
     api(platform(project(":parent")))
 
     api(project(":common"))
+    api(project(":data"))
     api(libs.pekko.http)
+    api(libs.pekko.http.jackson)
+    implementation(libs.jackson.datatype.jsr310)
     implementation(libs.pekko.actor.typed)
     implementation(libs.pekko.stream)
 

@@ -22,6 +22,7 @@ jsr305 = "3.0.2"
 checker-qual = "3.49.1"
 metrics-healthchecks = "4.2.30"
 picocli = "4.7.7"
+jackson = "2.22.2"
 
 # Testing Frameworks
 assertj = "3.27.7"
@@ -46,11 +47,15 @@ pekko-stream = { group = "org.apache.pekko", name = "pekko-stream_3", version.re
 pekko-stream-testkit = { group = "org.apache.pekko", name = "pekko-stream-testkit_3", version.ref = "pekko" }
 pekko-http = { group = "org.apache.pekko", name = "pekko-http_3", version.ref = "pekko-http" }
 pekko-http-testkit = { group = "org.apache.pekko", name = "pekko-http-testkit_3", version.ref = "pekko-http" }
+pekko-http-jackson = { group = "org.apache.pekko", name = "pekko-http-jackson_3", version.ref = "pekko-http" }
+jackson-bom = { group = "com.fasterxml.jackson", name = "jackson-bom", version.ref = "jackson"}
+jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310"}
 hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core", version.ref = "hibernate" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 rabbitmq-amqp = { group = "com.rabbitmq", name = "amqp-client", version.ref = "rabbitmq" }
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+slf4j-api = { group = "org.slf4j", name = "slf4j-api" }
+slf4j-bom = { group = "org.slf4j", name = "slf4j-bom", version.ref = "slf4j" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
 errorprone-core = { group = "com.google.errorprone", name = "error_prone_core", version.ref = "errorprone-core" }
 errorprone-annotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorprone-core" }

@@ -13,9 +13,9 @@
         <Class name="~com\.larpconnect\.njall\..*Command.*"/>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
     </Match>
-    <!-- Exclude hardcoded database password warnings in test and cucumber step classes -->
+    <!-- Exclude hardcoded database password and unclosed mock resource warnings in test and cucumber step classes -->
     <Match>
         <Class name="~.*(Test|Steps).*"/>
-        <Bug pattern="DMI_CONSTANT_DB_PASSWORD"/>
+        <Bug pattern="DMI_CONSTANT_DB_PASSWORD,OBL_UNSATISFIED_OBLIGATION"/>
     </Match>
 </FindBugsFilter>

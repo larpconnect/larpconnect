@@ -4,9 +4,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.larpconnect.njall.common.config.ServerConfig;
+import com.larpconnect.njall.data.annotation.NjallAdmin;
+import com.larpconnect.njall.data.annotation.NjallUsers;
 import com.typesafe.config.Config;
 
-/** Guice module providing database and migration configurations. */
+/** Guice module providing database, migration, and session configurations. */
 public final class DatabaseConfigModule extends AbstractModule {
 
   @Override
@@ -24,5 +26,19 @@ public final class DatabaseConfigModule extends AbstractModule {
   @Singleton
   MigrationConfig provideMigrationConfig(DatabaseConfig databaseConfig) {
     return databaseConfig.migration();
+  }
+
+  @Provides
+  @Singleton
+  @NjallAdmin
+  SessionConfig provideAdminSessionConfig(DatabaseConfig databaseConfig) {
+    return databaseConfig.admin();
+  }
+
+  @Provides
+  @Singleton
+  @NjallUsers
+  SessionConfig provideUsersSessionConfig(DatabaseConfig databaseConfig) {
+    return databaseConfig.users();
   }
 }
