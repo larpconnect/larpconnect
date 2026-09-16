@@ -21,6 +21,7 @@ testcontainers = "2.0.5"
 jsr305 = "3.0.2"
 checker-qual = "3.49.1"
 metrics-healthchecks = "4.2.30"
+picocli = "4.7.7"
 
 # Testing Frameworks
 assertj = "3.27.7"
@@ -58,6 +59,7 @@ flyway-database-postgresql = { group = "org.flywaydb", name = "flyway-database-p
 jsr305 = { group = "com.google.code.findbugs", name = "jsr305", version.ref = "jsr305" }
 checker-qual = { group = "org.checkerframework", name = "checker-qual", version.ref = "checker-qual" }
 metrics-healthchecks = { group = "io.dropwizard.metrics", name = "metrics-healthchecks", version.ref = "metrics-healthchecks" }
+picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
 
 # Test dependencies
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }

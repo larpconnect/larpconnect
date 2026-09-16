@@ -3,15 +3,12 @@ package com.larpconnect.njall.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.util.Modules;
 import com.larpconnect.njall.data.config.MigrationConfig;
 import com.larpconnect.njall.data.migration.DatabaseMigrator;
 import com.larpconnect.njall.server.ServerApp;
 import com.larpconnect.njall.server.ServerModule;
-import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.cucumber.java.AfterAll;
 import io.cucumber.java.BeforeAll;
@@ -45,6 +42,7 @@ public final class DatabaseMigrationSteps {
   private MigrationConfig migrationConfig;
   private int lastMigrationsCount;
   private Integer lastServerExitCode;
+  private String[] serverArgs;
 
   @BeforeAll
   public static void setUpContainer() throws Exception {
@@ -86,7 +84,26 @@ public final class DatabaseMigrationSteps {
 
   @Given("the server application is started with argument {string}")
   public void theServerApplicationIsStartedWithArgument(String arg) {
-    assertThat(arg).isEqualTo("--migrate");
+    assertThat(arg).isEqualTo("migrate");
+    this.serverArgs =
+        new String[] {
+          "migrate", "--jdbc-url=" + POSTGRES.getJdbcUrl(), "--username=njall", "--password=njall"
+        };
+  }
+
+  @Given("the server application is started with custom database migration arguments")
+  public void theServerApplicationIsStartedWithCustomDatabaseMigrationArguments() {
+    this.serverArgs =
+        new String[] {
+          "migrate",
+          "--jdbc-url=" + POSTGRES.getJdbcUrl(),
+          "--username=njall",
+          "--password=njall",
+          "--default-schema=njall",
+          "--server-name=alpha-node",
+          "--primary-domain=larpconnect.test",
+          "--admin-contact=ops@larpconnect.test"
+        };
   }
 
   @Given("the bootstrap database migration has already been executed")
@@ -108,9 +125,14 @@ public final class DatabaseMigrationSteps {
 
   @When("the server execution completes")
   public void theServerExecutionCompletes() {
-    var injector = createInjector(createDefaultConfig());
-    var app = new ServerApp(() -> injector, inj -> {});
-    lastServerExitCode = app.runWithArgs(new String[] {"--migrate"});
+    var app = new ServerApp();
+    lastServerExitCode = app.runWithArgs(serverArgs);
+  }
+
+  @When("the server execution completes with custom arguments")
+  public void theServerExecutionCompletesWithCustomArguments() {
+    var app = new ServerApp();
+    lastServerExitCode = app.runWithArgs(serverArgs);
   }
 
   @When("the database migrator executes the bootstrap migration again")
@@ -162,6 +184,7 @@ public final class DatabaseMigrationSteps {
   @Then("table {string} contains a server with name {string} and primary domain {string}")
   public void tableContainsAServerWithNameAndPrimaryDomain(
       String table, String expectedName, String expectedDomain) throws Exception {
+    assertThat(table).isEqualTo("njall.servers");
     var query = "SELECT id, name, primary_domain FROM njall.servers WHERE name = ?";
     try (var conn = openConnection("njall", "njall");
         var stmt = conn.prepareStatement(query)) {
@@ -178,6 +201,7 @@ public final class DatabaseMigrationSteps {
   @Then("table {string} contains an ADMIN contact with email {string}")
   public void tableContainsAnAdminContactWithEmail(String table, String expectedEmail)
       throws Exception {
+    assertThat(table).isEqualTo("njall.server_contacts");
     var query =
         "SELECT id, role_type, contact_type, contact FROM njall.server_contacts WHERE contact = ?";
     try (var conn = openConnection("njall", "njall");
@@ -271,14 +295,6 @@ public final class DatabaseMigrationSteps {
                     migrationConfig.placeholders().get("admin_contact")))
             .withFallback(ConfigFactory.load());
 
-    return Guice.createInjector(
-        Modules.override(new ServerModule())
-            .with(
-                new AbstractModule() {
-                  @Override
-                  protected void configure() {
-                    bind(Config.class).toInstance(customConfig);
-                  }
-                }));
+    return Guice.createInjector(new ServerModule(customConfig));
   }
 }

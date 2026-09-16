@@ -7,101 +7,84 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.data.migration.DatabaseMigrator;
+import com.larpconnect.njall.server.cli.CliRunner;
 import com.larpconnect.njall.server.http.HttpServerService;
+import com.typesafe.config.Config;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Main entry point for the Project Njall HTTP application. */
+/** Main entry point for the Project Njall HTTP application and CLI management. */
 public final class ServerApp {
 
   private final Logger logger = LoggerFactory.getLogger(ServerApp.class);
-  private final Supplier<Injector> injectorSupplier;
-  private final Consumer<Injector> serverLauncher;
-  private final Consumer<Thread> shutdownHookRegistrar;
+  private final CliRunner cliRunner;
 
   public ServerApp() {
-    this(
-        () -> Guice.createInjector(new ServerModule()),
-        null,
-        Runtime.getRuntime()::addShutdownHook);
+    this.cliRunner = createDefaultCliRunner();
   }
 
-  public ServerApp(Supplier<Injector> injectorSupplier, Consumer<Injector> serverLauncher) {
-    this(injectorSupplier, serverLauncher, Runtime.getRuntime()::addShutdownHook);
-  }
-
-  public ServerApp(
-      Supplier<Injector> injectorSupplier,
-      Consumer<Injector> serverLauncher,
-      Consumer<Thread> shutdownHookRegistrar) {
-    this.injectorSupplier = requireNonNull(injectorSupplier, "injectorSupplier cannot be null");
-    this.serverLauncher = serverLauncher != null ? serverLauncher : this::defaultLaunch;
-    this.shutdownHookRegistrar =
-        requireNonNull(shutdownHookRegistrar, "shutdownHookRegistrar cannot be null");
+  public ServerApp(CliRunner cliRunner) {
+    this.cliRunner = requireNonNull(cliRunner, "cliRunner cannot be null");
   }
 
   public static void main(String[] args) {
-    var app = new ServerApp();
+    var app = createApp();
     var exitCode = app.runWithArgs(args);
+    terminateIfRequired(exitCode);
+  }
+
+  private static ServerApp createApp() {
+    return new ServerApp();
+  }
+
+  private static void terminateIfRequired(Integer exitCode) {
     if (exitCode != null) {
       System.exit(exitCode);
     }
   }
 
   public Integer runWithArgs(String[] args) {
-    var cliArgs = parseArgs(args);
-    if (cliArgs.migrate()) {
-      return executeMigration();
-    }
-    run();
-    return null;
+    return cliRunner.execute(args);
   }
 
-  CliArgs parseArgs(String[] args) {
-    return CliArgs.parse(args);
+  CliRunner createDefaultCliRunner() {
+    return new CliRunner(this::launchServer, this::executeMigration);
   }
 
-  int executeMigration() {
-    var migrator = resolveMigrator();
-    return performMigration(migrator);
+  void launchServer(Config config) {
+    var injector = createInjector(config);
+    startHttpServer(injector);
+    registerShutdownHook(injector, Runtime.getRuntime()::addShutdownHook);
   }
 
-  private DatabaseMigrator resolveMigrator() {
-    return createInjector().getInstance(DatabaseMigrator.class);
+  int executeMigration(Config config) {
+    var injector = createInjector(config);
+    var migrator = resolveMigrator(injector);
+    return runMigration(migrator);
   }
 
-  private int performMigration(DatabaseMigrator migrator) {
-    logger.info("Starting database migration task from CLI flag...");
-    try {
-      migrator.migrate();
-      logger.info("Database migration completed successfully.");
-      return 0;
-    } catch (Exception e) {
-      logger.error("Database migration failed", e);
-      return 1;
-    }
+  private DatabaseMigrator resolveMigrator(Injector injector) {
+    return injector.getInstance(DatabaseMigrator.class);
   }
 
-  void run() {
-    var injector = createInjector();
-    launchServer(injector);
-    registerShutdownHook(injector);
+  Injector createInjector(Config config) {
+    var module = createServerModule(config);
+    return buildInjector(module);
   }
 
-  private void launchServer(Injector injector) {
-    logger.info("Bootstrapping LarpConnect server...");
-    serverLauncher.accept(injector);
+  private ServerModule createServerModule(Config config) {
+    return new ServerModule(config);
   }
 
-  Injector createInjector() {
-    return injectorSupplier.get();
+  private Injector buildInjector(ServerModule module) {
+    return Guice.createInjector(module);
   }
 
-  private void defaultLaunch(Injector injector) {
+  private void startHttpServer(Injector injector) {
     var server = injector.getInstance(HttpServerService.class);
     server
         .start()
@@ -113,25 +96,43 @@ public final class ServerApp {
             });
   }
 
-  void registerShutdownHook(Injector injector) {
+  private int runMigration(DatabaseMigrator migrator) {
+    logger.info("Starting database migration task from CLI command...");
+    try {
+      migrator.migrate();
+      logger.info("Database migration completed successfully.");
+      return 0;
+    } catch (Exception e) {
+      logger.error("Database migration failed", e);
+      return 1;
+    }
+  }
+
+  void registerShutdownHook(Injector injector, Consumer<Thread> hookRegistrar) {
     try {
       var system = injector.getInstance(Key.get(new TypeLiteral<ActorSystem<Void>>() {}));
       if (system != null) {
-        var hook =
-            new Thread(
-                () -> {
-                  logger.info("JVM shutdown initiated; invoking CoordinatedShutdown...");
-                  try {
-                    CoordinatedShutdown.get(system).run(CoordinatedShutdown.jvmExitReason());
-                  } catch (Exception e) {
-                    logger.warn("CoordinatedShutdown failed on JVM exit", e);
-                  }
-                },
-                "pekko-coordinated-shutdown");
-        shutdownHookRegistrar.accept(hook);
+        var hook = createShutdownThread(system);
+        hookRegistrar.accept(hook);
       }
     } catch (Exception e) {
       logger.warn("Could not register shutdown hook for ActorSystem", e);
     }
+  }
+
+  private Thread createShutdownThread(ActorSystem<Void> system) {
+    return new Thread(
+        () -> {
+          logger.info("JVM shutdown initiated; invoking CoordinatedShutdown...");
+          try {
+            CoordinatedShutdown.get(system)
+                .runAll(CoordinatedShutdown.jvmExitReason())
+                .toCompletableFuture()
+                .get(10, TimeUnit.SECONDS);
+          } catch (Exception e) {
+            logger.warn("CoordinatedShutdown failed on JVM exit", e);
+          }
+        },
+        "pekko-coordinated-shutdown");
   }
 }
