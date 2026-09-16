@@ -54,7 +54,8 @@ hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core", version
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 rabbitmq-amqp = { group = "com.rabbitmq", name = "amqp-client", version.ref = "rabbitmq" }
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+slf4j-api = { group = "org.slf4j", name = "slf4j-api" }
+slf4j-bom = { group = "org.slf4j", name = "slf4j-bom", version.ref = "slf4j" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
 errorprone-core = { group = "com.google.errorprone", name = "error_prone_core", version.ref = "errorprone-core" }
 errorprone-annotations = { group = "com.google.errorprone", name = "error_prone_annotations", version.ref = "errorprone-core" }

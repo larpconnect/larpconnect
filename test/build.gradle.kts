@@ -9,7 +9,6 @@ plugins {
 dependencies {
     api(platform(project(":parent")))
 
-    // Test platform BOMs
     api(platform(libs.junit.bom))
     api(platform(libs.mockito.bom))
     api(platform(libs.testcontainers.bom))
