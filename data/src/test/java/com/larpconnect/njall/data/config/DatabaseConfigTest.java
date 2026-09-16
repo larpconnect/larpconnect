@@ -21,20 +21,34 @@ final class DatabaseConfigTest {
           "s1",
           Map.of("k", "v"));
 
+  private static final SessionConfig VALID_ADMIN =
+      SessionConfig.of("jdbc:postgresql://localhost:5432/db", "admin", "pass", 2, 10, 5);
+
+  private static final SessionConfig VALID_USERS =
+      SessionConfig.of("jdbc:postgresql://localhost:5432/db", "users", "pass", 5, 20, 5);
+
   @Test
-  @DisplayName("of creates DatabaseConfig with valid MigrationConfig")
-  void of_validMigrationConfig_createsRecord() {
-    var dbConfig = DatabaseConfig.of(VALID_MIGRATION);
+  @DisplayName("of creates DatabaseConfig with valid configs")
+  void of_validConfigs_createsRecord() {
+    var dbConfig = DatabaseConfig.of(VALID_MIGRATION, VALID_ADMIN, VALID_USERS);
 
     assertThat(dbConfig.migration()).isSameAs(VALID_MIGRATION);
+    assertThat(dbConfig.admin()).isSameAs(VALID_ADMIN);
+    assertThat(dbConfig.users()).isSameAs(VALID_USERS);
   }
 
   @Test
-  @DisplayName("of throws NullPointerException when migration is null")
-  void of_nullMigrationConfig_throwsNullPointerException() {
-    assertThatThrownBy(() -> DatabaseConfig.of(null))
+  @DisplayName("of throws NullPointerException when arguments are null")
+  void of_nullArguments_throwsNullPointerException() {
+    assertThatThrownBy(() -> DatabaseConfig.of(null, VALID_ADMIN, VALID_USERS))
         .isInstanceOf(NullPointerException.class)
         .hasMessageContaining("migration cannot be null");
+    assertThatThrownBy(() -> DatabaseConfig.of(VALID_MIGRATION, null, VALID_USERS))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("admin cannot be null");
+    assertThatThrownBy(() -> DatabaseConfig.of(VALID_MIGRATION, VALID_ADMIN, null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("users cannot be null");
   }
 
   @Test
@@ -42,12 +56,26 @@ final class DatabaseConfigTest {
   void fromConfig_validConfig_parsesCorrectly() {
     var typesafeConfig =
         ConfigFactory.parseString(
-            "larpconnect.data.database.migration {\n"
-                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
-                + "  username = \"njall\"\n"
-                + "  password = \"secret\"\n"
-                + "  schemas = [\"njall\"]\n"
-                + "  default-schema = \"njall\"\n"
+            "larpconnect.data.database {\n"
+                + "  migration {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall\"\n"
+                + "    password = \"secret\"\n"
+                + "    schemas = [\"njall\"]\n"
+                + "    default-schema = \"njall\"\n"
+                + "  }\n"
+                + "  admin {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall_admin\"\n"
+                + "    password = \"secret_admin\"\n"
+                + "    pool { min-size = 2, max-size = 10, timeout-seconds = 5 }\n"
+                + "  }\n"
+                + "  users {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall_users\"\n"
+                + "    password = \"secret_users\"\n"
+                + "    pool { min-size = 5, max-size = 20, timeout-seconds = 5 }\n"
+                + "  }\n"
                 + "}");
     var serverConfig = ServerConfig.of("127.0.0.1", 8080);
 
@@ -55,6 +83,8 @@ final class DatabaseConfigTest {
 
     assertThat(dbConfig.migration().jdbcUrl()).isEqualTo("jdbc:postgresql://localhost:5432/app");
     assertThat(dbConfig.migration().username()).isEqualTo("njall");
+    assertThat(dbConfig.admin().username()).isEqualTo("njall_admin");
+    assertThat(dbConfig.users().username()).isEqualTo("njall_users");
   }
 
   @Test

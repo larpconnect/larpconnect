@@ -28,6 +28,8 @@ dependencies {
         api(libs.pekko.stream.testkit)
         api(libs.pekko.http)
         api(libs.pekko.http.testkit)
+        api(libs.pekko.http.jackson)
+        api(libs.jackson.datatype.jsr310)
 
         // Persistence & Messaging
         api(libs.hibernate.core)

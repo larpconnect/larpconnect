@@ -8,8 +8,10 @@ import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.admin.AdminRoute;
 import com.larpconnect.njall.api.http.RootRoute;
+import com.larpconnect.njall.common.annotation.Blocking;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.Props;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,6 +42,10 @@ final class ApiModuleTest {
           protected void configure() {
             bind(new TypeLiteral<ActorSystem<Void>>() {}).toInstance(system);
             bind(HealthCheckRegistry.class).toInstance(new HealthCheckRegistry());
+            bind(com.larpconnect.njall.data.dao.ServerDAO.class)
+                .toInstance(
+                    org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.ServerDAO.class));
+            bind(Props.class).annotatedWith(Blocking.class).toInstance(Props.empty());
           }
         };
 

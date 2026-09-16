@@ -1,6 +1,9 @@
 package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.inject.AbstractModule;
@@ -12,6 +15,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.api.admin.HealthCheckActorFactory;
 import com.larpconnect.njall.common.config.ServerConfig;
+import com.larpconnect.njall.data.session.SessionFactoryFactory;
 import com.larpconnect.njall.server.ServerModule;
 import com.larpconnect.njall.server.http.HttpServerService;
 import io.cucumber.java.After;
@@ -26,6 +30,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
+import org.hibernate.SessionFactory;
 
 public final class HealthEndpointSteps {
 
@@ -71,11 +76,17 @@ public final class HealthEndpointSteps {
   }
 
   private void startServer(Module... extraModules) throws Exception {
+    var mockSessionFactory = mock(SessionFactory.class);
+    when(mockSessionFactory.isClosed()).thenReturn(false);
+    var mockFactory = mock(SessionFactoryFactory.class);
+    when(mockFactory.create(any(), any())).thenReturn(mockSessionFactory);
+
     var baseOverride =
         new AbstractModule() {
           @Override
           protected void configure() {
             bind(ServerConfig.class).toInstance(ServerConfig.of("127.0.0.1", 0));
+            bind(SessionFactoryFactory.class).toInstance(mockFactory);
           }
         };
 

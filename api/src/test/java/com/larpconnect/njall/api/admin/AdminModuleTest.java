@@ -1,18 +1,23 @@
 package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.RouteProvider;
+import com.larpconnect.njall.common.annotation.Blocking;
+import com.larpconnect.njall.data.dao.ServerDAO;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.Props;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,30 +41,40 @@ final class AdminModuleTest {
 
   @Test
   @DisplayName(
-      "AdminModule binds AdminRoute, RouteProvider, actor, and PekkoHealthCheck into multibinder")
+      "AdminModule binds AdminRoute, RouteProvider, actors, and PekkoHealthCheck into multibinder")
   void configure_bindsAdminComponents() {
+    var serverDao = mock(ServerDAO.class);
     var testModule =
         new AbstractModule() {
           @Override
           protected void configure() {
             bind(new TypeLiteral<ActorSystem<Void>>() {}).toInstance(system);
             bind(HealthCheckRegistry.class).toInstance(new HealthCheckRegistry());
+            bind(ServerDAO.class).toInstance(serverDao);
+            bind(Props.class).annotatedWith(Blocking.class).toInstance(Props.empty());
           }
         };
 
     var injector = Guice.createInjector(new AdminModule(), testModule);
 
     var adminRoute = injector.getInstance(AdminRoute.class);
-    var actorRef =
+    var healthActorRef =
         injector.getInstance(Key.get(new TypeLiteral<ActorRef<HealthCheckCommand>>() {}));
+    var serverActorRef =
+        injector.getInstance(Key.get(new TypeLiteral<ActorRef<ServerAdminCommand>>() {}));
     var healthChecks = injector.getInstance(Key.get(new TypeLiteral<Set<HealthCheck>>() {}));
-    var actorFactory = injector.getInstance(HealthCheckActorFactory.class);
+    var healthActorFactory = injector.getInstance(HealthCheckActorFactory.class);
+    var serverActorFactory = injector.getInstance(ServerAdminActorFactory.class);
     var routeProviders = injector.getInstance(Key.get(new TypeLiteral<Set<RouteProvider>>() {}));
+    var objectMapper = injector.getInstance(ObjectMapper.class);
 
     assertThat(adminRoute).isInstanceOf(DefaultAdminRoute.class);
-    assertThat(actorRef).isNotNull();
+    assertThat(healthActorRef).isNotNull();
+    assertThat(serverActorRef).isNotNull();
     assertThat(healthChecks).hasAtLeastOneElementOfType(PekkoHealthCheck.class);
-    assertThat(actorFactory).isInstanceOf(DefaultHealthCheckActorFactory.class);
+    assertThat(healthActorFactory).isInstanceOf(DefaultHealthCheckActorFactory.class);
+    assertThat(serverActorFactory).isInstanceOf(DefaultServerAdminActorFactory.class);
     assertThat(routeProviders).hasAtLeastOneElementOfType(DefaultAdminRoute.class);
+    assertThat(objectMapper).isNotNull();
   }
 }

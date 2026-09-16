@@ -46,8 +46,21 @@ public final class DatabaseMigrationSteps {
 
   @BeforeAll
   public static void setUpContainer() throws Exception {
-    POSTGRES.start();
-    provisionRoles();
+    if (!POSTGRES.isRunning()) {
+      POSTGRES.start();
+      provisionRoles();
+    }
+  }
+
+  public static void ensureStartedAndMigrated() throws Exception {
+    setUpContainer();
+    var injector = createInjector(createDefaultConfig());
+    var migrator = injector.getInstance(DatabaseMigrator.class);
+    migrator.migrate();
+  }
+
+  public static String getJdbcUrl() {
+    return POSTGRES.getJdbcUrl();
   }
 
   @AfterAll
