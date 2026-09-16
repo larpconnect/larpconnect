@@ -7,7 +7,13 @@ plugins {
     id("njall.java-platform-conventions")
 }
 
+javaPlatform {
+    allowDependencies()
+}
+
 dependencies {
+    api(platform(libs.jackson.bom))
+    
     constraints {
         // Core runtime and ecosystem libraries
         api(libs.guava)
