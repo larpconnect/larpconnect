@@ -14,12 +14,13 @@ javaPlatform {
 dependencies {
     api(platform(libs.jackson.bom))
     api(platform(libs.slf4j.bom))
+    api(platform(libs.hibernate.bom))
+    api(platform(libs.guava.bom))
+    api(platform(libs.mug.bom))
     
     constraints {
         // Core runtime and ecosystem libraries
-        api(libs.guava)
         api(libs.guice)
-        api(libs.mug)
         api(libs.typesafe.config)
         api(libs.caffeine)
         api(libs.jsr305)
@@ -36,9 +37,7 @@ dependencies {
         api(libs.pekko.http.testkit)
         api(libs.pekko.http.jackson)
 
-        // Persistence & Messaging
-        api(libs.hibernate.core)
-        api(libs.postgresql)
+        // Persistence & Messaging        api(libs.postgresql)
         api(libs.flyway.core)
         api(libs.flyway.database.postgresql)
         api(libs.rabbitmq.amqp)

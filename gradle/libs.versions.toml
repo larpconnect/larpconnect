@@ -8,19 +8,19 @@ guice = "7.0.0"
 mug = "11.0"
 pekko = "2.0.0-M4"
 pekko-http = "2.0.0-M1"
-typesafe-config = "1.4.3"
-hibernate = "7.4.7.Final"
+typesafe-config = "1.4.9"
+hibernate = "7.4.8.Final"
 postgresql = "42.7.13"
 caffeine = "3.2.4"
 rabbitmq = "5.35.0"
 slf4j = "2.0.19"
 logback = "1.6.3"
 errorprone-core = "2.50.0"
-flyway = "13.5.0"
+flyway = "13.6.0"
 testcontainers = "2.0.5"
 jsr305 = "3.0.2"
-checker-qual = "3.49.1"
-metrics-healthchecks = "4.2.30"
+checker-qual = "4.2.3"
+metrics-healthchecks = "4.2.40"
 picocli = "4.7.7"
 jackson = "2.22.2"
 
@@ -37,9 +37,11 @@ spotbugs = "6.5.8"
 errorprone-plugin = "5.1.0"
 
 [libraries]
-guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+guava-bom = { group = "com.google.guava", name = "guava-bom", version.ref = "guava"}
+guava = { group = "com.google.guava", name = "guava" }
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
-mug = { group = "com.google.mug", name = "mug", version.ref = "mug" }
+mug-bom = { group = "com.google.mug", name = "mug-bom", version.ref = "mug" }
+mug = { group = "com.google.mug", name = "mug" }
 typesafe-config = { group = "com.typesafe", name = "config", version.ref = "typesafe-config" }
 pekko-actor-typed = { group = "org.apache.pekko", name = "pekko-actor-typed_3", version.ref = "pekko" }
 pekko-actor-testkit-typed = { group = "org.apache.pekko", name = "pekko-actor-testkit-typed_3", version.ref = "pekko" }
@@ -50,7 +52,8 @@ pekko-http-testkit = { group = "org.apache.pekko", name = "pekko-http-testkit_3"
 pekko-http-jackson = { group = "org.apache.pekko", name = "pekko-http-jackson_3", version.ref = "pekko-http" }
 jackson-bom = { group = "com.fasterxml.jackson", name = "jackson-bom", version.ref = "jackson"}
 jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310"}
-hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core", version.ref = "hibernate" }
+hibernate-bom = { group = "org.hibernate.orm", name = "hibernate-platform", version.ref = "hibernate" }
+hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 rabbitmq-amqp = { group = "com.rabbitmq", name = "amqp-client", version.ref = "rabbitmq" }
