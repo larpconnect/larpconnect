@@ -20,7 +20,7 @@ The system SHALL provide a sealed `DatabaseObject` interface representing domain
 - **THEN** the system returns an `ImmutableList` containing all corresponding domain records
 
 ### Requirement: Dual Role-Scoped Hibernate Session Factories
-The system SHALL provide two isolated Hibernate `SessionFactory` instances managed via Guice: one qualified with `@NjallAdmin` connecting as database role `njall_admin`, and one qualified with `@NjallUsers` connecting as database role `njall_users`. Each session factory SHALL configure dedicated connection pooling with configurable minimum and maximum pool sizes and connection timeout durations.
+The system SHALL provide two isolated Hibernate `SessionFactory` instances managed via Guice: one qualified with `@NjallAdmin` connecting as database role `njall_admin`, and one qualified with `@NjallUsers` connecting as database role `njall_users`. Each session factory SHALL configure dedicated connection pooling with configurable minimum and maximum pool sizes and connection timeout durations. Database passwords SHALL be optional; if a password is not provided or is empty, the system SHALL omit the JDBC password property to support trust-authenticated connections.
 
 #### Scenario: Inject administrative session factory
 - **GIVEN** the Guice dependency injection container is initialized

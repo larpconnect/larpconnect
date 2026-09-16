@@ -26,7 +26,7 @@
 
 - [x] 4.1 In `api/src/main/resources/openapi.yaml`, specify the `GET /api/admin/v1/servers` endpoint with camelCase JSON schema for `Server` and `ServerContact`.
 - [x] 4.2 In `api/src/main/java/com/larpconnect/njall/api/admin/`, define Pekko Typed protocols `ServerAdminCommand` and `ServerAdminResponse`.
-- [x] 4.3 In `api/src/main/java/com/larpconnect/njall/api/admin/`, implement `ServerAdminActor` and `ServerAdminActorFactory` executing `ServerDAO.list()` on Java 25 virtual threads.
+- [x] 4.3 In `api/src/main/java/com/larpconnect/njall/api/admin/`, implement `ServerAdminActor` and `ServerAdminActorFactory` executing `ServerDAO.list()` on a dedicated Pekko blocking dispatcher.
 - [x] 4.4 In `api/src/main/java/com/larpconnect/njall/api/admin/DefaultAdminRoute.java`, mount `GET /api/admin/v1/servers` and wire response marshalling.
 - [x] 4.5 In `api/src/main/java/com/larpconnect/njall/api/admin/AdminModule.java`, bind `ServerAdminActorFactory` and provide `ActorRef<ServerAdminCommand>`.
 - [x] 4.6 Implement unit tests for `ServerAdminActor` using `BehaviorTestKit` and route tests using Pekko HTTP `RouteTest` in `api/src/test/java/`. Ensure all `:api` checks and tests pass before proceeding to `:server`.

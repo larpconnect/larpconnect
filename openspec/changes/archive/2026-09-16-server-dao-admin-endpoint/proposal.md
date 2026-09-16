@@ -8,7 +8,7 @@ Now that Flyway database migrations are established, the application requires pe
 - **Dual Session Factories**: Configure two isolated Hibernate `SessionFactory` instances in `:data` bound with `@NjallAdmin` (connecting via role `njall_admin`) and `@NjallUsers` (connecting via role `njall_users`) with structured connection pool configurations.
 - **Read-Only Server Model**: Implement immutable domain representations `Server` and `ServerContact` backed by a package-private Hibernate entity and `ServerDAO` (using `@NjallAdmin SessionFactory`), enforcing strict read-only semantics against `njall.servers` and `njall.server_contacts`.
 - **Module Dependency**: Update `:api` to depend on `:data`, establishing the clean DAG `:common` -> `:data` -> `:api` -> `:server`.
-- **Administrative Server Endpoint**: Expose `GET /api/admin/v1/servers` in `:api` via `AdminRoute`, offloading blocking DAO queries to Java 25 virtual threads via a typed `ServerAdminActor`, returning camelCase JSON.
+- **Administrative Server Endpoint**: Expose `GET /api/admin/v1/servers` in `:api` via `AdminRoute`, delegating blocking DAO queries to a typed `ServerAdminActor` running on a dedicated Pekko blocking dispatcher (`larpconnect.blocking-dispatcher`), returning camelCase JSON.
 - **OpenAPI Specification**: Document `GET /api/admin/v1/servers` and corresponding `Server` / `ServerContact` schemas in `openapi.yaml`.
 - **Dual-Layer Testing**: Implement unit tests across `:data` and `:api`, and add Cucumber integration scenarios in `:integration` verifying end-to-end endpoint execution against a live PostgreSQL Testcontainer.
 

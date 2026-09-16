@@ -19,7 +19,7 @@ Additionally, Apache Pekko Typed is the reactive runtime engine (ADR 0001), wher
 1. **Sealed Base Persistence Abstraction**: In `:data`, introduce sealed interfaces `DatabaseObject` (requiring `UUID id()`) and `DAO<T extends DatabaseObject>` (requiring `Optional<T> findById(UUID id)` and `ImmutableList<T> list()`). Specific DAOs (e.g. `ServerDAO`) extend `DAO<T>` to maintain compile-time checked type hierarchies.
 2. **Dual Hibernate Session Factories**: Configure two isolated Hibernate `SessionFactory` singletons in `:data` bound via custom Guice qualifiers `@NjallAdmin` and `@NjallUsers`. Each session factory connects with its respective database role and search path, enforcing least privilege at the connection level.
 3. **Pure Record Domain Models**: Expose immutable domain records (`Server`, `ServerContact`) from DAOs. Internal Hibernate `@Entity` classes remain package-private within `:data` and are marked `@Immutable` for read-only entities, eliminating lazy-initialization and thread-safety hazards.
-4. **Pekko Virtual Thread Offloading**: Query execution from Pekko HTTP routes is dispatched to typed Pekko actors (`ServerAdminActor`), which offload blocking DAO queries onto Java 25 virtual threads (`Executors.newVirtualThreadPerTaskExecutor()`) before replying to the route ask pattern.
+4. **Pekko Blocking Dispatcher Isolation**: Query execution from Pekko HTTP routes is dispatched via typed ask to `ServerAdminActor`. The actor is configured to run on a dedicated Pekko blocking dispatcher (`larpconnect.blocking-dispatcher`) qualified with `@Blocking Props` in Guice, isolating synchronous DAO calls from the HTTP routing threads.
 
 ## Consequences
 

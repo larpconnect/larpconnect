@@ -9,7 +9,7 @@ With Flyway bootstrap migrations established in `:data`, the application require
 - Configure dual Hibernate `SessionFactory` instances in `:data` bound via custom Guice qualifiers `@NjallAdmin` and `@NjallUsers` with configurable connection pools.
 - Provide an immutable, read-only domain representation of `Server` and `ServerContact` backed by a `ServerDAO` implementation using the `@NjallAdmin` session factory.
 - Allow `:api` to depend on `:data`, preserving the DAG `:common` -> `:data` -> `:api` -> `:server`.
-- Implement `GET /api/admin/v1/servers` in `:api` returning camelCase JSON, offloading blocking queries to Java 25 virtual threads via a typed `ServerAdminActor`.
+- Implement `GET /api/admin/v1/servers` in `:api` returning camelCase JSON, delegating blocking queries to a typed `ServerAdminActor` running on a dedicated Pekko blocking dispatcher (`larpconnect.blocking-dispatcher`).
 - Update `openapi.yaml` and provide dual-layer testing (unit tests and Cucumber integration tests).
 
 **Non-Goals:**
@@ -34,7 +34,7 @@ With Flyway bootstrap migrations established in `:data`, the application require
 |   |                                                                     |   |
 |   |   +──────────────────+               +──────────────────────────+   |   |
 |   |   | DefaultAdminRoute| ─(typed ask)─>| ServerAdminActor         |   |   |
-|   |   +──────────────────+               | (virtual thread worker)  |   |   |
+|   |   +──────────────────+               | (blocking dispatcher)    |   |   |
 |   |                                      +─────────────┬────────────+   |   |
 |   +────────────────────────────────────────────────────┼────────────────+   |
 |                                                        │                    |
@@ -68,8 +68,8 @@ Client             DefaultAdminRoute        ServerAdminActor       DefaultServer
   │                        │                        │                     │                   │
   │──GET /api/admin/v1/───>│                        │                     │                   │
   │   servers              │──GetServers(replyTo)──>│                     │                   │
-  │                        │                        │──supplyAsync()─────>│                   │
-  │                        │                        │  (Virtual Thread)   │──openSession()───>│
+  │                        │                        │──list()────────────>│                   │
+  │                        │                        │  (Blocking Disp.)   │──openSession()───>│
   │                        │                        │                     │──HQL queries─────>│
   │                        │                        │                     │<──entities────────│
   │                        │                        │                     │──closeSession()──>│
@@ -100,12 +100,12 @@ Client             DefaultAdminRoute        ServerAdminActor       DefaultServer
   - `@Named("admin")`: Rejected per `njall-java` antipattern rules banning `@Named` strings.
 - **Rationale**: Custom binding annotations provide type safety, clear traceability, and eliminate string typo hazards.
 
-### Decision 4: Concurrency & Virtual Thread Offloading in Pekko
-- **Choice**: `DefaultAdminRoute` communicates with a typed `ServerAdminActor`. The actor executes blocking `ServerDAO` queries using Java 25 virtual threads (`Executors.newVirtualThreadPerTaskExecutor()`).
+### Decision 4: Concurrency & Dedicated Pekko Blocking Dispatcher
+- **Choice**: `DefaultAdminRoute` communicates with a typed `ServerAdminActor` via typed ask. `ServerAdminActor` is spawned on a dedicated Pekko blocking dispatcher (`larpconnect.blocking-dispatcher`) qualified with `@Blocking Props` via Guice, executing blocking `ServerDAO` queries synchronously on its isolated thread pool.
 - **Alternatives Considered**:
   - Running JDBC queries directly on the route dispatcher: Rejected; causes thread starvation in Pekko HTTP.
-  - Reactive Hibernate (Hibernate Reactive / Mutiny): Rejected; adds substantial complexity and third-party dependencies when Java 25 virtual threads cleanly solve JDBC blocking without thread pinning.
-- **Rationale**: Fits standard Pekko Typed architecture and Leverages Java 25 virtual threads per `njall-java` guidelines.
+  - Offloading to an external virtual thread `ExecutorService` inside the actor: Rejected; introduces foreign concurrency abstractions and breaks Pekko Typed mailbox guarantees. Using Pekko's native dispatcher configuration preserves actor semantics while isolating blocking I/O.
+- **Rationale**: Adheres to idiomatic Pekko Typed actor design, leveraging configuration-driven thread pool sizing without risking default dispatcher starvation.
 
 ### Decision 5: JSON Naming Convention
 - **Choice**: Lower camelCase for all JSON payload fields (`primaryDomain`, `createdOn`, `roleType`, `contactType`).
