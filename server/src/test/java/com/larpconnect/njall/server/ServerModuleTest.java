@@ -52,6 +52,9 @@ final class ServerModuleTest {
     var blockingProps = injector.getInstance(Key.get(Props.class, Blocking.class));
     var serverAdminActor =
         injector.getInstance(Key.get(new TypeLiteral<ActorRef<ServerAdminCommand>>() {}));
+    var serverManager = injector.getInstance(ServerManager.class);
+    var serverManagerService = injector.getInstance(ServerManagerService.class);
+    var hookRegistrar = injector.getInstance(ShutdownHookRegistrar.class);
 
     assertThat(serverService).isNotNull();
     assertThat(system).isNotNull();
@@ -59,6 +62,10 @@ final class ServerModuleTest {
     assertThat(adminRoute).isNotNull();
     assertThat(blockingProps).isNotNull();
     assertThat(serverAdminActor).isNotNull();
+    assertThat(serverManager).isNotNull();
+    assertThat(serverManagerService).isNotNull();
+    assertThat(serverManager).isSameAs(serverManagerService);
+    assertThat(hookRegistrar).isNotNull();
 
     CoordinatedShutdown.get(system)
         .runAll(CoordinatedShutdown.jvmExitReason())
