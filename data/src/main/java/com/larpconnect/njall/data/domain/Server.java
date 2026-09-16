@@ -66,23 +66,4 @@ public record Server(
       UUID id, String name, String primaryDomain, Instant createdOn, List<ServerContact> contacts) {
     return new Server(id, name, primaryDomain, createdOn, contacts);
   }
-
-  /**
-   * Pure factory method for creating a {@link Server} from an {@link ImmutableList} of contacts.
-   *
-   * @param id The server UUID.
-   * @param name The server name.
-   * @param primaryDomain The primary domain name.
-   * @param createdOn The creation timestamp.
-   * @param contacts The associated immutable contacts.
-   * @return A new {@link Server} instance.
-   */
-  public static Server of(
-      UUID id,
-      String name,
-      String primaryDomain,
-      Instant createdOn,
-      ImmutableList<ServerContact> contacts) {
-    return new Server(id, name, primaryDomain, createdOn, contacts);
-  }
 }
