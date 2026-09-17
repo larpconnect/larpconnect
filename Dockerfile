@@ -1,21 +1,19 @@
-FROM ghcr.io/rblaine95/eclipse-temurin:25 AS builder
-WORKDIR /app
-
-COPY . .
-
-RUN ./gradlew :server:shadowJar --no-daemon --stacktrace
-
 FROM ghcr.io/rblaine95/eclipse-temurin:25
-# For most mortals
+
+# Standard HTTP port
 EXPOSE 8080
 
-# For Render
+# Cloud platform port (e.g. Render)
 EXPOSE 10000
 
 RUN useradd -m larpconnect
+WORKDIR /app
+
+# Stage prebuilt application distribution from host
+COPY --chown=larpconnect:larpconnect server/build/install/server ./
+RUN chmod +x /app/bin/server
+
 USER larpconnect
 
-WORKDIR /app
-COPY --from=builder --chown=larpconnect:larpconnect /app/server/build/libs/larpconnect.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["/app/bin/server"]
+CMD ["server"]
