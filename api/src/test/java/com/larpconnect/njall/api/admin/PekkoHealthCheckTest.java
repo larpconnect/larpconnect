@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.CoordinatedShutdown;
@@ -57,13 +56,5 @@ final class PekkoHealthCheckTest {
       system.terminate();
       system.getWhenTerminated().toCompletableFuture().get(5, TimeUnit.SECONDS);
     }
-  }
-
-  @Test
-  @DisplayName("PekkoHealthCheck constructor throws NullPointerException for null system")
-  void constructor_nullSystem_throwsNullPointerException() {
-    assertThatNullPointerException()
-        .isThrownBy(() -> new PekkoHealthCheck(null))
-        .withMessage("system must not be null");
   }
 }

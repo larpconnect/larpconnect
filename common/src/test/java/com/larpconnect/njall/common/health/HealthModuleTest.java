@@ -1,7 +1,6 @@
 package com.larpconnect.njall.common.health;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -81,14 +80,5 @@ final class HealthModuleTest {
 
     assertThat(results).containsKey(anonymousCheck.getClass().getName());
     assertThat(results.get(anonymousCheck.getClass().getName()).isHealthy()).isFalse();
-  }
-
-  @Test
-  @DisplayName("provideHealthCheckRegistry throws NullPointerException when healthChecks is null")
-  void provideHealthCheckRegistry_nullSet_throwsNullPointerException() {
-    var module = new HealthModule();
-    assertThatNullPointerException()
-        .isThrownBy(() -> module.provideHealthCheckRegistry(null))
-        .withMessage("healthChecks must not be null");
   }
 }

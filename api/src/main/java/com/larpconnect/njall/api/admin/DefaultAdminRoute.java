@@ -1,6 +1,5 @@
 package com.larpconnect.njall.api.admin;
 
-import static java.util.Objects.requireNonNull;
 import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,10 +34,10 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
       ActorRef<ServerAdminCommand> serverAdminActor,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
-    this.healthCheckActor = requireNonNull(healthCheckActor, "healthCheckActor must not be null");
-    this.serverAdminActor = requireNonNull(serverAdminActor, "serverAdminActor must not be null");
-    this.system = requireNonNull(system, "system must not be null");
-    this.objectMapper = requireNonNull(objectMapper, "objectMapper must not be null");
+    this.healthCheckActor = healthCheckActor;
+    this.serverAdminActor = serverAdminActor;
+    this.system = system;
+    this.objectMapper = objectMapper;
   }
 
   @Override

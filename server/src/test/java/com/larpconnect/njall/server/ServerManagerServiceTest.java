@@ -2,7 +2,6 @@ package com.larpconnect.njall.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -22,44 +21,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 final class ServerManagerServiceTest {
-
-  @Test
-  @DisplayName("constructor throws NullPointerException when shutdownHookRegistrar is null")
-  void constructor_nullShutdownHookRegistrar_throwsNullPointerException() {
-    ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-1");
-    try {
-      var httpService = mock(HttpServerService.class);
-      assertThatNullPointerException()
-          .isThrownBy(() -> new DefaultServerManagerService(null, system, httpService))
-          .withMessage("shutdownHookRegistrar cannot be null");
-    } finally {
-      terminateSystem(system);
-    }
-  }
-
-  @Test
-  @DisplayName("constructor throws NullPointerException when actorSystem is null")
-  void constructor_nullActorSystem_throwsNullPointerException() {
-    var registrar = mock(ShutdownHookRegistrar.class);
-    var httpService = mock(HttpServerService.class);
-    assertThatNullPointerException()
-        .isThrownBy(() -> new DefaultServerManagerService(registrar, null, httpService))
-        .withMessage("actorSystem cannot be null");
-  }
-
-  @Test
-  @DisplayName("constructor throws NullPointerException when httpServerService is null")
-  void constructor_nullHttpServerService_throwsNullPointerException() {
-    var registrar = mock(ShutdownHookRegistrar.class);
-    ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-2");
-    try {
-      assertThatNullPointerException()
-          .isThrownBy(() -> new DefaultServerManagerService(registrar, system, null))
-          .withMessage("httpServerService cannot be null");
-    } finally {
-      terminateSystem(system);
-    }
-  }
 
   @Test
   @DisplayName("startUp registers shutdown hook thread and starts HTTP server")

@@ -118,12 +118,4 @@ final class DefaultServerDAOTest {
     assertThat(server.name()).isEqualTo("alpha");
     assertThat(server.contacts()).hasSize(1);
   }
-
-  @Test
-  @DisplayName("constructor throws NullPointerException when sessionFactory is null")
-  void constructor_nullSessionFactory_throwsNullPointerException() {
-    assertThatThrownBy(() -> new DefaultServerDAO(null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("sessionFactory cannot be null");
-  }
 }

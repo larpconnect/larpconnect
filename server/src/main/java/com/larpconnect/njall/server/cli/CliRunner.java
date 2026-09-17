@@ -1,10 +1,9 @@
 package com.larpconnect.njall.server.cli;
 
-import static java.util.Objects.requireNonNull;
-
 import com.typesafe.config.Config;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
@@ -27,8 +26,8 @@ public final class CliRunner {
   }
 
   public CliRunner(RootCommand rootCommand, IFactory factory) {
-    this.rootCommand = requireNonNull(rootCommand, "rootCommand cannot be null");
-    this.factory = requireNonNull(factory, "factory cannot be null");
+    this.rootCommand = rootCommand;
+    this.factory = factory;
   }
 
   private static ServerCommand createServerCommand(Consumer<Config> serverLauncher) {
@@ -64,13 +63,13 @@ public final class CliRunner {
    * @return Null if server runtime should keep executing; integer status code if process should
    *     terminate.
    */
-  public Integer execute(String[] args) {
+  public @Nullable Integer execute(@Nullable String[] args) {
     var cmd = buildCommandLine();
     var exitCode = executeCommandLine(cmd, args);
     return determineExitStatus(cmd, exitCode);
   }
 
-  private int executeCommandLine(CommandLine cmd, String[] args) {
+  private int executeCommandLine(CommandLine cmd, @Nullable String[] args) {
     return cmd.execute(args != null ? args : new String[0]);
   }
 
@@ -78,7 +77,7 @@ public final class CliRunner {
     return new CommandLine(rootCommand, factory);
   }
 
-  private Integer determineExitStatus(CommandLine cmd, int exitCode) {
+  private @Nullable Integer determineExitStatus(CommandLine cmd, int exitCode) {
     if (isHelpRequested(cmd)) {
       return exitCode;
     }
@@ -92,7 +91,7 @@ public final class CliRunner {
     return exitCode != 0;
   }
 
-  private Integer resolveExecutionResult(CommandLine cmd) {
+  private @Nullable Integer resolveExecutionResult(CommandLine cmd) {
     var terminal = findTerminalCommandLine(cmd);
     return extractStatusCode(terminal);
   }
@@ -107,7 +106,7 @@ public final class CliRunner {
     return current;
   }
 
-  private Integer extractStatusCode(CommandLine terminal) {
+  private @Nullable Integer extractStatusCode(CommandLine terminal) {
     var executionResult = terminal.getExecutionResult();
     if (executionResult instanceof Integer code) {
       return code;

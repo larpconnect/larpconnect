@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import com.larpconnect.njall.api.RouteProvider;
 import java.time.Duration;
@@ -82,13 +81,5 @@ final class RootRouteTest {
         handler.apply(HttpRequest.POST("/")).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
     assertThat(response.status()).isEqualTo(StatusCodes.METHOD_NOT_ALLOWED);
-  }
-
-  @Test
-  @DisplayName("DefaultRootRoute constructor throws NullPointerException for null routeProviders")
-  void constructor_nullRouteProviders_throwsNullPointerException() {
-    assertThatNullPointerException()
-        .isThrownBy(() -> new DefaultRootRoute(null))
-        .withMessage("routeProviders must not be null");
   }
 }

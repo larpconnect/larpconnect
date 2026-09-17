@@ -3,6 +3,7 @@ package com.larpconnect.njall.data.config;
 import static java.util.Objects.requireNonNull;
 
 import com.typesafe.config.Config;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Configuration profile for role-scoped database session factories.
@@ -17,7 +18,7 @@ import com.typesafe.config.Config;
 public record SessionConfig(
     String jdbcUrl,
     String username,
-    String password,
+    @Nullable String password,
     int minPoolSize,
     int maxPoolSize,
     int timeoutSeconds) {
@@ -60,7 +61,7 @@ public record SessionConfig(
   public static SessionConfig of(
       String jdbcUrl,
       String username,
-      String password,
+      @Nullable String password,
       int minPoolSize,
       int maxPoolSize,
       int timeoutSeconds) {

@@ -1,9 +1,8 @@
 package com.larpconnect.njall.server.cli;
 
-import static java.util.Objects.requireNonNull;
-
 import java.io.File;
 import java.util.concurrent.Callable;
+import org.jspecify.annotations.Nullable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
@@ -26,7 +25,7 @@ public final class RootCommand implements Callable<Integer> {
       names = {"-c", "--config"},
       description = "Path to optional external HOCON configuration file.",
       scope = ScopeType.INHERIT)
-  private File configFile;
+  private @Nullable File configFile;
 
   @Option(
       names = {"-v", "--verbose"},
@@ -41,11 +40,10 @@ public final class RootCommand implements Callable<Integer> {
   }
 
   public RootCommand(ServerCommand defaultServerCommand) {
-    this.defaultServerCommand =
-        requireNonNull(defaultServerCommand, "defaultServerCommand cannot be null");
+    this.defaultServerCommand = defaultServerCommand;
   }
 
-  public File configFile() {
+  public @Nullable File configFile() {
     return configFile;
   }
 
@@ -54,7 +52,7 @@ public final class RootCommand implements Callable<Integer> {
   }
 
   @Override
-  public Integer call() {
+  public @Nullable Integer call() {
     return defaultServerCommand.callWithRoot(this);
   }
 }

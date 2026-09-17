@@ -1,11 +1,10 @@
 package com.larpconnect.njall.server.cli;
 
-import static java.util.Objects.requireNonNull;
-
 import com.typesafe.config.Config;
 import java.io.File;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -21,32 +20,32 @@ public final class ServerCommand implements Callable<Integer> {
 
   private final Logger logger = LoggerFactory.getLogger(ServerCommand.class);
 
-  @ParentCommand private RootCommand rootCommand;
+  @ParentCommand private @Nullable RootCommand rootCommand;
 
   @Option(
       names = {"--host", "-b"},
       description = "Network host or IP interface address to bind to.")
-  private String host;
+  private @Nullable String host;
 
   @Option(
       names = {"-p", "--port"},
       description = "HTTP port number to bind to (0-65535, 0 for dynamic ephemeral port).")
-  private Integer port;
+  private @Nullable Integer port;
 
   @Option(
       names = {"--name"},
       description = "Server node identification name.")
-  private String name;
+  private @Nullable String name;
 
   @Option(
       names = {"--primary-domain"},
       description = "Server primary domain.")
-  private String primaryDomain;
+  private @Nullable String primaryDomain;
 
   @Option(
       names = {"--admin-contact"},
       description = "Administrative contact email address.")
-  private String adminContact;
+  private @Nullable String adminContact;
 
   private final Consumer<Config> serverLauncher;
 
@@ -55,36 +54,36 @@ public final class ServerCommand implements Callable<Integer> {
   }
 
   public ServerCommand(Consumer<Config> serverLauncher) {
-    this.serverLauncher = requireNonNull(serverLauncher, "serverLauncher cannot be null");
+    this.serverLauncher = serverLauncher;
   }
 
-  public String host() {
+  public @Nullable String host() {
     return host;
   }
 
-  public Integer port() {
+  public @Nullable Integer port() {
     return port;
   }
 
-  public String name() {
+  public @Nullable String name() {
     return name;
   }
 
-  public String primaryDomain() {
+  public @Nullable String primaryDomain() {
     return primaryDomain;
   }
 
-  public String adminContact() {
+  public @Nullable String adminContact() {
     return adminContact;
   }
 
-  Integer callWithRoot(RootCommand parent) {
+  @Nullable Integer callWithRoot(RootCommand parent) {
     this.rootCommand = parent;
     return call();
   }
 
   @Override
-  public Integer call() {
+  public @Nullable Integer call() {
     logServerStart();
     var configFile = resolveConfigFile();
     var config = buildConfig(configFile);
@@ -100,11 +99,11 @@ public final class ServerCommand implements Callable<Integer> {
     serverLauncher.accept(config);
   }
 
-  private File resolveConfigFile() {
+  private @Nullable File resolveConfigFile() {
     return rootCommand != null ? rootCommand.configFile() : null;
   }
 
-  private Config buildConfig(File configFile) {
+  private Config buildConfig(@Nullable File configFile) {
     var builder = createConfigBuilder();
     var options = createServerOptions();
     return builder.withConfigFile(configFile).withServerOptions(options).build();

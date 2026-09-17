@@ -1,12 +1,11 @@
 package com.larpconnect.njall.server.cli;
 
-import static java.util.Objects.requireNonNull;
-
 import com.typesafe.config.Config;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -22,48 +21,48 @@ public final class MigrateCommand implements Callable<Integer> {
 
   private final Logger logger = LoggerFactory.getLogger(MigrateCommand.class);
 
-  @ParentCommand private RootCommand rootCommand;
+  @ParentCommand private @Nullable RootCommand rootCommand;
 
   @Option(
       names = {"--jdbc-url"},
       description = "JDBC database connection URL.")
-  private String jdbcUrl;
+  private @Nullable String jdbcUrl;
 
   @Option(
       names = {"-u", "--username"},
       description = "Administrative database user name.")
-  private String username;
+  private @Nullable String username;
 
   @Option(
       names = {"-p", "--password"},
       description = "Administrative database password.")
-  private String password;
+  private @Nullable String password;
 
   @Option(
       names = {"--schemas"},
       split = ",",
       description = "Comma-separated list of managed database schemas.")
-  private List<String> schemas;
+  private @Nullable List<String> schemas;
 
   @Option(
       names = {"--default-schema"},
       description = "Default schema for Flyway schema history table.")
-  private String defaultSchema;
+  private @Nullable String defaultSchema;
 
   @Option(
       names = {"--server-name"},
       description = "Server name for database seed placeholder substitution.")
-  private String serverName;
+  private @Nullable String serverName;
 
   @Option(
       names = {"--primary-domain"},
       description = "Primary domain for database seed placeholder substitution.")
-  private String primaryDomain;
+  private @Nullable String primaryDomain;
 
   @Option(
       names = {"--admin-contact"},
       description = "Admin contact email for database seed placeholder substitution.")
-  private String adminContact;
+  private @Nullable String adminContact;
 
   private final Function<Config, Integer> migrationExecutor;
 
@@ -72,38 +71,38 @@ public final class MigrateCommand implements Callable<Integer> {
   }
 
   public MigrateCommand(Function<Config, Integer> migrationExecutor) {
-    this.migrationExecutor = requireNonNull(migrationExecutor, "migrationExecutor cannot be null");
+    this.migrationExecutor = migrationExecutor;
   }
 
-  public String jdbcUrl() {
+  public @Nullable String jdbcUrl() {
     return jdbcUrl;
   }
 
-  public String username() {
+  public @Nullable String username() {
     return username;
   }
 
-  public String password() {
+  public @Nullable String password() {
     return password;
   }
 
-  public List<String> schemas() {
+  public @Nullable List<String> schemas() {
     return schemas;
   }
 
-  public String defaultSchema() {
+  public @Nullable String defaultSchema() {
     return defaultSchema;
   }
 
-  public String serverName() {
+  public @Nullable String serverName() {
     return serverName;
   }
 
-  public String primaryDomain() {
+  public @Nullable String primaryDomain() {
     return primaryDomain;
   }
 
-  public String adminContact() {
+  public @Nullable String adminContact() {
     return adminContact;
   }
 
@@ -123,11 +122,11 @@ public final class MigrateCommand implements Callable<Integer> {
     return migrationExecutor.apply(config);
   }
 
-  private File resolveConfigFile() {
+  private @Nullable File resolveConfigFile() {
     return rootCommand != null ? rootCommand.configFile() : null;
   }
 
-  private Config buildConfig(File configFile) {
+  private Config buildConfig(@Nullable File configFile) {
     var builder = createConfigBuilder();
     var options = createMigrationOptions();
     return builder.withConfigFile(configFile).withMigrationOptions(options).build();

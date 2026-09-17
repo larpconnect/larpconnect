@@ -1,7 +1,5 @@
 package com.larpconnect.njall.api.admin;
 
-import static java.util.Objects.requireNonNull;
-
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import java.util.Map;
@@ -17,7 +15,7 @@ public final class HealthCheckActor extends AbstractBehavior<HealthCheckCommand>
 
   public HealthCheckActor(ActorContext<HealthCheckCommand> context, HealthCheckRegistry registry) {
     super(context);
-    this.registry = requireNonNull(registry, "registry must not be null");
+    this.registry = registry;
   }
 
   @Override

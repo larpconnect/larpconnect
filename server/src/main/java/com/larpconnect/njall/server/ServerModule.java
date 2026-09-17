@@ -1,7 +1,5 @@
 package com.larpconnect.njall.server;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.AbstractModule;
 import com.larpconnect.njall.api.ApiModule;
 import com.larpconnect.njall.common.CommonModule;
@@ -21,7 +19,7 @@ public final class ServerModule extends AbstractModule {
   }
 
   public ServerModule(Config config) {
-    this.config = requireNonNull(config, "config cannot be null");
+    this.config = config;
   }
 
   @Override

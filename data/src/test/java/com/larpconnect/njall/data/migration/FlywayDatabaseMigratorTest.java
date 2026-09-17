@@ -103,30 +103,6 @@ final class FlywayDatabaseMigratorTest {
     assertThat(count).isEqualTo(2);
   }
 
-  @Test
-  @DisplayName("constructor throws NullPointerException when config is null")
-  void constructor_nullConfig_throwsNullPointerException() {
-    assertThatThrownBy(() -> new FlywayDatabaseMigrator(null, dataSourceFactory, flywayFactory))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("config cannot be null");
-  }
-
-  @Test
-  @DisplayName("constructor throws NullPointerException when dataSourceFactory is null")
-  void constructor_nullDataSourceFactory_throwsNullPointerException() {
-    assertThatThrownBy(() -> new FlywayDatabaseMigrator(config, null, flywayFactory))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("dataSourceFactory cannot be null");
-  }
-
-  @Test
-  @DisplayName("constructor throws NullPointerException when flywayFactory is null")
-  void constructor_nullFlywayFactory_throwsNullPointerException() {
-    assertThatThrownBy(() -> new FlywayDatabaseMigrator(config, dataSourceFactory, null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("flywayFactory cannot be null");
-  }
-
   private interface TestCloseableDataSource extends DataSource, AutoCloseable {
     @Override
     void close();

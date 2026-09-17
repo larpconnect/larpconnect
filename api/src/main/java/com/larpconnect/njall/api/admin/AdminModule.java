@@ -1,7 +1,5 @@
 package com.larpconnect.njall.api.admin;
 
-import static java.util.Objects.requireNonNull;
-
 import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -43,8 +41,6 @@ public final class AdminModule extends AbstractModule {
   @Singleton
   ActorRef<HealthCheckCommand> provideHealthCheckActor(
       ActorSystem<Void> system, HealthCheckActorFactory factory) {
-    requireNonNull(system, "system must not be null");
-    requireNonNull(factory, "factory must not be null");
     return system.systemActorOf(factory.create(), "healthCheckActor", Props.empty());
   }
 
@@ -52,9 +48,6 @@ public final class AdminModule extends AbstractModule {
   @Singleton
   ActorRef<ServerAdminCommand> provideServerAdminActor(
       ActorSystem<Void> system, ServerAdminActorFactory factory, @Blocking Props dispatcher) {
-    requireNonNull(system, "system must not be null");
-    requireNonNull(factory, "factory must not be null");
-    requireNonNull(dispatcher, "dispatcher must not be null");
     return system.systemActorOf(factory.create(), "serverAdminActor", dispatcher);
   }
 }

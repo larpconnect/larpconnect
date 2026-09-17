@@ -1,7 +1,5 @@
 package com.larpconnect.njall.api.admin;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.ServerDAO;
 import com.larpconnect.njall.data.domain.Server;
@@ -27,7 +25,7 @@ public final class ServerAdminActor extends AbstractBehavior<ServerAdminCommand>
 
   public ServerAdminActor(ActorContext<ServerAdminCommand> context, ServerDAO serverDao) {
     super(context);
-    this.serverDao = requireNonNull(serverDao, "serverDao must not be null");
+    this.serverDao = serverDao;
   }
 
   @Override

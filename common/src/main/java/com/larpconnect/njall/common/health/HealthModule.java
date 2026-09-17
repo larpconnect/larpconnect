@@ -1,7 +1,5 @@
 package com.larpconnect.njall.common.health;
 
-import static java.util.Objects.requireNonNull;
-
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
@@ -23,7 +21,6 @@ public final class HealthModule extends AbstractModule {
   @Provides
   @Singleton
   HealthCheckRegistry provideHealthCheckRegistry(Set<HealthCheck> healthChecks) {
-    requireNonNull(healthChecks, "healthChecks must not be null");
     var registry = newRegistry();
     registerAll(registry, healthChecks);
     return registry;
