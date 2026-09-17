@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
@@ -112,17 +111,5 @@ final class HealthCheckActorTest {
     assertThat(response).isInstanceOf(HealthCheckResponse.Unhealthy.class);
     assertThat(((HealthCheckResponse.Unhealthy) response).reason())
         .isEqualTo("errorCheck: " + exception);
-  }
-
-  @Test
-  @DisplayName("HealthCheckActor constructor throws NullPointerException when registry is null")
-  void constructor_nullRegistry_throwsNullPointerException() {
-    assertThatNullPointerException()
-        .isThrownBy(
-            () ->
-                BehaviorTestKit.create(
-                    Behaviors.<HealthCheckCommand>setup(
-                        context -> new HealthCheckActor(context, null))))
-        .withMessage("registry must not be null");
   }
 }

@@ -18,4 +18,8 @@
         <Class name="~.*(Test|Steps).*"/>
         <Bug pattern="DMI_CONSTANT_DB_PASSWORD,OBL_UNSATISFIED_OBLIGATION"/>
     </Match>
+    <!-- Exclude SpotBugs false positives on injected framework and service dependencies -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

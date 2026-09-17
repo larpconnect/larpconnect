@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -276,28 +275,5 @@ final class AdminRouteTest {
             .get(5, TimeUnit.SECONDS);
 
     assertThat(response.status()).isEqualTo(StatusCodes.METHOD_NOT_ALLOWED);
-  }
-
-  @Test
-  @DisplayName("DefaultAdminRoute constructor throws NullPointerException for null dependencies")
-  void constructor_nullArguments_throwsNullPointerException() {
-    var health = dummyHealthActor();
-    var server = dummyServerActor();
-
-    assertThatNullPointerException()
-        .isThrownBy(() -> new DefaultAdminRoute(null, server, system, objectMapper))
-        .withMessage("healthCheckActor must not be null");
-
-    assertThatNullPointerException()
-        .isThrownBy(() -> new DefaultAdminRoute(health, null, system, objectMapper))
-        .withMessage("serverAdminActor must not be null");
-
-    assertThatNullPointerException()
-        .isThrownBy(() -> new DefaultAdminRoute(health, server, null, objectMapper))
-        .withMessage("system must not be null");
-
-    assertThatNullPointerException()
-        .isThrownBy(() -> new DefaultAdminRoute(health, server, system, null))
-        .withMessage("objectMapper must not be null");
   }
 }

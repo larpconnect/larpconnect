@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.migration;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.Inject;
 import com.larpconnect.njall.data.config.MigrationConfig;
 import javax.sql.DataSource;
@@ -22,9 +20,9 @@ public final class FlywayDatabaseMigrator implements DatabaseMigrator {
   @Inject
   FlywayDatabaseMigrator(
       MigrationConfig config, DataSourceFactory dataSourceFactory, FlywayFactory flywayFactory) {
-    this.config = requireNonNull(config, "config cannot be null");
-    this.dataSourceFactory = requireNonNull(dataSourceFactory, "dataSourceFactory cannot be null");
-    this.flywayFactory = requireNonNull(flywayFactory, "flywayFactory cannot be null");
+    this.config = config;
+    this.dataSourceFactory = dataSourceFactory;
+    this.flywayFactory = flywayFactory;
   }
 
   @Override

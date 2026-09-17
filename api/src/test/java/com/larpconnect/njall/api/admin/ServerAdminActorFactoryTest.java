@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -13,14 +12,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 final class ServerAdminActorFactoryTest {
-
-  @Test
-  @DisplayName("DefaultServerAdminActorFactory constructor throws NPE when arguments are null")
-  void constructor_nullArguments_throwsNullPointerException() {
-    assertThatNullPointerException()
-        .isThrownBy(() -> new DefaultServerAdminActorFactory(null))
-        .withMessage("serverDao must not be null");
-  }
 
   @Test
   @DisplayName("DefaultServerAdminActorFactory.create produces executable behavior")

@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Builds composite Typesafe {@link Config} instances by layering CLI options and external
@@ -17,7 +18,7 @@ public final class CliConfigBuilder {
 
   private final Map<String, Object> overrides = new HashMap<>();
   private final Config baseConfig;
-  private File configFile;
+  private @Nullable File configFile;
 
   public CliConfigBuilder() {
     this(ConfigFactory.load());
@@ -27,12 +28,12 @@ public final class CliConfigBuilder {
     this.baseConfig = requireNonNull(baseConfig, "baseConfig cannot be null");
   }
 
-  public CliConfigBuilder withConfigFile(File configFile) {
+  public CliConfigBuilder withConfigFile(@Nullable File configFile) {
     this.configFile = configFile;
     return this;
   }
 
-  public CliConfigBuilder withOverride(String path, Object value) {
+  public CliConfigBuilder withOverride(String path, @Nullable Object value) {
     if (value != null) {
       if (value instanceof List<?> list && list.isEmpty()) {
         return this;
@@ -42,7 +43,7 @@ public final class CliConfigBuilder {
     return this;
   }
 
-  public CliConfigBuilder withServerOptions(ServerOptions options) {
+  public CliConfigBuilder withServerOptions(@Nullable ServerOptions options) {
     if (options == null) {
       return this;
     }
@@ -58,7 +59,7 @@ public final class CliConfigBuilder {
     return this;
   }
 
-  public CliConfigBuilder withMigrationOptions(MigrationOptions options) {
+  public CliConfigBuilder withMigrationOptions(@Nullable MigrationOptions options) {
     if (options == null) {
       return this;
     }

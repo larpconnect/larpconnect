@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -88,17 +87,5 @@ final class ServerAdminActorTest {
     assertThat(response).isInstanceOf(ServerAdminResponse.Failure.class);
     var failure = (ServerAdminResponse.Failure) response;
     assertThat(failure.reason()).isEqualTo("Error querying servers");
-  }
-
-  @Test
-  @DisplayName("ServerAdminActor constructor throws NullPointerException when arguments are null")
-  void constructor_nullArguments_throwsNullPointerException() {
-    assertThatNullPointerException()
-        .isThrownBy(
-            () ->
-                BehaviorTestKit.create(
-                    Behaviors.<ServerAdminCommand>setup(
-                        context -> new ServerAdminActor(context, null))))
-        .withMessage("serverDao must not be null");
   }
 }

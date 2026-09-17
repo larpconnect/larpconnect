@@ -1,12 +1,11 @@
 package com.larpconnect.njall.server;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.larpconnect.njall.data.migration.DatabaseMigrator;
 import com.larpconnect.njall.server.cli.CliRunner;
 import com.typesafe.config.Config;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,7 @@ public final class ServerApp {
   }
 
   public ServerApp(CliRunner cliRunner) {
-    this.cliRunner = requireNonNull(cliRunner, "cliRunner cannot be null");
+    this.cliRunner = cliRunner;
   }
 
   public static void main(String[] args) {
@@ -34,13 +33,13 @@ public final class ServerApp {
     return new ServerApp();
   }
 
-  private static void terminateIfRequired(Integer exitCode) {
+  private static void terminateIfRequired(@Nullable Integer exitCode) {
     if (exitCode != null) {
       System.exit(exitCode);
     }
   }
 
-  public Integer runWithArgs(String[] args) {
+  public @Nullable Integer runWithArgs(@Nullable String[] args) {
     return cliRunner.execute(args);
   }
 

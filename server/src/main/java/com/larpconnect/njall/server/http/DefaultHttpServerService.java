@@ -1,7 +1,5 @@
 package com.larpconnect.njall.server.http;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.larpconnect.njall.api.http.RootRoute;
@@ -30,9 +28,9 @@ final class DefaultHttpServerService implements HttpServerService {
 
   @Inject
   DefaultHttpServerService(ActorSystem<Void> system, ServerConfig config, RootRoute rootRoute) {
-    this.system = requireNonNull(system, "system cannot be null");
-    this.config = requireNonNull(config, "config cannot be null");
-    this.rootRoute = requireNonNull(rootRoute, "rootRoute cannot be null");
+    this.system = system;
+    this.config = config;
+    this.rootRoute = rootRoute;
   }
 
   @Override

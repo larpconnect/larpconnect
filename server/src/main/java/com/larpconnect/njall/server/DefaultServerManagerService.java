@@ -1,7 +1,5 @@
 package com.larpconnect.njall.server;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.larpconnect.njall.server.http.HttpServerService;
@@ -9,6 +7,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.actor.typed.ActorSystem;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,17 +22,16 @@ final class DefaultServerManagerService extends AbstractIdleService
   private final ShutdownHookRegistrar shutdownHookRegistrar;
   private final ActorSystem<Void> actorSystem;
   private final HttpServerService httpServerService;
-  private Thread shutdownHook;
+  private @Nullable Thread shutdownHook;
 
   @Inject
   DefaultServerManagerService(
       ShutdownHookRegistrar shutdownHookRegistrar,
       ActorSystem<Void> actorSystem,
       HttpServerService httpServerService) {
-    this.shutdownHookRegistrar =
-        requireNonNull(shutdownHookRegistrar, "shutdownHookRegistrar cannot be null");
-    this.actorSystem = requireNonNull(actorSystem, "actorSystem cannot be null");
-    this.httpServerService = requireNonNull(httpServerService, "httpServerService cannot be null");
+    this.shutdownHookRegistrar = shutdownHookRegistrar;
+    this.actorSystem = actorSystem;
+    this.httpServerService = httpServerService;
   }
 
   @Override

@@ -1,7 +1,5 @@
 package com.larpconnect.njall.api.http;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.RouteProvider;
 import java.util.Set;
@@ -15,8 +13,7 @@ final class DefaultRootRoute extends AllDirectives implements RootRoute {
 
   @Inject
   DefaultRootRoute(Set<RouteProvider> routeProviders) {
-    this.routeProviders =
-        Set.copyOf(requireNonNull(routeProviders, "routeProviders must not be null"));
+    this.routeProviders = Set.copyOf(routeProviders);
   }
 
   @Override

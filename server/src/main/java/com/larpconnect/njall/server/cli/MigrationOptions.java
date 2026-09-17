@@ -2,27 +2,28 @@ package com.larpconnect.njall.server.cli;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 /** Encapsulates CLI options for the migrate subcommand. */
 public record MigrationOptions(
-    String jdbcUrl,
-    String username,
-    String password,
-    ImmutableList<String> schemas,
-    String defaultSchema,
-    String serverName,
-    String primaryDomain,
-    String adminContact) {
+    @Nullable String jdbcUrl,
+    @Nullable String username,
+    @Nullable String password,
+    @Nullable ImmutableList<String> schemas,
+    @Nullable String defaultSchema,
+    @Nullable String serverName,
+    @Nullable String primaryDomain,
+    @Nullable String adminContact) {
 
   public MigrationOptions(
-      String jdbcUrl,
-      String username,
-      String password,
-      List<String> schemas,
-      String defaultSchema,
-      String serverName,
-      String primaryDomain,
-      String adminContact) {
+      @Nullable String jdbcUrl,
+      @Nullable String username,
+      @Nullable String password,
+      @Nullable List<String> schemas,
+      @Nullable String defaultSchema,
+      @Nullable String serverName,
+      @Nullable String primaryDomain,
+      @Nullable String adminContact) {
     this(
         jdbcUrl,
         username,

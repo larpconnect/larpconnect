@@ -1,7 +1,5 @@
 package com.larpconnect.njall.api.admin;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.Inject;
 import com.larpconnect.njall.data.dao.ServerDAO;
 import org.apache.pekko.actor.typed.Behavior;
@@ -15,7 +13,7 @@ final class DefaultServerAdminActorFactory implements ServerAdminActorFactory {
 
   @Inject
   DefaultServerAdminActorFactory(ServerDAO serverDao) {
-    this.serverDao = requireNonNull(serverDao, "serverDao must not be null");
+    this.serverDao = serverDao;
   }
 
   @Override

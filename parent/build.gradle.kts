@@ -23,8 +23,8 @@ dependencies {
         api(libs.guice)
         api(libs.typesafe.config)
         api(libs.caffeine)
-        api(libs.jsr305)
         api(libs.checker.qual)
+        api(libs.jspecify)
         api(libs.metrics.healthchecks)
         api(libs.picocli)
 

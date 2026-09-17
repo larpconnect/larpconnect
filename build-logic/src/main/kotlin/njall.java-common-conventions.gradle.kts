@@ -119,6 +119,8 @@ tasks.check {
 
 // Define dependency constraints from Version Catalog
 dependencies {
+    compileOnly("org.jspecify:jspecify:1.0.1")
+
     constraints {
         // Enforce same versions across all subprojects
         implementation("org.apache.commons:commons-text:1.14.0")

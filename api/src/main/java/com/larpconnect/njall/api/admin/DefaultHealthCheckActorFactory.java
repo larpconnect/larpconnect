@@ -1,7 +1,5 @@
 package com.larpconnect.njall.api.admin;
 
-import static java.util.Objects.requireNonNull;
-
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Inject;
 import org.apache.pekko.actor.typed.Behavior;
@@ -15,7 +13,7 @@ final class DefaultHealthCheckActorFactory implements HealthCheckActorFactory {
 
   @Inject
   DefaultHealthCheckActorFactory(HealthCheckRegistry registry) {
-    this.registry = requireNonNull(registry, "registry must not be null");
+    this.registry = registry;
   }
 
   @Override

@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.jspecify.annotations.Nullable;
 
 final class DefaultServerDAO implements ServerDAO {
 
@@ -19,7 +20,7 @@ final class DefaultServerDAO implements ServerDAO {
 
   @Inject
   DefaultServerDAO(@NjallAdmin SessionFactory sessionFactory) {
-    this.sessionFactory = requireNonNull(sessionFactory, "sessionFactory cannot be null");
+    this.sessionFactory = sessionFactory;
   }
 
   @Override
@@ -60,7 +61,7 @@ final class DefaultServerDAO implements ServerDAO {
     return assembleContacts(contactEntities);
   }
 
-  private ServerEntity findServerEntity(Session session, UUID id) {
+  private @Nullable ServerEntity findServerEntity(Session session, UUID id) {
     return session.find(ServerEntity.class, id);
   }
 
