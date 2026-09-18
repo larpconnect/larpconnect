@@ -47,8 +47,9 @@ final class HttpServerModuleTest {
               }
             });
 
-    var service = injector.getInstance(HttpServerService.class);
+    var service1 = injector.getInstance(HttpServerService.class);
+    var service2 = injector.getInstance(HttpServerService.class);
 
-    assertThat(service).isInstanceOf(DefaultHttpServerService.class);
+    assertThat(service1).isInstanceOf(DefaultHttpServerService.class).isSameAs(service2);
   }
 }

@@ -1,12 +1,10 @@
 package com.larpconnect.njall.data.session;
 
-import com.google.inject.Singleton;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.hibernate.SessionFactory;
 
 /** Tracks instantiated Hibernate session factories and provides bulk shutdown capability. */
-@Singleton
 public final class ActiveSessionFactories {
 
   private final Set<SessionFactory> factories = ConcurrentHashMap.newKeySet();

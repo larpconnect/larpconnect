@@ -1,7 +1,6 @@
 package com.larpconnect.njall.server.http;
 
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.larpconnect.njall.api.http.RootRoute;
 import com.larpconnect.njall.common.config.ServerConfig;
 import java.time.Duration;
@@ -15,7 +14,6 @@ import org.apache.pekko.http.javadsl.ServerBinding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Singleton
 final class DefaultHttpServerService implements HttpServerService {
 
   private static final Duration TERMINATION_TIMEOUT = Duration.ofSeconds(10);
