@@ -100,7 +100,7 @@ Then in the guice module bind it as follows:
 
 void configuration() {
   bind(Capability.class).to(CapabilityService.class);
-  bind(CapabilityService.class).to(DefaultCapabilityService.class).in(Singleton.class);
+  bind(CapabilityService.class).to(DefaultCapabilityService.class).in(Scopes.SINGLETON);
 }
 ```
 

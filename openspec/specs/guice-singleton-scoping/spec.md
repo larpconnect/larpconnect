@@ -7,7 +7,7 @@ Enforces explicit module-level singleton scoping for Guice-managed services and 
 ## Requirements
 
 ### Requirement: Module-Level Singleton Scoping for HTTP Server Service
-The system SHALL configure singleton lifecycle scoping for `HttpServerService` exclusively within `HttpServerModule` using `.in(Singleton.class)`. The implementation class `DefaultHttpServerService` SHALL NOT declare the `@Singleton` annotation.
+The system SHALL configure singleton lifecycle scoping for `HttpServerService` exclusively within `HttpServerModule` using `.in(Scopes.SINGLETON)`. The implementation class `DefaultHttpServerService` SHALL NOT declare the `@Singleton` annotation.
 
 #### Scenario: HTTP server service is resolved as a singleton from Guice
 - **GIVEN** the Guice injector is initialized with `HttpServerModule`
@@ -25,7 +25,7 @@ The system SHALL manage `ActiveSessionFactories` singleton lifecycle exclusively
 - **AND** `ActiveSessionFactories` declares no class-level `@Singleton` annotation
 
 ### Requirement: Strict Module-Governed Singleton Scoping Convention
-All implementation classes across Project Njall modules SHALL rely strictly on Guice module declarations (`.in(Singleton.class)` or `@Provides @Singleton`) to establish singleton lifecycles. No Java class definition SHALL declare `@Singleton`.
+All implementation classes across Project Njall modules SHALL rely strictly on Guice module declarations (`.in(Scopes.SINGLETON)` or `@Provides @Singleton`) to establish singleton lifecycles. No Java class definition SHALL declare `@Singleton`.
 
 #### Scenario: Zero class definitions declare Singleton annotations
 - **GIVEN** the Java source code across `:api`, `:common`, `:data`, and `:server`

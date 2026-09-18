@@ -21,12 +21,12 @@ Annotating implementation classes directly couples domain and service classes to
 
 ## Decision
 
-1. **Prohibit `@Singleton` on Class Definitions**: Implementation classes across all modules (`:common`, `:data`, `:api`, `:server`) must not declare the `@Singleton` annotation. Implementation classes must remain plain Java classes decoupled from scope annotations.
-2. **Mandate Module-Level Singleton Scoping**: All singleton bindings must be declared explicitly in their governing Guice module using `.in(Singleton.class)`.
+1. **Prohibit `@Singleton` on Class Definitions**: Implementation classes across all modules (`:common`, `:data`, `:api`, `:server`) must not declare the `@Singleton` annotation. Implementation classes must remain plain Java classes decoupled from scope annotations. This is enforced by Checkstyle via `MatchXpath`.
+2. **Mandate Module-Level Singleton Scoping**: All singleton bindings must be declared explicitly in their governing Guice module using `.in(Scopes.SINGLETON)`.
 3. **Permit `@Singleton` on Provider Methods**: Module provider methods (`@Provides @Singleton`) remain standard and permitted because they live directly inside the Guice module configuration layer.
-4. **Standardize Scoping Syntax**: New and updated bindings must use `.in(Singleton.class)` consistently across all modules.
+4. **Standardize Scoping Syntax**: All singleton bindings must use `.in(Scopes.SINGLETON)` consistently across all modules.
 
 ## Consequences
 
-- **Positive**: Complete separation of concerns between business/infrastructure logic and dependency injection scoping; all component lifecycles are visible and auditable directly from module classes; unit testing and test-scoped overriding become simpler; eliminated redundancy.
-- **Negative**: Removing `@Singleton` from an existing class requires ensuring the corresponding module binding explicitly specifies `.in(Singleton.class)` to prevent accidental prototype instantiation.
+- **Positive**: Complete separation of concerns between business/infrastructure logic and dependency injection scoping; all component lifecycles are visible and auditable directly from module classes; unit testing and test-scoped overriding become simpler; automated Checkstyle rule prevents class-level scope regressions; uniform `.in(Scopes.SINGLETON)` syntax across all modules.
+- **Negative**: Removing `@Singleton` from an existing class requires ensuring the corresponding module binding explicitly specifies `.in(Scopes.SINGLETON)` to prevent accidental prototype instantiation.

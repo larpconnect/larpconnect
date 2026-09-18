@@ -90,11 +90,11 @@ separating out all bindings that relate to a single internal subcomponent, etc.
 
 In Project Njall, object lifecycles and scopes must be governed strictly at the Guice module layer:
 
-1. **No `@Singleton` on Class Definitions**: Do NOT annotate implementation classes (e.g. `DefaultFoo`, `ActiveSessionFactories`) with `@Singleton`. Implementation classes must remain plain Java POJOs decoupled from Guice scope annotations.
-2. **Explicit Module Scoping**: When a bound interface or class must be a singleton, declare `.in(Singleton.class)` explicitly in the module:
+1. **No `@Singleton` on Class Definitions**: Do NOT annotate implementation classes (e.g. `DefaultFoo`, `ActiveSessionFactories`) with `@Singleton`. Implementation classes must remain plain Java POJOs decoupled from Guice scope annotations. This is enforced by Checkstyle.
+2. **Explicit Module Scoping**: When a bound interface or class must be a singleton, declare `.in(Scopes.SINGLETON)` explicitly in the module:
    ```java
-   bind(FooService.class).to(DefaultFooService.class).in(Singleton.class);
-   bind(ActiveTracker.class).in(Singleton.class);
+   bind(FooService.class).to(DefaultFooService.class).in(Scopes.SINGLETON);
+   bind(ActiveTracker.class).in(Scopes.SINGLETON);
    ```
 3. **Provider Methods**: Scoping provider methods with `@Singleton` (e.g., `@Provides @Singleton`) is standard and permitted because providers reside directly inside Guice module configurations.
 
@@ -116,7 +116,7 @@ Then in the guice module bind it as follows:
 
 void configuration() {
   bind(Capability.class).to(CapabilityService.class);
-  bind(CapabilityService.class).to(DefaultCapabilityService.class).in(Singleton.class);
+  bind(CapabilityService.class).to(DefaultCapabilityService.class).in(Scopes.SINGLETON);
 }
 ```
 
