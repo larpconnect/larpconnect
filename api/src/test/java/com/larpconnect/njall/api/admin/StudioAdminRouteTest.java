@@ -227,4 +227,24 @@ final class StudioAdminRouteTest {
             .get(5, TimeUnit.SECONDS);
     assertThat(resp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
   }
+
+  @Test
+  @DisplayName("POST /api/admin/v1/studios returns 500 on ask failure or timeout")
+  void postStudios_timeoutReturns500() throws Exception {
+    ActorRef<StudioAdminCommand> silentActor =
+        system.systemActorOf(
+            Behaviors.empty(), "silentStudioPost" + UUID.randomUUID(), Props.empty());
+
+    var route = new StudioAdminRoute(silentActor, system, objectMapper, Duration.ofMillis(300));
+    var handler = route.route().seal().function(system);
+
+    var resp =
+        handler
+            .apply(
+                HttpRequest.POST("/api/admin/v1/studios")
+                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"alias\":\"valhalla\"}"))
+            .toCompletableFuture()
+            .get(5, TimeUnit.SECONDS);
+    assertThat(resp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
+  }
 }

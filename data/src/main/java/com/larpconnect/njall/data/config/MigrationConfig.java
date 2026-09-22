@@ -6,13 +6,15 @@ import com.larpconnect.njall.common.config.ServerConfig;
 import com.typesafe.config.Config;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Configuration for database migrations via Flyway.
  *
  * @param jdbcUrl The JDBC database connection URL.
  * @param username The administrative database username.
- * @param password The administrative database password.
+ * @param password The administrative database password, or null/blank if trust auth is enabled.
+ * @param trustAuth Whether passwordless trust authentication is explicitly permitted.
  * @param schemas The list of database schemas managed by migration.
  * @param defaultSchema The default schema for Flyway metadata history.
  * @param placeholders Map of placeholder variables for script substitution.
@@ -20,7 +22,8 @@ import java.util.Map;
 public record MigrationConfig(
     String jdbcUrl,
     String username,
-    String password,
+    @Nullable String password,
+    boolean trustAuth,
     List<String> schemas,
     String defaultSchema,
     Map<String, String> placeholders) {
@@ -28,16 +31,54 @@ public record MigrationConfig(
   public MigrationConfig {
     requireNonNull(jdbcUrl, "jdbcUrl cannot be null");
     requireNonNull(username, "username cannot be null");
-    requireNonNull(password, "password cannot be null");
     requireNonNull(schemas, "schemas cannot be null");
     requireNonNull(defaultSchema, "defaultSchema cannot be null");
     requireNonNull(placeholders, "placeholders cannot be null");
+    if (!trustAuth && (password == null || password.isBlank())) {
+      throw new IllegalStateException(
+          "Database password is required for migration profile with username '"
+              + username
+              + "' unless trust-auth is enabled");
+    }
     schemas = List.copyOf(schemas);
     placeholders = Map.copyOf(placeholders);
   }
 
   /**
-   * Pure factory method for creating a {@link MigrationConfig}.
+   * Returns true if a non-blank password is provided.
+   *
+   * @return true if password is present and non-blank.
+   */
+  public boolean hasPassword() {
+    return password != null && !password.isBlank();
+  }
+
+  /**
+   * Pure factory method for creating a {@link MigrationConfig} with explicit trust authentication.
+   *
+   * @param jdbcUrl The JDBC database connection URL.
+   * @param username The administrative database username.
+   * @param password The administrative database password.
+   * @param trustAuth Whether passwordless trust authentication is enabled.
+   * @param schemas The list of database schemas managed by migration.
+   * @param defaultSchema The default schema for Flyway metadata history.
+   * @param placeholders Map of placeholder variables for script substitution.
+   * @return A new {@link MigrationConfig} instance.
+   */
+  public static MigrationConfig of(
+      String jdbcUrl,
+      String username,
+      @Nullable String password,
+      boolean trustAuth,
+      List<String> schemas,
+      String defaultSchema,
+      Map<String, String> placeholders) {
+    return new MigrationConfig(
+        jdbcUrl, username, password, trustAuth, schemas, defaultSchema, placeholders);
+  }
+
+  /**
+   * Convenience factory method defaulting trust authentication to false.
    *
    * @param jdbcUrl The JDBC database connection URL.
    * @param username The administrative database username.
@@ -50,11 +91,11 @@ public record MigrationConfig(
   public static MigrationConfig of(
       String jdbcUrl,
       String username,
-      String password,
+      @Nullable String password,
       List<String> schemas,
       String defaultSchema,
       Map<String, String> placeholders) {
-    return new MigrationConfig(jdbcUrl, username, password, schemas, defaultSchema, placeholders);
+    return of(jdbcUrl, username, password, false, schemas, defaultSchema, placeholders);
   }
 
   /**
@@ -73,7 +114,16 @@ public record MigrationConfig(
 
     var jdbcUrl = migrationConfig.getString("jdbc-url");
     var username = migrationConfig.getString("username");
-    var password = migrationConfig.getString("password");
+    var password =
+        migrationConfig.hasPath("password") ? migrationConfig.getString("password") : null;
+
+    var globalTrustKey = "larpconnect.data.database.trust-auth";
+    var globalTrustAuth = config.hasPath(globalTrustKey) && config.getBoolean(globalTrustKey);
+    var trustAuth =
+        migrationConfig.hasPath("trust-auth")
+            ? migrationConfig.getBoolean("trust-auth")
+            : globalTrustAuth;
+
     var schemas = migrationConfig.getStringList("schemas");
     var defaultSchema = migrationConfig.getString("default-schema");
 
@@ -83,6 +133,6 @@ public record MigrationConfig(
             "primary_domain", serverConfig.primaryDomain(),
             "admin_contact", serverConfig.adminContact());
 
-    return of(jdbcUrl, username, password, schemas, defaultSchema, placeholders);
+    return of(jdbcUrl, username, password, trustAuth, schemas, defaultSchema, placeholders);
   }
 }

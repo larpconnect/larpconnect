@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +44,25 @@ final class CliConfigBuilderTest {
     assertThat(config.getString("larpconnect.server.name")).isEqualTo("node-1");
     assertThat(config.getString("larpconnect.server.primary-domain")).isEqualTo("test.org");
     assertThat(config.getString("larpconnect.server.admin-contact")).isEqualTo("test@test.org");
+  }
+
+  @Test
+  @DisplayName("withServerOptions with Optional components applies overrides")
+  void withServerOptions_withOptionalComponents_appliesOverrides() {
+    var base = ConfigFactory.parseString("larpconnect.server.port = 8080");
+    var builder = new CliConfigBuilder(base);
+
+    var options =
+        new ServerOptions(
+            Optional.of("127.0.0.1"),
+            Optional.of(9090),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty());
+
+    var applied = builder.withServerOptions(options).build();
+    assertThat(applied.getString("larpconnect.server.host")).isEqualTo("127.0.0.1");
+    assertThat(applied.getInt("larpconnect.server.port")).isEqualTo(9090);
   }
 
   @Test
@@ -96,6 +116,45 @@ final class CliConfigBuilderTest {
   }
 
   @Test
+  @DisplayName("withMigrationOptions with Optional components applies overrides")
+  void withMigrationOptions_withOptionalComponents_appliesOverrides() {
+    var base =
+        ConfigFactory.parseString(
+            "larpconnect.data.database.migration.username = \"default_user\"");
+    var builder = new CliConfigBuilder(base);
+
+    var options =
+        new MigrationOptions(
+            Optional.of("jdbc:postgresql://db/njall"),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty());
+
+    var applied = builder.withMigrationOptions(options).build();
+    assertThat(applied.getString("larpconnect.data.database.migration.jdbc-url"))
+        .isEqualTo("jdbc:postgresql://db/njall");
+    assertThat(applied.getString("larpconnect.data.database.migration.username"))
+        .isEqualTo("default_user");
+  }
+
+  @Test
+  @DisplayName("withMigrationOptions applies trustAuth override")
+  void withMigrationOptions_appliesTrustAuthOverride() {
+    var base = ConfigFactory.parseString("larpconnect.data.database.migration.trust-auth = false");
+    var builder = new CliConfigBuilder(base);
+
+    var options = new MigrationOptions(null, null, null, true, null, null, null, null, null);
+
+    var applied = builder.withMigrationOptions(options).build();
+    assertThat(applied.getBoolean("larpconnect.data.database.migration.trust-auth")).isTrue();
+  }
+
+  @Test
   @DisplayName("withMigrationOptions ignores null options safely")
   void withMigrationOptions_whenNull_returnsUnmodified() {
     var base =
@@ -139,6 +198,26 @@ final class CliConfigBuilderTest {
 
       assertThat(config.getInt("larpconnect.server.port")).isEqualTo(9999);
       assertThat(config.getString("larpconnect.server.host")).isEqualTo("0.0.0.0");
+    } finally {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  @Test
+  @DisplayName("withConfigFile with Optional applies file or ignores empty")
+  void withConfigFile_withOptional_appliesOrIgnoresEmpty() throws IOException {
+    var tempFile = Files.createTempFile("larpconnect-opt-test", ".conf");
+    try {
+      Files.writeString(tempFile, "larpconnect.server.port = 7777\n");
+      var base = ConfigFactory.parseString("larpconnect.server.port = 8080");
+
+      var applied =
+          new CliConfigBuilder(base).withConfigFile(Optional.of(tempFile.toFile())).build();
+      assertThat(applied.getInt("larpconnect.server.port")).isEqualTo(7777);
+
+      var emptyApplied =
+          new CliConfigBuilder(base).withConfigFile(Optional.<java.io.File>empty()).build();
+      assertThat(emptyApplied.getInt("larpconnect.server.port")).isEqualTo(8080);
     } finally {
       Files.deleteIfExists(tempFile);
     }

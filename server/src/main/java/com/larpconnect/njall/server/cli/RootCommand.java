@@ -1,6 +1,7 @@
 package com.larpconnect.njall.server.cli;
 
 import java.io.File;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine.Command;
@@ -15,7 +16,7 @@ import picocli.CommandLine.ScopeType;
  */
 @Command(
     name = "larpconnect",
-    description = "Project Njall / LarpConnect server runtime and management CLI.",
+    description = "Njall / LarpConnect server runtime and management CLI.",
     mixinStandardHelpOptions = true,
     version = "0.1.0",
     subcommands = {ServerCommand.class, MigrateCommand.class})
@@ -43,8 +44,8 @@ public final class RootCommand implements Callable<Integer> {
     this.defaultServerCommand = defaultServerCommand;
   }
 
-  public @Nullable File configFile() {
-    return configFile;
+  public Optional<File> configFile() {
+    return Optional.ofNullable(configFile);
   }
 
   public boolean verbose() {

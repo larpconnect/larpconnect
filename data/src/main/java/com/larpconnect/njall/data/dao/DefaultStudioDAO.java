@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
+import com.larpconnect.njall.data.domain.DeletionFilter;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -24,16 +25,17 @@ final class DefaultStudioDAO implements StudioDAO {
 
   @Override
   public Optional<StudioLookup> findById(UUID id) {
-    return findById(id, false);
+    return findById(id, DeletionFilter.ACTIVE_ONLY);
   }
 
   @Override
-  public Optional<StudioLookup> findById(UUID studioId, boolean includeDeleted) {
+  public Optional<StudioLookup> findById(UUID studioId, DeletionFilter filter) {
     requireNonNull(studioId, "studioId cannot be null");
+    requireNonNull(filter, "filter cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var hql =
           "from StudioLookupEntity where studioId = :studioId"
-              + (includeDeleted ? "" : " and deletedAt is null");
+              + (filter.includesDeleted() ? "" : " and deletedAt is null");
       var entity =
           session
               .createQuery(hql, StudioLookupEntity.class)
@@ -45,16 +47,17 @@ final class DefaultStudioDAO implements StudioDAO {
 
   @Override
   public Optional<StudioLookup> findByAlias(String alias) {
-    return findByAlias(alias, false);
+    return findByAlias(alias, DeletionFilter.ACTIVE_ONLY);
   }
 
   @Override
-  public Optional<StudioLookup> findByAlias(String alias, boolean includeDeleted) {
+  public Optional<StudioLookup> findByAlias(String alias, DeletionFilter filter) {
     requireNonNull(alias, "alias cannot be null");
+    requireNonNull(filter, "filter cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var hql =
           "from StudioLookupEntity where alias = :alias"
-              + (includeDeleted ? "" : " and deletedAt is null");
+              + (filter.includesDeleted() ? "" : " and deletedAt is null");
       var entity =
           session
               .createQuery(hql, StudioLookupEntity.class)
@@ -66,15 +69,16 @@ final class DefaultStudioDAO implements StudioDAO {
 
   @Override
   public ImmutableList<StudioLookup> list() {
-    return list(false);
+    return list(DeletionFilter.ACTIVE_ONLY);
   }
 
   @Override
-  public ImmutableList<StudioLookup> list(boolean includeDeleted) {
+  public ImmutableList<StudioLookup> list(DeletionFilter filter) {
+    requireNonNull(filter, "filter cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var hql =
           "from StudioLookupEntity"
-              + (includeDeleted ? "" : " where deletedAt is null")
+              + (filter.includesDeleted() ? "" : " where deletedAt is null")
               + " order by alias asc";
       var entities = session.createQuery(hql, StudioLookupEntity.class).list();
       return entities.stream().map(this::toStudio).collect(ImmutableList.toImmutableList());

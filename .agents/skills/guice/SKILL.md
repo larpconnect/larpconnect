@@ -1,6 +1,6 @@
 ---
 name: guice
-description: Guidance for interacting with Guice
+description: Guidance for interacting with Guice and managing dependency injection more generally
 ---
 
 # Skill: Common Design Patterns

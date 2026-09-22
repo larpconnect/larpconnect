@@ -127,32 +127,50 @@ mutable fields (`private int count;`). Instead, define an immutable state record
 recursive behavior methods:
 
 ```java
-public final class CharacterAggregator {
+public final class CharacterAggregator extends AbstractBehavior<CharacterCommand> {
+
     private record State(ImmutableSet<String> activeIds) {}
 
-    private CharacterAggregator() {}
+    private final State state;
 
     public static Behavior<CharacterCommand> create() {
-        return active(new State(ImmutableSet.of()));
+        return Behaviors.setup(context -> new CharacterAggregator(context, new State(ImmutableSet.of())));
     }
 
-    private static Behavior<CharacterCommand> active(State state) {
-        return Behaviors.receiveMessage(message -> switch (message) {
-            case CharacterCommand.RegisterCharacter reg -> {
-                State nextState = new State(
-                    ImmutableSet.<String>builder()
-                        .addAll(state.activeIds())
-                        .add(reg.characterId())
-                        .build()
-                );
-                reg.replyTo().tell(new CharacterResponse.CharacterRegistered(reg.characterId()));
-                yield active(nextState);
-            }
-            case CharacterCommand.RetireCharacter ret -> {
-                // Return updated recursive state
-                yield active(state);
-            }
-        });
+    private CharacterAggregator(ActorContext<CharacterCommand> context, State state) {
+        super(context);
+        this.state = state;
+    }
+
+    @Override
+    public Receive<CharacterCommand> createReceive() {
+        return newReceiveBuilder()
+            .onMessage(CharacterCommand.RegisterCharacter.class, this::onRegister)
+            .onMessage(CharacterCommand.RetireCharacter.class, this::onRetire)
+            .build();
+    }
+
+    private Behavior<CharacterCommand> onRegister(CharacterCommand.RegisterCharacter cmd) {
+        State nextState = new State(
+            ImmutableSet.<String>builder()
+                .addAll(this.state.activeIds())
+                .add(cmd.characterId())
+                .build()
+        );
+
+        cmd.replyTo().tell(new CharacterResponse.CharacterRegistered(cmd.characterId()));
+        return new CharacterAggregator(getContext(), nextState);
+    }
+
+    private Behavior<CharacterCommand> onRetire(CharacterCommand.RetireCharacter cmd) {
+        State nextState = new State(
+            this.state.activeIds().stream()
+                .filter(id -> !id.equals(cmd.characterId()))
+                .collect(ImmutableSet.toImmutableSet())
+        );
+
+        // ...
+        return new CharacterAggregator(getContext(), nextState);
     }
 }
 ```

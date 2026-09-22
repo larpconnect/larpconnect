@@ -2,12 +2,16 @@ package com.larpconnect.njall.data.migration;
 
 import static java.util.Objects.requireNonNull;
 
+import com.google.inject.Inject;
 import com.larpconnect.njall.data.config.MigrationConfig;
 import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 
 /** Default implementation of {@link FlywayFactory} configuring Flyway. */
 final class DefaultFlywayFactory implements FlywayFactory {
+
+  @Inject
+  DefaultFlywayFactory() {}
 
   @Override
   public Flyway create(MigrationConfig config, DataSource dataSource) {

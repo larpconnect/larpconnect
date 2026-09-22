@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.http;
 
 import com.google.inject.Inject;
-import com.larpconnect.njall.api.RouteProvider;
 import java.util.Set;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;

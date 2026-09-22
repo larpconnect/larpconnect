@@ -224,4 +224,24 @@ final class RoleAdminRouteTest {
             .get(5, TimeUnit.SECONDS);
     assertThat(resp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
   }
+
+  @Test
+  @DisplayName("POST /api/admin/v1/roles returns 500 on ask failure or timeout")
+  void postRoles_timeoutReturns500() throws Exception {
+    ActorRef<RoleAdminCommand> silentActor =
+        system.systemActorOf(
+            Behaviors.empty(), "silentRolePost" + UUID.randomUUID(), Props.empty());
+
+    var route = new RoleAdminRoute(silentActor, system, objectMapper, Duration.ofMillis(300));
+    var handler = route.route().seal().function(system);
+
+    var resp =
+        handler
+            .apply(
+                HttpRequest.POST("/api/admin/v1/roles")
+                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"roleName\":\"security_admin\"}"))
+            .toCompletableFuture()
+            .get(5, TimeUnit.SECONDS);
+    assertThat(resp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
+  }
 }

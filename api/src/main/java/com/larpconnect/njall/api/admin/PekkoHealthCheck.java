@@ -11,7 +11,7 @@ public final class PekkoHealthCheck extends HealthCheck {
   private final ActorSystem<Void> system;
 
   @Inject
-  public PekkoHealthCheck(ActorSystem<Void> system) {
+  PekkoHealthCheck(ActorSystem<Void> system) {
     this.system = system;
   }
 

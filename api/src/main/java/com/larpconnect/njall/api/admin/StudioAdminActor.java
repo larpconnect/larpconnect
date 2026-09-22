@@ -1,6 +1,7 @@
 package com.larpconnect.njall.api.admin;
 
 import com.larpconnect.njall.data.dao.StudioDAO;
+import com.larpconnect.njall.data.domain.DeletionFilter;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.AbstractBehavior;
@@ -36,7 +37,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
         cmd.replyTo().tell(StudioAdminResponse.badRequest("Invalid studio alias: " + cmd.alias()));
         return this;
       }
-      var existing = studioDao.findByAlias(cmd.alias(), true);
+      var existing = studioDao.findByAlias(cmd.alias(), DeletionFilter.INCLUDE_DELETED);
       if (existing.isPresent()) {
         cmd.replyTo()
             .tell(StudioAdminResponse.conflict("Studio alias already exists: " + cmd.alias()));
@@ -52,7 +53,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onListStudios(StudioAdminCommand.ListStudios cmd) {
     try {
-      var studios = studioDao.list(cmd.includeDeleted());
+      var studios = studioDao.list(cmd.filter());
       cmd.replyTo().tell(StudioAdminResponse.list(studios));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "list studios", e);
@@ -62,7 +63,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onGetStudioById(StudioAdminCommand.GetStudioById cmd) {
     try {
-      var studio = studioDao.findById(cmd.studioId(), cmd.includeDeleted());
+      var studio = studioDao.findById(cmd.studioId(), cmd.filter());
       if (studio.isPresent()) {
         cmd.replyTo().tell(StudioAdminResponse.single(studio.get()));
       } else {
@@ -76,7 +77,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onGetStudioByAlias(StudioAdminCommand.GetStudioByAlias cmd) {
     try {
-      var studio = studioDao.findByAlias(cmd.alias(), cmd.includeDeleted());
+      var studio = studioDao.findByAlias(cmd.alias(), cmd.filter());
       if (studio.isPresent()) {
         cmd.replyTo().tell(StudioAdminResponse.single(studio.get()));
       } else {

@@ -10,7 +10,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
-import com.larpconnect.njall.api.RouteProvider;
+import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.dao.ServerDAO;
 import java.util.Set;

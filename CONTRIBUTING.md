@@ -2,7 +2,7 @@
 
 First off, thank you for considering contributing to LarpConnect!
 
-LarpConnect is partly an experiment to see what the limits of AI are for
+LarpConnect (Njall) is partly an experiment to see what the limits of AI are for
 programming complex tasks while maintaining strict code quality standards and
 rules. But it is, at its core, first and foremost, an online distributed
 application that is designed to run on the internet. So we welcome contributions
@@ -37,9 +37,6 @@ adherence to rigid coding standards.
   dependency management rules.
 - **Linear History:** We maintain a linear commit history. Rebasing on the main
   branch is required.
-- **You Are Not an AI:** You aren't expected to write like an AI or engage with
-  the `@AiContract` blocks at all. We have tools that will follow along and
-  hopefully clean these up accurately.
 
 ## Your First Contribution
 
@@ -53,7 +50,7 @@ If you're new to open source, here are some helpful resources:
 ## Getting Started
 
 1. **Fork the repository** and create your branch from `main`.
-2. **Branch naming:** Feature branches created by AIs must prefixed with
+2. **Branch naming:** Feature branches created by AIs should be prefixed with
    `<ai name>/`, e.g., `jules/`. This does not apply to humans or commits where you work on it locally: only where an agent is acting autonomously with only a code review.
 3. **Set up your environment:** Ensure you have Java 25 installed.
 4. **Make your changes.**

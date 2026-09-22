@@ -44,6 +44,7 @@ context: |
 rules:
   proposal:
     - Use the grill-me skill for all proposals that will affect java code.
+    - Must use glossary skill
   design:
     - Use the c4-diagrams skill
   adr:

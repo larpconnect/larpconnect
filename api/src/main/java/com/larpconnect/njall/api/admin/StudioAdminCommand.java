@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
+import com.larpconnect.njall.data.domain.DeletionFilter;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;
 
@@ -11,15 +12,15 @@ public sealed interface StudioAdminCommand {
       implements StudioAdminCommand {}
 
   /** Command instructing the actor to list registered studios. */
-  record ListStudios(boolean includeDeleted, ActorRef<StudioAdminResponse> replyTo)
+  record ListStudios(DeletionFilter filter, ActorRef<StudioAdminResponse> replyTo)
       implements StudioAdminCommand {}
 
   /** Command instructing the actor to find a studio by its unique UUID. */
-  record GetStudioById(UUID studioId, boolean includeDeleted, ActorRef<StudioAdminResponse> replyTo)
+  record GetStudioById(UUID studioId, DeletionFilter filter, ActorRef<StudioAdminResponse> replyTo)
       implements StudioAdminCommand {}
 
   /** Command instructing the actor to find a studio by its natural alias. */
   record GetStudioByAlias(
-      String alias, boolean includeDeleted, ActorRef<StudioAdminResponse> replyTo)
+      String alias, DeletionFilter filter, ActorRef<StudioAdminResponse> replyTo)
       implements StudioAdminCommand {}
 }

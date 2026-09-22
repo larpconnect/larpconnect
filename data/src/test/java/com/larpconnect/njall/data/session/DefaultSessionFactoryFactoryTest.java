@@ -103,12 +103,12 @@ final class DefaultSessionFactoryFactoryTest {
   }
 
   @Test
-  @DisplayName("create omits password setting when password is empty string")
+  @DisplayName("create omits password setting when password is empty string and trustAuth is true")
   void create_emptyPassword_omitsPasswordSetting() throws Exception {
     var testDriver = registerMockDriver();
     try {
       var factory = new DefaultSessionFactoryFactory();
-      var config = SessionConfig.of("jdbc:mockpg://localhost/test", "user", "", 2, 10, 5);
+      var config = SessionConfig.of("jdbc:mockpg://localhost/test", "user", "", true, 2, 10, 5);
 
       var sessionFactory = factory.create(config, List.of(DummyEntity.class));
 
@@ -122,12 +122,12 @@ final class DefaultSessionFactoryFactoryTest {
   }
 
   @Test
-  @DisplayName("create omits password setting when password is null")
+  @DisplayName("create omits password setting when password is null and trustAuth is true")
   void create_nullPassword_omitsPasswordSetting() throws Exception {
     var testDriver = registerMockDriver();
     try {
       var factory = new DefaultSessionFactoryFactory();
-      var config = SessionConfig.of("jdbc:mockpg://localhost/test", "user", null, 2, 10, 5);
+      var config = SessionConfig.of("jdbc:mockpg://localhost/test", "user", null, true, 2, 10, 5);
 
       var sessionFactory = factory.create(config, List.of(DummyEntity.class));
 

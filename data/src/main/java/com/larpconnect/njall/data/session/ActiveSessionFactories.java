@@ -1,5 +1,6 @@
 package com.larpconnect.njall.data.session;
 
+import com.google.inject.Inject;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.hibernate.SessionFactory;
@@ -8,6 +9,9 @@ import org.hibernate.SessionFactory;
 public final class ActiveSessionFactories {
 
   private final Set<SessionFactory> factories = ConcurrentHashMap.newKeySet();
+
+  @Inject
+  ActiveSessionFactories() {}
 
   /**
    * Registers an instantiated {@link SessionFactory} for lifecycle management.

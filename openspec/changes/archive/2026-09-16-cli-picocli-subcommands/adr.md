@@ -15,4 +15,4 @@ ADR review completed for this change. The adoption of Picocli, subcommand archit
 
 ## New Durable ADRs Created
 
-- [0004-picocli-subcommand-architecture.md](file:///c:/Users/nacht/larpconnect/adr/0004-picocli-subcommand-architecture.md) (Supersedes ADR-0003 Decision 4)
+- [0004-picocli-subcommand-architecture.md](../../../../adr/0004-picocli-subcommand-architecture.md) (Supersedes ADR-0003 Decision 4)

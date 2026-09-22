@@ -24,11 +24,11 @@ final class ServerCommandTest {
         "--primary-domain", "larpconnect.test",
         "--admin-contact", "ops@larpconnect.test");
 
-    assertThat(serverCommand.host()).isEqualTo("127.0.0.1");
-    assertThat(serverCommand.port()).isEqualTo(9090);
-    assertThat(serverCommand.name()).isEqualTo("alpha-node");
-    assertThat(serverCommand.primaryDomain()).isEqualTo("larpconnect.test");
-    assertThat(serverCommand.adminContact()).isEqualTo("ops@larpconnect.test");
+    assertThat(serverCommand.host()).contains("127.0.0.1");
+    assertThat(serverCommand.port()).contains(9090);
+    assertThat(serverCommand.name()).contains("alpha-node");
+    assertThat(serverCommand.primaryDomain()).contains("larpconnect.test");
+    assertThat(serverCommand.adminContact()).contains("ops@larpconnect.test");
   }
 
   @Test
@@ -75,6 +75,11 @@ final class ServerCommandTest {
   void defaultConstructor_initializes() {
     var serverCommand = new ServerCommand();
     assertThat(serverCommand).isNotNull();
+    assertThat(serverCommand.host()).isEmpty();
+    assertThat(serverCommand.port()).isEmpty();
+    assertThat(serverCommand.name()).isEmpty();
+    assertThat(serverCommand.primaryDomain()).isEmpty();
+    assertThat(serverCommand.adminContact()).isEmpty();
     assertThat(serverCommand.call()).isNull();
   }
 }

@@ -185,10 +185,10 @@ WSL automatically inherits the Windows current working directory when invoked:
 
 ```powershell
 # If your CWD in PowerShell is:
-# C:\Users\nacht\larpconnect
+# C:\Users\<username>\larpconnect
 
 # WSL automatically executes within:
-# /mnt/c/Users/nacht/larpconnect
+# /mnt/c/Users/<username>/larpconnect
 ```
 
 ### Guidelines for Paths
@@ -203,8 +203,8 @@ WSL automatically inherits the Windows current working directory when invoked:
    wsl ./gradlew :server\test
    ```
 2. **Absolute Paths in WSL**:
-   - Windows path `C:\Users\nacht\larpconnect\build.gradle.kts` maps to
-     `/mnt/c/Users/nacht/larpconnect/build.gradle.kts`.
+   - Windows path `C:\Users\<username>\larpconnect\build.gradle.kts` maps to
+     `/mnt/c/Users/<username>/larpconnect/build.gradle.kts`.
    - Never use Windows drive letters (`C:`) inside Linux arguments.
 
 ---

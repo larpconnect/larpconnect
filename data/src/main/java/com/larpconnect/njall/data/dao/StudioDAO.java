@@ -1,6 +1,7 @@
 package com.larpconnect.njall.data.dao;
 
 import com.google.common.collect.ImmutableList;
+import com.larpconnect.njall.data.domain.DeletionFilter;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,33 +15,45 @@ public non-sealed interface StudioDAO extends DAO<StudioLookup> {
    * @param alias The studio alias.
    * @return An Optional containing the studio if found, otherwise empty.
    */
-  Optional<StudioLookup> findByAlias(String alias);
+  default Optional<StudioLookup> findByAlias(String alias) {
+    return findByAlias(alias, DeletionFilter.ACTIVE_ONLY);
+  }
 
   /**
-   * Retrieves a studio by its unique alias, optionally including soft-deleted studios.
+   * Retrieves a studio by its unique alias according to the specified deletion filter.
    *
    * @param alias The studio alias.
-   * @param includeDeleted Whether to include soft-deleted studios.
+   * @param filter The deletion filter strategy.
    * @return An Optional containing the studio if found, otherwise empty.
    */
-  Optional<StudioLookup> findByAlias(String alias, boolean includeDeleted);
+  Optional<StudioLookup> findByAlias(String alias, DeletionFilter filter);
 
   /**
-   * Retrieves a studio by its public studioId, optionally including soft-deleted studios.
+   * Retrieves a studio by its public studioId according to the specified deletion filter.
    *
    * @param studioId The public studio UUID.
-   * @param includeDeleted Whether to include soft-deleted studios.
+   * @param filter The deletion filter strategy.
    * @return An Optional containing the studio if found, otherwise empty.
    */
-  Optional<StudioLookup> findById(UUID studioId, boolean includeDeleted);
+  Optional<StudioLookup> findById(UUID studioId, DeletionFilter filter);
 
   /**
-   * Lists studios, optionally including soft-deleted studios.
+   * Lists studios according to the specified deletion filter.
    *
-   * @param includeDeleted Whether to include soft-deleted studios.
+   * @param filter The deletion filter strategy.
    * @return Immutable list of studios.
    */
-  ImmutableList<StudioLookup> list(boolean includeDeleted);
+  ImmutableList<StudioLookup> list(DeletionFilter filter);
+
+  @Override
+  default Optional<StudioLookup> findById(UUID studioId) {
+    return findById(studioId, DeletionFilter.ACTIVE_ONLY);
+  }
+
+  @Override
+  default ImmutableList<StudioLookup> list() {
+    return list(DeletionFilter.ACTIVE_ONLY);
+  }
 
   /**
    * Creates and persists a new studio lookup record.

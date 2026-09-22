@@ -128,6 +128,8 @@ public final Utility {
 Note marking this as `final`  and `@Immutable`: these objects must always disallow inheritance and never carry state of any form. They
 must also have a `private` constructor to forbid instantiation.
 
+Loggers should _not_ be used in static utility classes or in static methods more generally: if logging is needed then the class should be turned into an injectable object.
+
 Strongly prefer, however, writing this as a Guice object that can be injected:
 
 ```java

@@ -5,7 +5,9 @@ import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.larpconnect.njall.data.domain.DeletionFilter;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -30,7 +32,7 @@ public final class StudioAdminRoute extends AllDirectives {
   private final Duration askTimeout;
 
   @Inject
-  public StudioAdminRoute(
+  StudioAdminRoute(
       ActorRef<StudioAdminCommand> studioAdminActor,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
@@ -68,9 +70,7 @@ public final class StudioAdminRoute extends AllDirectives {
                                 () ->
                                     parameterOptional(
                                         "include_deleted",
-                                        val ->
-                                            handleListStudios(
-                                                val.map(Boolean::parseBoolean).orElse(false)))),
+                                        val -> handleListStudios(parseDeletionFilter(val)))),
                             post(
                                 () ->
                                     entity(
@@ -84,15 +84,11 @@ public final class StudioAdminRoute extends AllDirectives {
                             () ->
                                 parameterOptional(
                                     "include_deleted",
-                                    val ->
-                                        handleGetStudio(
-                                            id, val.map(Boolean::parseBoolean).orElse(false)))))));
+                                    val -> handleGetStudio(id, parseDeletionFilter(val)))))));
   }
 
   private Route handleCreateStudio(CreateStudioRequest request) {
-    return onComplete(
-        () -> askCreateStudio(request.alias()),
-        responseTry -> mapResponseToRoute(responseTry, true));
+    return onComplete(() -> askCreateStudio(request.alias()), this::mapCreateResponse);
   }
 
   private CompletionStage<StudioAdminResponse> askCreateStudio(String alias) {
@@ -103,28 +99,24 @@ public final class StudioAdminRoute extends AllDirectives {
         system.scheduler());
   }
 
-  private Route handleListStudios(boolean includeDeleted) {
-    return onComplete(
-        () -> askListStudios(includeDeleted),
-        responseTry -> mapResponseToRoute(responseTry, false));
+  private Route handleListStudios(DeletionFilter filter) {
+    return onComplete(() -> askListStudios(filter), this::mapOkResponse);
   }
 
-  private CompletionStage<StudioAdminResponse> askListStudios(boolean includeDeleted) {
+  private CompletionStage<StudioAdminResponse> askListStudios(DeletionFilter filter) {
     return ask(
         studioAdminActor,
-        replyTo -> new StudioAdminCommand.ListStudios(includeDeleted, replyTo),
+        replyTo -> new StudioAdminCommand.ListStudios(filter, replyTo),
         askTimeout,
         system.scheduler());
   }
 
-  private Route handleGetStudio(String identifier, boolean includeDeleted) {
-    return onComplete(
-        () -> askGetStudio(identifier, includeDeleted),
-        responseTry -> mapResponseToRoute(responseTry, false));
+  private Route handleGetStudio(String identifier, DeletionFilter filter) {
+    return onComplete(() -> askGetStudio(identifier, filter), this::mapOkResponse);
   }
 
   private CompletionStage<StudioAdminResponse> askGetStudio(
-      String identifier, boolean includeDeleted) {
+      String identifier, DeletionFilter filter) {
     var maybeUuid = AdminValidation.tryParseUuid(identifier);
     return ask(
         studioAdminActor,
@@ -133,21 +125,25 @@ public final class StudioAdminRoute extends AllDirectives {
                 .map(
                     uuid ->
                         (StudioAdminCommand)
-                            new StudioAdminCommand.GetStudioById(uuid, includeDeleted, replyTo))
+                            new StudioAdminCommand.GetStudioById(uuid, filter, replyTo))
                 .orElseGet(
-                    () ->
-                        new StudioAdminCommand.GetStudioByAlias(
-                            identifier, includeDeleted, replyTo)),
+                    () -> new StudioAdminCommand.GetStudioByAlias(identifier, filter, replyTo)),
         askTimeout,
         system.scheduler());
   }
 
-  private Route mapResponseToRoute(
-      Try<StudioAdminResponse> responseTry, boolean isCreateOperation) {
+  private Route mapCreateResponse(Try<StudioAdminResponse> responseTry) {
     if (responseTry.isFailure()) {
       return handleActorFailure(responseTry.failed().get());
     }
-    return mapSuccessResponse(responseTry.get(), isCreateOperation);
+    return mapSuccessResponse(responseTry.get(), StatusCodes.CREATED);
+  }
+
+  private Route mapOkResponse(Try<StudioAdminResponse> responseTry) {
+    if (responseTry.isFailure()) {
+      return handleActorFailure(responseTry.failed().get());
+    }
+    return mapSuccessResponse(responseTry.get(), StatusCodes.OK);
   }
 
   private Route handleActorFailure(Throwable error) {
@@ -158,13 +154,10 @@ public final class StudioAdminRoute extends AllDirectives {
         Jackson.marshaller(objectMapper));
   }
 
-  private Route mapSuccessResponse(StudioAdminResponse response, boolean isCreateOperation) {
+  private Route mapSuccessResponse(StudioAdminResponse response, StatusCode successStatus) {
     return switch (response) {
       case StudioAdminResponse.StudioSingle single ->
-          complete(
-              resolveSuccessStatus(isCreateOperation),
-              single.studio(),
-              Jackson.marshaller(objectMapper));
+          complete(successStatus, single.studio(), Jackson.marshaller(objectMapper));
       case StudioAdminResponse.StudioList list ->
           completeOK(list.studios(), Jackson.marshaller(objectMapper));
       default -> mapErrorResponse(response);
@@ -201,7 +194,9 @@ public final class StudioAdminRoute extends AllDirectives {
     };
   }
 
-  private static StatusCode resolveSuccessStatus(boolean isCreateOperation) {
-    return isCreateOperation ? StatusCodes.CREATED : StatusCodes.OK;
+  private static DeletionFilter parseDeletionFilter(Optional<String> param) {
+    return param.filter(Boolean::parseBoolean).isPresent()
+        ? DeletionFilter.INCLUDE_DELETED
+        : DeletionFilter.ACTIVE_ONLY;
   }
 }

@@ -19,6 +19,7 @@ final class SessionConfigTest {
     assertThat(config.jdbcUrl()).isEqualTo(TEST_URL);
     assertThat(config.username()).isEqualTo("admin");
     assertThat(config.password()).isEqualTo("secret");
+    assertThat(config.trustAuth()).isFalse();
     assertThat(config.hasPassword()).isTrue();
     assertThat(config.minPoolSize()).isEqualTo(2);
     assertThat(config.maxPoolSize()).isEqualTo(10);
@@ -26,19 +27,39 @@ final class SessionConfigTest {
   }
 
   @Test
-  @DisplayName("of allows null, empty, or blank password with hasPassword returning false")
-  void of_nullOrBlankPassword_setsPasswordAndHasPasswordFalse() {
-    var nullConfig = SessionConfig.of(TEST_URL, "admin", null, 2, 10, 5);
+  @DisplayName("of with explicit trustAuth allows null, empty, or blank password")
+  void of_nullOrBlankPasswordWithTrustAuth_setsPasswordAndHasPasswordFalse() {
+    var nullConfig = SessionConfig.of(TEST_URL, "admin", null, true, 2, 10, 5);
     assertThat(nullConfig.password()).isNull();
+    assertThat(nullConfig.trustAuth()).isTrue();
     assertThat(nullConfig.hasPassword()).isFalse();
 
-    var emptyConfig = SessionConfig.of(TEST_URL, "admin", "", 2, 10, 5);
+    var emptyConfig = SessionConfig.of(TEST_URL, "admin", "", true, 2, 10, 5);
     assertThat(emptyConfig.password()).isEmpty();
+    assertThat(emptyConfig.trustAuth()).isTrue();
     assertThat(emptyConfig.hasPassword()).isFalse();
 
-    var blankConfig = SessionConfig.of(TEST_URL, "admin", "   ", 2, 10, 5);
+    var blankConfig = SessionConfig.of(TEST_URL, "admin", "   ", true, 2, 10, 5);
     assertThat(blankConfig.password()).isEqualTo("   ");
+    assertThat(blankConfig.trustAuth()).isTrue();
     assertThat(blankConfig.hasPassword()).isFalse();
+  }
+
+  @Test
+  @DisplayName(
+      "of throws IllegalStateException when password is null or blank and trustAuth is false")
+  void of_nullOrBlankPasswordWithoutTrustAuth_throwsIllegalStateException() {
+    assertThatThrownBy(() -> SessionConfig.of(TEST_URL, "admin", null, 2, 10, 5))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Database password is required for profile with username 'admin'");
+
+    assertThatThrownBy(() -> SessionConfig.of(TEST_URL, "admin", "", false, 2, 10, 5))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Database password is required for profile with username 'admin'");
+
+    assertThatThrownBy(() -> SessionConfig.of(TEST_URL, "admin", "   ", false, 2, 10, 5))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Database password is required for profile with username 'admin'");
   }
 
   @Test
@@ -89,6 +110,7 @@ final class SessionConfigTest {
     assertThat(sessionConfig.jdbcUrl()).isEqualTo("jdbc:postgresql://localhost:5432/test");
     assertThat(sessionConfig.username()).isEqualTo("njall_admin");
     assertThat(sessionConfig.password()).isEqualTo("admin_pass");
+    assertThat(sessionConfig.trustAuth()).isFalse();
     assertThat(sessionConfig.hasPassword()).isTrue();
     assertThat(sessionConfig.minPoolSize()).isEqualTo(3);
     assertThat(sessionConfig.maxPoolSize()).isEqualTo(15);
@@ -96,13 +118,14 @@ final class SessionConfigTest {
   }
 
   @Test
-  @DisplayName("fromConfig parses SessionConfig when password is omitted")
-  void fromConfig_omittedPassword_parsesWithNullPassword() {
+  @DisplayName("fromConfig parses SessionConfig when password is omitted but trustAuth is true")
+  void fromConfig_omittedPasswordWithTrustAuth_parsesSuccessfully() {
     var rawConfig =
         ConfigFactory.parseString(
             "admin {\n"
                 + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
                 + "  username = \"njall_admin\"\n"
+                + "  trust-auth = true\n"
                 + "  pool {\n"
                 + "    min-size = 3\n"
                 + "    max-size = 15\n"
@@ -113,12 +136,39 @@ final class SessionConfigTest {
     var sessionConfig = SessionConfig.fromConfig(rawConfig, "admin");
 
     assertThat(sessionConfig.password()).isNull();
+    assertThat(sessionConfig.trustAuth()).isTrue();
     assertThat(sessionConfig.hasPassword()).isFalse();
   }
 
   @Test
-  @DisplayName("fromConfig parses SessionConfig when password is empty string")
-  void fromConfig_emptyPassword_parsesWithEmptyPassword() {
+  @DisplayName(
+      "fromConfig parses SessionConfig when password is empty string but trustAuth is true")
+  void fromConfig_emptyPasswordWithTrustAuth_parsesSuccessfully() {
+    var rawConfig =
+        ConfigFactory.parseString(
+            "admin {\n"
+                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
+                + "  username = \"njall_admin\"\n"
+                + "  password = \"\"\n"
+                + "  trust-auth = true\n"
+                + "  pool {\n"
+                + "    min-size = 3\n"
+                + "    max-size = 15\n"
+                + "    timeout-seconds = 10\n"
+                + "  }\n"
+                + "}");
+
+    var sessionConfig = SessionConfig.fromConfig(rawConfig, "admin");
+
+    assertThat(sessionConfig.password()).isEmpty();
+    assertThat(sessionConfig.trustAuth()).isTrue();
+    assertThat(sessionConfig.hasPassword()).isFalse();
+  }
+
+  @Test
+  @DisplayName(
+      "fromConfig throws IllegalStateException when password is blank and trustAuth is false")
+  void fromConfig_blankPasswordWithoutTrustAuth_throwsIllegalStateException() {
     var rawConfig =
         ConfigFactory.parseString(
             "admin {\n"
@@ -132,10 +182,55 @@ final class SessionConfigTest {
                 + "  }\n"
                 + "}");
 
-    var sessionConfig = SessionConfig.fromConfig(rawConfig, "admin");
+    assertThatThrownBy(() -> SessionConfig.fromConfig(rawConfig, "admin"))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "Database password is required for profile with username 'njall_admin'");
+  }
 
-    assertThat(sessionConfig.password()).isEmpty();
-    assertThat(sessionConfig.hasPassword()).isFalse();
+  @Test
+  @DisplayName("fromConfig inherits global trust-auth when profile does not declare one")
+  void fromConfig_globalTrustAuth_inheritsSetting() {
+    var rawConfig =
+        ConfigFactory.parseString(
+            "larpconnect.data.database.trust-auth = true\n"
+                + "admin {\n"
+                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
+                + "  username = \"njall_admin\"\n"
+                + "  password = \"\"\n"
+                + "  pool {\n"
+                + "    min-size = 3\n"
+                + "    max-size = 15\n"
+                + "    timeout-seconds = 10\n"
+                + "  }\n"
+                + "}");
+
+    var sessionConfig = SessionConfig.fromConfig(rawConfig, "admin");
+    assertThat(sessionConfig.trustAuth()).isTrue();
+  }
+
+  @Test
+  @DisplayName("fromConfig profile trust-auth overrides global setting")
+  void fromConfig_profileOverride_takesPrecedenceOverGlobal() {
+    var rawConfig =
+        ConfigFactory.parseString(
+            "larpconnect.data.database.trust-auth = true\n"
+                + "admin {\n"
+                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
+                + "  username = \"njall_admin\"\n"
+                + "  password = \"\"\n"
+                + "  trust-auth = false\n"
+                + "  pool {\n"
+                + "    min-size = 3\n"
+                + "    max-size = 15\n"
+                + "    timeout-seconds = 10\n"
+                + "  }\n"
+                + "}");
+
+    assertThatThrownBy(() -> SessionConfig.fromConfig(rawConfig, "admin"))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "Database password is required for profile with username 'njall_admin'");
   }
 
   @Test
