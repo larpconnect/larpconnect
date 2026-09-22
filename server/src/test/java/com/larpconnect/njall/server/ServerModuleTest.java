@@ -15,6 +15,7 @@ import com.google.inject.util.Modules;
 import com.larpconnect.njall.api.admin.AdminRoute;
 import com.larpconnect.njall.api.admin.ServerAdminCommand;
 import com.larpconnect.njall.common.annotation.Blocking;
+import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.session.SessionFactoryFactory;
 import com.larpconnect.njall.server.http.HttpServerService;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +56,7 @@ final class ServerModuleTest {
     var serverManager = injector.getInstance(ServerManager.class);
     var serverManagerService = injector.getInstance(ServerManagerService.class);
     var hookRegistrar = injector.getInstance(ShutdownHookRegistrar.class);
+    var adminSessionFactory = injector.getInstance(Key.get(SessionFactory.class, NjallAdmin.class));
 
     assertThat(serverService).isNotNull();
     assertThat(system).isNotNull();
@@ -66,6 +68,7 @@ final class ServerModuleTest {
     assertThat(serverManagerService).isNotNull();
     assertThat(serverManager).isSameAs(serverManagerService);
     assertThat(hookRegistrar).isNotNull();
+    assertThat(adminSessionFactory).isNotNull();
 
     CoordinatedShutdown.get(system)
         .runAll(CoordinatedShutdown.jvmExitReason())

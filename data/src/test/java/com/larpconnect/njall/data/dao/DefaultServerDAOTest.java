@@ -34,7 +34,7 @@ final class DefaultServerDAOTest {
     sessionFactory = mock(SessionFactory.class);
     session = mock(Session.class);
     when(sessionFactory.openSession()).thenReturn(session);
-    dao = new DefaultServerDAO(sessionFactory);
+    dao = new DefaultServerDAO(() -> sessionFactory);
   }
 
   @Test

@@ -20,4 +20,5 @@ dependencies {
     testImplementation(libs.cucumber.java)
     testImplementation(libs.cucumber.junit.platform.engine)
     testImplementation(libs.junit.platform.suite)
+    testImplementation(libs.archunit.junit5)
 }
