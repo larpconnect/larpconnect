@@ -10,6 +10,7 @@ import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.model.StatusCode;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
@@ -113,20 +114,34 @@ public final class RoleAdminRoute extends AllDirectives {
 
   private Route mapResponseToRoute(Try<RoleAdminResponse> responseTry, boolean isCreateOperation) {
     if (responseTry.isFailure()) {
-      logger.error("Role admin actor request failed", responseTry.failed().get());
-      return complete(
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          AdminErrorResponse.of(500, "Internal server error"),
-          Jackson.marshaller(objectMapper));
+      return handleActorFailure(responseTry.failed().get());
     }
-    return switch (responseTry.get()) {
+    return mapSuccessResponse(responseTry.get(), isCreateOperation);
+  }
+
+  private Route handleActorFailure(Throwable error) {
+    logger.error("Role admin actor request failed", error);
+    return complete(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        AdminErrorResponse.of(500, "Internal server error"),
+        Jackson.marshaller(objectMapper));
+  }
+
+  private Route mapSuccessResponse(RoleAdminResponse response, boolean isCreateOperation) {
+    return switch (response) {
       case RoleAdminResponse.RoleSingle single ->
           complete(
-              isCreateOperation ? StatusCodes.CREATED : StatusCodes.OK,
+              resolveSuccessStatus(isCreateOperation),
               single.role(),
               Jackson.marshaller(objectMapper));
       case RoleAdminResponse.RoleList list ->
           completeOK(list.roles(), Jackson.marshaller(objectMapper));
+      default -> mapErrorResponse(response);
+    };
+  }
+
+  private Route mapErrorResponse(RoleAdminResponse response) {
+    return switch (response) {
       case RoleAdminResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
@@ -147,6 +162,15 @@ public final class RoleAdminRoute extends AllDirectives {
               StatusCodes.INTERNAL_SERVER_ERROR,
               AdminErrorResponse.of(500, f.message()),
               Jackson.marshaller(objectMapper));
+      default ->
+          complete(
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              AdminErrorResponse.of(500, "Unknown error"),
+              Jackson.marshaller(objectMapper));
     };
+  }
+
+  private static StatusCode resolveSuccessStatus(boolean isCreateOperation) {
+    return isCreateOperation ? StatusCodes.CREATED : StatusCodes.OK;
   }
 }

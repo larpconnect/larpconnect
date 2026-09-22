@@ -16,10 +16,12 @@ import io.cucumber.java.BeforeAll;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -40,10 +42,36 @@ public final class DatabaseMigrationSteps {
           .withUsername("postgres")
           .withPassword("postgres");
 
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+  private static final String NJALL_PASSWORD = generateRandomPassword();
+  private static final String NJALL_ADMIN_PASSWORD = generateRandomPassword();
+  private static final String NJALL_USERS_PASSWORD = generateRandomPassword();
+  private static final String NJALL_SYSTEM_PASSWORD = generateRandomPassword();
+
   private MigrationConfig migrationConfig;
   private int lastMigrationsCount;
   private Integer lastServerExitCode;
   private String[] serverArgs;
+
+  private static String generateRandomPassword() {
+    return HexFormat.of().formatHex(SECURE_RANDOM.generateSeed(16));
+  }
+
+  /**
+   * Returns the dynamically generated password for the given PostgreSQL role.
+   *
+   * @param role database role name
+   * @return generated password string
+   */
+  public static String getPasswordFor(String role) {
+    return switch (role) {
+      case "njall" -> NJALL_PASSWORD;
+      case "njall_admin" -> NJALL_ADMIN_PASSWORD;
+      case "njall_users" -> NJALL_USERS_PASSWORD;
+      case "njall_system" -> NJALL_SYSTEM_PASSWORD;
+      default -> throw new IllegalArgumentException("Unknown role: " + role);
+    };
+  }
 
   @BeforeAll
   public static void setUpContainer() throws Exception {
@@ -71,23 +99,48 @@ public final class DatabaseMigrationSteps {
 
   private static void provisionRoles() throws Exception {
     var sql =
-        """
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall') THEN
-            CREATE ROLE njall WITH LOGIN SUPERUSER PASSWORD 'njall';
-          END IF;
-          IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_admin') THEN
-            CREATE ROLE njall_admin WITH LOGIN PASSWORD 'njall_admin';
-          END IF;
-          IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_users') THEN
-            CREATE ROLE njall_users WITH LOGIN PASSWORD 'njall_users';
-          END IF;
-          IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_system') THEN
-            CREATE ROLE njall_system WITH LOGIN PASSWORD 'njall_system';
-          END IF;
-        END $$;
-        """;
+        "DO $$\n"
+            + "BEGIN\n"
+            + "  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall') THEN\n"
+            + "    CREATE ROLE njall WITH LOGIN SUPERUSER PASSWORD '"
+            + NJALL_PASSWORD
+            + "';\n"
+            + "  ELSE\n"
+            + "    ALTER ROLE njall WITH PASSWORD '"
+            + NJALL_PASSWORD
+            + "';\n"
+            + "  END IF;\n"
+            + "  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_admin')"
+            + " THEN\n"
+            + "    CREATE ROLE njall_admin WITH LOGIN PASSWORD '"
+            + NJALL_ADMIN_PASSWORD
+            + "';\n"
+            + "  ELSE\n"
+            + "    ALTER ROLE njall_admin WITH PASSWORD '"
+            + NJALL_ADMIN_PASSWORD
+            + "';\n"
+            + "  END IF;\n"
+            + "  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_users')"
+            + " THEN\n"
+            + "    CREATE ROLE njall_users WITH LOGIN PASSWORD '"
+            + NJALL_USERS_PASSWORD
+            + "';\n"
+            + "  ELSE\n"
+            + "    ALTER ROLE njall_users WITH PASSWORD '"
+            + NJALL_USERS_PASSWORD
+            + "';\n"
+            + "  END IF;\n"
+            + "  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_system')"
+            + " THEN\n"
+            + "    CREATE ROLE njall_system WITH LOGIN PASSWORD '"
+            + NJALL_SYSTEM_PASSWORD
+            + "';\n"
+            + "  ELSE\n"
+            + "    ALTER ROLE njall_system WITH PASSWORD '"
+            + NJALL_SYSTEM_PASSWORD
+            + "';\n"
+            + "  END IF;\n"
+            + "END $$;\n";
     try (var conn = openConnection("postgres", "postgres");
         var stmt = conn.createStatement()) {
       stmt.execute(sql);
@@ -116,7 +169,10 @@ public final class DatabaseMigrationSteps {
     assertThat(arg).isEqualTo("migrate");
     this.serverArgs =
         new String[] {
-          "migrate", "--jdbc-url=" + POSTGRES.getJdbcUrl(), "--username=njall", "--password=njall"
+          "migrate",
+          "--jdbc-url=" + POSTGRES.getJdbcUrl(),
+          "--username=njall",
+          "--password=" + NJALL_PASSWORD
         };
   }
 
@@ -127,7 +183,7 @@ public final class DatabaseMigrationSteps {
           "migrate",
           "--jdbc-url=" + POSTGRES.getJdbcUrl(),
           "--username=njall",
-          "--password=njall",
+          "--password=" + NJALL_PASSWORD,
           "--default-schema=njall",
           "--server-name=alpha-node",
           "--primary-domain=larpconnect.test",
@@ -178,7 +234,7 @@ public final class DatabaseMigrationSteps {
         "SELECT n.nspname, r.rolname FROM pg_namespace n "
             + "JOIN pg_roles r ON n.nspowner = r.oid "
             + "WHERE n.nspname IN (?, ?, ?, ?)";
-    try (var conn = openConnection("njall", "njall");
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
         var stmt = conn.prepareStatement(query)) {
       stmt.setString(1, s1);
       stmt.setString(2, s2);
@@ -200,14 +256,14 @@ public final class DatabaseMigrationSteps {
           + " {string}")
   public void roleHasUsageAndSelectOnNjall(
       String role, String s1, String s2, String s3, String tableSchema) throws Exception {
-    assertCanSelectFromServers(role, role);
+    assertCanSelectFromServers(role, getPasswordFor(role));
   }
 
   @Then("role {string} has USAGE on {string}, {string} and SELECT on all tables in {string}")
   public void roleHasUsageAndSelectOnNjallShort(
       String role, String s1, String s2, String tableSchema) throws Exception {
-    assertCanSelectFromServers(role, role);
-    assertCannotInsertIntoServers(role, role);
+    assertCanSelectFromServers(role, getPasswordFor(role));
+    assertCannotInsertIntoServers(role, getPasswordFor(role));
   }
 
   @Then("table {string} contains a server with name {string} and primary domain {string}")
@@ -215,7 +271,7 @@ public final class DatabaseMigrationSteps {
       String table, String expectedName, String expectedDomain) throws Exception {
     assertThat(table).isEqualTo("njall.servers");
     var query = "SELECT id, name, primary_domain FROM njall.servers WHERE name = ?";
-    try (var conn = openConnection("njall", "njall");
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
         var stmt = conn.prepareStatement(query)) {
       stmt.setString(1, expectedName);
       try (var rs = stmt.executeQuery()) {
@@ -233,7 +289,7 @@ public final class DatabaseMigrationSteps {
     assertThat(table).isEqualTo("njall.server_contacts");
     var query =
         "SELECT id, role_type, contact_type, contact FROM njall.server_contacts WHERE contact = ?";
-    try (var conn = openConnection("njall", "njall");
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
         var stmt = conn.prepareStatement(query)) {
       stmt.setString(1, expectedEmail);
       try (var rs = stmt.executeQuery()) {
@@ -247,7 +303,7 @@ public final class DatabaseMigrationSteps {
 
   @Then("database migrations are executed to completion")
   public void databaseMigrationsAreExecutedToCompletion() throws Exception {
-    try (var conn = openConnection("njall", "njall");
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
         var stmt = conn.createStatement();
         var rs = stmt.executeQuery("SELECT count(*) FROM njall.flyway_schema_history")) {
       assertThat(rs.next()).isTrue();
@@ -271,7 +327,7 @@ public final class DatabaseMigrationSteps {
     var schema = parts.getFirst();
     var table = parts.get(1);
     var query = "SELECT tableowner FROM pg_tables WHERE schemaname = ? AND tablename = ?";
-    try (var conn = openConnection("njall", "njall");
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
         var stmt = conn.prepareStatement(query)) {
       stmt.setString(1, schema);
       stmt.setString(2, table);
@@ -286,7 +342,7 @@ public final class DatabaseMigrationSteps {
   public void roleHasUsageAndSelectOnTable(String role, String schema, String table)
       throws Exception {
     var query = "SELECT count(*) FROM " + schema + "." + table;
-    try (var conn = openConnection(role, role);
+    try (var conn = openConnection(role, getPasswordFor(role));
         var stmt = conn.createStatement();
         var rs = stmt.executeQuery(query)) {
       assertThat(rs.next()).isTrue();
@@ -296,7 +352,7 @@ public final class DatabaseMigrationSteps {
   @Then("role {string} has no SELECT on table {string}")
   public void roleHasNoSelectOnTable(String role, String table) throws Exception {
     var query = "SELECT count(*) FROM " + table;
-    try (var conn = openConnection(role, role);
+    try (var conn = openConnection(role, getPasswordFor(role));
         var stmt = conn.createStatement()) {
       assertThatThrownBy(
               () -> {
@@ -317,7 +373,7 @@ public final class DatabaseMigrationSteps {
     var schema = parts.getFirst();
     var table = parts.get(1);
     var query = "SELECT rowsecurity FROM pg_tables WHERE schemaname = ? AND tablename = ?";
-    try (var conn = openConnection("njall", "njall");
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
         var stmt = conn.prepareStatement(query)) {
       stmt.setString(1, schema);
       stmt.setString(2, table);
@@ -360,7 +416,7 @@ public final class DatabaseMigrationSteps {
     return MigrationConfig.of(
         POSTGRES.getJdbcUrl(),
         "njall",
-        "njall",
+        NJALL_PASSWORD,
         List.of("njall", "njall_admin", "njall_users", "njall_system"),
         "njall",
         Map.of(
@@ -382,11 +438,11 @@ public final class DatabaseMigrationSteps {
                     Map.entry(
                         "larpconnect.data.database.admin.jdbc-url", migrationConfig.jdbcUrl()),
                     Map.entry("larpconnect.data.database.admin.username", "njall_admin"),
-                    Map.entry("larpconnect.data.database.admin.password", "njall_admin"),
+                    Map.entry("larpconnect.data.database.admin.password", NJALL_ADMIN_PASSWORD),
                     Map.entry(
                         "larpconnect.data.database.users.jdbc-url", migrationConfig.jdbcUrl()),
                     Map.entry("larpconnect.data.database.users.username", "njall_users"),
-                    Map.entry("larpconnect.data.database.users.password", "njall_users"),
+                    Map.entry("larpconnect.data.database.users.password", NJALL_USERS_PASSWORD),
                     Map.entry(
                         "larpconnect.server.name",
                         migrationConfig.placeholders().get("server_name")),

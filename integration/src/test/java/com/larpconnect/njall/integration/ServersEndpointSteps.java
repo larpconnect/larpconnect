@@ -168,13 +168,13 @@ public final class ServersEndpointSteps {
             "larpconnect.data.database.admin.username",
             "njall_admin",
             "larpconnect.data.database.admin.password",
-            "njall_admin",
+            DatabaseMigrationSteps.getPasswordFor("njall_admin"),
             "larpconnect.data.database.users.jdbc-url",
             jdbcUrl,
             "larpconnect.data.database.users.username",
             "njall_users",
             "larpconnect.data.database.users.password",
-            "njall_users");
+            DatabaseMigrationSteps.getPasswordFor("njall_users"));
     return ConfigFactory.parseMap(configMap).withFallback(ConfigFactory.load());
   }
 }

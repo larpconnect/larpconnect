@@ -239,7 +239,10 @@ public final class AdminManagementApiSteps {
             + "njall_admin.admin_roles, "
             + "njall_admin.studios_lookup CASCADE";
     try (var conn =
-            DriverManager.getConnection(DatabaseMigrationSteps.getJdbcUrl(), "njall", "njall");
+            DriverManager.getConnection(
+                DatabaseMigrationSteps.getJdbcUrl(),
+                "njall",
+                DatabaseMigrationSteps.getPasswordFor("njall"));
         var stmt = conn.createStatement()) {
       stmt.execute(sql);
     }
@@ -257,13 +260,13 @@ public final class AdminManagementApiSteps {
             "larpconnect.data.database.admin.username",
             "njall_admin",
             "larpconnect.data.database.admin.password",
-            "njall_admin",
+            DatabaseMigrationSteps.getPasswordFor("njall_admin"),
             "larpconnect.data.database.users.jdbc-url",
             jdbcUrl,
             "larpconnect.data.database.users.username",
             "njall_users",
             "larpconnect.data.database.users.password",
-            "njall_users");
+            DatabaseMigrationSteps.getPasswordFor("njall_users"));
     return ConfigFactory.parseMap(configMap).withFallback(ConfigFactory.load());
   }
 }
