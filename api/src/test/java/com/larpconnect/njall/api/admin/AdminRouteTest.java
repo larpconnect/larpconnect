@@ -85,6 +85,39 @@ final class AdminRouteTest {
         ImmutableList.of(contact));
   }
 
+  private static StudioAdminRoute dummyStudioRoute() {
+    ActorRef<StudioAdminCommand> actor =
+        system.systemActorOf(
+            Behaviors.empty(), "dummyStudioActor" + UUID.randomUUID(), Props.empty());
+    return new StudioAdminRoute(actor, system, objectMapper);
+  }
+
+  private static UserAdminRoute dummyUserRoute() {
+    ActorRef<UserAdminCommand> actor =
+        system.systemActorOf(
+            Behaviors.empty(), "dummyUserActor" + UUID.randomUUID(), Props.empty());
+    return new UserAdminRoute(actor, system, objectMapper);
+  }
+
+  private static RoleAdminRoute dummyRoleRoute() {
+    ActorRef<RoleAdminCommand> actor =
+        system.systemActorOf(
+            Behaviors.empty(), "dummyRoleActor" + UUID.randomUUID(), Props.empty());
+    return new RoleAdminRoute(actor, system, objectMapper);
+  }
+
+  private static DefaultAdminRoute createRoute(
+      ActorRef<HealthCheckCommand> healthActor, ActorRef<ServerAdminCommand> serverActor) {
+    return new DefaultAdminRoute(
+        healthActor,
+        serverActor,
+        dummyStudioRoute(),
+        dummyUserRoute(),
+        dummyRoleRoute(),
+        system,
+        objectMapper);
+  }
+
   @Test
   @DisplayName("GET /api/admin/v1/health returns 200 OK with empty body when healthy")
   void route_healthyResponse_returns200Ok() throws Exception {
@@ -100,7 +133,7 @@ final class AdminRouteTest {
             "healthyActor" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new DefaultAdminRoute(healthActor, dummyServerActor(), system, objectMapper);
+    var route = createRoute(healthActor, dummyServerActor());
     var handler = route.route().seal().function(system);
 
     var response =
@@ -134,7 +167,7 @@ final class AdminRouteTest {
             "unhealthyActor" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new DefaultAdminRoute(healthActor, dummyServerActor(), system, objectMapper);
+    var route = createRoute(healthActor, dummyServerActor());
     var handler = route.route().seal().function(system);
 
     var response =
@@ -162,7 +195,7 @@ final class AdminRouteTest {
             "silentHealthActor" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new DefaultAdminRoute(silentHealthActor, dummyServerActor(), system, objectMapper);
+    var route = createRoute(silentHealthActor, dummyServerActor());
     var handler = route.route().seal().function(system);
 
     var response =
@@ -190,7 +223,7 @@ final class AdminRouteTest {
             "serverSuccessActor" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new DefaultAdminRoute(dummyHealthActor(), serverActor, system, objectMapper);
+    var route = createRoute(dummyHealthActor(), serverActor);
     var handler = route.route().seal().function(system);
 
     var response =
@@ -229,7 +262,7 @@ final class AdminRouteTest {
             "serverFailureActor" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new DefaultAdminRoute(dummyHealthActor(), serverActor, system, objectMapper);
+    var route = createRoute(dummyHealthActor(), serverActor);
     var handler = route.route().seal().function(system);
 
     var response =
@@ -250,7 +283,7 @@ final class AdminRouteTest {
             "silentServerActor" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new DefaultAdminRoute(dummyHealthActor(), silentServerActor, system, objectMapper);
+    var route = createRoute(dummyHealthActor(), silentServerActor);
     var handler = route.route().seal().function(system);
 
     var response =
@@ -265,7 +298,7 @@ final class AdminRouteTest {
   @Test
   @DisplayName("POST /api/admin/v1/servers is rejected with 405 Method Not Allowed")
   void route_postServers_returnsMethodNotAllowed() throws Exception {
-    var route = new DefaultAdminRoute(dummyHealthActor(), dummyServerActor(), system, objectMapper);
+    var route = createRoute(dummyHealthActor(), dummyServerActor());
     var handler = route.route().seal().function(system);
 
     var response =

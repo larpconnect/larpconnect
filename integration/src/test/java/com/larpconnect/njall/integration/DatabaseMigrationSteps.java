@@ -3,6 +3,7 @@ package com.larpconnect.njall.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.google.common.base.Splitter;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.larpconnect.njall.data.config.MigrationConfig;
@@ -262,6 +263,67 @@ public final class DatabaseMigrationSteps {
   @Then("zero migrations are applied")
   public void zeroMigrationsAreApplied() {
     assertThat(lastMigrationsCount).isZero();
+  }
+
+  @Then("table {string} exists and is owned by {string}")
+  public void tableExistsAndIsOwnedBy(String fullTable, String expectedOwner) throws Exception {
+    var parts = Splitter.on('.').splitToList(fullTable);
+    var schema = parts.getFirst();
+    var table = parts.get(1);
+    var query = "SELECT tableowner FROM pg_tables WHERE schemaname = ? AND tablename = ?";
+    try (var conn = openConnection("njall", "njall");
+        var stmt = conn.prepareStatement(query)) {
+      stmt.setString(1, schema);
+      stmt.setString(2, table);
+      try (var rs = stmt.executeQuery()) {
+        assertThat(rs.next()).isTrue();
+        assertThat(rs.getString("tableowner")).isEqualTo(expectedOwner);
+      }
+    }
+  }
+
+  @Then("role {string} has USAGE on schema {string} and SELECT on table {string}")
+  public void roleHasUsageAndSelectOnTable(String role, String schema, String table)
+      throws Exception {
+    var query = "SELECT count(*) FROM " + schema + "." + table;
+    try (var conn = openConnection(role, role);
+        var stmt = conn.createStatement();
+        var rs = stmt.executeQuery(query)) {
+      assertThat(rs.next()).isTrue();
+    }
+  }
+
+  @Then("role {string} has no SELECT on table {string}")
+  public void roleHasNoSelectOnTable(String role, String table) throws Exception {
+    var query = "SELECT count(*) FROM " + table;
+    try (var conn = openConnection(role, role);
+        var stmt = conn.createStatement()) {
+      assertThatThrownBy(
+              () -> {
+                try (var rs = stmt.executeQuery(query)) {
+                  assertThat(rs.next()).isFalse();
+                }
+              })
+          .isInstanceOf(SQLException.class)
+          .hasMessageContaining("permission denied");
+    }
+  }
+
+  @Then("table {string} has row level security enabled")
+  public void tableHasRowLevelSecurityEnabled(String fullTable) throws Exception {
+    var parts = Splitter.on('.').splitToList(fullTable);
+    var schema = parts.getFirst();
+    var table = parts.get(1);
+    var query = "SELECT rowsecurity FROM pg_tables WHERE schemaname = ? AND tablename = ?";
+    try (var conn = openConnection("njall", "njall");
+        var stmt = conn.prepareStatement(query)) {
+      stmt.setString(1, schema);
+      stmt.setString(2, table);
+      try (var rs = stmt.executeQuery()) {
+        assertThat(rs.next()).isTrue();
+        assertThat(rs.getBoolean("rowsecurity")).isTrue();
+      }
+    }
   }
 
   private void assertCanSelectFromServers(String user, String pass) throws Exception {

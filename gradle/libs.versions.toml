@@ -53,6 +53,7 @@ pekko-http-testkit = { group = "org.apache.pekko", name = "pekko-http-testkit_3"
 pekko-http-jackson = { group = "org.apache.pekko", name = "pekko-http-jackson_3", version.ref = "pekko-http" }
 jackson-bom = { group = "com.fasterxml.jackson", name = "jackson-bom", version.ref = "jackson"}
 jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310"}
+jackson-datatype-guava = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-guava" }
 hibernate-bom = { group = "org.hibernate.orm", name = "hibernate-platform", version.ref = "hibernate" }
 hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
