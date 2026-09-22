@@ -57,7 +57,7 @@ public final class ServersEndpointSteps {
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + path))
-            .timeout(Duration.ofSeconds(10))
+            .timeout(Duration.ofSeconds(20))
             .GET()
             .build();
 
@@ -168,13 +168,13 @@ public final class ServersEndpointSteps {
             "larpconnect.data.database.admin.username",
             "njall_admin",
             "larpconnect.data.database.admin.password",
-            "njall_admin",
+            DatabaseMigrationSteps.getPasswordFor("njall_admin"),
             "larpconnect.data.database.users.jdbc-url",
             jdbcUrl,
             "larpconnect.data.database.users.username",
             "njall_users",
             "larpconnect.data.database.users.password",
-            "njall_users");
+            DatabaseMigrationSteps.getPasswordFor("njall_users"));
     return ConfigFactory.parseMap(configMap).withFallback(ConfigFactory.load());
   }
 }

@@ -45,6 +45,15 @@ final class ApiModuleTest {
             bind(com.larpconnect.njall.data.dao.ServerDAO.class)
                 .toInstance(
                     org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.ServerDAO.class));
+            bind(com.larpconnect.njall.data.dao.StudioDAO.class)
+                .toInstance(
+                    org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.StudioDAO.class));
+            bind(com.larpconnect.njall.data.dao.AdminRoleDAO.class)
+                .toInstance(
+                    org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.AdminRoleDAO.class));
+            bind(com.larpconnect.njall.data.dao.AdminUserDAO.class)
+                .toInstance(
+                    org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.AdminUserDAO.class));
             bind(Props.class).annotatedWith(Blocking.class).toInstance(Props.empty());
           }
         };

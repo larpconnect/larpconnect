@@ -27,7 +27,13 @@ final class DaoModuleTest {
     var injector = Guice.createInjector(mockModule, new DaoModule());
 
     var serverDao = injector.getInstance(ServerDAO.class);
+    var roleDao = injector.getInstance(AdminRoleDAO.class);
+    var userDao = injector.getInstance(AdminUserDAO.class);
+    var studioDao = injector.getInstance(StudioDAO.class);
 
     assertThat(serverDao).isNotNull().isInstanceOf(DefaultServerDAO.class);
+    assertThat(roleDao).isNotNull().isInstanceOf(DefaultAdminRoleDAO.class);
+    assertThat(userDao).isNotNull().isInstanceOf(DefaultAdminUserDAO.class);
+    assertThat(studioDao).isNotNull().isInstanceOf(DefaultStudioDAO.class);
   }
 }

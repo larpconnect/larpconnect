@@ -42,5 +42,13 @@
             <message key="matchxpath.match"
                      value="Logger variable must not be named 'LOGGER' or 'LOG'. Use 'logger' instead."/>
         </module>
+
+        <!-- Forbid @Singleton annotation on class declarations -->
+        <module name="MatchXpath">
+            <property name="query"
+                      value="//CLASS_DEF/MODIFIERS/ANNOTATION[.//IDENT[@text='Singleton']] | //RECORD_DEF/MODIFIERS/ANNOTATION[.//IDENT[@text='Singleton']] | //INTERFACE_DEF/MODIFIERS/ANNOTATION[.//IDENT[@text='Singleton']]"/>
+            <message key="matchxpath.match"
+                     value="@Singleton must not be declared on classes. Configure scoping in Guice modules using .in(Scopes.SINGLETON) or on provider methods."/>
+        </module>
     </module>
 </module>
