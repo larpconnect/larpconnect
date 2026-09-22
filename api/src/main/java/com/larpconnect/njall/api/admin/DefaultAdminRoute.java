@@ -21,7 +21,7 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
 
   private final Logger logger = LoggerFactory.getLogger(DefaultAdminRoute.class);
   private static final Duration HEALTH_ASK_TIMEOUT = Duration.ofSeconds(2);
-  private static final Duration SERVER_ASK_TIMEOUT = Duration.ofSeconds(5);
+  private static final Duration SERVER_ASK_TIMEOUT = Duration.ofSeconds(10);
 
   private final ActorRef<HealthCheckCommand> healthCheckActor;
   private final ActorRef<ServerAdminCommand> serverAdminActor;

@@ -257,7 +257,7 @@ final class AdminRouteTest {
         handler
             .apply(HttpRequest.GET("/api/admin/v1/servers"))
             .toCompletableFuture()
-            .get(7, TimeUnit.SECONDS);
+            .get(12, TimeUnit.SECONDS);
 
     assertThat(response.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
   }

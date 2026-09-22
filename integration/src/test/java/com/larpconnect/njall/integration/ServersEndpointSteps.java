@@ -57,7 +57,7 @@ public final class ServersEndpointSteps {
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + path))
-            .timeout(Duration.ofSeconds(10))
+            .timeout(Duration.ofSeconds(20))
             .GET()
             .build();
 

@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.domain.Server;
 import com.larpconnect.njall.data.domain.ServerContact;
@@ -16,24 +17,24 @@ import org.jspecify.annotations.Nullable;
 
 final class DefaultServerDAO implements ServerDAO {
 
-  private final SessionFactory sessionFactory;
+  private final Provider<SessionFactory> sessionFactoryProvider;
 
   @Inject
-  DefaultServerDAO(@NjallAdmin SessionFactory sessionFactory) {
-    this.sessionFactory = sessionFactory;
+  DefaultServerDAO(@NjallAdmin Provider<SessionFactory> sessionFactoryProvider) {
+    this.sessionFactoryProvider = sessionFactoryProvider;
   }
 
   @Override
   public Optional<Server> findById(UUID id) {
     requireNonNull(id, "id cannot be null");
-    try (var session = sessionFactory.openSession()) {
+    try (var session = sessionFactoryProvider.get().openSession()) {
       return executeFindById(session, id);
     }
   }
 
   @Override
   public ImmutableList<Server> list() {
-    try (var session = sessionFactory.openSession()) {
+    try (var session = sessionFactoryProvider.get().openSession()) {
       return executeList(session);
     }
   }
