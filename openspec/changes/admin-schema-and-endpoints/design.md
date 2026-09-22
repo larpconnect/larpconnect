@@ -106,6 +106,11 @@ This design builds directly upon existing in-force architectural decisions:
 - **Rationale**: Synchronous Hibernate DAO calls must be isolated from the default actor system thread pool to prevent starvation, following `njall-pekko` standards.
 - **Alternatives Considered**: Executing DAO queries directly inside route directives was rejected because it would block Pekko HTTP worker threads.
 
+### Decision 6: Canonical Identifier Formats for Studio Aliases and Role Names
+- **Choice**: Enforce regex `^[a-z][a-z0-9_]*$` (alphanumeric lowercase and underscore, strictly starting with a letter) for both studio aliases and role names at the API boundary (HTTP 400 Bad Request) and at the database level via PostgreSQL CHECK constraints (`CHECK (alias ~ '^[a-z][a-z0-9_]*$')` on `studios_lookup` and `CHECK (role_name ~ '^[a-z][a-z0-9_]*$')` on `admin_roles`).
+- **Rationale**: Guarantees URL/subdomain safety, eliminates case sensitivity and collation hazards, and ensures uniform naming across routing, security, and storage layers.
+- **Alternatives Considered**: Permitting mixed-case, hyphens, or uppercase enum-style role names was rejected to preserve strict lowercase alphanumeric and underscore conventions across all identifiers.
+
 ## Risks / Trade-offs
 
 - **[PostgreSQL Enum Type Drift]** -> If enum `njall_admin.tstatus` evolves in future migrations, Hibernate string mapping or custom enum converters must be used rather than ordinal mappings to prevent deserialization errors.

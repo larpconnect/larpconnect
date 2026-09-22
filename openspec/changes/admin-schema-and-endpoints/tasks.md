@@ -1,6 +1,6 @@
 ## 1. Database Migration
 
-- [ ] 1.1 Create Flyway migration `data/src/main/resources/db/migration/V2__admin_schema.sql` defining `njall_admin.tstatus`, `admin_users`, `admin_roles`, `admin_role_assignments`, and `studios_lookup` tables with UUIDv7 primary keys.
+- [ ] 1.1 Create Flyway migration `data/src/main/resources/db/migration/V2__admin_schema.sql` defining `njall_admin.tstatus`, `admin_users`, `admin_roles`, `admin_role_assignments`, and `studios_lookup` tables with UUIDv7 primary keys and CHECK constraints on `alias` and `role_name` (`^[a-z][a-z0-9_]*$`).
 - [ ] 1.2 Implement the `njall_admin.sync_admin_timestamp()` trigger function and attach `BEFORE UPDATE` triggers to `admin_users` and `studios_lookup`.
 - [ ] 1.3 Add Row Level Security policy on `njall_admin.studios_lookup` for `njall_users` using `current_setting('app.tenant_id', true)::uuid`.
 - [ ] 1.4 Add least-privilege grants allowing `njall_users` `USAGE` on schema `njall_admin` and `SELECT` on table `studios_lookup`.
@@ -22,8 +22,8 @@
 - [ ] 3.1 Define sealed message protocols and response ADTs: `StudioAdminCommand`, `UserAdminCommand`, `RoleAdminCommand`, and corresponding responses.
 - [ ] 3.2 Implement typed Pekko actors `StudioAdminActor`, `UserAdminActor`, and `RoleAdminActor` operating on `larpconnect.blocking-dispatcher`.
 - [ ] 3.3 Implement actor factory interfaces and Guice-managed factory implementations for each admin actor.
-- [ ] 3.4 Implement request/response Jackson records and AIP-193 error response records.
-- [ ] 3.5 Implement modular route classes `StudioAdminRoute`, `UserAdminRoute`, and `RoleAdminRoute`.
+- [ ] 3.4 Implement request/response Jackson records and AIP-193 error response records, including alias and roleName format validation (`^[a-z][a-z0-9_]*$`).
+- [ ] 3.5 Implement modular route classes `StudioAdminRoute`, `UserAdminRoute`, and `RoleAdminRoute` with input validation.
 - [ ] 3.6 Compose the modular sub-routes into `DefaultAdminRoute`.
 - [ ] 3.7 Bind actors, factories, and sub-routes in `AdminModule`.
 - [ ] 3.8 Update `api/src/main/resources/openapi.yaml` with schema definitions and endpoints for studios, users, roles, and custom methods (`:addRole`, `:removeRole`).
