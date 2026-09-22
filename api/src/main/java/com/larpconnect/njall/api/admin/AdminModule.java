@@ -26,6 +26,9 @@ public final class AdminModule extends AbstractModule {
         .to(DefaultAdminRoute.class);
     bind(HealthCheckActorFactory.class).to(DefaultHealthCheckActorFactory.class);
     bind(ServerAdminActorFactory.class).to(DefaultServerAdminActorFactory.class);
+    bind(StudioAdminActorFactory.class).to(DefaultStudioAdminActorFactory.class);
+    bind(RoleAdminActorFactory.class).to(DefaultRoleAdminActorFactory.class);
+    bind(UserAdminActorFactory.class).to(DefaultUserAdminActorFactory.class);
   }
 
   @Provides
@@ -49,5 +52,26 @@ public final class AdminModule extends AbstractModule {
   ActorRef<ServerAdminCommand> provideServerAdminActor(
       ActorSystem<Void> system, ServerAdminActorFactory factory, @Blocking Props dispatcher) {
     return system.systemActorOf(factory.create(), "serverAdminActor", dispatcher);
+  }
+
+  @Provides
+  @Singleton
+  ActorRef<StudioAdminCommand> provideStudioAdminActor(
+      ActorSystem<Void> system, StudioAdminActorFactory factory, @Blocking Props dispatcher) {
+    return system.systemActorOf(factory.create(), "studioAdminActor", dispatcher);
+  }
+
+  @Provides
+  @Singleton
+  ActorRef<RoleAdminCommand> provideRoleAdminActor(
+      ActorSystem<Void> system, RoleAdminActorFactory factory, @Blocking Props dispatcher) {
+    return system.systemActorOf(factory.create(), "roleAdminActor", dispatcher);
+  }
+
+  @Provides
+  @Singleton
+  ActorRef<UserAdminCommand> provideUserAdminActor(
+      ActorSystem<Void> system, UserAdminActorFactory factory, @Blocking Props dispatcher) {
+    return system.systemActorOf(factory.create(), "userAdminActor", dispatcher);
   }
 }

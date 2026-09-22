@@ -11,10 +11,16 @@ public final class DaoModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(ServerDAO.class).to(DefaultServerDAO.class);
+    bind(AdminRoleDAO.class).to(DefaultAdminRoleDAO.class);
+    bind(AdminUserDAO.class).to(DefaultAdminUserDAO.class);
+    bind(StudioDAO.class).to(DefaultStudioDAO.class);
 
     var adminEntities =
         Multibinder.newSetBinder(binder(), new TypeLiteral<Class<?>>() {}, NjallAdmin.class);
     adminEntities.addBinding().toInstance(ServerEntity.class);
     adminEntities.addBinding().toInstance(ServerContactEntity.class);
+    adminEntities.addBinding().toInstance(AdminRoleEntity.class);
+    adminEntities.addBinding().toInstance(AdminUserEntity.class);
+    adminEntities.addBinding().toInstance(StudioLookupEntity.class);
   }
 }
