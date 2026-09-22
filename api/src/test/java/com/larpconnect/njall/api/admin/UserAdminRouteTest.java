@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -19,7 +20,9 @@ import org.apache.pekko.actor.typed.Props;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.japi.function.Function;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -53,6 +56,20 @@ final class UserAdminRouteTest {
     return AdminUser.of(userId, "admin_user", AdminUserStatus.ACTIVE, now, now, List.of());
   }
 
+  private static HttpResponse executeGet(
+      Function<HttpRequest, CompletionStage<HttpResponse>> handler, String path) throws Exception {
+    return handler.apply(HttpRequest.GET(path)).toCompletableFuture().get(5, TimeUnit.SECONDS);
+  }
+
+  private static HttpResponse executePost(
+      Function<HttpRequest, CompletionStage<HttpResponse>> handler, String path, String json)
+      throws Exception {
+    return handler
+        .apply(HttpRequest.POST(path).withEntity(ContentTypes.APPLICATION_JSON, json))
+        .toCompletableFuture()
+        .get(5, TimeUnit.SECONDS);
+  }
+
   @Test
   @DisplayName("GET /api/admin/v1/users returns 200 OK with list")
   void getUsers_returns200() throws Exception {
@@ -61,8 +78,10 @@ final class UserAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof UserAdminCommand.ListUsers cmd) {
-                    cmd.replyTo().tell(UserAdminResponse.list(ImmutableList.of(user)));
+                  switch (msg) {
+                    case UserAdminCommand.ListUsers cmd ->
+                        cmd.replyTo().tell(UserAdminResponse.list(ImmutableList.of(user)));
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -89,8 +108,10 @@ final class UserAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof UserAdminCommand.CreateUser cmd) {
-                    cmd.replyTo().tell(UserAdminResponse.single(user));
+                  switch (msg) {
+                    case UserAdminCommand.CreateUser cmd ->
+                        cmd.replyTo().tell(UserAdminResponse.single(user));
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -119,18 +140,22 @@ final class UserAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof UserAdminCommand.GetUserByUsername cmd) {
-                    if ("admin_user".equals(cmd.username())) {
-                      cmd.replyTo().tell(UserAdminResponse.single(user));
-                    } else {
-                      cmd.replyTo().tell(UserAdminResponse.notFound("Not found"));
+                  switch (msg) {
+                    case UserAdminCommand.GetUserByUsername cmd -> {
+                      if ("admin_user".equals(cmd.username())) {
+                        cmd.replyTo().tell(UserAdminResponse.single(user));
+                      } else {
+                        cmd.replyTo().tell(UserAdminResponse.notFound("Not found"));
+                      }
                     }
-                  } else if (msg instanceof UserAdminCommand.GetUserById cmd) {
-                    if (userId.equals(cmd.userId())) {
-                      cmd.replyTo().tell(UserAdminResponse.single(user));
-                    } else {
-                      cmd.replyTo().tell(UserAdminResponse.notFound("Not found"));
+                    case UserAdminCommand.GetUserById cmd -> {
+                      if (userId.equals(cmd.userId())) {
+                        cmd.replyTo().tell(UserAdminResponse.single(user));
+                      } else {
+                        cmd.replyTo().tell(UserAdminResponse.notFound("Not found"));
+                      }
                     }
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -140,25 +165,13 @@ final class UserAdminRouteTest {
     var route = new UserAdminRoute(actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
-    var responseName =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/users/admin_user"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseName = executeGet(handler, "/api/admin/v1/users/admin_user");
     assertThat(responseName.status()).isEqualTo(StatusCodes.OK);
 
-    var responseUuid =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/users/" + userId))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseUuid = executeGet(handler, "/api/admin/v1/users/" + userId);
     assertThat(responseUuid.status()).isEqualTo(StatusCodes.OK);
 
-    var responseMissing =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/users/unknown"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseMissing = executeGet(handler, "/api/admin/v1/users/unknown");
     assertThat(responseMissing.status()).isEqualTo(StatusCodes.NOT_FOUND);
   }
 
@@ -170,8 +183,10 @@ final class UserAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof UserAdminCommand.AddRole cmd) {
-                    cmd.replyTo().tell(UserAdminResponse.single(user));
+                  switch (msg) {
+                    case UserAdminCommand.AddRole cmd ->
+                        cmd.replyTo().tell(UserAdminResponse.single(user));
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -210,8 +225,10 @@ final class UserAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof UserAdminCommand.RemoveRole cmd) {
-                    cmd.replyTo().tell(UserAdminResponse.single(user));
+                  switch (msg) {
+                    case UserAdminCommand.RemoveRole cmd ->
+                        cmd.replyTo().tell(UserAdminResponse.single(user));
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -249,14 +266,17 @@ final class UserAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof UserAdminCommand.CreateUser cmd) {
-                    if ("bad".equals(cmd.username())) {
-                      cmd.replyTo().tell(UserAdminResponse.badRequest("Bad format"));
-                    } else if ("conflict".equals(cmd.username())) {
-                      cmd.replyTo().tell(UserAdminResponse.conflict("Already exists"));
-                    } else if ("failure".equals(cmd.username())) {
-                      cmd.replyTo().tell(UserAdminResponse.failure("Boom"));
+                  switch (msg) {
+                    case UserAdminCommand.CreateUser cmd -> {
+                      if ("bad".equals(cmd.username())) {
+                        cmd.replyTo().tell(UserAdminResponse.badRequest("Bad format"));
+                      } else if ("conflict".equals(cmd.username())) {
+                        cmd.replyTo().tell(UserAdminResponse.conflict("Already exists"));
+                      } else if ("failure".equals(cmd.username())) {
+                        cmd.replyTo().tell(UserAdminResponse.failure("Boom"));
+                      }
                     }
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -266,31 +286,13 @@ final class UserAdminRouteTest {
     var route = new UserAdminRoute(actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
-    var badResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/users")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"username\":\"bad\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var badResp = executePost(handler, "/api/admin/v1/users", "{\"username\":\"bad\"}");
     assertThat(badResp.status()).isEqualTo(StatusCodes.BAD_REQUEST);
 
-    var conflictResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/users")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"username\":\"conflict\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var conflictResp = executePost(handler, "/api/admin/v1/users", "{\"username\":\"conflict\"}");
     assertThat(conflictResp.status()).isEqualTo(StatusCodes.CONFLICT);
 
-    var failResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/users")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"username\":\"failure\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var failResp = executePost(handler, "/api/admin/v1/users", "{\"username\":\"failure\"}");
     assertThat(failResp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
   }
 

@@ -12,7 +12,6 @@ import com.larpconnect.njall.data.domain.AdminUserStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
 final class DefaultAdminUserDAO implements AdminUserDAO {
@@ -29,7 +28,7 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
     requireNonNull(id, "id cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var entity = session.find(AdminUserEntity.class, id);
-      return Optional.ofNullable(entity).map(this::toUser);
+      return Optional.ofNullable(entity).map(DefaultAdminUserDAO::toUser);
     }
   }
 
@@ -43,7 +42,7 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
               .createQuery(hql, AdminUserEntity.class)
               .setParameter("username", username)
               .uniqueResult();
-      return Optional.ofNullable(entity).map(this::toUser);
+      return Optional.ofNullable(entity).map(DefaultAdminUserDAO::toUser);
     }
   }
 
@@ -54,7 +53,7 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
       var entities = session.createQuery(hql, AdminUserEntity.class).list();
       return entities.stream()
           .distinct()
-          .map(this::toUser)
+          .map(DefaultAdminUserDAO::toUser)
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -78,11 +77,20 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
                 .setParameter("status", status.name())
                 .getSingleResult();
 
+        var insertRoleSql =
+            "INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id) "
+                + "VALUES (:userId, :roleId) ON CONFLICT DO NOTHING";
         for (var roleId : roleIds) {
-          assignRole(session, userId, roleId);
+          session
+              .createNativeQuery(insertRoleSql, Void.class)
+              .setParameter("userId", userId)
+              .setParameter("roleId", roleId)
+              .executeUpdate();
         }
         tx.commit();
-        return findById(userId).orElseThrow();
+        session.clear();
+        var entity = session.find(AdminUserEntity.class, userId);
+        return requireNonNull(toUser(entity), "Created user entity cannot be null");
       } catch (Exception e) {
         tx.rollback();
         throw e;
@@ -97,11 +105,26 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
-        verifyUserExists(session, userId);
-        verifyRoleExists(session, roleId);
-        assignRole(session, userId, roleId);
+        var userEntity = session.find(AdminUserEntity.class, userId);
+        if (userEntity == null) {
+          throw new IllegalArgumentException("User not found: " + userId);
+        }
+        var roleEntity = session.find(AdminRoleEntity.class, roleId);
+        if (roleEntity == null) {
+          throw new IllegalArgumentException("Role not found: " + roleId);
+        }
+        var insertRoleSql =
+            "INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id) "
+                + "VALUES (:userId, :roleId) ON CONFLICT DO NOTHING";
+        session
+            .createNativeQuery(insertRoleSql, Void.class)
+            .setParameter("userId", userId)
+            .setParameter("roleId", roleId)
+            .executeUpdate();
         tx.commit();
-        return findById(userId).orElseThrow();
+        session.clear();
+        var updated = session.find(AdminUserEntity.class, userId);
+        return requireNonNull(toUser(updated), "User entity cannot be null");
       } catch (Exception e) {
         tx.rollback();
         throw e;
@@ -116,8 +139,14 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
-        verifyUserExists(session, userId);
-        verifyRoleExists(session, roleId);
+        var userEntity = session.find(AdminUserEntity.class, userId);
+        if (userEntity == null) {
+          throw new IllegalArgumentException("User not found: " + userId);
+        }
+        var roleEntity = session.find(AdminRoleEntity.class, roleId);
+        if (roleEntity == null) {
+          throw new IllegalArgumentException("Role not found: " + roleId);
+        }
         var deleteSql =
             "DELETE FROM njall_admin.admin_role_assignments "
                 + "WHERE admin_user_id = :userId AND role_id = :roleId";
@@ -127,7 +156,9 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
             .setParameter("roleId", roleId)
             .executeUpdate();
         tx.commit();
-        return findById(userId).orElseThrow();
+        session.clear();
+        var updated = session.find(AdminUserEntity.class, userId);
+        return requireNonNull(toUser(updated), "User entity cannot be null");
       } catch (Exception e) {
         tx.rollback();
         throw e;
@@ -135,32 +166,10 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
     }
   }
 
-  private void verifyUserExists(Session session, UUID userId) {
-    var userEntity = session.find(AdminUserEntity.class, userId);
-    if (userEntity == null) {
-      throw new IllegalArgumentException("User not found: " + userId);
+  private static AdminUser toUser(AdminUserEntity entity) {
+    if (entity == null) {
+      return null;
     }
-  }
-
-  private void verifyRoleExists(Session session, UUID roleId) {
-    var roleEntity = session.find(AdminRoleEntity.class, roleId);
-    if (roleEntity == null) {
-      throw new IllegalArgumentException("Role not found: " + roleId);
-    }
-  }
-
-  private void assignRole(Session session, UUID userId, UUID roleId) {
-    var insertRoleSql =
-        "INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id) "
-            + "VALUES (:userId, :roleId) ON CONFLICT DO NOTHING";
-    session
-        .createNativeQuery(insertRoleSql, Void.class)
-        .setParameter("userId", userId)
-        .setParameter("roleId", roleId)
-        .executeUpdate();
-  }
-
-  private AdminUser toUser(AdminUserEntity entity) {
     var roles =
         entity.getRoles().stream()
             .map(r -> AdminRole.of(r.getId(), r.getRoleName()))

@@ -359,17 +359,17 @@ components:
     StudioLookup:
       type: object
       required:
-        - tenant_id
-        - studio_id
+        - tenantId
+        - studioId
         - alias
-        - created_at
-        - updated_at
+        - createdAt
+        - updatedAt
       properties:
-        tenant_id:
+        tenantId:
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789abc"
-        studio_id:
+        studioId:
           type: string
           format: uuid
           example: "123e4567-e89b-12d3-a456-426614174000"
@@ -377,13 +377,13 @@ components:
           type: string
           pattern: "^[a-z][a-z0-9_]*$"
           example: "valhalla"
-        created_at:
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
-        deleted_at:
+        deletedAt:
           type: string
           format: date-time
           nullable: true
@@ -402,13 +402,13 @@ components:
       type: object
       required:
         - id
-        - role_name
+        - roleName
       properties:
         id:
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789abc"
-        role_name:
+        roleName:
           type: string
           pattern: "^[a-z][a-z0-9_]*$"
           example: "security_admin"
@@ -429,8 +429,8 @@ components:
         - id
         - username
         - status
-        - created_at
-        - updated_at
+        - createdAt
+        - updatedAt
         - roles
       properties:
         id:
@@ -442,12 +442,12 @@ components:
           example: "admin_user"
         status:
           type: string
-          enum: [active, inactive, suspended]
-          example: "active"
-        created_at:
+          enum: [ACTIVE, DISABLED, DELETED]
+          example: "ACTIVE"
+        createdAt:
           type: string
           format: date-time
-        updated_at:
+        updatedAt:
           type: string
           format: date-time
         roles:
@@ -465,8 +465,9 @@ components:
           example: "admin_user"
         status:
           type: string
-          enum: [active, inactive, suspended]
-          default: "active"
+          enum: [ACTIVE, DISABLED, DELETED]
+          default: "ACTIVE"
+          example: "ACTIVE"
         roles:
           type: array
           items:

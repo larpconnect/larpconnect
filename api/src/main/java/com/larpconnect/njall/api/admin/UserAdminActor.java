@@ -1,11 +1,12 @@
 package com.larpconnect.njall.api.admin;
 
+import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.AdminRoleDAO;
 import com.larpconnect.njall.data.dao.AdminUserDAO;
 import com.larpconnect.njall.data.domain.AdminRole;
 import com.larpconnect.njall.data.domain.AdminUser;
 import com.larpconnect.njall.data.domain.AdminUserStatus;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -45,31 +46,24 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
 
   private Behavior<UserAdminCommand> onCreateUser(UserAdminCommand.CreateUser cmd) {
     try {
-      if (cmd.username() == null || cmd.username().isBlank()) {
-        cmd.replyTo().tell(UserAdminResponse.badRequest("Username cannot be blank"));
+      var validationError = validateCreateUserCommand(cmd);
+      if (validationError.isPresent()) {
+        cmd.replyTo().tell(validationError.get());
         return this;
       }
-      var existing = userDao.findByUsername(cmd.username());
-      if (existing.isPresent()) {
-        cmd.replyTo()
-            .tell(UserAdminResponse.conflict("Username already exists: " + cmd.username()));
-        return this;
-      }
-      var resolvedRoles = new ArrayList<AdminRole>();
-      if (cmd.initialRoles() != null) {
-        for (var roleStr : cmd.initialRoles()) {
-          var maybeRole = resolveRoleByIdentifier(roleStr);
-          if (maybeRole.isEmpty()) {
-            cmd.replyTo().tell(UserAdminResponse.badRequest("Role not found: " + roleStr));
-            return this;
-          }
-          resolvedRoles.add(maybeRole.get());
+      return switch (resolveRoleIds(cmd.initialRoles())) {
+        case RoleResolution.MissingRole missing -> {
+          cmd.replyTo()
+              .tell(UserAdminResponse.badRequest("Role not found: " + missing.roleIdentifier()));
+          yield this;
         }
-      }
-      var roleIds = resolvedRoles.stream().map(AdminRole::id).toList();
-      var status = cmd.status() != null ? cmd.status() : AdminUserStatus.ACTIVE;
-      var user = userDao.create(cmd.username(), status, roleIds);
-      cmd.replyTo().tell(UserAdminResponse.single(user));
+        case RoleResolution.Success success -> {
+          var status = cmd.status() != null ? cmd.status() : AdminUserStatus.ACTIVE;
+          var user = userDao.create(cmd.username(), status, success.roleIds());
+          cmd.replyTo().tell(UserAdminResponse.single(user));
+          yield this;
+        }
+      };
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create user", e);
     }
@@ -195,5 +189,36 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
     var message = error.getMessage();
     var reason = message != null && !message.isBlank() ? message : "Error executing " + operation;
     replyTo.tell(UserAdminResponse.failure(reason));
+  }
+
+  private Optional<UserAdminResponse> validateCreateUserCommand(UserAdminCommand.CreateUser cmd) {
+    if (cmd.username() == null || cmd.username().isBlank()) {
+      return Optional.of(UserAdminResponse.badRequest("Username cannot be blank"));
+    }
+    if (userDao.findByUsername(cmd.username()).isPresent()) {
+      return Optional.of(UserAdminResponse.conflict("Username already exists: " + cmd.username()));
+    }
+    return Optional.empty();
+  }
+
+  private RoleResolution resolveRoleIds(@Nullable List<String> initialRoles) {
+    if (initialRoles == null || initialRoles.isEmpty()) {
+      return new RoleResolution.Success(ImmutableList.of());
+    }
+    var roleIds = ImmutableList.<UUID>builder();
+    for (var roleStr : initialRoles) {
+      var maybeRole = resolveRoleByIdentifier(roleStr);
+      if (maybeRole.isEmpty()) {
+        return new RoleResolution.MissingRole(roleStr);
+      }
+      roleIds.add(maybeRole.get().id());
+    }
+    return new RoleResolution.Success(roleIds.build());
+  }
+
+  private sealed interface RoleResolution {
+    record Success(ImmutableList<UUID> roleIds) implements RoleResolution {}
+
+    record MissingRole(String roleIdentifier) implements RoleResolution {}
   }
 }

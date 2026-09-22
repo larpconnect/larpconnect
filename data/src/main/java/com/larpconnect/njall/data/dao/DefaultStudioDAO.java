@@ -148,15 +148,12 @@ final class DefaultStudioDAO implements StudioDAO {
   }
 
   static Instant toInstant(Object value) {
-    if (value instanceof Instant instant) {
-      return instant;
-    }
-    if (value instanceof OffsetDateTime odt) {
-      return odt.toInstant();
-    }
-    if (value instanceof java.sql.Timestamp ts) {
-      return ts.toInstant();
-    }
-    throw new IllegalArgumentException("Unsupported timestamp type: " + value);
+    return switch (value) {
+      case Instant instant -> instant;
+      case OffsetDateTime odt -> odt.toInstant();
+      case java.sql.Timestamp ts -> ts.toInstant();
+      case null, default ->
+          throw new IllegalArgumentException("Unsupported timestamp type: " + value);
+    };
   }
 }

@@ -36,7 +36,15 @@ public final class RoleAdminRoute extends AllDirectives {
     this(roleAdminActor, system, objectMapper, Duration.ofSeconds(20));
   }
 
-  public RoleAdminRoute(
+  /**
+   * Package-private constructor allowing custom ask timeouts during unit testing.
+   *
+   * @param roleAdminActor actor handling role administration commands
+   * @param system typed actor system
+   * @param objectMapper Jackson object mapper
+   * @param askTimeout timeout duration for ask operations
+   */
+  RoleAdminRoute(
       ActorRef<RoleAdminCommand> roleAdminActor,
       ActorSystem<Void> system,
       ObjectMapper objectMapper,

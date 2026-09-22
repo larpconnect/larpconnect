@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.domain.AdminRole;
 import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -16,7 +17,9 @@ import org.apache.pekko.actor.typed.Props;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.japi.function.Function;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +52,20 @@ final class RoleAdminRouteTest {
     return AdminRole.of(roleId, "security_admin");
   }
 
+  private static HttpResponse executeGet(
+      Function<HttpRequest, CompletionStage<HttpResponse>> handler, String path) throws Exception {
+    return handler.apply(HttpRequest.GET(path)).toCompletableFuture().get(5, TimeUnit.SECONDS);
+  }
+
+  private static HttpResponse executePost(
+      Function<HttpRequest, CompletionStage<HttpResponse>> handler, String path, String json)
+      throws Exception {
+    return handler
+        .apply(HttpRequest.POST(path).withEntity(ContentTypes.APPLICATION_JSON, json))
+        .toCompletableFuture()
+        .get(5, TimeUnit.SECONDS);
+  }
+
   @Test
   @DisplayName("GET /api/admin/v1/roles returns 200 OK with list")
   void getRoles_returns200() throws Exception {
@@ -57,8 +74,10 @@ final class RoleAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof RoleAdminCommand.ListRoles cmd) {
-                    cmd.replyTo().tell(RoleAdminResponse.list(ImmutableList.of(role)));
+                  switch (msg) {
+                    case RoleAdminCommand.ListRoles cmd ->
+                        cmd.replyTo().tell(RoleAdminResponse.list(ImmutableList.of(role)));
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -85,8 +104,10 @@ final class RoleAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof RoleAdminCommand.CreateRole cmd) {
-                    cmd.replyTo().tell(RoleAdminResponse.single(role));
+                  switch (msg) {
+                    case RoleAdminCommand.CreateRole cmd ->
+                        cmd.replyTo().tell(RoleAdminResponse.single(role));
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -115,18 +136,22 @@ final class RoleAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof RoleAdminCommand.GetRoleByName cmd) {
-                    if ("security_admin".equals(cmd.roleName())) {
-                      cmd.replyTo().tell(RoleAdminResponse.single(role));
-                    } else {
-                      cmd.replyTo().tell(RoleAdminResponse.notFound("Not found"));
+                  switch (msg) {
+                    case RoleAdminCommand.GetRoleByName cmd -> {
+                      if ("security_admin".equals(cmd.roleName())) {
+                        cmd.replyTo().tell(RoleAdminResponse.single(role));
+                      } else {
+                        cmd.replyTo().tell(RoleAdminResponse.notFound("Not found"));
+                      }
                     }
-                  } else if (msg instanceof RoleAdminCommand.GetRoleById cmd) {
-                    if (roleId.equals(cmd.roleId())) {
-                      cmd.replyTo().tell(RoleAdminResponse.single(role));
-                    } else {
-                      cmd.replyTo().tell(RoleAdminResponse.notFound("Not found"));
+                    case RoleAdminCommand.GetRoleById cmd -> {
+                      if (roleId.equals(cmd.roleId())) {
+                        cmd.replyTo().tell(RoleAdminResponse.single(role));
+                      } else {
+                        cmd.replyTo().tell(RoleAdminResponse.notFound("Not found"));
+                      }
                     }
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -136,25 +161,13 @@ final class RoleAdminRouteTest {
     var route = new RoleAdminRoute(actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
-    var responseName =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/roles/security_admin"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseName = executeGet(handler, "/api/admin/v1/roles/security_admin");
     assertThat(responseName.status()).isEqualTo(StatusCodes.OK);
 
-    var responseUuid =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/roles/" + roleId))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseUuid = executeGet(handler, "/api/admin/v1/roles/" + roleId);
     assertThat(responseUuid.status()).isEqualTo(StatusCodes.OK);
 
-    var responseMissing =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/roles/unknown"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseMissing = executeGet(handler, "/api/admin/v1/roles/unknown");
     assertThat(responseMissing.status()).isEqualTo(StatusCodes.NOT_FOUND);
   }
 
@@ -165,14 +178,17 @@ final class RoleAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof RoleAdminCommand.CreateRole cmd) {
-                    if ("bad".equals(cmd.roleName())) {
-                      cmd.replyTo().tell(RoleAdminResponse.badRequest("Bad format"));
-                    } else if ("conflict".equals(cmd.roleName())) {
-                      cmd.replyTo().tell(RoleAdminResponse.conflict("Already exists"));
-                    } else if ("failure".equals(cmd.roleName())) {
-                      cmd.replyTo().tell(RoleAdminResponse.failure("Boom"));
+                  switch (msg) {
+                    case RoleAdminCommand.CreateRole cmd -> {
+                      if ("bad".equals(cmd.roleName())) {
+                        cmd.replyTo().tell(RoleAdminResponse.badRequest("Bad format"));
+                      } else if ("conflict".equals(cmd.roleName())) {
+                        cmd.replyTo().tell(RoleAdminResponse.conflict("Already exists"));
+                      } else if ("failure".equals(cmd.roleName())) {
+                        cmd.replyTo().tell(RoleAdminResponse.failure("Boom"));
+                      }
                     }
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -182,31 +198,13 @@ final class RoleAdminRouteTest {
     var route = new RoleAdminRoute(actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
-    var badResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/roles")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"roleName\":\"bad\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var badResp = executePost(handler, "/api/admin/v1/roles", "{\"roleName\":\"bad\"}");
     assertThat(badResp.status()).isEqualTo(StatusCodes.BAD_REQUEST);
 
-    var conflictResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/roles")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"roleName\":\"conflict\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var conflictResp = executePost(handler, "/api/admin/v1/roles", "{\"roleName\":\"conflict\"}");
     assertThat(conflictResp.status()).isEqualTo(StatusCodes.CONFLICT);
 
-    var failResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/roles")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"roleName\":\"failure\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var failResp = executePost(handler, "/api/admin/v1/roles", "{\"roleName\":\"failure\"}");
     assertThat(failResp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
   }
 

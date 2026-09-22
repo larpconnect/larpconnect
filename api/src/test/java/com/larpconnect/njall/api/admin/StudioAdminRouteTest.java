@@ -10,6 +10,7 @@ import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -17,7 +18,9 @@ import org.apache.pekko.actor.typed.Props;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
+import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.japi.function.Function;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +55,20 @@ final class StudioAdminRouteTest {
     return StudioLookup.of(tenantId, studioId, "valhalla", now, now, null);
   }
 
+  private static HttpResponse executeGet(
+      Function<HttpRequest, CompletionStage<HttpResponse>> handler, String path) throws Exception {
+    return handler.apply(HttpRequest.GET(path)).toCompletableFuture().get(5, TimeUnit.SECONDS);
+  }
+
+  private static HttpResponse executePost(
+      Function<HttpRequest, CompletionStage<HttpResponse>> handler, String path, String json)
+      throws Exception {
+    return handler
+        .apply(HttpRequest.POST(path).withEntity(ContentTypes.APPLICATION_JSON, json))
+        .toCompletableFuture()
+        .get(5, TimeUnit.SECONDS);
+  }
+
   @Test
   @DisplayName("GET /api/admin/v1/studios returns 200 OK with list")
   void getStudios_returns200() throws Exception {
@@ -60,8 +77,10 @@ final class StudioAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof StudioAdminCommand.ListStudios cmd) {
-                    cmd.replyTo().tell(StudioAdminResponse.list(ImmutableList.of(studio)));
+                  switch (msg) {
+                    case StudioAdminCommand.ListStudios cmd ->
+                        cmd.replyTo().tell(StudioAdminResponse.list(ImmutableList.of(studio)));
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -88,8 +107,10 @@ final class StudioAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof StudioAdminCommand.CreateStudio cmd) {
-                    cmd.replyTo().tell(StudioAdminResponse.single(studio));
+                  switch (msg) {
+                    case StudioAdminCommand.CreateStudio cmd ->
+                        cmd.replyTo().tell(StudioAdminResponse.single(studio));
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -118,18 +139,22 @@ final class StudioAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof StudioAdminCommand.GetStudioByAlias cmd) {
-                    if ("valhalla".equals(cmd.alias())) {
-                      cmd.replyTo().tell(StudioAdminResponse.single(studio));
-                    } else {
-                      cmd.replyTo().tell(StudioAdminResponse.notFound("Not found"));
+                  switch (msg) {
+                    case StudioAdminCommand.GetStudioByAlias cmd -> {
+                      if ("valhalla".equals(cmd.alias())) {
+                        cmd.replyTo().tell(StudioAdminResponse.single(studio));
+                      } else {
+                        cmd.replyTo().tell(StudioAdminResponse.notFound("Not found"));
+                      }
                     }
-                  } else if (msg instanceof StudioAdminCommand.GetStudioById cmd) {
-                    if (studioId.equals(cmd.studioId())) {
-                      cmd.replyTo().tell(StudioAdminResponse.single(studio));
-                    } else {
-                      cmd.replyTo().tell(StudioAdminResponse.notFound("Not found"));
+                    case StudioAdminCommand.GetStudioById cmd -> {
+                      if (studioId.equals(cmd.studioId())) {
+                        cmd.replyTo().tell(StudioAdminResponse.single(studio));
+                      } else {
+                        cmd.replyTo().tell(StudioAdminResponse.notFound("Not found"));
+                      }
                     }
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -139,25 +164,13 @@ final class StudioAdminRouteTest {
     var route = new StudioAdminRoute(actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
-    var responseAlias =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/studios/valhalla"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseAlias = executeGet(handler, "/api/admin/v1/studios/valhalla");
     assertThat(responseAlias.status()).isEqualTo(StatusCodes.OK);
 
-    var responseUuid =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/studios/" + studioId))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseUuid = executeGet(handler, "/api/admin/v1/studios/" + studioId);
     assertThat(responseUuid.status()).isEqualTo(StatusCodes.OK);
 
-    var responseMissing =
-        handler
-            .apply(HttpRequest.GET("/api/admin/v1/studios/unknown"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var responseMissing = executeGet(handler, "/api/admin/v1/studios/unknown");
     assertThat(responseMissing.status()).isEqualTo(StatusCodes.NOT_FOUND);
   }
 
@@ -168,14 +181,17 @@ final class StudioAdminRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof StudioAdminCommand.CreateStudio cmd) {
-                    if ("bad".equals(cmd.alias())) {
-                      cmd.replyTo().tell(StudioAdminResponse.badRequest("Bad format"));
-                    } else if ("conflict".equals(cmd.alias())) {
-                      cmd.replyTo().tell(StudioAdminResponse.conflict("Already exists"));
-                    } else if ("failure".equals(cmd.alias())) {
-                      cmd.replyTo().tell(StudioAdminResponse.failure("Boom"));
+                  switch (msg) {
+                    case StudioAdminCommand.CreateStudio cmd -> {
+                      if ("bad".equals(cmd.alias())) {
+                        cmd.replyTo().tell(StudioAdminResponse.badRequest("Bad format"));
+                      } else if ("conflict".equals(cmd.alias())) {
+                        cmd.replyTo().tell(StudioAdminResponse.conflict("Already exists"));
+                      } else if ("failure".equals(cmd.alias())) {
+                        cmd.replyTo().tell(StudioAdminResponse.failure("Boom"));
+                      }
                     }
+                    default -> {}
                   }
                   return Behaviors.same();
                 }),
@@ -185,31 +201,13 @@ final class StudioAdminRouteTest {
     var route = new StudioAdminRoute(actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
-    var badResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/studios")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"alias\":\"bad\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var badResp = executePost(handler, "/api/admin/v1/studios", "{\"alias\":\"bad\"}");
     assertThat(badResp.status()).isEqualTo(StatusCodes.BAD_REQUEST);
 
-    var conflictResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/studios")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"alias\":\"conflict\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var conflictResp = executePost(handler, "/api/admin/v1/studios", "{\"alias\":\"conflict\"}");
     assertThat(conflictResp.status()).isEqualTo(StatusCodes.CONFLICT);
 
-    var failResp =
-        handler
-            .apply(
-                HttpRequest.POST("/api/admin/v1/studios")
-                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"alias\":\"failure\"}"))
-            .toCompletableFuture()
-            .get(5, TimeUnit.SECONDS);
+    var failResp = executePost(handler, "/api/admin/v1/studios", "{\"alias\":\"failure\"}");
     assertThat(failResp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
   }
 

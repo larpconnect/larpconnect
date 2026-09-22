@@ -36,7 +36,15 @@ public final class StudioAdminRoute extends AllDirectives {
     this(studioAdminActor, system, objectMapper, Duration.ofSeconds(20));
   }
 
-  public StudioAdminRoute(
+  /**
+   * Package-private constructor allowing custom ask timeouts during unit testing.
+   *
+   * @param studioAdminActor actor handling studio administration commands
+   * @param system typed actor system
+   * @param objectMapper Jackson object mapper
+   * @param askTimeout timeout duration for ask operations
+   */
+  StudioAdminRoute(
       ActorRef<StudioAdminCommand> studioAdminActor,
       ActorSystem<Void> system,
       ObjectMapper objectMapper,

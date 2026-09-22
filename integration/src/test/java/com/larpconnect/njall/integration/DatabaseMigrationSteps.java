@@ -301,6 +301,8 @@ public final class DatabaseMigrationSteps {
       assertThatThrownBy(
               () -> {
                 try (var rs = stmt.executeQuery(query)) {
+                  // Consuming rs.next() satisfies SpotBugs RV_RETURN_VALUE_IGNORED while ensuring
+                  // the query execution is fully attempted under permission checks.
                   assertThat(rs.next()).isFalse();
                 }
               })
