@@ -1,7 +1,7 @@
 package com.larpconnect.njall.api.admin;
 
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Inject;
+import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.ActorContext;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;

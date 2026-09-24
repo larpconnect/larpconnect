@@ -1,12 +1,13 @@
 package com.larpconnect.njall.api.admin;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.google.inject.Inject;
+import io.dropwizard.metrics5.health.HealthCheck;
+import io.dropwizard.metrics5.health.HealthCheck.Result;
 import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.actor.typed.ActorSystem;
 
 /** Evaluates the operational health and shutdown status of the Apache Pekko ActorSystem. */
-public final class PekkoHealthCheck extends HealthCheck {
+public final class PekkoHealthCheck implements HealthCheck {
 
   private final ActorSystem<Void> system;
 
@@ -16,7 +17,7 @@ public final class PekkoHealthCheck extends HealthCheck {
   }
 
   @Override
-  protected Result check() {
+  public Result check() {
     if (system.getWhenTerminated().toCompletableFuture().isDone()) {
       return Result.unhealthy("ActorSystem is terminated");
     }

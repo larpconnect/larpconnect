@@ -7,7 +7,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.ConfigurationException;
 import com.google.inject.CreationException;
@@ -24,6 +23,7 @@ import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.session.SessionFactoryFactory;
 import com.larpconnect.njall.server.http.HttpServerService;
+import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.actor.typed.ActorRef;

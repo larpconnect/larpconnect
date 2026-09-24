@@ -2,13 +2,13 @@ package com.larpconnect.njall.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.admin.AdminRoute;
 import com.larpconnect.njall.api.http.RootRoute;
 import com.larpconnect.njall.common.annotation.Blocking;
+import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.Props;

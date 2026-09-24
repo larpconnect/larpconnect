@@ -17,6 +17,8 @@ dependencies {
     api(platform(libs.hibernate.bom))
     api(platform(libs.guava.bom))
     api(platform(libs.mug.bom))
+    api(platform(libs.pekko.bom))
+    api(platform(libs.pekko.http.bom))
     
     constraints {
         // Core runtime and ecosystem libraries
@@ -28,19 +30,12 @@ dependencies {
         api(libs.metrics.healthchecks)
         api(libs.picocli)
 
-        // Asynchronous runtime & HTTP (Pekko)
-        api(libs.pekko.actor.typed)
-        api(libs.pekko.actor.testkit.typed)
-        api(libs.pekko.stream)
-        api(libs.pekko.stream.testkit)
-        api(libs.pekko.http)
-        api(libs.pekko.http.testkit)
-        api(libs.pekko.http.jackson)
-
-        // Persistence & Messaging        api(libs.postgresql)
+        // Persistence & Messaging
+        api(libs.postgresql)
         api(libs.flyway.core)
         api(libs.flyway.database.postgresql)
         api(libs.rabbitmq.amqp)
+
 
         // Logging runtime
         api(libs.logback.classic)

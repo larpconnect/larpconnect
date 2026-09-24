@@ -1,6 +1,5 @@
 package com.larpconnect.njall.api.admin;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -10,6 +9,7 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.common.annotation.Blocking;
+import io.dropwizard.metrics5.health.HealthCheck;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.Props;
