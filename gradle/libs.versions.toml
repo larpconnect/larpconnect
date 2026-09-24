@@ -5,7 +5,7 @@
 # Core Runtime Libraries
 guava = "33.7.1-jre"
 guice = "7.0.0"
-mug = "11.0"
+mug = "11.1"
 pekko = "2.0.0-M4"
 pekko-http = "2.0.0-M1"
 typesafe-config = "1.4.9"
