@@ -26,23 +26,48 @@ The application SHALL provide a unified command-line entry point using Picocli t
 - **AND** the application process terminates with exit status 2
 
 ### Requirement: Server Subcommand Execution
-The application SHALL provide a `server` subcommand that starts the HTTP server runtime. The subcommand SHALL support options `-h/--host` (bind address), `-p/--port` (listening port), `--name` (server node name), `--primary-domain` (primary domain name), and `--admin-contact` (system administrator contact email). Parsed non-null options SHALL override Typesafe Config and reference defaults.
+The application SHALL provide a `server` subcommand that starts the HTTP **Server** runtime. The subcommand SHALL support options `-h/--host` (bind address), `-p/--port` (listening port), `--name` (server node name), `--primary-domain` (primary domain name), and `--admin-contact` (system administrator contact email). Command accessors and `ServerOptions` records SHALL expose these options via `Optional<T>` return types. Parsed non-empty options SHALL override Typesafe Config and reference defaults.
 
 #### Scenario: Server subcommand starts HTTP server with default options
 - **GIVEN** the application is started with argument `server`
 - **WHEN** server initialization completes
 - **THEN** the HTTP server service starts and binds to the configured host and port
 - **AND** Pekko coordinated shutdown hooks are registered
+- **AND** unset options on `ServerCommand` evaluate to `Optional.empty()`
 
 #### Scenario: Server subcommand applies port override from command line
 - **GIVEN** the application is started with arguments `server --port 9090 --host 127.0.0.1`
 - **WHEN** server initialization completes
 - **THEN** the HTTP server service binds to `127.0.0.1:9090`
+- **AND** `serverCommand.port()` returns `Optional.of(9090)`
+- **AND** `serverCommand.host()` returns `Optional.of("127.0.0.1")`
 
 ### Requirement: External Configuration File Support
-The application SHALL allow operators to specify a path to an external HOCON configuration file via the `-c/--config` option on root or subcommands. When provided, the configuration file SHALL be parsed and layered into the Typesafe Config hierarchy with precedence over `reference.conf` and environment variables, but subordinated to explicit command-line flags.
+The application SHALL allow operators to specify a path to an external HOCON configuration file via the `-c/--config` option on root or subcommands. The root command and configuration builder SHALL expose this option as `Optional<File>`. When present, the configuration file SHALL be parsed and layered into the Typesafe Config hierarchy with precedence over `reference.conf` and environment variables, but subordinated to explicit command-line flags.
 
 #### Scenario: External config file overrides defaults
 - **GIVEN** an external HOCON file with custom server and database settings
 - **WHEN** the application is started with `--config <path>`
-- **THEN** the settings from the external configuration file are applied to the runtime
+- **THEN** `rootCommand.configFile()` returns an `Optional<File>` containing the path
+- **AND** the settings from the external configuration file are applied to the runtime
+
+#### Scenario: No config file specified results in empty Optional
+- **GIVEN** the application is started without the `--config` option
+- **WHEN** argument parsing occurs
+- **THEN** `rootCommand.configFile()` returns `Optional.empty()`
+- **AND** configuration defaults from reference and application files are retained
+
+### Requirement: Migrate Subcommand Execution and Options
+The application SHALL provide a `migrate` subcommand that executes database migrations. The subcommand SHALL support options `--jdbc-url`, `-u/--username`, `-p/--password`, `--trust-auth` (flag to enable trust authentication), `--schemas`, `--default-schema`, `--server-name`, `--primary-domain`, and `--admin-contact`. Command accessors and `MigrationOptions` records SHALL expose these options via `Optional<T>` return types (with `--trust-auth` exposed as `Optional<Boolean>`). Parsed non-empty options SHALL override configuration defaults via `CliConfigBuilder`.
+
+#### Scenario: Migrate subcommand executes with trust-auth flag
+- **GIVEN** the application is invoked with arguments `migrate --trust-auth`
+- **WHEN** argument parsing occurs
+- **THEN** `migrateCommand.trustAuth()` returns `Optional.of(true)`
+- **AND** `CliConfigBuilder` sets override `larpconnect.data.database.migration.trust-auth` to `true`
+
+#### Scenario: Migrate subcommand defaults trust-auth to empty Optional when omitted
+- **GIVEN** the application is invoked with argument `migrate` without `--trust-auth`
+- **WHEN** argument parsing occurs
+- **THEN** `migrateCommand.trustAuth()` returns `Optional.empty()`
+- **AND** no `trust-auth` CLI override is injected by `CliConfigBuilder`

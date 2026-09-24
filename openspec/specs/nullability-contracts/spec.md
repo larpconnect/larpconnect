@@ -15,12 +15,12 @@ All non-test, non-integration Java packages in Project Njall SHALL declare `@Nul
 - **THEN** all method parameters, return values, type arguments, and fields in that package SHALL default to non-null unless explicitly annotated.
 
 ### Requirement: Explicit Nullable Annotations for Nullable Types
-Any parameter, record component, or return value that can legitimately evaluate to `null` SHALL be explicitly annotated with `org.jspecify.annotations.Nullable`.
+Any parameter, record component, or return value that can legitimately evaluate to `null` SHALL be explicitly annotated with `org.jspecify.annotations.Nullable`. Public command-line interface command accessors and options records SHALL return `java.util.Optional<T>` to isolate framework-level nullness at the command boundary rather than leaking `@Nullable` return values into application code.
 
 #### Scenario: Optional CLI options and return values are explicitly nullable
-- **GIVEN** a method or constructor parameter that accepts `null` (such as optional CLI parameters in `CliRunner` or `CliConfigBuilder`)
-- **WHEN** the method signature is declared
-- **THEN** the parameter and/or return type SHALL be annotated with `@Nullable`.
+- **GIVEN** a method or constructor parameter that accepts `null` (such as internal CLI fields populated by Picocli or optional parameters in `CliRunner`)
+- **WHEN** the method or field signature is declared
+- **THEN** internal framework-injected fields SHALL be annotated with `@Nullable` while public command option accessors and options records SHALL return `Optional<T>`.
 
 #### Scenario: Query methods returning null on absent records are explicitly nullable
 - **GIVEN** an internal data retrieval method such as `DefaultServerDAO.findServerEntity`

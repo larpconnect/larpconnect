@@ -2,6 +2,7 @@ package com.larpconnect.njall.server.cli;
 
 import com.typesafe.config.Config;
 import java.io.File;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import org.jspecify.annotations.Nullable;
@@ -57,24 +58,24 @@ public final class ServerCommand implements Callable<Integer> {
     this.serverLauncher = serverLauncher;
   }
 
-  public @Nullable String host() {
-    return host;
+  public Optional<String> host() {
+    return Optional.ofNullable(host);
   }
 
-  public @Nullable Integer port() {
-    return port;
+  public Optional<Integer> port() {
+    return Optional.ofNullable(port);
   }
 
-  public @Nullable String name() {
-    return name;
+  public Optional<String> name() {
+    return Optional.ofNullable(name);
   }
 
-  public @Nullable String primaryDomain() {
-    return primaryDomain;
+  public Optional<String> primaryDomain() {
+    return Optional.ofNullable(primaryDomain);
   }
 
-  public @Nullable String adminContact() {
-    return adminContact;
+  public Optional<String> adminContact() {
+    return Optional.ofNullable(adminContact);
   }
 
   @Nullable Integer callWithRoot(RootCommand parent) {
@@ -99,11 +100,11 @@ public final class ServerCommand implements Callable<Integer> {
     serverLauncher.accept(config);
   }
 
-  private @Nullable File resolveConfigFile() {
-    return rootCommand != null ? rootCommand.configFile() : null;
+  private Optional<File> resolveConfigFile() {
+    return Optional.ofNullable(rootCommand).flatMap(RootCommand::configFile);
   }
 
-  private Config buildConfig(@Nullable File configFile) {
+  private Config buildConfig(Optional<File> configFile) {
     var builder = createConfigBuilder();
     var options = createServerOptions();
     return builder.withConfigFile(configFile).withServerOptions(options).build();
@@ -114,6 +115,6 @@ public final class ServerCommand implements Callable<Integer> {
   }
 
   private ServerOptions createServerOptions() {
-    return new ServerOptions(host, port, name, primaryDomain, adminContact);
+    return new ServerOptions(host(), port(), name(), primaryDomain(), adminContact());
   }
 }

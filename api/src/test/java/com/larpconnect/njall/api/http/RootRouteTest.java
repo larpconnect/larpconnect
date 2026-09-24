@@ -2,7 +2,6 @@ package com.larpconnect.njall.api.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.larpconnect.njall.api.RouteProvider;
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;

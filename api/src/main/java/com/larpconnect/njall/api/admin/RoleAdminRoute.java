@@ -30,7 +30,7 @@ public final class RoleAdminRoute extends AllDirectives {
   private final Duration askTimeout;
 
   @Inject
-  public RoleAdminRoute(
+  RoleAdminRoute(
       ActorRef<RoleAdminCommand> roleAdminActor,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
@@ -74,9 +74,7 @@ public final class RoleAdminRoute extends AllDirectives {
   }
 
   private Route handleCreateRole(CreateRoleRequest request) {
-    return onComplete(
-        () -> askCreateRole(request.roleName()),
-        responseTry -> mapResponseToRoute(responseTry, true));
+    return onComplete(() -> askCreateRole(request.roleName()), this::mapCreateResponse);
   }
 
   private CompletionStage<RoleAdminResponse> askCreateRole(String roleName) {
@@ -88,7 +86,7 @@ public final class RoleAdminRoute extends AllDirectives {
   }
 
   private Route handleListRoles() {
-    return onComplete(this::askListRoles, responseTry -> mapResponseToRoute(responseTry, false));
+    return onComplete(this::askListRoles, this::mapOkResponse);
   }
 
   private CompletionStage<RoleAdminResponse> askListRoles() {
@@ -96,8 +94,7 @@ public final class RoleAdminRoute extends AllDirectives {
   }
 
   private Route handleGetRole(String identifier) {
-    return onComplete(
-        () -> askGetRole(identifier), responseTry -> mapResponseToRoute(responseTry, false));
+    return onComplete(() -> askGetRole(identifier), this::mapOkResponse);
   }
 
   private CompletionStage<RoleAdminResponse> askGetRole(String identifier) {
@@ -112,11 +109,18 @@ public final class RoleAdminRoute extends AllDirectives {
         system.scheduler());
   }
 
-  private Route mapResponseToRoute(Try<RoleAdminResponse> responseTry, boolean isCreateOperation) {
+  private Route mapCreateResponse(Try<RoleAdminResponse> responseTry) {
     if (responseTry.isFailure()) {
       return handleActorFailure(responseTry.failed().get());
     }
-    return mapSuccessResponse(responseTry.get(), isCreateOperation);
+    return mapSuccessResponse(responseTry.get(), StatusCodes.CREATED);
+  }
+
+  private Route mapOkResponse(Try<RoleAdminResponse> responseTry) {
+    if (responseTry.isFailure()) {
+      return handleActorFailure(responseTry.failed().get());
+    }
+    return mapSuccessResponse(responseTry.get(), StatusCodes.OK);
   }
 
   private Route handleActorFailure(Throwable error) {
@@ -127,13 +131,10 @@ public final class RoleAdminRoute extends AllDirectives {
         Jackson.marshaller(objectMapper));
   }
 
-  private Route mapSuccessResponse(RoleAdminResponse response, boolean isCreateOperation) {
+  private Route mapSuccessResponse(RoleAdminResponse response, StatusCode successStatus) {
     return switch (response) {
       case RoleAdminResponse.RoleSingle single ->
-          complete(
-              resolveSuccessStatus(isCreateOperation),
-              single.role(),
-              Jackson.marshaller(objectMapper));
+          complete(successStatus, single.role(), Jackson.marshaller(objectMapper));
       case RoleAdminResponse.RoleList list ->
           completeOK(list.roles(), Jackson.marshaller(objectMapper));
       default -> mapErrorResponse(response);
@@ -168,9 +169,5 @@ public final class RoleAdminRoute extends AllDirectives {
               AdminErrorResponse.of(500, "Unknown error"),
               Jackson.marshaller(objectMapper));
     };
-  }
-
-  private static StatusCode resolveSuccessStatus(boolean isCreateOperation) {
-    return isCreateOperation ? StatusCodes.CREATED : StatusCodes.OK;
   }
 }

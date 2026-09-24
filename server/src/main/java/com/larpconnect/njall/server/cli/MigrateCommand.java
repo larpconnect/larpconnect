@@ -1,8 +1,10 @@
 package com.larpconnect.njall.server.cli;
 
+import com.google.common.collect.ImmutableList;
 import com.typesafe.config.Config;
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
@@ -37,6 +39,11 @@ public final class MigrateCommand implements Callable<Integer> {
       names = {"-p", "--password"},
       description = "Administrative database password.")
   private @Nullable String password;
+
+  @Option(
+      names = {"--trust-auth"},
+      description = "Explicitly enable passwordless trust authentication.")
+  private @Nullable Boolean trustAuth;
 
   @Option(
       names = {"--schemas"},
@@ -74,36 +81,40 @@ public final class MigrateCommand implements Callable<Integer> {
     this.migrationExecutor = migrationExecutor;
   }
 
-  public @Nullable String jdbcUrl() {
-    return jdbcUrl;
+  public Optional<String> jdbcUrl() {
+    return Optional.ofNullable(jdbcUrl);
   }
 
-  public @Nullable String username() {
-    return username;
+  public Optional<String> username() {
+    return Optional.ofNullable(username);
   }
 
-  public @Nullable String password() {
-    return password;
+  public Optional<String> password() {
+    return Optional.ofNullable(password);
   }
 
-  public @Nullable List<String> schemas() {
-    return schemas;
+  public Optional<Boolean> trustAuth() {
+    return Optional.ofNullable(trustAuth);
   }
 
-  public @Nullable String defaultSchema() {
-    return defaultSchema;
+  public Optional<ImmutableList<String>> schemas() {
+    return Optional.ofNullable(schemas).map(ImmutableList::copyOf);
   }
 
-  public @Nullable String serverName() {
-    return serverName;
+  public Optional<String> defaultSchema() {
+    return Optional.ofNullable(defaultSchema);
   }
 
-  public @Nullable String primaryDomain() {
-    return primaryDomain;
+  public Optional<String> serverName() {
+    return Optional.ofNullable(serverName);
   }
 
-  public @Nullable String adminContact() {
-    return adminContact;
+  public Optional<String> primaryDomain() {
+    return Optional.ofNullable(primaryDomain);
+  }
+
+  public Optional<String> adminContact() {
+    return Optional.ofNullable(adminContact);
   }
 
   @Override
@@ -122,11 +133,11 @@ public final class MigrateCommand implements Callable<Integer> {
     return migrationExecutor.apply(config);
   }
 
-  private @Nullable File resolveConfigFile() {
-    return rootCommand != null ? rootCommand.configFile() : null;
+  private Optional<File> resolveConfigFile() {
+    return Optional.ofNullable(rootCommand).flatMap(RootCommand::configFile);
   }
 
-  private Config buildConfig(@Nullable File configFile) {
+  private Config buildConfig(Optional<File> configFile) {
     var builder = createConfigBuilder();
     var options = createMigrationOptions();
     return builder.withConfigFile(configFile).withMigrationOptions(options).build();
@@ -138,13 +149,14 @@ public final class MigrateCommand implements Callable<Integer> {
 
   private MigrationOptions createMigrationOptions() {
     return new MigrationOptions(
-        jdbcUrl,
-        username,
-        password,
-        schemas,
-        defaultSchema,
-        serverName,
-        primaryDomain,
-        adminContact);
+        jdbcUrl(),
+        username(),
+        password(),
+        trustAuth(),
+        schemas(),
+        defaultSchema(),
+        serverName(),
+        primaryDomain(),
+        adminContact());
   }
 }

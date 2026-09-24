@@ -18,27 +18,30 @@ public final class DatabaseConfigModule extends AbstractModule {
 
   @Provides
   @Singleton
-  DatabaseConfig provideDatabaseConfig(Config config, ServerConfig serverConfig) {
-    return DatabaseConfig.fromConfig(config, serverConfig);
+  DatabaseConfig provideDatabaseConfig(
+      MigrationConfig migrationConfig,
+      @NjallAdmin SessionConfig adminConfig,
+      @NjallUsers SessionConfig usersConfig) {
+    return DatabaseConfig.of(migrationConfig, adminConfig, usersConfig);
   }
 
   @Provides
   @Singleton
-  MigrationConfig provideMigrationConfig(DatabaseConfig databaseConfig) {
-    return databaseConfig.migration();
+  MigrationConfig provideMigrationConfig(Config config, ServerConfig serverConfig) {
+    return MigrationConfig.fromConfig(config, serverConfig);
   }
 
   @Provides
   @Singleton
   @NjallAdmin
-  SessionConfig provideAdminSessionConfig(DatabaseConfig databaseConfig) {
-    return databaseConfig.admin();
+  SessionConfig provideAdminSessionConfig(Config config) {
+    return SessionConfig.fromConfig(config, "larpconnect.data.database.admin");
   }
 
   @Provides
   @Singleton
   @NjallUsers
-  SessionConfig provideUsersSessionConfig(DatabaseConfig databaseConfig) {
-    return databaseConfig.users();
+  SessionConfig provideUsersSessionConfig(Config config) {
+    return SessionConfig.fromConfig(config, "larpconnect.data.database.users");
   }
 }

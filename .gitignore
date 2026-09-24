@@ -60,3 +60,8 @@ build
 
 # Code Reviews
 .agents/logs/reviews/
+
+# Local Environment and Secrets
+.env
+.env.*
+!.env.example

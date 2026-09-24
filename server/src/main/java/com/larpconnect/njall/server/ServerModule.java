@@ -1,6 +1,7 @@
 package com.larpconnect.njall.server;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.util.Modules;
 import com.larpconnect.njall.api.ApiModule;
 import com.larpconnect.njall.common.CommonModule;
 import com.larpconnect.njall.data.DataModule;
@@ -24,6 +25,10 @@ public final class ServerModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    install(Modules.disableCircularProxiesModule());
+    install(Modules.requireAtInjectOnConstructorsModule());
+    install(Modules.requireExplicitBindingsModule());
+    install(Modules.requireExactBindingAnnotationsModule());
     install(new CommonModule(config));
     install(new DataModule());
     install(new ApiModule());

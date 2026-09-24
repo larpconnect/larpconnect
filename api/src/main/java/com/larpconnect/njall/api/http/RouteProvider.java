@@ -1,4 +1,4 @@
-package com.larpconnect.njall.api;
+package com.larpconnect.njall.api.http;
 
 import org.apache.pekko.http.javadsl.server.Route;
 

@@ -91,3 +91,17 @@ This means:
 * HornetQ 2.4.11.Final+
 * Apache Pekko 2.0-M4+ (Scala Version 3)
 * Junit (Jupiter) 6.1+
+
+---
+
+## 6. Repository Portability and Path Invariants
+
+* **Strict Relative Paths**: All paths and markdown links written inside any repository file
+  (OpenSpec proposals, specs, designs, ADRs, documentation, comments, and code) MUST be relative
+  paths (e.g., `../../../../adr/0001-*.md` or `adr/0001-*.md`).
+* **Absolute Paths & `file:///` Banned in Repository Files**: Never write `file:///` URLs, drive
+  letters (`C:`), or user/machine-specific absolute paths into any repository file. The `file:///`
+  clickable link format is strictly reserved for conversational chat output to the user, never
+  for committed repository files.
+* **Portable Examples**: Any path examples in documentation or skills must use generic placeholders
+  (e.g., `<workspace>`, `<username>`, or relative paths).

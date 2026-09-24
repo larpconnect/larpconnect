@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.larpconnect.njall.data.domain.DeletionFilter;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -60,6 +61,9 @@ final class DefaultStudioDAOTest {
     assertThat(result).isPresent();
     assertThat(result.get().alias()).isEqualTo("valhalla");
 
+    var resultActive = dao.findById(studioId, DeletionFilter.ACTIVE_ONLY);
+    assertThat(resultActive).isPresent();
+
     Query<StudioLookupEntity> queryAll = mock(Query.class);
     when(session.createQuery(
             "from StudioLookupEntity where studioId = :studioId", StudioLookupEntity.class))
@@ -67,8 +71,12 @@ final class DefaultStudioDAOTest {
     when(queryAll.setParameter("studioId", studioId)).thenReturn(queryAll);
     when(queryAll.uniqueResult()).thenReturn(entity);
 
-    var resultAll = dao.findById(studioId, true);
+    var resultAll = dao.findById(studioId, DeletionFilter.INCLUDE_DELETED);
     assertThat(resultAll).isPresent();
+
+    assertThatThrownBy(() -> dao.findById(null, DeletionFilter.ACTIVE_ONLY))
+        .isInstanceOf(NullPointerException.class);
+    assertThatThrownBy(() -> dao.findById(studioId, null)).isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -88,6 +96,9 @@ final class DefaultStudioDAOTest {
     assertThat(result).isPresent();
     assertThat(result.get().studioId()).isEqualTo(studioId);
 
+    var resultActive = dao.findByAlias("valhalla", DeletionFilter.ACTIVE_ONLY);
+    assertThat(resultActive).isPresent();
+
     Query<StudioLookupEntity> queryAll = mock(Query.class);
     when(session.createQuery(
             "from StudioLookupEntity where alias = :alias", StudioLookupEntity.class))
@@ -95,12 +106,17 @@ final class DefaultStudioDAOTest {
     when(queryAll.setParameter("alias", "valhalla")).thenReturn(queryAll);
     when(queryAll.uniqueResult()).thenReturn(entity);
 
-    var resultAll = dao.findByAlias("valhalla", true);
+    var resultAll = dao.findByAlias("valhalla", DeletionFilter.INCLUDE_DELETED);
     assertThat(resultAll).isPresent();
+
+    assertThatThrownBy(() -> dao.findByAlias(null, DeletionFilter.ACTIVE_ONLY))
+        .isInstanceOf(NullPointerException.class);
+    assertThatThrownBy(() -> dao.findByAlias("valhalla", null))
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
-  @DisplayName("list returns studios according to includeDeleted flag")
+  @DisplayName("list returns studios according to DeletionFilter")
   @SuppressWarnings("unchecked")
   void list_filtering() {
     var entity = new StudioLookupEntity(tenantId, studioId, "valhalla", now, now, null);
@@ -113,14 +129,19 @@ final class DefaultStudioDAOTest {
     var list = dao.list();
     assertThat(list).hasSize(1);
 
+    var listActive = dao.list(DeletionFilter.ACTIVE_ONLY);
+    assertThat(listActive).hasSize(1);
+
     Query<StudioLookupEntity> queryAll = mock(Query.class);
     when(session.createQuery(
             "from StudioLookupEntity order by alias asc", StudioLookupEntity.class))
         .thenReturn(queryAll);
     when(queryAll.list()).thenReturn(List.of(entity));
 
-    var listAll = dao.list(true);
+    var listAll = dao.list(DeletionFilter.INCLUDE_DELETED);
     assertThat(listAll).hasSize(1);
+
+    assertThatThrownBy(() -> dao.list(null)).isInstanceOf(NullPointerException.class);
   }
 
   @Test

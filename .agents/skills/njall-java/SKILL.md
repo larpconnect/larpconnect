@@ -65,7 +65,7 @@ Commons utilities where available. Use context7 to get the latest documentation.
 - Avoid static methods.
 - Strongly prefer static inner classes where inner classes are used.
 - Include a `package-info.java` file in every package with a public object in
-  it.
+  it. This should include the `NullMarked` annotation.
 - Functional programming: Prefer `streaming` interfaces, closures, and
   functional patterns.
 - Asynchronous Processing: Virtual threads should be leveraged for I/O
@@ -90,11 +90,12 @@ Commons utilities where available. Use context7 to get the latest documentation.
   - Do not ignore exceptions. If they are truly trivial they can be logged at a
     debug level, or a comment can be inserted indicating that the exception
     cannot happen.
+  - Avoid double-logging exceptions. A catch block should **either** log the error **or** throw the error, not both except under unusual circumstances.
 
 ### Java Style
 
 - When there only exists a single implementation for a java interface or
-  abstract class, that class may be named `Default<InterfaceName>`. It should
+  abstract class, that class should be named `Default<InterfaceName>`. It should
   never be named `InterfaceNameImpl`.
 - Interfaces should just be the interface name and not include any marking in
   the name indicating that they are an interface (so `Example` not `IExample` or

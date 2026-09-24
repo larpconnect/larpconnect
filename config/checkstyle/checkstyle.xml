@@ -50,5 +50,13 @@
             <message key="matchxpath.match"
                      value="@Singleton must not be declared on classes. Configure scoping in Guice modules using .in(Scopes.SINGLETON) or on provider methods."/>
         </module>
+
+        <!-- Forbid 'Impl' naming on type declarations -->
+        <module name="MatchXpath">
+            <property name="query"
+                      value="(//CLASS_DEF | //INTERFACE_DEF | //RECORD_DEF | //ENUM_DEF | //ANNOTATION_DEF)/IDENT[ends-with(lower-case(@text), 'impl')]"/>
+            <message key="matchxpath.match"
+                     value="Types must not end with 'Impl' (e.g. '&lt;InterfaceName&gt;Impl'). Follow the project naming convention and use 'Default&lt;InterfaceName&gt;' instead."/>
+        </module>
     </module>
 </module>

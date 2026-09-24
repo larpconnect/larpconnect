@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -18,7 +19,7 @@ public final class CliConfigBuilder {
 
   private final Map<String, Object> overrides = new HashMap<>();
   private final Config baseConfig;
-  private @Nullable File configFile;
+  private Optional<File> configFile = Optional.empty();
 
   public CliConfigBuilder() {
     this(ConfigFactory.load());
@@ -28,9 +29,13 @@ public final class CliConfigBuilder {
     this.baseConfig = requireNonNull(baseConfig, "baseConfig cannot be null");
   }
 
-  public CliConfigBuilder withConfigFile(@Nullable File configFile) {
-    this.configFile = configFile;
+  public CliConfigBuilder withConfigFile(Optional<File> configFile) {
+    this.configFile = requireNonNull(configFile, "configFile cannot be null");
     return this;
+  }
+
+  public CliConfigBuilder withConfigFile(File configFile) {
+    return withConfigFile(Optional.of(requireNonNull(configFile, "configFile cannot be null")));
   }
 
   public CliConfigBuilder withOverride(String path, @Nullable Object value) {
@@ -51,11 +56,11 @@ public final class CliConfigBuilder {
   }
 
   private CliConfigBuilder applyServerOptions(ServerOptions options) {
-    withOverride("larpconnect.server.host", options.host());
-    withOverride("larpconnect.server.port", options.port());
-    withOverride("larpconnect.server.name", options.name());
-    withOverride("larpconnect.server.primary-domain", options.primaryDomain());
-    withOverride("larpconnect.server.admin-contact", options.adminContact());
+    options.host().ifPresent(v -> withOverride("larpconnect.server.host", v));
+    options.port().ifPresent(v -> withOverride("larpconnect.server.port", v));
+    options.name().ifPresent(v -> withOverride("larpconnect.server.name", v));
+    options.primaryDomain().ifPresent(v -> withOverride("larpconnect.server.primary-domain", v));
+    options.adminContact().ifPresent(v -> withOverride("larpconnect.server.admin-contact", v));
     return this;
   }
 
@@ -67,14 +72,27 @@ public final class CliConfigBuilder {
   }
 
   private CliConfigBuilder applyMigrationOptions(MigrationOptions options) {
-    withOverride("larpconnect.data.database.migration.jdbc-url", options.jdbcUrl());
-    withOverride("larpconnect.data.database.migration.username", options.username());
-    withOverride("larpconnect.data.database.migration.password", options.password());
-    withOverride("larpconnect.data.database.migration.schemas", options.schemas());
-    withOverride("larpconnect.data.database.migration.default-schema", options.defaultSchema());
-    withOverride("larpconnect.server.name", options.serverName());
-    withOverride("larpconnect.server.primary-domain", options.primaryDomain());
-    withOverride("larpconnect.server.admin-contact", options.adminContact());
+    options
+        .jdbcUrl()
+        .ifPresent(v -> withOverride("larpconnect.data.database.migration.jdbc-url", v));
+    options
+        .username()
+        .ifPresent(v -> withOverride("larpconnect.data.database.migration.username", v));
+    options
+        .password()
+        .ifPresent(v -> withOverride("larpconnect.data.database.migration.password", v));
+    options
+        .trustAuth()
+        .ifPresent(v -> withOverride("larpconnect.data.database.migration.trust-auth", v));
+    options
+        .schemas()
+        .ifPresent(v -> withOverride("larpconnect.data.database.migration.schemas", v));
+    options
+        .defaultSchema()
+        .ifPresent(v -> withOverride("larpconnect.data.database.migration.default-schema", v));
+    options.serverName().ifPresent(v -> withOverride("larpconnect.server.name", v));
+    options.primaryDomain().ifPresent(v -> withOverride("larpconnect.server.primary-domain", v));
+    options.adminContact().ifPresent(v -> withOverride("larpconnect.server.admin-contact", v));
     return this;
   }
 
@@ -93,13 +111,15 @@ public final class CliConfigBuilder {
   }
 
   private Config loadFileConfig() {
-    if (configFile == null) {
-      return ConfigFactory.empty();
-    }
-    if (!configFile.exists()) {
-      throw new IllegalArgumentException(
-          "Specified configuration file does not exist: " + configFile.getPath());
-    }
-    return ConfigFactory.parseFile(configFile);
+    return configFile
+        .map(
+            file -> {
+              if (!file.exists()) {
+                throw new IllegalArgumentException(
+                    "Specified configuration file does not exist: " + file.getPath());
+              }
+              return ConfigFactory.parseFile(file);
+            })
+        .orElseGet(ConfigFactory::empty);
   }
 }

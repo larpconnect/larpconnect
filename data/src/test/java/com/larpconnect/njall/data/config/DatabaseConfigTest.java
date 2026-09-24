@@ -88,6 +88,78 @@ final class DatabaseConfigTest {
   }
 
   @Test
+  @DisplayName("fromConfig parses DatabaseConfig with global trust-auth enabled")
+  void fromConfig_globalTrustAuth_parsesEmptyPasswordsSuccessfully() {
+    var typesafeConfig =
+        ConfigFactory.parseString(
+            "larpconnect.data.database {\n"
+                + "  trust-auth = true\n"
+                + "  migration {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall\"\n"
+                + "    password = \"\"\n"
+                + "    schemas = [\"njall\"]\n"
+                + "    default-schema = \"njall\"\n"
+                + "  }\n"
+                + "  admin {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall_admin\"\n"
+                + "    password = \"\"\n"
+                + "    pool { min-size = 2, max-size = 10, timeout-seconds = 5 }\n"
+                + "  }\n"
+                + "  users {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall_users\"\n"
+                + "    password = \"\"\n"
+                + "    pool { min-size = 5, max-size = 20, timeout-seconds = 5 }\n"
+                + "  }\n"
+                + "}");
+    var serverConfig = ServerConfig.of("127.0.0.1", 8080);
+
+    var dbConfig = DatabaseConfig.fromConfig(typesafeConfig, serverConfig);
+
+    assertThat(dbConfig.migration().trustAuth()).isTrue();
+    assertThat(dbConfig.admin().trustAuth()).isTrue();
+    assertThat(dbConfig.users().trustAuth()).isTrue();
+  }
+
+  @Test
+  @DisplayName(
+      "fromConfig throws IllegalStateException when trust-auth is false and password is empty")
+  void fromConfig_unconfiguredPasswordWithoutTrustAuth_throwsIllegalStateException() {
+    var typesafeConfig =
+        ConfigFactory.parseString(
+            "larpconnect.data.database {\n"
+                + "  trust-auth = false\n"
+                + "  migration {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall\"\n"
+                + "    password = \"\"\n"
+                + "    schemas = [\"njall\"]\n"
+                + "    default-schema = \"njall\"\n"
+                + "  }\n"
+                + "  admin {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall_admin\"\n"
+                + "    password = \"secret_admin\"\n"
+                + "    pool { min-size = 2, max-size = 10, timeout-seconds = 5 }\n"
+                + "  }\n"
+                + "  users {\n"
+                + "    jdbc-url = \"jdbc:postgresql://localhost:5432/app\"\n"
+                + "    username = \"njall_users\"\n"
+                + "    password = \"secret_users\"\n"
+                + "    pool { min-size = 5, max-size = 20, timeout-seconds = 5 }\n"
+                + "  }\n"
+                + "}");
+    var serverConfig = ServerConfig.of("127.0.0.1", 8080);
+
+    assertThatThrownBy(() -> DatabaseConfig.fromConfig(typesafeConfig, serverConfig))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "Database password is required for migration profile with username 'njall'");
+  }
+
+  @Test
   @DisplayName("fromConfig throws NullPointerException when config is null")
   void fromConfig_nullConfig_throwsNullPointerException() {
     var serverConfig = ServerConfig.of("127.0.0.1", 8080);

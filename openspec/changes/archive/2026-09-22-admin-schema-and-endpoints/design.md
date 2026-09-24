@@ -3,11 +3,11 @@
 Project Njall requires a dedicated administrative data schema (`njall_admin`) and HTTP API endpoints under `/api/admin/v1/` to manage multi-tenant studios, administrative users, roles, and user-role assignments. The database layer uses PostgreSQL 18+ managed by Flyway migrations and Hibernate ORM. The runtime uses Apache Pekko Typed actors, Pekko HTTP routes, and Google Guice dependency injection.
 
 This design builds directly upon existing in-force architectural decisions:
-- [ADR-0001](file:///c:/Users/nacht/larpconnect/adr/0001-pekko-http-runtime-architecture.md): Pekko HTTP runtime architecture.
-- [ADR-0003](file:///c:/Users/nacht/larpconnect/adr/0003-data-module-and-flyway-migration-architecture.md): Data module and Flyway migration architecture.
-- [ADR-0005](file:///c:/Users/nacht/larpconnect/adr/0005-sealed-dao-and-hibernate-dual-session-architecture.md): Sealed DAO and Hibernate dual-session architecture.
-- [ADR-0008](file:///c:/Users/nacht/larpconnect/adr/0008-module-level-singleton-scoping-convention.md): Module-level singleton scoping convention.
-- [ADR-0009](file:///c:/Users/nacht/larpconnect/adr/0009-hibernate-session-factory-provider-injection-and-archunit-enforcement.md): Hibernate SessionFactory Provider injection and ArchUnit enforcement.
+- [ADR-0001](../../../../adr/0001-pekko-http-runtime-architecture.md): Pekko HTTP runtime architecture.
+- [ADR-0003](../../../../adr/0003-data-module-and-flyway-migration-architecture.md): Data module and Flyway migration architecture.
+- [ADR-0005](../../../../adr/0005-sealed-dao-and-hibernate-dual-session-architecture.md): Sealed DAO and Hibernate dual-session architecture.
+- [ADR-0008](../../../../adr/0008-module-level-singleton-scoping-convention.md): Module-level singleton scoping convention.
+- [ADR-0009](../../../../adr/0009-hibernate-session-factory-provider-injection-and-archunit-enforcement.md): Hibernate SessionFactory Provider injection and ArchUnit enforcement.
 
 ### C4 Container & Component Diagram (ASCII)
 

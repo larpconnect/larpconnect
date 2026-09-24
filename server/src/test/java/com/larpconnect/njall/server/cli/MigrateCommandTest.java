@@ -2,9 +2,9 @@ package com.larpconnect.njall.server.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.typesafe.config.Config;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,23 +19,33 @@ final class MigrateCommandTest {
     var cmd = new CommandLine(migrateCommand);
 
     cmd.parseArgs(
-        "--jdbc-url", "jdbc:postgresql://db:5432/larpconnect",
-        "-u", "admin_user",
-        "-p", "secret_pass",
-        "--schemas", "s1,s2,s3",
-        "--default-schema", "s1",
-        "--server-name", "node-x",
-        "--primary-domain", "custom.domain",
-        "--admin-contact", "admin@domain.com");
+        "--jdbc-url",
+        "jdbc:postgresql://db:5432/larpconnect",
+        "-u",
+        "admin_user",
+        "-p",
+        "secret_pass",
+        "--trust-auth",
+        "--schemas",
+        "s1,s2,s3",
+        "--default-schema",
+        "s1",
+        "--server-name",
+        "node-x",
+        "--primary-domain",
+        "custom.domain",
+        "--admin-contact",
+        "admin@domain.com");
 
-    assertThat(migrateCommand.jdbcUrl()).isEqualTo("jdbc:postgresql://db:5432/larpconnect");
-    assertThat(migrateCommand.username()).isEqualTo("admin_user");
-    assertThat(migrateCommand.password()).isEqualTo("secret_pass");
-    assertThat(migrateCommand.schemas()).isEqualTo(List.of("s1", "s2", "s3"));
-    assertThat(migrateCommand.defaultSchema()).isEqualTo("s1");
-    assertThat(migrateCommand.serverName()).isEqualTo("node-x");
-    assertThat(migrateCommand.primaryDomain()).isEqualTo("custom.domain");
-    assertThat(migrateCommand.adminContact()).isEqualTo("admin@domain.com");
+    assertThat(migrateCommand.jdbcUrl()).contains("jdbc:postgresql://db:5432/larpconnect");
+    assertThat(migrateCommand.username()).contains("admin_user");
+    assertThat(migrateCommand.password()).contains("secret_pass");
+    assertThat(migrateCommand.trustAuth()).contains(true);
+    assertThat(migrateCommand.schemas()).contains(ImmutableList.of("s1", "s2", "s3"));
+    assertThat(migrateCommand.defaultSchema()).contains("s1");
+    assertThat(migrateCommand.serverName()).contains("node-x");
+    assertThat(migrateCommand.primaryDomain()).contains("custom.domain");
+    assertThat(migrateCommand.adminContact()).contains("admin@domain.com");
   }
 
   @Test
@@ -57,6 +67,27 @@ final class MigrateCommandTest {
     assertThat(capturedConfig.get()).isNotNull();
     assertThat(capturedConfig.get().getString("larpconnect.data.database.migration.jdbc-url"))
         .isEqualTo("jdbc:postgresql://remote:5432/db");
+  }
+
+  @Test
+  @DisplayName("call passes trust-auth flag into migration configuration")
+  void call_whenTrustAuthSpecified_setsTrustAuthOverrideInConfig() {
+    var capturedConfig = new AtomicReference<Config>();
+    var migrateCommand =
+        new MigrateCommand(
+            cfg -> {
+              capturedConfig.set(cfg);
+              return 0;
+            });
+    var cmd = new CommandLine(migrateCommand);
+    cmd.parseArgs("--trust-auth");
+
+    var exitCode = migrateCommand.call();
+
+    assertThat(exitCode).isEqualTo(0);
+    assertThat(capturedConfig.get()).isNotNull();
+    assertThat(capturedConfig.get().getBoolean("larpconnect.data.database.migration.trust-auth"))
+        .isTrue();
   }
 
   @Test
@@ -114,6 +145,15 @@ final class MigrateCommandTest {
   void defaultConstructor_initializes() {
     var migrateCommand = new MigrateCommand();
     assertThat(migrateCommand).isNotNull();
+    assertThat(migrateCommand.jdbcUrl()).isEmpty();
+    assertThat(migrateCommand.username()).isEmpty();
+    assertThat(migrateCommand.password()).isEmpty();
+    assertThat(migrateCommand.trustAuth()).isEmpty();
+    assertThat(migrateCommand.schemas()).isEmpty();
+    assertThat(migrateCommand.defaultSchema()).isEmpty();
+    assertThat(migrateCommand.serverName()).isEmpty();
+    assertThat(migrateCommand.primaryDomain()).isEmpty();
+    assertThat(migrateCommand.adminContact()).isEmpty();
     assertThat(migrateCommand.call()).isEqualTo(0);
   }
 }

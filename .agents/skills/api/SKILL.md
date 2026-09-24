@@ -58,6 +58,11 @@ If a `v1` is used for versioning it generally comes _after_ the base path. So th
 * `/admin/v1/accounts`
 * `/servers/{server-id}/v1/nodeinfo`
 
+Sometimes an `/api` may be used before the basepath for local routing:
+
+* `/api/admin/v1/accounts`
+
+
 Responses are by default in JSON unless otherwise documented/requested.
 
 ### Logging

@@ -32,7 +32,7 @@ public final class UserAdminRoute extends AllDirectives {
   private final Duration askTimeout;
 
   @Inject
-  public UserAdminRoute(
+  UserAdminRoute(
       ActorRef<UserAdminCommand> userAdminActor,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
@@ -118,8 +118,7 @@ public final class UserAdminRoute extends AllDirectives {
   }
 
   private Route handleCreateUser(CreateUserRequest request) {
-    return onComplete(
-        () -> askCreateUser(request), responseTry -> mapResponseToRoute(responseTry, true));
+    return onComplete(() -> askCreateUser(request), this::mapCreateResponse);
   }
 
   private CompletionStage<UserAdminResponse> askCreateUser(CreateUserRequest request) {
@@ -133,7 +132,7 @@ public final class UserAdminRoute extends AllDirectives {
   }
 
   private Route handleListUsers() {
-    return onComplete(this::askListUsers, responseTry -> mapResponseToRoute(responseTry, false));
+    return onComplete(this::askListUsers, this::mapOkResponse);
   }
 
   private CompletionStage<UserAdminResponse> askListUsers() {
@@ -141,8 +140,7 @@ public final class UserAdminRoute extends AllDirectives {
   }
 
   private Route handleGetUser(String identifier) {
-    return onComplete(
-        () -> askGetUser(identifier), responseTry -> mapResponseToRoute(responseTry, false));
+    return onComplete(() -> askGetUser(identifier), this::mapOkResponse);
   }
 
   private CompletionStage<UserAdminResponse> askGetUser(String identifier) {
@@ -158,9 +156,7 @@ public final class UserAdminRoute extends AllDirectives {
   }
 
   private Route handleAddRole(String userIdentifier, RoleAssignmentRequest req) {
-    return onComplete(
-        () -> askAddRole(userIdentifier, req),
-        responseTry -> mapResponseToRoute(responseTry, false));
+    return onComplete(() -> askAddRole(userIdentifier, req), this::mapOkResponse);
   }
 
   private CompletionStage<UserAdminResponse> askAddRole(
@@ -174,9 +170,7 @@ public final class UserAdminRoute extends AllDirectives {
   }
 
   private Route handleRemoveRole(String userIdentifier, RoleAssignmentRequest req) {
-    return onComplete(
-        () -> askRemoveRole(userIdentifier, req),
-        responseTry -> mapResponseToRoute(responseTry, false));
+    return onComplete(() -> askRemoveRole(userIdentifier, req), this::mapOkResponse);
   }
 
   private CompletionStage<UserAdminResponse> askRemoveRole(
@@ -189,11 +183,18 @@ public final class UserAdminRoute extends AllDirectives {
         system.scheduler());
   }
 
-  private Route mapResponseToRoute(Try<UserAdminResponse> responseTry, boolean isCreateOperation) {
+  private Route mapCreateResponse(Try<UserAdminResponse> responseTry) {
     if (responseTry.isFailure()) {
       return handleActorFailure(responseTry.failed().get());
     }
-    return mapSuccessResponse(responseTry.get(), isCreateOperation);
+    return mapSuccessResponse(responseTry.get(), StatusCodes.CREATED);
+  }
+
+  private Route mapOkResponse(Try<UserAdminResponse> responseTry) {
+    if (responseTry.isFailure()) {
+      return handleActorFailure(responseTry.failed().get());
+    }
+    return mapSuccessResponse(responseTry.get(), StatusCodes.OK);
   }
 
   private Route handleActorFailure(Throwable error) {
@@ -204,13 +205,10 @@ public final class UserAdminRoute extends AllDirectives {
         Jackson.marshaller(objectMapper));
   }
 
-  private Route mapSuccessResponse(UserAdminResponse response, boolean isCreateOperation) {
+  private Route mapSuccessResponse(UserAdminResponse response, StatusCode successStatus) {
     return switch (response) {
       case UserAdminResponse.UserSingle single ->
-          complete(
-              resolveSuccessStatus(isCreateOperation),
-              single.user(),
-              Jackson.marshaller(objectMapper));
+          complete(successStatus, single.user(), Jackson.marshaller(objectMapper));
       case UserAdminResponse.UserList list ->
           completeOK(list.users(), Jackson.marshaller(objectMapper));
       default -> mapErrorResponse(response);
@@ -245,9 +243,5 @@ public final class UserAdminRoute extends AllDirectives {
               AdminErrorResponse.of(500, "Unknown error"),
               Jackson.marshaller(objectMapper));
     };
-  }
-
-  private static StatusCode resolveSuccessStatus(boolean isCreateOperation) {
-    return isCreateOperation ? StatusCodes.CREATED : StatusCodes.OK;
   }
 }

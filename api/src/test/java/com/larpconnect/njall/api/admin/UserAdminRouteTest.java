@@ -312,4 +312,24 @@ final class UserAdminRouteTest {
             .get(5, TimeUnit.SECONDS);
     assertThat(resp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
   }
+
+  @Test
+  @DisplayName("POST /api/admin/v1/users returns 500 on ask failure or timeout")
+  void postUsers_timeoutReturns500() throws Exception {
+    ActorRef<UserAdminCommand> silentActor =
+        system.systemActorOf(
+            Behaviors.empty(), "silentUserPost" + UUID.randomUUID(), Props.empty());
+
+    var route = new UserAdminRoute(silentActor, system, objectMapper, Duration.ofMillis(300));
+    var handler = route.route().seal().function(system);
+
+    var resp =
+        handler
+            .apply(
+                HttpRequest.POST("/api/admin/v1/users")
+                    .withEntity(ContentTypes.APPLICATION_JSON, "{\"username\":\"admin_user\"}"))
+            .toCompletableFuture()
+            .get(5, TimeUnit.SECONDS);
+    assertThat(resp.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
+  }
 }

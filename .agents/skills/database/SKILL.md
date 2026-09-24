@@ -9,9 +9,10 @@ description: Guidance on how to manage the data layer
 ## Technical Constraints
 
 - Use PSQL 18+. You may fully use features of PSQL up to version 18 without fear of backwards compatibility. 
+- The database has access to PostGIS. Features from PostGIS may be used without worrying about whether it has been installed and configured.
 - All SQL should be written using either `HQL` (for inline code) or `pgplsql` (in scripts).
 - The database interaction layer is stored in `:data`.
-- We use a multi-single-tenant system. The `tenant-id` is associated with a specific table or column. 
+- We use a multi-tenant system. The `tenant-id` is associated with a specific table or column. 
 - Use `flyway` for database management, with the specific scripts in `resources`.
 
 ## Specific Guidance
@@ -25,7 +26,7 @@ description: Guidance on how to manage the data layer
 
 ### Multitenancy
 
-The system is a multi-single-tenant design, with the `tenant-id` associated with the column. Enforcement is via row level security. To implement this the `studio-id` is taken by the DAO, the `tenant-id` is retrieved from a `caffeine` cache, and then used to query the database.
+The system is a multi-tenant design, with the `tenant-id` associated with the column. Enforcement is via row level security. To implement this the `studio-id` is taken by the DAO, the `tenant-id` is retrieved from a `caffeine` cache, and then used to query the database.
 
 ### Pattern for Objects
 

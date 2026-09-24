@@ -2,6 +2,7 @@ package com.larpconnect.njall.server.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.File;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -28,7 +29,7 @@ final class RootCommandTest {
   void call_returnsNull() {
     var root = new RootCommand();
     assertThat(root.call()).isNull();
-    assertThat(root.configFile()).isNull();
+    assertThat(root.configFile()).isEmpty();
     assertThat(root.verbose()).isFalse();
   }
 
@@ -41,6 +42,6 @@ final class RootCommandTest {
     cmd.parseArgs("-v", "--config", "test.conf");
 
     assertThat(root.verbose()).isTrue();
-    assertThat(root.configFile()).hasName("test.conf");
+    assertThat(root.configFile()).contains(new File("test.conf"));
   }
 }

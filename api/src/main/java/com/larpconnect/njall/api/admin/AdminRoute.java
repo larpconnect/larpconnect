@@ -1,6 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
-import com.larpconnect.njall.api.RouteProvider;
+import com.larpconnect.njall.api.http.RouteProvider;
 import org.apache.pekko.http.javadsl.server.Route;
 
 /** Defines the administrative HTTP routing contract for Project Njall. */
