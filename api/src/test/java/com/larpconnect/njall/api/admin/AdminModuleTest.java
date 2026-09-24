@@ -3,8 +3,6 @@ package com.larpconnect.njall.api.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -13,6 +11,8 @@ import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.dao.ServerDAO;
+import io.dropwizard.metrics5.health.HealthCheck;
+import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorRef;

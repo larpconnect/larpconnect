@@ -2,9 +2,9 @@ package com.larpconnect.njall.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.Guice;
 import com.larpconnect.njall.common.config.ServerConfig;
+import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

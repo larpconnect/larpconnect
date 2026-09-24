@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.codahale.metrics.health.HealthCheck;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Key;
@@ -22,6 +21,8 @@ import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.dropwizard.metrics5.health.HealthCheck;
+import io.dropwizard.metrics5.health.HealthCheck.Result;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -55,7 +56,7 @@ public final class HealthEndpointSteps {
                 .toInstance(
                     new HealthCheck() {
                       @Override
-                      protected Result check() {
+                      public Result check() {
                         return Result.unhealthy("Subsystem unhealthy");
                       }
                     });

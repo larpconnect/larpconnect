@@ -2,8 +2,9 @@ package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheckRegistry;
+import io.dropwizard.metrics5.health.HealthCheck;
+import io.dropwizard.metrics5.health.HealthCheck.Result;
+import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestInbox;
 import org.apache.pekko.actor.typed.Behavior;
@@ -25,7 +26,7 @@ final class HealthCheckActorTest {
         "healthyCheck",
         new HealthCheck() {
           @Override
-          protected Result check() {
+          public Result check() {
             return Result.healthy();
           }
         });
@@ -47,7 +48,7 @@ final class HealthCheckActorTest {
         "failingCheck",
         new HealthCheck() {
           @Override
-          protected Result check() {
+          public Result check() {
             return Result.unhealthy("Disk full");
           }
         });
@@ -71,7 +72,7 @@ final class HealthCheckActorTest {
         "noMsgCheck",
         new HealthCheck() {
           @Override
-          protected Result check() {
+          public Result check() {
             return Result.unhealthy((String) null);
           }
         });
@@ -97,7 +98,7 @@ final class HealthCheckActorTest {
         "errorCheck",
         new HealthCheck() {
           @Override
-          protected Result check() {
+          public Result check() {
             return Result.unhealthy(exception);
           }
         });

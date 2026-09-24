@@ -2,19 +2,20 @@ package com.larpconnect.njall.common.health;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.multibindings.Multibinder;
+import io.dropwizard.metrics5.health.HealthCheck;
+import io.dropwizard.metrics5.health.HealthCheck.Result;
+import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 final class HealthModuleTest {
 
-  static final class SampleHealthCheck extends HealthCheck {
+  static final class SampleHealthCheck implements HealthCheck {
     @Override
-    protected Result check() {
+    public Result check() {
       return Result.healthy();
     }
   }
@@ -58,7 +59,7 @@ final class HealthModuleTest {
     var anonymousCheck =
         new HealthCheck() {
           @Override
-          protected Result check() {
+          public Result check() {
             return Result.unhealthy("down");
           }
         };

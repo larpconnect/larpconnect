@@ -20,7 +20,7 @@ flyway = "13.7.0"
 testcontainers = "2.0.5"
 jsr305 = "3.0.2"
 checker-qual = "4.2.3"
-metrics-healthchecks = "4.2.40"
+metrics-healthchecks = "5.0.8"
 picocli = "4.7.7"
 jackson = "2.22.2"
 jspecify = "1.0.1"
@@ -44,13 +44,15 @@ guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 mug-bom = { group = "com.google.mug", name = "mug-bom", version.ref = "mug" }
 mug = { group = "com.google.mug", name = "mug" }
 typesafe-config = { group = "com.typesafe", name = "config", version.ref = "typesafe-config" }
-pekko-actor-typed = { group = "org.apache.pekko", name = "pekko-actor-typed_3", version.ref = "pekko" }
-pekko-actor-testkit-typed = { group = "org.apache.pekko", name = "pekko-actor-testkit-typed_3", version.ref = "pekko" }
-pekko-stream = { group = "org.apache.pekko", name = "pekko-stream_3", version.ref = "pekko" }
-pekko-stream-testkit = { group = "org.apache.pekko", name = "pekko-stream-testkit_3", version.ref = "pekko" }
-pekko-http = { group = "org.apache.pekko", name = "pekko-http_3", version.ref = "pekko-http" }
-pekko-http-testkit = { group = "org.apache.pekko", name = "pekko-http-testkit_3", version.ref = "pekko-http" }
-pekko-http-jackson = { group = "org.apache.pekko", name = "pekko-http-jackson_3", version.ref = "pekko-http" }
+pekko-bom = { group = "org.apache.pekko", name = "pekko-bom_3", version.ref = "pekko" }
+pekko-http-bom = { group = "org.apache.pekko", name = "pekko-http-bom_3", version.ref = "pekko-http" }
+pekko-actor-typed = { group = "org.apache.pekko", name = "pekko-actor-typed_3" }
+pekko-actor-testkit-typed = { group = "org.apache.pekko", name = "pekko-actor-testkit-typed_3" }
+pekko-stream = { group = "org.apache.pekko", name = "pekko-stream_3" }
+pekko-stream-testkit = { group = "org.apache.pekko", name = "pekko-stream-testkit_3" }
+pekko-http = { group = "org.apache.pekko", name = "pekko-http_3" }
+pekko-http-testkit = { group = "org.apache.pekko", name = "pekko-http-testkit_3" }
+pekko-http-jackson = { group = "org.apache.pekko", name = "pekko-http-jackson_3" }
 jackson-bom = { group = "com.fasterxml.jackson", name = "jackson-bom", version.ref = "jackson"}
 jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310"}
 jackson-datatype-guava = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-guava" }
@@ -69,7 +71,7 @@ flyway-database-postgresql = { group = "org.flywaydb", name = "flyway-database-p
 jsr305 = { group = "com.google.code.findbugs", name = "jsr305", version.ref = "jsr305" }
 checker-qual = { group = "org.checkerframework", name = "checker-qual", version.ref = "checker-qual" }
 jspecify = { group = "org.jspecify", name = "jspecify", version.ref = "jspecify" }
-metrics-healthchecks = { group = "io.dropwizard.metrics", name = "metrics-healthchecks", version.ref = "metrics-healthchecks" }
+metrics-healthchecks = { group = "io.dropwizard.metrics5", name = "metrics-healthchecks", version.ref = "metrics-healthchecks" }
 picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
 
 # Test dependencies

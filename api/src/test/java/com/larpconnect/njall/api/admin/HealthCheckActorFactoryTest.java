@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.codahale.metrics.health.HealthCheckRegistry;
+import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestInbox;
 import org.junit.jupiter.api.DisplayName;
