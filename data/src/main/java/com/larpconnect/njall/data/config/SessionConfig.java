@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.config;
 
-import static java.util.Objects.requireNonNull;
-
 import com.typesafe.config.Config;
 import org.jspecify.annotations.Nullable;
 
@@ -26,8 +24,6 @@ public record SessionConfig(
     int timeoutSeconds) {
 
   public SessionConfig {
-    requireNonNull(jdbcUrl, "jdbcUrl cannot be null");
-    requireNonNull(username, "username cannot be null");
     if (!trustAuth && (password == null || password.isBlank())) {
       throw new IllegalStateException(
           "Database password is required for profile with username '"
@@ -108,9 +104,6 @@ public record SessionConfig(
    * @return A new {@link SessionConfig} instance populated from configuration.
    */
   public static SessionConfig fromConfig(Config config, String path) {
-    requireNonNull(config, "config cannot be null");
-    requireNonNull(path, "path cannot be null");
-
     var sessionSection = config.getConfig(path);
     var jdbcUrl = sessionSection.getString("jdbc-url");
     var username = sessionSection.getString("username");

@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.dao;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -30,8 +28,6 @@ final class DefaultStudioDAO implements StudioDAO {
 
   @Override
   public Optional<StudioLookup> findById(UUID studioId, DeletionFilter filter) {
-    requireNonNull(studioId, "studioId cannot be null");
-    requireNonNull(filter, "filter cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var hql =
           "from StudioLookupEntity where studioId = :studioId"
@@ -52,8 +48,6 @@ final class DefaultStudioDAO implements StudioDAO {
 
   @Override
   public Optional<StudioLookup> findByAlias(String alias, DeletionFilter filter) {
-    requireNonNull(alias, "alias cannot be null");
-    requireNonNull(filter, "filter cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var hql =
           "from StudioLookupEntity where alias = :alias"
@@ -74,7 +68,6 @@ final class DefaultStudioDAO implements StudioDAO {
 
   @Override
   public ImmutableList<StudioLookup> list(DeletionFilter filter) {
-    requireNonNull(filter, "filter cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var hql =
           "from StudioLookupEntity"
@@ -87,7 +80,6 @@ final class DefaultStudioDAO implements StudioDAO {
 
   @Override
   public StudioLookup create(String alias) {
-    requireNonNull(alias, "alias cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
@@ -114,7 +106,6 @@ final class DefaultStudioDAO implements StudioDAO {
 
   @Override
   public Optional<StudioLookup> softDelete(UUID studioId) {
-    requireNonNull(studioId, "studioId cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {

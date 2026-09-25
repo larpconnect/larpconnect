@@ -63,17 +63,6 @@ final class SessionConfigTest {
   }
 
   @Test
-  @DisplayName("of throws NullPointerException when required string is null")
-  void of_nullString_throwsNullPointerException() {
-    assertThatThrownBy(() -> SessionConfig.of(null, "admin", "secret", 2, 10, 5))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("jdbcUrl cannot be null");
-    assertThatThrownBy(() -> SessionConfig.of(TEST_URL, null, "secret", 2, 10, 5))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("username cannot be null");
-  }
-
-  @Test
   @DisplayName("of throws IllegalArgumentException when pool sizes are invalid")
   void of_invalidPoolSizes_throwsIllegalArgumentException() {
     assertThatThrownBy(() -> SessionConfig.of(TEST_URL, "admin", "secret", 0, 10, 5))
@@ -94,16 +83,18 @@ final class SessionConfigTest {
   void fromConfig_validConfig_parsesCorrectly() {
     var rawConfig =
         ConfigFactory.parseString(
-            "admin {\n"
-                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
-                + "  username = \"njall_admin\"\n"
-                + "  password = \"admin_pass\"\n"
-                + "  pool {\n"
-                + "    min-size = 3\n"
-                + "    max-size = 15\n"
-                + "    timeout-seconds = 10\n"
-                + "  }\n"
-                + "}");
+            """
+            admin {
+              jdbc-url = "jdbc:postgresql://localhost:5432/test"
+              username = "njall_admin"
+              password = "admin_pass"
+              pool {
+                min-size = 3
+                max-size = 15
+                timeout-seconds = 10
+              }
+            }
+            """);
 
     var sessionConfig = SessionConfig.fromConfig(rawConfig, "admin");
 
@@ -122,16 +113,18 @@ final class SessionConfigTest {
   void fromConfig_omittedPasswordWithTrustAuth_parsesSuccessfully() {
     var rawConfig =
         ConfigFactory.parseString(
-            "admin {\n"
-                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
-                + "  username = \"njall_admin\"\n"
-                + "  trust-auth = true\n"
-                + "  pool {\n"
-                + "    min-size = 3\n"
-                + "    max-size = 15\n"
-                + "    timeout-seconds = 10\n"
-                + "  }\n"
-                + "}");
+            """
+            admin {
+              jdbc-url = "jdbc:postgresql://localhost:5432/test"
+              username = "njall_admin"
+              trust-auth = true
+              pool {
+                min-size = 3
+                max-size = 15
+                timeout-seconds = 10
+              }
+            }
+            """);
 
     var sessionConfig = SessionConfig.fromConfig(rawConfig, "admin");
 
@@ -146,17 +139,19 @@ final class SessionConfigTest {
   void fromConfig_emptyPasswordWithTrustAuth_parsesSuccessfully() {
     var rawConfig =
         ConfigFactory.parseString(
-            "admin {\n"
-                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
-                + "  username = \"njall_admin\"\n"
-                + "  password = \"\"\n"
-                + "  trust-auth = true\n"
-                + "  pool {\n"
-                + "    min-size = 3\n"
-                + "    max-size = 15\n"
-                + "    timeout-seconds = 10\n"
-                + "  }\n"
-                + "}");
+            """
+            admin {
+              jdbc-url = "jdbc:postgresql://localhost:5432/test"
+              username = "njall_admin"
+              password = ""
+              trust-auth = true
+              pool {
+                min-size = 3
+                max-size = 15
+                timeout-seconds = 10
+              }
+            }
+            """);
 
     var sessionConfig = SessionConfig.fromConfig(rawConfig, "admin");
 
@@ -171,16 +166,18 @@ final class SessionConfigTest {
   void fromConfig_blankPasswordWithoutTrustAuth_throwsIllegalStateException() {
     var rawConfig =
         ConfigFactory.parseString(
-            "admin {\n"
-                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
-                + "  username = \"njall_admin\"\n"
-                + "  password = \"\"\n"
-                + "  pool {\n"
-                + "    min-size = 3\n"
-                + "    max-size = 15\n"
-                + "    timeout-seconds = 10\n"
-                + "  }\n"
-                + "}");
+            """
+            admin {
+              jdbc-url = "jdbc:postgresql://localhost:5432/test"
+              username = "njall_admin"
+              password = ""
+              pool {
+                min-size = 3
+                max-size = 15
+                timeout-seconds = 10
+              }
+            }
+            """);
 
     assertThatThrownBy(() -> SessionConfig.fromConfig(rawConfig, "admin"))
         .isInstanceOf(IllegalStateException.class)
@@ -193,17 +190,19 @@ final class SessionConfigTest {
   void fromConfig_globalTrustAuth_inheritsSetting() {
     var rawConfig =
         ConfigFactory.parseString(
-            "larpconnect.data.database.trust-auth = true\n"
-                + "admin {\n"
-                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
-                + "  username = \"njall_admin\"\n"
-                + "  password = \"\"\n"
-                + "  pool {\n"
-                + "    min-size = 3\n"
-                + "    max-size = 15\n"
-                + "    timeout-seconds = 10\n"
-                + "  }\n"
-                + "}");
+            """
+            larpconnect.data.database.trust-auth = true
+            admin {
+              jdbc-url = "jdbc:postgresql://localhost:5432/test"
+              username = "njall_admin"
+              password = ""
+              pool {
+                min-size = 3
+                max-size = 15
+                timeout-seconds = 10
+              }
+            }
+            """);
 
     var sessionConfig = SessionConfig.fromConfig(rawConfig, "admin");
     assertThat(sessionConfig.trustAuth()).isTrue();
@@ -214,34 +213,24 @@ final class SessionConfigTest {
   void fromConfig_profileOverride_takesPrecedenceOverGlobal() {
     var rawConfig =
         ConfigFactory.parseString(
-            "larpconnect.data.database.trust-auth = true\n"
-                + "admin {\n"
-                + "  jdbc-url = \"jdbc:postgresql://localhost:5432/test\"\n"
-                + "  username = \"njall_admin\"\n"
-                + "  password = \"\"\n"
-                + "  trust-auth = false\n"
-                + "  pool {\n"
-                + "    min-size = 3\n"
-                + "    max-size = 15\n"
-                + "    timeout-seconds = 10\n"
-                + "  }\n"
-                + "}");
+            """
+            larpconnect.data.database.trust-auth = true
+            admin {
+              jdbc-url = "jdbc:postgresql://localhost:5432/test"
+              username = "njall_admin"
+              password = ""
+              trust-auth = false
+              pool {
+                min-size = 3
+                max-size = 15
+                timeout-seconds = 10
+              }
+            }
+            """);
 
     assertThatThrownBy(() -> SessionConfig.fromConfig(rawConfig, "admin"))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining(
             "Database password is required for profile with username 'njall_admin'");
-  }
-
-  @Test
-  @DisplayName("fromConfig throws NullPointerException when arguments are null")
-  void fromConfig_nullArguments_throwsNullPointerException() {
-    var config = ConfigFactory.empty();
-    assertThatThrownBy(() -> SessionConfig.fromConfig(null, "admin"))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("config cannot be null");
-    assertThatThrownBy(() -> SessionConfig.fromConfig(config, null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("path cannot be null");
   }
 }

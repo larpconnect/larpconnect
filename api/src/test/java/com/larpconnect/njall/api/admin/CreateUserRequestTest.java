@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.domain.AdminUserStatus;
@@ -21,9 +20,6 @@ final class CreateUserRequestTest {
 
     var reqWithRoles = CreateUserRequest.of("admin", AdminUserStatus.ACTIVE, List.of("superadmin"));
     assertThat(reqWithRoles.roles()).containsExactly("superadmin");
-
-    assertThatThrownBy(() -> CreateUserRequest.of(null, AdminUserStatus.ACTIVE, null))
-        .isInstanceOf(NullPointerException.class);
   }
 
   @Test

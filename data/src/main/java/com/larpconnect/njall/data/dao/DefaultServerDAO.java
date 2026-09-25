@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.dao;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,7 +24,6 @@ final class DefaultServerDAO implements ServerDAO {
 
   @Override
   public Optional<Server> findById(UUID id) {
-    requireNonNull(id, "id cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       return executeFindById(session, id);
     }

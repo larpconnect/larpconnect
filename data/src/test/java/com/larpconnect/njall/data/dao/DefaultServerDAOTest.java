@@ -1,7 +1,6 @@
 package com.larpconnect.njall.data.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -73,14 +72,6 @@ final class DefaultServerDAOTest {
     assertThat(contact.roleType()).isEqualTo(RoleType.ADMIN);
     assertThat(contact.contactType()).isEqualTo(ContactType.EMAIL);
     assertThat(contact.contact()).isEqualTo("ops@alpha.org");
-  }
-
-  @Test
-  @DisplayName("findById throws NullPointerException when id is null")
-  void findById_nullId_throwsNullPointerException() {
-    assertThatThrownBy(() -> dao.findById(null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("id cannot be null");
   }
 
   @Test

@@ -1,7 +1,5 @@
 package com.larpconnect.njall.api.http;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.Inject;
 import com.larpconnect.njall.common.telemetry.TraceContext;
 import io.opentelemetry.api.trace.Span;
@@ -25,12 +23,11 @@ final class DefaultTracingDirective extends AllDirectives implements TracingDire
 
   @Inject
   DefaultTracingDirective(Tracer tracer) {
-    this.tracer = requireNonNull(tracer, "tracer cannot be null");
+    this.tracer = tracer;
   }
 
   @Override
   public Route trace(Supplier<Route> innerRouteSupplier) {
-    requireNonNull(innerRouteSupplier, "innerRouteSupplier cannot be null");
     return extractRequest(request -> traceRequest(request, innerRouteSupplier));
   }
 

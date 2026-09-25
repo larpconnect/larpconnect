@@ -1,7 +1,5 @@
 package com.larpconnect.njall.common.config;
 
-import static java.util.Objects.requireNonNull;
-
 import com.typesafe.config.Config;
 
 /**
@@ -64,7 +62,6 @@ public record ServerConfig(
    * @return The parsed {@link ServerConfig}.
    */
   public static ServerConfig fromConfig(Config config) {
-    requireNonNull(config, "config cannot be null");
     var host = config.getString("larpconnect.server.host");
     var port = config.getInt("larpconnect.server.port");
     var name =

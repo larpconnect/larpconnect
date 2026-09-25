@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.config;
 
-import static java.util.Objects.requireNonNull;
-
 import com.larpconnect.njall.common.config.ServerConfig;
 import com.typesafe.config.Config;
 import java.util.List;
@@ -29,11 +27,6 @@ public record MigrationConfig(
     Map<String, String> placeholders) {
 
   public MigrationConfig {
-    requireNonNull(jdbcUrl, "jdbcUrl cannot be null");
-    requireNonNull(username, "username cannot be null");
-    requireNonNull(schemas, "schemas cannot be null");
-    requireNonNull(defaultSchema, "defaultSchema cannot be null");
-    requireNonNull(placeholders, "placeholders cannot be null");
     if (!trustAuth && (password == null || password.isBlank())) {
       throw new IllegalStateException(
           "Database password is required for migration profile with username '"
@@ -106,9 +99,6 @@ public record MigrationConfig(
    * @return A new {@link MigrationConfig} instance populated from configuration.
    */
   public static MigrationConfig fromConfig(Config config, ServerConfig serverConfig) {
-    requireNonNull(config, "config cannot be null");
-    requireNonNull(serverConfig, "serverConfig cannot be null");
-
     var dbPath = "larpconnect.data.database.migration";
     var migrationConfig = config.getConfig(dbPath);
 

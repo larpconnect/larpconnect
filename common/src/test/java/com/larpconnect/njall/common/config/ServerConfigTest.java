@@ -84,12 +84,4 @@ final class ServerConfigTest {
     assertThat(config.primaryDomain()).isEqualTo("larpconnect.org");
     assertThat(config.adminContact()).isEqualTo("admin@larpconnect.org");
   }
-
-  @Test
-  @DisplayName("fromConfig throws NullPointerException when config is null")
-  void fromConfig_nullConfig_throwsNullPointerException() {
-    assertThatThrownBy(() -> ServerConfig.fromConfig(null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("config cannot be null");
-  }
 }

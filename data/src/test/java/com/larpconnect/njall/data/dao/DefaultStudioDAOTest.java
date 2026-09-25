@@ -73,10 +73,6 @@ final class DefaultStudioDAOTest {
 
     var resultAll = dao.findById(studioId, DeletionFilter.INCLUDE_DELETED);
     assertThat(resultAll).isPresent();
-
-    assertThatThrownBy(() -> dao.findById(null, DeletionFilter.ACTIVE_ONLY))
-        .isInstanceOf(NullPointerException.class);
-    assertThatThrownBy(() -> dao.findById(studioId, null)).isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -108,11 +104,6 @@ final class DefaultStudioDAOTest {
 
     var resultAll = dao.findByAlias("valhalla", DeletionFilter.INCLUDE_DELETED);
     assertThat(resultAll).isPresent();
-
-    assertThatThrownBy(() -> dao.findByAlias(null, DeletionFilter.ACTIVE_ONLY))
-        .isInstanceOf(NullPointerException.class);
-    assertThatThrownBy(() -> dao.findByAlias("valhalla", null))
-        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -140,8 +131,6 @@ final class DefaultStudioDAOTest {
 
     var listAll = dao.list(DeletionFilter.INCLUDE_DELETED);
     assertThat(listAll).hasSize(1);
-
-    assertThatThrownBy(() -> dao.list(null)).isInstanceOf(NullPointerException.class);
   }
 
   @Test

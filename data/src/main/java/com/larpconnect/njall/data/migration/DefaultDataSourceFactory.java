@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.migration;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.Inject;
 import com.larpconnect.njall.data.config.MigrationConfig;
 import javax.sql.DataSource;
@@ -15,7 +13,6 @@ final class DefaultDataSourceFactory implements DataSourceFactory {
 
   @Override
   public DataSource create(MigrationConfig config) {
-    requireNonNull(config, "config cannot be null");
     var dataSource = newDataSource();
     configureDataSource(dataSource, config);
     return dataSource;
