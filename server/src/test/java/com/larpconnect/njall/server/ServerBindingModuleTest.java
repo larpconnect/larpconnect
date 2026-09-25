@@ -42,13 +42,9 @@ final class ServerBindingModuleTest {
     var system = injector.getInstance(Key.get(new TypeLiteral<ActorSystem<Void>>() {}));
     var blockingProps = injector.getInstance(Key.get(Props.class, Blocking.class));
 
-    assertThat(serverManager).isNotNull();
-    assertThat(serverManagerService).isNotNull();
     assertThat(serverManager).isSameAs(serverManagerService);
-    assertThat(hookRegistrar).isNotNull();
     assertThat(hookRegistrar.removeShutdownHook(new Thread())).isFalse();
-    assertThat(system).isNotNull();
-    assertThat(blockingProps).isNotNull();
+    assertThat(blockingProps).isInstanceOf(Props.class);
 
     CoordinatedShutdown.get(system)
         .runAll(CoordinatedShutdown.jvmExitReason())

@@ -1,7 +1,5 @@
 package com.larpconnect.njall.common.config;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -18,7 +16,7 @@ public final class ConfigModule extends AbstractModule {
   }
 
   public ConfigModule(Config config) {
-    this.config = requireNonNull(config, "config cannot be null");
+    this.config = config;
   }
 
   @Override

@@ -2,7 +2,11 @@ package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.inject.AbstractModule;
@@ -31,12 +35,15 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
 
 public final class HealthEndpointSteps {
 
   private HttpServerService serverService;
   private ActorSystem<Void> system;
+  private SessionFactory mockSessionFactory;
   private int boundPort;
   private HttpResponse<String> response;
 
@@ -76,9 +83,38 @@ public final class HealthEndpointSteps {
         });
   }
 
+  @Given(
+      "the njall_admin database connection fails, is terminated, or times out during probe"
+          + " evaluation")
+  public void theNjallAdminDatabaseConnectionFails() throws Exception {
+    startServer(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            var failingSessionFactory = mock(SessionFactory.class);
+            when(failingSessionFactory.isClosed()).thenReturn(false);
+            when(failingSessionFactory.openSession())
+                .thenThrow(new RuntimeException("Database unreachable"));
+            var failingFactory = mock(SessionFactoryFactory.class);
+            when(failingFactory.create(any(), any())).thenReturn(failingSessionFactory);
+            bind(SessionFactoryFactory.class).toInstance(failingFactory);
+          }
+        });
+  }
+
+  @SuppressWarnings("unchecked")
   private void startServer(Module... extraModules) throws Exception {
-    var mockSessionFactory = mock(SessionFactory.class);
+    mockSessionFactory = mock(SessionFactory.class);
     when(mockSessionFactory.isClosed()).thenReturn(false);
+
+    var mockSession = mock(Session.class);
+    var mockQuery = (NativeQuery<Integer>) mock(NativeQuery.class);
+    when(mockSessionFactory.openSession()).thenReturn(mockSession);
+    when(mockSession.createNativeQuery(anyString(), org.mockito.ArgumentMatchers.eq(Integer.class)))
+        .thenReturn(mockQuery);
+    when(mockQuery.setTimeout(anyInt())).thenReturn(mockQuery);
+    when(mockQuery.getSingleResult()).thenReturn(1);
+
     var mockFactory = mock(SessionFactoryFactory.class);
     when(mockFactory.create(any(), any())).thenReturn(mockSessionFactory);
 
@@ -112,6 +148,16 @@ public final class HealthEndpointSteps {
   @When("a client sends an HTTP GET request to {string} without authorization headers")
   public void aClientSendsAnHttpGetRequestWithoutAuth(String path) throws Exception {
     sendRequest(path);
+  }
+
+  @When("a client sends another HTTP GET request to {string} within the cache window")
+  public void aClientSendsAnotherHttpGetRequestWithinCacheWindow(String path) throws Exception {
+    sendRequest(path);
+  }
+
+  @Then("no new database ping query is executed")
+  public void noNewDatabasePingQueryIsExecuted() {
+    verify(mockSessionFactory, times(1)).openSession();
   }
 
   private void sendRequest(String path) throws Exception {

@@ -2,6 +2,8 @@ package com.larpconnect.njall.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +32,9 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import org.apache.pekko.actor.typed.ActorSystem;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
 import org.slf4j.LoggerFactory;
 
 /** Cucumber step definitions for OpenTelemetry distributed tracing integration scenarios. */
@@ -70,6 +74,14 @@ public final class TelemetryTracingSteps {
 
     var mockSessionFactory = mock(SessionFactory.class);
     when(mockSessionFactory.isClosed()).thenReturn(false);
+    var mockSession = mock(Session.class);
+    @SuppressWarnings("unchecked")
+    var mockQuery = (NativeQuery<Integer>) mock(NativeQuery.class);
+    when(mockSessionFactory.openSession()).thenReturn(mockSession);
+    when(mockSession.createNativeQuery(anyString(), org.mockito.ArgumentMatchers.eq(Integer.class)))
+        .thenReturn(mockQuery);
+    when(mockQuery.setTimeout(anyInt())).thenReturn(mockQuery);
+    when(mockQuery.getSingleResult()).thenReturn(1);
     var mockFactory = mock(SessionFactoryFactory.class);
     when(mockFactory.create(any(), any())).thenReturn(mockSessionFactory);
 

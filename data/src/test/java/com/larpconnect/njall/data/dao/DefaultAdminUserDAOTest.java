@@ -226,9 +226,10 @@ final class DefaultAdminUserDAOTest {
   }
 
   @Test
-  @DisplayName("AdminUserEntity handles null roles set gracefully")
-  void adminUserEntity_nullRolesHandled() {
-    var entity = new AdminUserEntity(userId, "admin_test", AdminUserStatus.ACTIVE, now, now, null);
-    assertThat(entity.getRoles()).isNotNull().isEmpty();
+  @DisplayName("AdminUserEntity handles empty roles set")
+  void adminUserEntity_emptyRolesHandled() {
+    var entity =
+        new AdminUserEntity(userId, "admin_test", AdminUserStatus.ACTIVE, now, now, Set.of());
+    assertThat(entity.getRoles()).isEmpty();
   }
 }

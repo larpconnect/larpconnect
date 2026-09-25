@@ -284,6 +284,7 @@ $$\text{Mug} > \text{Guice} > \text{Caffeine} > \text{Guava} > \text{Pekko} > \t
 - **Single-Implementation Naming**: When an interface has a single implementation, it must be named `DefaultFoo`, **not** `FooImpl`.
 - **Logging**: Ensure `private final Logger logger = LoggerFactory.getLogger(Foo.class)` is used, not `static final`, and never `System.out` or `printStackTrace`.
 - **Conventional Patterns**: Ensure that conventional, straightforward, clear patterns are used that fit with the existing codebase. Flag non-obvious, unusual, or unidiomatic patterns as `WARNING`.
+- **Immutability** : Prioritize immutability where possible. Use `final` for fields, `Immutable` collections where it is possible to do so, and records where it is appropriate. If a collection needs to be mutated in the beginning but then will transfer to read only, consider using a builder and then storing it as an immutable object.
 
 ---
 
@@ -292,7 +293,10 @@ $$\text{Mug} > \text{Guice} > \text{Caffeine} > \text{Guava} > \text{Pekko} > \t
 - **AssertJ**: Verify that assertions use AssertJ (`assertThat(...)`). Bare JUnit assertions (`assertEquals`, `assertTrue`) are violations.
 - **Behavior over Mocks**: Check if tests actually verify behavioral outcomes rather than just verifying that mocks were called in a brittle sequence.
 - **osgrove Test Naming**: Check that test method names follow `<method>_<condition>_<expectedOutcome>` or use `@DisplayName`.
-
+- **Useful module testing**:
+  - Avoid "double entry accounting" where the mere existence of a binding is checked. Configuration in general does not need to be tested on modules.
+  - Provider methods can be checked directly on the instantiated module without even loading Guice.
+  - Guice only returns nonnull values by default. So do not check `getInstance` is not null. By the same logic, if a constructor is annotated `@Inject`, it should not validate the passed in parameters to ensure that they are not null.
 
 ### 7. Extraneous Changes
 

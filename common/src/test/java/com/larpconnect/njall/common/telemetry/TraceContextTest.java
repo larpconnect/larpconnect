@@ -64,18 +64,6 @@ final class TraceContextTest {
   }
 
   @Test
-  @DisplayName("Constructor rejects null arguments with NullPointerException")
-  void constructor_nullArguments_throwsNullPointerException() {
-    assertThatThrownBy(() -> new TraceContext(null, VALID_SPAN_ID))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("traceId cannot be null");
-
-    assertThatThrownBy(() -> new TraceContext(VALID_TRACE_ID, null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("spanId cannot be null");
-  }
-
-  @Test
   @DisplayName("Constructor rejects invalid traceId formats with IllegalArgumentException")
   void constructor_invalidTraceId_throwsIllegalArgumentException() {
     assertThatThrownBy(() -> new TraceContext("short", VALID_SPAN_ID))

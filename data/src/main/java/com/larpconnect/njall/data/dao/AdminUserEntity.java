@@ -63,7 +63,7 @@ class AdminUserEntity {
     this.status = status;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
-    this.roles = roles != null ? roles : new HashSet<>();
+    this.roles = roles;
   }
 
   UUID getId() {

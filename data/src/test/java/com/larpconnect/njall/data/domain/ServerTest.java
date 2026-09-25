@@ -1,7 +1,6 @@
 package com.larpconnect.njall.data.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.util.List;
@@ -30,54 +29,15 @@ final class ServerTest {
   }
 
   @Test
-  @DisplayName("Server throws NullPointerException when required fields are null")
-  void of_nullFields_throwsNullPointerException() {
+  @DisplayName("ServerContact.of creates valid contact record")
+  void serverContact_of_createsRecord() {
     var contact =
         ServerContact.of(CONTACT_ID, RoleType.ADMIN, ContactType.EMAIL, "admin@larpconnect.org", 0);
 
-    assertThatThrownBy(() -> Server.of(null, "node-1", "larpconnect.org", NOW, List.of(contact)))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("id cannot be null");
-
-    assertThatThrownBy(() -> Server.of(SERVER_ID, null, "larpconnect.org", NOW, List.of(contact)))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("name cannot be null");
-
-    assertThatThrownBy(() -> Server.of(SERVER_ID, "node-1", null, NOW, List.of(contact)))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("primaryDomain cannot be null");
-
-    assertThatThrownBy(
-            () -> Server.of(SERVER_ID, "node-1", "larpconnect.org", null, List.of(contact)))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("createdOn cannot be null");
-
-    assertThatThrownBy(() -> Server.of(SERVER_ID, "node-1", "larpconnect.org", NOW, null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("contacts cannot be null");
-  }
-
-  @Test
-  @DisplayName("ServerContact throws NullPointerException when required fields are null")
-  void serverContact_nullFields_throwsNullPointerException() {
-    assertThatThrownBy(
-            () -> ServerContact.of(null, RoleType.ADMIN, ContactType.EMAIL, "admin@test.org", 0))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("id cannot be null");
-
-    assertThatThrownBy(
-            () -> ServerContact.of(CONTACT_ID, null, ContactType.EMAIL, "admin@test.org", 0))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("roleType cannot be null");
-
-    assertThatThrownBy(
-            () -> ServerContact.of(CONTACT_ID, RoleType.ADMIN, null, "admin@test.org", 0))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("contactType cannot be null");
-
-    assertThatThrownBy(
-            () -> ServerContact.of(CONTACT_ID, RoleType.ADMIN, ContactType.EMAIL, null, 0))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("contact cannot be null");
+    assertThat(contact.id()).isEqualTo(CONTACT_ID);
+    assertThat(contact.roleType()).isEqualTo(RoleType.ADMIN);
+    assertThat(contact.contactType()).isEqualTo(ContactType.EMAIL);
+    assertThat(contact.contact()).isEqualTo("admin@larpconnect.org");
+    assertThat(contact.ordering()).isEqualTo(0);
   }
 }

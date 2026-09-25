@@ -11,6 +11,7 @@ dependencies {
 
     api(project(":common"))
     api(libs.guice)
+    api(libs.caffeine)
     api(libs.flyway.core)
     api(libs.flyway.database.postgresql)
     api(libs.hibernate.core)

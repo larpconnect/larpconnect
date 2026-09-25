@@ -11,6 +11,7 @@ dependencies {
 
     api(libs.typesafe.config)
     api(libs.guice)
+    api(libs.caffeine)
     api(libs.metrics.healthchecks)
     api(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)

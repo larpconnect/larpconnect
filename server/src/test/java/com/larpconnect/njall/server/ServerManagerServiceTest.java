@@ -184,13 +184,11 @@ final class ServerManagerServiceTest {
   }
 
   private static void terminateSystem(ActorSystem<Void> system) {
-    if (system != null) {
-      try {
-        system.terminate();
-        system.getWhenTerminated().toCompletableFuture().get(5, TimeUnit.SECONDS);
-      } catch (Exception ignored) {
-        // Ignored in test cleanup
-      }
+    try {
+      system.terminate();
+      system.getWhenTerminated().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    } catch (Exception ignored) {
+      // Ignored in test cleanup
     }
   }
 

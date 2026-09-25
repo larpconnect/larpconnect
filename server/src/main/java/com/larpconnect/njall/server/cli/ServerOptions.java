@@ -1,7 +1,5 @@
 package com.larpconnect.njall.server.cli;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
@@ -12,14 +10,6 @@ public record ServerOptions(
     Optional<String> name,
     Optional<String> primaryDomain,
     Optional<String> adminContact) {
-
-  public ServerOptions {
-    requireNonNull(host, "host cannot be null");
-    requireNonNull(port, "port cannot be null");
-    requireNonNull(name, "name cannot be null");
-    requireNonNull(primaryDomain, "primaryDomain cannot be null");
-    requireNonNull(adminContact, "adminContact cannot be null");
-  }
 
   public ServerOptions(
       @Nullable String host,

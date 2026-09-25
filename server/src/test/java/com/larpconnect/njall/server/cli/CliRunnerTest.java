@@ -109,6 +109,6 @@ final class CliRunnerTest {
   void cliModule_providesCliRunner() {
     var injector = Guice.createInjector(new CliModule());
     var runner = injector.getInstance(CliRunner.class);
-    assertThat(runner).isNotNull();
+    assertThat(runner).isInstanceOf(CliRunner.class);
   }
 }

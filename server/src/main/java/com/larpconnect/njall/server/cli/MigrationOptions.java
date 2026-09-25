@@ -1,7 +1,5 @@
 package com.larpconnect.njall.server.cli;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
@@ -18,18 +16,6 @@ public record MigrationOptions(
     Optional<String> serverName,
     Optional<String> primaryDomain,
     Optional<String> adminContact) {
-
-  public MigrationOptions {
-    requireNonNull(jdbcUrl, "jdbcUrl cannot be null");
-    requireNonNull(username, "username cannot be null");
-    requireNonNull(password, "password cannot be null");
-    requireNonNull(trustAuth, "trustAuth cannot be null");
-    requireNonNull(schemas, "schemas cannot be null");
-    requireNonNull(defaultSchema, "defaultSchema cannot be null");
-    requireNonNull(serverName, "serverName cannot be null");
-    requireNonNull(primaryDomain, "primaryDomain cannot be null");
-    requireNonNull(adminContact, "adminContact cannot be null");
-  }
 
   public MigrationOptions(
       @Nullable String jdbcUrl,

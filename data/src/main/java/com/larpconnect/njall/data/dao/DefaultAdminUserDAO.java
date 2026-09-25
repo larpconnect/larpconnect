@@ -89,8 +89,10 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
         }
         tx.commit();
         session.clear();
-        var entity = session.find(AdminUserEntity.class, userId);
-        return requireNonNull(toUser(entity), "Created user entity cannot be null");
+        var entity =
+            requireNonNull(
+                session.find(AdminUserEntity.class, userId), "Created user entity cannot be null");
+        return toUser(entity);
       } catch (Exception e) {
         tx.rollback();
         throw e;
@@ -123,8 +125,10 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
             .executeUpdate();
         tx.commit();
         session.clear();
-        var updated = session.find(AdminUserEntity.class, userId);
-        return requireNonNull(toUser(updated), "User entity cannot be null");
+        var updated =
+            requireNonNull(
+                session.find(AdminUserEntity.class, userId), "User entity cannot be null");
+        return toUser(updated);
       } catch (Exception e) {
         tx.rollback();
         throw e;
@@ -157,8 +161,10 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
             .executeUpdate();
         tx.commit();
         session.clear();
-        var updated = session.find(AdminUserEntity.class, userId);
-        return requireNonNull(toUser(updated), "User entity cannot be null");
+        var updated =
+            requireNonNull(
+                session.find(AdminUserEntity.class, userId), "User entity cannot be null");
+        return toUser(updated);
       } catch (Exception e) {
         tx.rollback();
         throw e;
@@ -167,9 +173,6 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
   }
 
   private static AdminUser toUser(AdminUserEntity entity) {
-    if (entity == null) {
-      return null;
-    }
     var roles =
         entity.getRoles().stream()
             .map(r -> AdminRole.of(r.getId(), r.getRoleName()))

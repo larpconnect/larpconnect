@@ -64,17 +64,14 @@ final class ServerModuleTest {
     var hookRegistrar = injector.getInstance(ShutdownHookRegistrar.class);
     var adminSessionFactory = injector.getInstance(Key.get(SessionFactory.class, NjallAdmin.class));
 
-    assertThat(serverService).isNotNull();
-    assertThat(system).isNotNull();
-    assertThat(registry).isNotNull();
-    assertThat(adminRoute).isNotNull();
-    assertThat(blockingProps).isNotNull();
-    assertThat(serverAdminActor).isNotNull();
-    assertThat(serverManager).isNotNull();
-    assertThat(serverManagerService).isNotNull();
     assertThat(serverManager).isSameAs(serverManagerService);
-    assertThat(hookRegistrar).isNotNull();
-    assertThat(adminSessionFactory).isNotNull();
+    assertThat(serverService).isInstanceOf(HttpServerService.class);
+    assertThat(registry).isInstanceOf(HealthCheckRegistry.class);
+    assertThat(adminRoute).isInstanceOf(AdminRoute.class);
+    assertThat(hookRegistrar).isInstanceOf(ShutdownHookRegistrar.class);
+    assertThat(blockingProps).isInstanceOf(Props.class);
+    assertThat(serverAdminActor).isInstanceOf(ActorRef.class);
+    assertThat(adminSessionFactory).isSameAs(mockSessionFactory);
 
     CoordinatedShutdown.get(system)
         .runAll(CoordinatedShutdown.jvmExitReason())

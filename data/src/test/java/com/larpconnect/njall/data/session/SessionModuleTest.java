@@ -45,8 +45,8 @@ final class SessionModuleTest {
     var usersSessionFactory = injector.getInstance(Key.get(SessionFactory.class, NjallUsers.class));
     var activeFactories = injector.getInstance(ActiveSessionFactories.class);
 
-    assertThat(adminSessionFactory).isNotNull().isSameAs(mockAdminSession);
-    assertThat(usersSessionFactory).isNotNull().isSameAs(mockUsersSession);
+    assertThat(adminSessionFactory).isSameAs(mockAdminSession);
+    assertThat(usersSessionFactory).isSameAs(mockUsersSession);
     assertThat(activeFactories.activeCount()).isEqualTo(2);
   }
 }
