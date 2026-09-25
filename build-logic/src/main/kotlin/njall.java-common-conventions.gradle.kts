@@ -71,7 +71,6 @@ tasks.withType<JavaCompile>().configureEach {
     options.errorprone {
         isEnabled = true
         disableWarningsInGeneratedCode.set(true) // Exempt generated code
-        disable("StringConcatToTextBlock")
         error("AddNullMarkedToPackageInfo", "ParameterMissingNullable", "RedundantNullCheck")
     }
 }

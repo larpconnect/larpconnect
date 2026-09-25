@@ -81,11 +81,13 @@ final class CliConfigBuilderTest {
   void withMigrationOptions_appliesOverrides() {
     var base =
         ConfigFactory.parseString(
-            "larpconnect.data.database.migration.jdbc-url = \"jdbc:postgresql://localhost/db\"\n"
-                + "larpconnect.data.database.migration.username = \"njall\"\n"
-                + "larpconnect.data.database.migration.password = \"\"\n"
-                + "larpconnect.data.database.migration.schemas = [\"njall\"]\n"
-                + "larpconnect.data.database.migration.default-schema = \"njall\"");
+            """
+            larpconnect.data.database.migration.jdbc-url = "jdbc:postgresql://localhost/db"
+            larpconnect.data.database.migration.username = "njall"
+            larpconnect.data.database.migration.password = ""
+            larpconnect.data.database.migration.schemas = ["njall"]
+            larpconnect.data.database.migration.default-schema = "njall"
+            """);
     var builder = new CliConfigBuilder(base);
 
     var config =

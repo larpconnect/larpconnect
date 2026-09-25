@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.health;
 
-import static java.util.Objects.requireNonNull;
-
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.benmanes.caffeine.cache.Ticker;
@@ -28,16 +26,8 @@ public final class AdminDatabaseHealthCheck implements HealthCheck {
   @Inject
   AdminDatabaseHealthCheck(
       @NjallAdmin Provider<SessionFactory> sessionFactoryProvider, Ticker ticker) {
-    this(sessionFactoryProvider, DEFAULT_CACHE_TTL, ticker);
-  }
-
-  AdminDatabaseHealthCheck(
-      Provider<SessionFactory> sessionFactoryProvider, Duration cacheTtl, Ticker ticker) {
-    this.sessionFactoryProvider =
-        requireNonNull(sessionFactoryProvider, "sessionFactoryProvider cannot be null");
-    requireNonNull(cacheTtl, "cacheTtl cannot be null");
-    requireNonNull(ticker, "ticker cannot be null");
-    this.cache = buildCache(cacheTtl, ticker);
+    this.cache = buildCache(DEFAULT_CACHE_TTL, ticker);
+    this.sessionFactoryProvider = sessionFactoryProvider;
   }
 
   private LoadingCache<String, Result> buildCache(Duration cacheTtl, Ticker ticker) {

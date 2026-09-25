@@ -1,7 +1,6 @@
 package com.larpconnect.njall.data.migration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.larpconnect.njall.data.config.MigrationConfig;
 import java.util.List;
@@ -56,14 +55,5 @@ final class DefaultDataSourceFactoryTest {
     assertThat(pgDs.getUrl()).startsWith("jdbc:postgresql://localhost:5432/app");
     assertThat(pgDs.getUser()).isEqualTo("njall");
     assertThat(pgDs.getPassword()).isNull();
-  }
-
-  @Test
-  @DisplayName("create throws NullPointerException when config is null")
-  void create_nullConfig_throwsNullPointerException() {
-    var factory = new DefaultDataSourceFactory();
-    assertThatThrownBy(() -> factory.create(null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("config cannot be null");
   }
 }

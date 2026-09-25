@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
@@ -119,13 +118,5 @@ final class TracingDirectiveTest {
         handler.apply(HttpRequest.GET("/fail")).toCompletableFuture().get(5, TimeUnit.SECONDS);
 
     assertThat(response.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
-  }
-
-  @Test
-  @DisplayName("trace rejects null route supplier with NullPointerException")
-  void trace_nullSupplier_throwsNullPointerException() {
-    assertThatThrownBy(() -> tracingDirective.trace(null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("innerRouteSupplier cannot be null");
   }
 }

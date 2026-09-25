@@ -1,7 +1,5 @@
 package com.larpconnect.njall.api.admin;
 
-import static java.util.Objects.requireNonNull;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.domain.AdminUserStatus;
@@ -15,7 +13,6 @@ public record CreateUserRequest(
     @JsonProperty("roles") @Nullable ImmutableList<String> roles) {
 
   public CreateUserRequest {
-    requireNonNull(username, "username cannot be null");
     roles = roles != null ? ImmutableList.copyOf(roles) : null;
   }
 

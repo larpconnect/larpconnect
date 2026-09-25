@@ -1,7 +1,6 @@
 package com.larpconnect.njall.data.health;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -130,39 +129,6 @@ final class AdminDatabaseHealthCheckTest {
     assertThat(result.isHealthy()).isTrue();
   }
 
-  @Test
-  @DisplayName("constructor throws NullPointerException when sessionFactoryProvider is null")
-  void constructor_nullProvider_throwsNullPointerException() {
-    var ticker = Ticker.systemTicker();
-    assertThatNullPointerException()
-        .isThrownBy(() -> new AdminDatabaseHealthCheck(null, Duration.ofSeconds(10), ticker))
-        .withMessage("sessionFactoryProvider cannot be null");
-  }
-
-  @Test
-  @DisplayName("constructor throws NullPointerException when cacheTtl is null")
-  void constructor_nullTtl_throwsNullPointerException() {
-    var fixture = createFixture();
-    assertThatNullPointerException()
-        .isThrownBy(
-            () ->
-                new AdminDatabaseHealthCheck(
-                    fixture.sessionFactoryProvider, null, fixture.fakeTicker))
-        .withMessage("cacheTtl cannot be null");
-  }
-
-  @Test
-  @DisplayName("constructor throws NullPointerException when ticker is null")
-  void constructor_nullTicker_throwsNullPointerException() {
-    var fixture = createFixture();
-    assertThatNullPointerException()
-        .isThrownBy(
-            () ->
-                new AdminDatabaseHealthCheck(
-                    fixture.sessionFactoryProvider, Duration.ofSeconds(10), null))
-        .withMessage("ticker cannot be null");
-  }
-
   // Unchecked cast required for mocking generic Provider and NativeQuery types with Mockito.
   @SuppressWarnings("unchecked")
   private static TestFixture createFixture() {
@@ -189,8 +155,7 @@ final class AdminDatabaseHealthCheckTest {
       FakeTicker fakeTicker) {
 
     AdminDatabaseHealthCheck createHealthCheck() {
-      return new AdminDatabaseHealthCheck(
-          sessionFactoryProvider, Duration.ofSeconds(10), fakeTicker);
+      return new AdminDatabaseHealthCheck(sessionFactoryProvider, fakeTicker);
     }
   }
 

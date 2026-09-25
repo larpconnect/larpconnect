@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.config;
 
-import static java.util.Objects.requireNonNull;
-
 import com.larpconnect.njall.common.config.ServerConfig;
 import com.typesafe.config.Config;
 
@@ -13,12 +11,6 @@ import com.typesafe.config.Config;
  * @param users Tenanted users database session configuration profile.
  */
 public record DatabaseConfig(MigrationConfig migration, SessionConfig admin, SessionConfig users) {
-
-  public DatabaseConfig {
-    requireNonNull(migration, "migration cannot be null");
-    requireNonNull(admin, "admin cannot be null");
-    requireNonNull(users, "users cannot be null");
-  }
 
   /**
    * Pure factory method for creating a {@link DatabaseConfig}.
@@ -41,8 +33,6 @@ public record DatabaseConfig(MigrationConfig migration, SessionConfig admin, Ses
    * @return A new {@link DatabaseConfig} instance.
    */
   public static DatabaseConfig fromConfig(Config config, ServerConfig serverConfig) {
-    requireNonNull(config, "config cannot be null");
-    requireNonNull(serverConfig, "serverConfig cannot be null");
     var migration = MigrationConfig.fromConfig(config, serverConfig);
     var admin = SessionConfig.fromConfig(config, "larpconnect.data.database.admin");
     var users = SessionConfig.fromConfig(config, "larpconnect.data.database.users");

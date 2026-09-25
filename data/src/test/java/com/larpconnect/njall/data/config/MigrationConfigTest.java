@@ -121,97 +121,19 @@ final class MigrationConfigTest {
   }
 
   @Test
-  @DisplayName("of throws NullPointerException when jdbcUrl is null")
-  void of_nullJdbcUrl_throwsNullPointerException() {
-    assertThatThrownBy(
-            () ->
-                MigrationConfig.of(
-                    null,
-                    VALID_USER,
-                    VALID_PASSWORD,
-                    VALID_SCHEMAS,
-                    VALID_DEFAULT_SCHEMA,
-                    VALID_PLACEHOLDERS))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("jdbcUrl cannot be null");
-  }
-
-  @Test
-  @DisplayName("of throws NullPointerException when username is null")
-  void of_nullUsername_throwsNullPointerException() {
-    assertThatThrownBy(
-            () ->
-                MigrationConfig.of(
-                    VALID_JDBC_URL,
-                    null,
-                    VALID_PASSWORD,
-                    VALID_SCHEMAS,
-                    VALID_DEFAULT_SCHEMA,
-                    VALID_PLACEHOLDERS))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("username cannot be null");
-  }
-
-  @Test
-  @DisplayName("of throws NullPointerException when schemas is null")
-  void of_nullSchemas_throwsNullPointerException() {
-    assertThatThrownBy(
-            () ->
-                MigrationConfig.of(
-                    VALID_JDBC_URL,
-                    VALID_USER,
-                    VALID_PASSWORD,
-                    null,
-                    VALID_DEFAULT_SCHEMA,
-                    VALID_PLACEHOLDERS))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("schemas cannot be null");
-  }
-
-  @Test
-  @DisplayName("of throws NullPointerException when defaultSchema is null")
-  void of_nullDefaultSchema_throwsNullPointerException() {
-    assertThatThrownBy(
-            () ->
-                MigrationConfig.of(
-                    VALID_JDBC_URL,
-                    VALID_USER,
-                    VALID_PASSWORD,
-                    VALID_SCHEMAS,
-                    null,
-                    VALID_PLACEHOLDERS))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("defaultSchema cannot be null");
-  }
-
-  @Test
-  @DisplayName("of throws NullPointerException when placeholders is null")
-  void of_nullPlaceholders_throwsNullPointerException() {
-    assertThatThrownBy(
-            () ->
-                MigrationConfig.of(
-                    VALID_JDBC_URL,
-                    VALID_USER,
-                    VALID_PASSWORD,
-                    VALID_SCHEMAS,
-                    VALID_DEFAULT_SCHEMA,
-                    null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("placeholders cannot be null");
-  }
-
-  @Test
   @DisplayName("fromConfig parses MigrationConfig from valid Config and ServerConfig")
   void fromConfig_validConfig_parsesCorrectly() {
     var typesafeConfig =
         ConfigFactory.parseString(
-            "larpconnect.data.database.migration {\n"
-                + "  jdbc-url = \"jdbc:postgresql://db:5432/app\"\n"
-                + "  username = \"app_migrator\"\n"
-                + "  password = \"pass123\"\n"
-                + "  schemas = [\"s1\", \"s2\"]\n"
-                + "  default-schema = \"s1\"\n"
-                + "}");
+            """
+            larpconnect.data.database.migration {
+              jdbc-url = "jdbc:postgresql://db:5432/app"
+              username = "app_migrator"
+              password = "pass123"
+              schemas = ["s1", "s2"]
+              default-schema = "s1"
+            }
+            """);
     var serverConfig =
         ServerConfig.of("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
 
@@ -235,14 +157,16 @@ final class MigrationConfigTest {
   void fromConfig_emptyPasswordWithTrustAuth_parsesSuccessfully() {
     var typesafeConfig =
         ConfigFactory.parseString(
-            "larpconnect.data.database.migration {\n"
-                + "  jdbc-url = \"jdbc:postgresql://db:5432/app\"\n"
-                + "  username = \"app_migrator\"\n"
-                + "  password = \"\"\n"
-                + "  trust-auth = true\n"
-                + "  schemas = [\"s1\", \"s2\"]\n"
-                + "  default-schema = \"s1\"\n"
-                + "}");
+            """
+            larpconnect.data.database.migration {
+              jdbc-url = "jdbc:postgresql://db:5432/app"
+              username = "app_migrator"
+              password = ""
+              trust-auth = true
+              schemas = ["s1", "s2"]
+              default-schema = "s1"
+            }
+            """);
     var serverConfig =
         ServerConfig.of("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
 
@@ -259,13 +183,15 @@ final class MigrationConfigTest {
   void fromConfig_emptyPasswordWithoutTrustAuth_throwsIllegalStateException() {
     var typesafeConfig =
         ConfigFactory.parseString(
-            "larpconnect.data.database.migration {\n"
-                + "  jdbc-url = \"jdbc:postgresql://db:5432/app\"\n"
-                + "  username = \"app_migrator\"\n"
-                + "  password = \"\"\n"
-                + "  schemas = [\"s1\", \"s2\"]\n"
-                + "  default-schema = \"s1\"\n"
-                + "}");
+            """
+            larpconnect.data.database.migration {
+              jdbc-url = "jdbc:postgresql://db:5432/app"
+              username = "app_migrator"
+              password = ""
+              schemas = ["s1", "s2"]
+              default-schema = "s1"
+            }
+            """);
     var serverConfig =
         ServerConfig.of("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
 
@@ -280,36 +206,20 @@ final class MigrationConfigTest {
   void fromConfig_globalTrustAuth_inheritsSetting() {
     var typesafeConfig =
         ConfigFactory.parseString(
-            "larpconnect.data.database.trust-auth = true\n"
-                + "larpconnect.data.database.migration {\n"
-                + "  jdbc-url = \"jdbc:postgresql://db:5432/app\"\n"
-                + "  username = \"app_migrator\"\n"
-                + "  password = \"\"\n"
-                + "  schemas = [\"s1\", \"s2\"]\n"
-                + "  default-schema = \"s1\"\n"
-                + "}");
+            """
+            larpconnect.data.database.trust-auth = true
+            larpconnect.data.database.migration {
+              jdbc-url = "jdbc:postgresql://db:5432/app"
+              username = "app_migrator"
+              password = ""
+              schemas = ["s1", "s2"]
+              default-schema = "s1"
+            }
+            """);
     var serverConfig =
         ServerConfig.of("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
 
     var config = MigrationConfig.fromConfig(typesafeConfig, serverConfig);
     assertThat(config.trustAuth()).isTrue();
-  }
-
-  @Test
-  @DisplayName("fromConfig throws NullPointerException when config is null")
-  void fromConfig_nullConfig_throwsNullPointerException() {
-    var serverConfig = ServerConfig.of("0.0.0.0", 8080);
-    assertThatThrownBy(() -> MigrationConfig.fromConfig(null, serverConfig))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("config cannot be null");
-  }
-
-  @Test
-  @DisplayName("fromConfig throws NullPointerException when serverConfig is null")
-  void fromConfig_nullServerConfig_throwsNullPointerException() {
-    var typesafeConfig = ConfigFactory.empty();
-    assertThatThrownBy(() -> MigrationConfig.fromConfig(typesafeConfig, null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("serverConfig cannot be null");
   }
 }

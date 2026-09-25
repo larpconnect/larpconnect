@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.session;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.Inject;
 import com.larpconnect.njall.data.config.SessionConfig;
 import java.util.Collection;
@@ -19,9 +17,6 @@ final class DefaultSessionFactoryFactory implements SessionFactoryFactory {
 
   @Override
   public SessionFactory create(SessionConfig config, Collection<Class<?>> annotatedClasses) {
-    requireNonNull(config, "config cannot be null");
-    requireNonNull(annotatedClasses, "annotatedClasses cannot be null");
-
     var registry = buildRegistry(config);
     return buildSessionFactory(registry, annotatedClasses);
   }

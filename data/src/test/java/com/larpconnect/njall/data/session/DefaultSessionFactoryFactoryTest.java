@@ -1,7 +1,6 @@
 package com.larpconnect.njall.data.session;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.larpconnect.njall.data.config.SessionConfig;
 import jakarta.persistence.Entity;
@@ -138,21 +137,5 @@ final class DefaultSessionFactoryFactoryTest {
     } finally {
       java.sql.DriverManager.deregisterDriver(testDriver);
     }
-  }
-
-  @Test
-  @DisplayName("create throws NullPointerException when arguments are null")
-  void create_nullArguments_throwsNullPointerException() {
-    var factory = new DefaultSessionFactoryFactory();
-    var config =
-        SessionConfig.of("jdbc:postgresql://localhost:5432/test", "user", "pass", 2, 10, 5);
-
-    assertThatThrownBy(() -> factory.create(null, List.of()))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("config cannot be null");
-
-    assertThatThrownBy(() -> factory.create(config, null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("annotatedClasses cannot be null");
   }
 }
