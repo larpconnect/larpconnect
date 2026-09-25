@@ -24,4 +24,5 @@ dependencies {
 
     // Test logging runtime
     api(libs.logback.classic)
+    api(libs.opentelemetry.logback.mdc)
 }

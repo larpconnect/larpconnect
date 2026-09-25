@@ -16,9 +16,13 @@ final class CommonModuleTest {
     var injector = Guice.createInjector(new CommonModule());
     var serverConfig = injector.getInstance(ServerConfig.class);
     var registry = injector.getInstance(HealthCheckRegistry.class);
+    var openTelemetry = injector.getInstance(io.opentelemetry.api.OpenTelemetry.class);
+    var tracer = injector.getInstance(io.opentelemetry.api.trace.Tracer.class);
 
     assertThat(serverConfig.host()).isEqualTo("0.0.0.0");
     assertThat(serverConfig.port()).isEqualTo(8080);
     assertThat(registry).isNotNull();
+    assertThat(openTelemetry).isNotNull();
+    assertThat(tracer).isNotNull();
   }
 }

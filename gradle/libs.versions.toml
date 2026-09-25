@@ -24,6 +24,8 @@ metrics-healthchecks = "5.0.8"
 picocli = "4.7.7"
 jackson = "2.22.2"
 jspecify = "1.0.1"
+opentelemetry = "1.66.0"
+opentelemetry-instrumentation = "2.31.1-alpha"
 
 # Testing Frameworks
 assertj = "3.27.7"
@@ -73,6 +75,11 @@ checker-qual = { group = "org.checkerframework", name = "checker-qual", version.
 jspecify = { group = "org.jspecify", name = "jspecify", version.ref = "jspecify" }
 metrics-healthchecks = { group = "io.dropwizard.metrics5", name = "metrics-healthchecks", version.ref = "metrics-healthchecks" }
 picocli = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
+opentelemetry-bom = { group = "io.opentelemetry", name = "opentelemetry-bom", version.ref = "opentelemetry" }
+opentelemetry-instrumentation-bom = { group = "io.opentelemetry.instrumentation", name = "opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation" }
+opentelemetry-api = { group = "io.opentelemetry", name = "opentelemetry-api" }
+opentelemetry-sdk = { group = "io.opentelemetry", name = "opentelemetry-sdk" }
+opentelemetry-logback-mdc = { group = "io.opentelemetry.instrumentation", name = "opentelemetry-logback-mdc-1.0" }
 
 # Test dependencies
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }

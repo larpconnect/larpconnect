@@ -4,11 +4,14 @@ import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.larpconnect.njall.common.telemetry.TraceContext;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.model.HttpHeader;
+import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
@@ -64,13 +67,19 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
   }
 
   private Route handleHealth() {
-    return onComplete(this::askHealthCheck, this::mapResponseToRoute);
+    return extractRequest(
+        request -> onComplete(() -> askHealthCheck(request), this::mapResponseToRoute));
   }
 
-  private CompletionStage<HealthCheckResponse> askHealthCheck() {
+  private CompletionStage<HealthCheckResponse> askHealthCheck(HttpRequest request) {
+    var traceContext =
+        request
+            .getHeader("traceparent")
+            .map(HttpHeader::value)
+            .flatMap(TraceContext::parseTraceparent);
     return ask(
         healthCheckActor,
-        HealthCheckCommand.CheckHealth::new,
+        replyTo -> new HealthCheckCommand.CheckHealth(replyTo, traceContext),
         HEALTH_ASK_TIMEOUT,
         system.scheduler());
   }

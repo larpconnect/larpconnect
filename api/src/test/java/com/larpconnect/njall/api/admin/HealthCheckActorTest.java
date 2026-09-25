@@ -2,20 +2,21 @@ package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.larpconnect.njall.common.telemetry.TraceContext;
 import io.dropwizard.metrics5.health.HealthCheck;
 import io.dropwizard.metrics5.health.HealthCheck.Result;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestInbox;
 import org.apache.pekko.actor.typed.Behavior;
-import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 
 final class HealthCheckActorTest {
 
   private static Behavior<HealthCheckCommand> createBehavior(HealthCheckRegistry registry) {
-    return Behaviors.setup(context -> new HealthCheckActor(context, registry));
+    return HealthCheckActor.create(registry);
   }
 
   @Test
@@ -112,5 +113,62 @@ final class HealthCheckActorTest {
     assertThat(response).isInstanceOf(HealthCheckResponse.Unhealthy.class);
     assertThat(((HealthCheckResponse.Unhealthy) response).reason())
         .isEqualTo("errorCheck: " + exception);
+  }
+
+  @Test
+  @DisplayName("HealthCheckActor preserves trace_id and span_id in MDC during execution")
+  void onCheckHealth_withTraceContext_populatesMdcDuringExecution() {
+    var registry = new HealthCheckRegistry();
+    var expectedTraceId = "4bf92f3577b34da6a3ce929d0e0e4736";
+    var expectedSpanId = "00f067aa0ba902b7";
+    var traceContext = new TraceContext(expectedTraceId, expectedSpanId);
+
+    registry.register(
+        "mdcValidationCheck",
+        new HealthCheck() {
+          @Override
+          public Result check() {
+            var mdcTraceId = MDC.get("trace_id");
+            var mdcSpanId = MDC.get("span_id");
+            if (expectedTraceId.equals(mdcTraceId) && expectedSpanId.equals(mdcSpanId)) {
+              return Result.healthy();
+            }
+            return Result.unhealthy(
+                "MDC mismatch: trace_id=" + mdcTraceId + ", span_id=" + mdcSpanId);
+          }
+        });
+
+    var testKit = BehaviorTestKit.create(createBehavior(registry));
+    TestInbox<HealthCheckResponse> inbox = TestInbox.create();
+
+    testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef(), traceContext));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(HealthCheckResponse.Healthy.class);
+  }
+
+  @Test
+  @DisplayName("extractMdc extracts trace_id and span_id when TraceContext is present")
+  void extractMdc_withTraceContext_returnsPopulatedMap() {
+    TestInbox<HealthCheckResponse> inbox = TestInbox.create();
+    var traceContext = new TraceContext("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7");
+    var command = new HealthCheckCommand.CheckHealth(inbox.getRef(), traceContext);
+
+    var mdc = HealthCheckActor.extractMdc(command);
+
+    assertThat(mdc)
+        .containsEntry("trace_id", "4bf92f3577b34da6a3ce929d0e0e4736")
+        .containsEntry("span_id", "00f067aa0ba902b7");
+  }
+
+  @Test
+  @DisplayName("extractMdc returns empty map when TraceContext is empty")
+  void extractMdc_withoutTraceContext_returnsEmptyMap() {
+    TestInbox<HealthCheckResponse> inbox = TestInbox.create();
+    var command = new HealthCheckCommand.CheckHealth(inbox.getRef());
+
+    var mdc = HealthCheckActor.extractMdc(command);
+
+    assertThat(mdc).isEmpty();
   }
 }

@@ -7,13 +7,14 @@ Provides a foundational Pekko HTTP runtime server with Typesafe configuration, g
 ## Requirements
 
 ### Requirement: Root Endpoint Serves Empty OK Response
-The system SHALL accept HTTP GET requests at path `/` and return an HTTP 200 OK status code with an empty response body.
+The system SHALL accept HTTP GET requests at path `/` and return an HTTP 200 OK status code with an empty response body and a valid W3C `traceparent` response header.
 
 #### Scenario: Client requests the root endpoint
 - **GIVEN** the HTTP server is running
 - **WHEN** a client sends an HTTP GET request to `/`
 - **THEN** the response status code is 200 OK
 - **AND** the response body is empty
+- **AND** the response headers SHALL contain a valid `traceparent` header.
 
 ### Requirement: Configurable Server Port and Host via Typesafe Config
 The system SHALL bind the HTTP server to a configurable host and port defaulting to `0.0.0.0:8080`. The configuration SHALL support HOCON files and environment variable overrides (`PORT` and `HOST`). The server SHALL support dynamic port binding (port 0) for ephemeral test environments.
