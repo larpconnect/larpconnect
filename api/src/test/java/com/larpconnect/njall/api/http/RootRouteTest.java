@@ -2,6 +2,9 @@ package com.larpconnect.njall.api.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -18,11 +21,16 @@ import org.junit.jupiter.api.Test;
 final class RootRouteTest {
 
   private static ActorSystem<Void> system;
+  private static TracingDirective tracingDirective;
   private static final RouteProvider REJECTING_ROUTE_PROVIDER = Directives::reject;
 
   @BeforeAll
   static void setUp() {
     system = ActorSystem.create(Behaviors.empty(), "root-route-test");
+    var tracerProvider = SdkTracerProvider.builder().build();
+    OpenTelemetry otel = OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build();
+    var tracer = otel.getTracer("test");
+    tracingDirective = new DefaultTracingDirective(tracer);
   }
 
   @AfterAll
@@ -32,9 +40,9 @@ final class RootRouteTest {
   }
 
   @Test
-  @DisplayName("route returns 200 OK with blank entity for GET /")
+  @DisplayName("route returns 200 OK with blank entity and traceparent header for GET /")
   void route_getSlash_returnsOkWithBlankEntity() throws Exception {
-    var rootRoute = new DefaultRootRoute(Set.of(REJECTING_ROUTE_PROVIDER));
+    var rootRoute = new DefaultRootRoute(Set.of(REJECTING_ROUTE_PROVIDER), tracingDirective);
     var handler = rootRoute.route().seal().function(system);
 
     var response =
@@ -47,6 +55,7 @@ final class RootRouteTest {
             .get(5, TimeUnit.SECONDS);
 
     assertThat(response.status()).isEqualTo(StatusCodes.OK);
+    assertThat(response.getHeader("traceparent")).isPresent();
     assertThat(strictEntity.getData().utf8String()).isEmpty();
   }
 
@@ -58,7 +67,7 @@ final class RootRouteTest {
             Directives.path(
                 "custom-subroute",
                 () -> Directives.get(() -> Directives.complete(StatusCodes.ACCEPTED, "custom")));
-    var rootRoute = new DefaultRootRoute(Set.of(customProvider));
+    var rootRoute = new DefaultRootRoute(Set.of(customProvider), tracingDirective);
     var handler = rootRoute.route().seal().function(system);
 
     var response =
@@ -68,12 +77,13 @@ final class RootRouteTest {
             .get(5, TimeUnit.SECONDS);
 
     assertThat(response.status()).isEqualTo(StatusCodes.ACCEPTED);
+    assertThat(response.getHeader("traceparent")).isPresent();
   }
 
   @Test
   @DisplayName("route rejects POST request to /")
   void route_postSlash_isRejected() throws Exception {
-    var rootRoute = new DefaultRootRoute(Set.of(REJECTING_ROUTE_PROVIDER));
+    var rootRoute = new DefaultRootRoute(Set.of(REJECTING_ROUTE_PROVIDER), tracingDirective);
     var handler = rootRoute.route().seal().function(system);
 
     var response =

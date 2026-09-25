@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import com.google.inject.AbstractModule;
 import com.larpconnect.njall.common.config.ConfigModule;
 import com.larpconnect.njall.common.health.HealthModule;
+import com.larpconnect.njall.common.telemetry.TelemetryModule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -25,5 +26,6 @@ public final class CommonModule extends AbstractModule {
   protected void configure() {
     install(new ConfigModule(config));
     install(new HealthModule());
+    install(new TelemetryModule());
   }
 }

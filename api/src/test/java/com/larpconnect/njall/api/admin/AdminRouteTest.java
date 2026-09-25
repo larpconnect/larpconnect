@@ -6,14 +6,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.ImmutableList;
+import com.larpconnect.njall.common.telemetry.TraceContext;
 import com.larpconnect.njall.data.domain.ContactType;
 import com.larpconnect.njall.data.domain.RoleType;
 import com.larpconnect.njall.data.domain.Server;
 import com.larpconnect.njall.data.domain.ServerContact;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.Props;
@@ -21,6 +24,7 @@ import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.model.headers.RawHeader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -150,6 +154,43 @@ final class AdminRouteTest {
 
     assertThat(response.status()).isEqualTo(StatusCodes.OK);
     assertThat(body.getData().utf8String()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("GET /api/admin/v1/health extracts traceparent header and passes TraceContext")
+  void route_healthWithTraceparent_passesTraceContext() throws Exception {
+    var capturedContext = new AtomicReference<Optional<TraceContext>>();
+    var healthActor =
+        system.systemActorOf(
+            Behaviors.<HealthCheckCommand>receiveMessage(
+                msg -> {
+                  if (msg instanceof HealthCheckCommand.CheckHealth cmd) {
+                    capturedContext.set(cmd.traceContext());
+                    cmd.replyTo().tell(HealthCheckResponse.healthy());
+                  }
+                  return Behaviors.same();
+                }),
+            "traceHealthActor" + UUID.randomUUID(),
+            Props.empty());
+
+    var route = createRoute(healthActor, dummyServerActor());
+    var handler = route.route().seal().function(system);
+
+    var response =
+        handler
+            .apply(
+                HttpRequest.GET("/api/admin/v1/health")
+                    .addHeader(
+                        RawHeader.create(
+                            "traceparent",
+                            "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")))
+            .toCompletableFuture()
+            .get(5, TimeUnit.SECONDS);
+
+    assertThat(response.status()).isEqualTo(StatusCodes.OK);
+    assertThat(capturedContext.get()).isPresent();
+    assertThat(capturedContext.get().get().traceId()).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+    assertThat(capturedContext.get().get().spanId()).isEqualTo("00f067aa0ba902b7");
   }
 
   @Test

@@ -12,6 +12,8 @@ dependencies {
     api(libs.typesafe.config)
     api(libs.guice)
     api(libs.metrics.healthchecks)
+    api(libs.opentelemetry.api)
+    implementation(libs.opentelemetry.sdk)
 
     testImplementation(project(":test"))
 }

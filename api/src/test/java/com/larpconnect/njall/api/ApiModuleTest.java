@@ -58,7 +58,11 @@ final class ApiModuleTest {
           }
         };
 
-    var injector = Guice.createInjector(new ApiModule(), testModule);
+    var injector =
+        Guice.createInjector(
+            new ApiModule(),
+            new com.larpconnect.njall.common.telemetry.TelemetryModule(),
+            testModule);
     var rootRoute = injector.getInstance(RootRoute.class);
     var adminRoute = injector.getInstance(AdminRoute.class);
 

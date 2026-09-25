@@ -21,6 +21,8 @@ dependencies {
     implementation(libs.pekko.actor.typed)
     implementation(libs.pekko.stream)
     implementation(libs.logback.classic)
+    implementation(libs.opentelemetry.logback.mdc)
 
     testImplementation(project(":test"))
+    testImplementation(libs.opentelemetry.sdk)
 }

@@ -316,27 +316,46 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
 
 components:
+  headers:
+    Traceparent:
+      description: W3C Trace Context traceparent header for distributed tracing and request correlation
+      schema:
+        type: string
+        example: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+
   responses:
     BadRequestResponse:
       description: Malformed request or validation failure
+      headers:
+        traceparent:
+          $ref: '#/components/headers/Traceparent'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/AdminErrorResponse'
     NotFoundResponse:
       description: Requested entity not found
+      headers:
+        traceparent:
+          $ref: '#/components/headers/Traceparent'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/AdminErrorResponse'
     ConflictResponse:
       description: Entity already exists
+      headers:
+        traceparent:
+          $ref: '#/components/headers/Traceparent'
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/AdminErrorResponse'
     ErrorResponse:
       description: Internal server error
+      headers:
+        traceparent:
+          $ref: '#/components/headers/Traceparent'
       content:
         application/json:
           schema:

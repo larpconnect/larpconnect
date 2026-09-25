@@ -19,8 +19,15 @@ dependencies {
     api(platform(libs.mug.bom))
     api(platform(libs.pekko.bom))
     api(platform(libs.pekko.http.bom))
+    api(platform(libs.opentelemetry.bom))
+    api(platform(libs.opentelemetry.instrumentation.bom))
     
     constraints {
+        // OpenTelemetry
+        api(libs.opentelemetry.api)
+        api(libs.opentelemetry.sdk)
+        api(libs.opentelemetry.logback.mdc)
+
         // Core runtime and ecosystem libraries
         api(libs.guice)
         api(libs.typesafe.config)

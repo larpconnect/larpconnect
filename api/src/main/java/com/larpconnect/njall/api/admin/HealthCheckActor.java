@@ -6,12 +6,38 @@ import java.util.Map;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.AbstractBehavior;
 import org.apache.pekko.actor.typed.javadsl.ActorContext;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.actor.typed.javadsl.Receive;
 
 /** Object-oriented Apache Pekko Typed actor evaluating Dropwizard health check registries. */
 public final class HealthCheckActor extends AbstractBehavior<HealthCheckCommand> {
 
   private final HealthCheckRegistry registry;
+
+  /**
+   * Creates a {@link Behavior} for {@link HealthCheckActor} decorated with {@code
+   * Behaviors.withMdc}.
+   *
+   * @param registry health check registry
+   * @return decorated behavior
+   */
+  public static Behavior<HealthCheckCommand> create(HealthCheckRegistry registry) {
+    return Behaviors.withMdc(
+        HealthCheckCommand.class,
+        Map.of(),
+        HealthCheckActor::extractMdc,
+        Behaviors.setup(context -> new HealthCheckActor(context, registry)));
+  }
+
+  static Map<String, String> extractMdc(HealthCheckCommand cmd) {
+    return switch (cmd) {
+      case HealthCheckCommand.CheckHealth checkHealth ->
+          checkHealth
+              .traceContext()
+              .map(tc -> Map.of("trace_id", tc.traceId(), "span_id", tc.spanId()))
+              .orElseGet(Map::of);
+    };
+  }
 
   public HealthCheckActor(ActorContext<HealthCheckCommand> context, HealthCheckRegistry registry) {
     super(context);
