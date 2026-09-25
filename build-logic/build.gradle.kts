@@ -7,7 +7,6 @@ plugins {
 }
 
 repositories {
-    // google() is configured first as requested
     google()
     gradlePluginPortal()
     mavenCentral()

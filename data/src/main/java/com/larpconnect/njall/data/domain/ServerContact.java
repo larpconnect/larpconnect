@@ -1,5 +1,6 @@
 package com.larpconnect.njall.data.domain;
 
+import com.google.errorprone.annotations.Immutable;
 import java.util.UUID;
 
 /**
@@ -11,21 +12,6 @@ import java.util.UUID;
  * @param contact The contact address or identifier.
  * @param ordering Sort priority index for contact display.
  */
+@Immutable
 public record ServerContact(
-    UUID id, RoleType roleType, ContactType contactType, String contact, int ordering) {
-
-  /**
-   * Pure factory method for creating a {@link ServerContact}.
-   *
-   * @param id The contact UUID.
-   * @param roleType The role type.
-   * @param contactType The contact type.
-   * @param contact The contact address.
-   * @param ordering The sort ordering index.
-   * @return A new {@link ServerContact} instance.
-   */
-  public static ServerContact of(
-      UUID id, RoleType roleType, ContactType contactType, String contact, int ordering) {
-    return new ServerContact(id, roleType, contactType, contact, ordering);
-  }
-}
+    UUID id, RoleType roleType, ContactType contactType, String contact, int ordering) {}

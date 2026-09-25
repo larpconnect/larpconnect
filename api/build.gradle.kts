@@ -15,6 +15,7 @@ dependencies {
     api(libs.pekko.http.jackson)
     api(libs.opentelemetry.api)
     implementation(libs.jackson.datatype.jsr310)
+    implementation(libs.jackson.datatype.jdk8)
     implementation(libs.jackson.datatype.guava)
     implementation(libs.pekko.actor.typed)
     implementation(libs.pekko.stream)

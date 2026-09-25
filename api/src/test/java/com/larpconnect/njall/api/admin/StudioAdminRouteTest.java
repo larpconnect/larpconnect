@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +53,7 @@ final class StudioAdminRouteTest {
   }
 
   private StudioLookup sampleStudio() {
-    return StudioLookup.of(tenantId, studioId, "valhalla", now, now, null);
+    return new StudioLookup(tenantId, studioId, "valhalla", now, now, Optional.empty());
   }
 
   private static HttpResponse executeGet(

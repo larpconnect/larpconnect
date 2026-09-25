@@ -119,6 +119,14 @@ final class DefaultAdminUserDAOTest {
   }
 
   @Test
+  @DisplayName("create throws IllegalArgumentException when status is UNKNOWN")
+  void create_unknownStatus_throwsIllegalArgumentException() {
+    assertThatThrownBy(() -> dao.create("admin_test", AdminUserStatus.UNKNOWN, List.of()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("UNKNOWN status");
+  }
+
+  @Test
   @DisplayName("addRole checks existence and assigns role")
   @SuppressWarnings("unchecked")
   void addRole_success() {

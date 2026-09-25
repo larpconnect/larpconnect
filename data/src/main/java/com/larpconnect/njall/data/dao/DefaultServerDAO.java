@@ -73,7 +73,7 @@ final class DefaultServerDAO implements ServerDAO {
   }
 
   private Server toServer(ServerEntity entity, ImmutableList<ServerContact> contacts) {
-    return Server.of(
+    return new Server(
         entity.getId(),
         entity.getName(),
         entity.getPrimaryDomain(),
@@ -86,7 +86,7 @@ final class DefaultServerDAO implements ServerDAO {
     return entities.stream()
         .map(
             entity ->
-                Server.of(
+                new Server(
                     entity.getId(),
                     entity.getName(),
                     entity.getPrimaryDomain(),
@@ -99,7 +99,7 @@ final class DefaultServerDAO implements ServerDAO {
     return entities.stream()
         .map(
             entity ->
-                ServerContact.of(
+                new ServerContact(
                     entity.getId(),
                     entity.getRoleType(),
                     entity.getContactType(),

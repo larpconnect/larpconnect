@@ -122,7 +122,7 @@ public final class HealthEndpointSteps {
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(ServerConfig.class).toInstance(ServerConfig.of("127.0.0.1", 0));
+            bind(ServerConfig.class).toInstance(new ServerConfig("127.0.0.1", 0));
             bind(SessionFactoryFactory.class).toInstance(mockFactory);
           }
         };

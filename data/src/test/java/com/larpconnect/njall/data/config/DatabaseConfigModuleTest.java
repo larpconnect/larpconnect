@@ -25,6 +25,7 @@ final class DatabaseConfigModuleTest {
     assertThat(dbConfig.migration()).isSameAs(migrationConfig);
     assertThat(dbConfig.admin()).isSameAs(adminConfig);
     assertThat(dbConfig.users()).isSameAs(usersConfig);
+    assertThat(injector.getInstance(SessionConfigFactory.class)).isNotNull();
     assertThat(adminConfig.username()).isEqualTo("njall_admin");
     assertThat(usersConfig.username()).isEqualTo("njall_users");
     assertThat(adminConfig.minPoolSize()).isEqualTo(2);

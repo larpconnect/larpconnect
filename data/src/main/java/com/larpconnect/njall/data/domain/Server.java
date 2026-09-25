@@ -1,6 +1,7 @@
 package com.larpconnect.njall.data.domain;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.Immutable;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +15,7 @@ import java.util.UUID;
  * @param createdOn Timestamp when the server record was provisioned.
  * @param contacts List of administrative and operational contact records.
  */
+@Immutable
 public record Server(
     UUID id,
     String name,
@@ -38,20 +40,5 @@ public record Server(
   public Server(
       UUID id, String name, String primaryDomain, Instant createdOn, List<ServerContact> contacts) {
     this(id, name, primaryDomain, createdOn, ImmutableList.copyOf(contacts));
-  }
-
-  /**
-   * Pure factory method for creating a {@link Server} from a {@link List} of contacts.
-   *
-   * @param id The server UUID.
-   * @param name The server name.
-   * @param primaryDomain The primary domain name.
-   * @param createdOn The creation timestamp.
-   * @param contacts The associated contacts.
-   * @return A new {@link Server} instance.
-   */
-  public static Server of(
-      UUID id, String name, String primaryDomain, Instant createdOn, List<ServerContact> contacts) {
-    return new Server(id, name, primaryDomain, createdOn, contacts);
   }
 }

@@ -9,6 +9,7 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.common.annotation.Blocking;
+import com.larpconnect.njall.common.telemetry.ApiCall;
 import io.dropwizard.metrics5.health.HealthCheck;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -45,7 +46,7 @@ public final class AdminModule extends AbstractModule {
 
   @Provides
   @Singleton
-  ActorRef<HealthCheckCommand> provideHealthCheckActor(
+  ActorRef<ApiCall<HealthCheckCommand>> provideHealthCheckActor(
       ActorSystem<Void> system, HealthCheckActorFactory factory) {
     return system.systemActorOf(factory.create(), "healthCheckActor", Props.empty());
   }

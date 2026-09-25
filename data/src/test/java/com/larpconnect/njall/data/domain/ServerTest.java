@@ -15,11 +15,12 @@ final class ServerTest {
   private static final Instant NOW = Instant.now();
 
   @Test
-  @DisplayName("Server.of creates immutable Server with contacts")
-  void of_validInputs_createsServer() {
+  @DisplayName("Constructor creates immutable Server with contacts")
+  void constructor_validInputs_createsServer() {
     var contact =
-        ServerContact.of(CONTACT_ID, RoleType.ADMIN, ContactType.EMAIL, "admin@larpconnect.org", 0);
-    var server = Server.of(SERVER_ID, "node-1", "larpconnect.org", NOW, List.of(contact));
+        new ServerContact(
+            CONTACT_ID, RoleType.ADMIN, ContactType.EMAIL, "admin@larpconnect.org", 0);
+    var server = new Server(SERVER_ID, "node-1", "larpconnect.org", NOW, List.of(contact));
 
     assertThat(server.id()).isEqualTo(SERVER_ID);
     assertThat(server.name()).isEqualTo("node-1");
@@ -29,10 +30,11 @@ final class ServerTest {
   }
 
   @Test
-  @DisplayName("ServerContact.of creates valid contact record")
-  void serverContact_of_createsRecord() {
+  @DisplayName("Constructor creates valid contact record")
+  void serverContact_constructor_createsRecord() {
     var contact =
-        ServerContact.of(CONTACT_ID, RoleType.ADMIN, ContactType.EMAIL, "admin@larpconnect.org", 0);
+        new ServerContact(
+            CONTACT_ID, RoleType.ADMIN, ContactType.EMAIL, "admin@larpconnect.org", 0);
 
     assertThat(contact.id()).isEqualTo(CONTACT_ID);
     assertThat(contact.roleType()).isEqualTo(RoleType.ADMIN);

@@ -1,6 +1,7 @@
 package com.larpconnect.njall.data.domain;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.Immutable;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import java.util.UUID;
  * @param updatedAt Last update timestamp.
  * @param roles Immutable list of assigned roles.
  */
+@Immutable
 public record AdminUser(
     UUID id,
     String username,
@@ -36,15 +38,5 @@ public record AdminUser(
       Instant updatedAt,
       List<AdminRole> roles) {
     this(id, username, status, createdAt, updatedAt, ImmutableList.copyOf(roles));
-  }
-
-  public static AdminUser of(
-      UUID id,
-      String username,
-      AdminUserStatus status,
-      Instant createdAt,
-      Instant updatedAt,
-      List<AdminRole> roles) {
-    return new AdminUser(id, username, status, createdAt, updatedAt, roles);
   }
 }

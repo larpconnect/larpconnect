@@ -92,7 +92,7 @@ public final class TelemetryTracingSteps {
                     new AbstractModule() {
                       @Override
                       protected void configure() {
-                        bind(ServerConfig.class).toInstance(ServerConfig.of("127.0.0.1", 0));
+                        bind(ServerConfig.class).toInstance(new ServerConfig("127.0.0.1", 0));
                         bind(SessionFactoryFactory.class).toInstance(mockFactory);
                       }
                     }));
@@ -184,18 +184,13 @@ public final class TelemetryTracingSteps {
       rootLogger.detachAppender(otelAppender);
       otelAppender.stop();
       listAppender.stop();
-      otelAppender = null;
-      listAppender = null;
-      rootLogger = null;
     }
     if (serverService != null) {
       serverService.stop().toCompletableFuture().get(5, TimeUnit.SECONDS);
-      serverService = null;
     }
     if (system != null) {
       system.terminate();
       system.getWhenTerminated().toCompletableFuture().get(5, TimeUnit.SECONDS);
-      system = null;
     }
   }
 }

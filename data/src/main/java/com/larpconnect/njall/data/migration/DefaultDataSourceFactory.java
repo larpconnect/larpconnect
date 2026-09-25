@@ -26,7 +26,7 @@ final class DefaultDataSourceFactory implements DataSourceFactory {
     dataSource.setUrl(config.jdbcUrl());
     dataSource.setUser(config.username());
     if (config.hasPassword()) {
-      dataSource.setPassword(config.password());
+      dataSource.setPassword(config.password().orElse(null));
     }
   }
 }

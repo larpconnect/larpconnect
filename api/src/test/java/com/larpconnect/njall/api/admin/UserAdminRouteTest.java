@@ -53,7 +53,7 @@ final class UserAdminRouteTest {
   }
 
   private AdminUser sampleUser() {
-    return AdminUser.of(userId, "admin_user", AdminUserStatus.ACTIVE, now, now, List.of());
+    return new AdminUser(userId, "admin_user", AdminUserStatus.ACTIVE, now, now, List.of());
   }
 
   private static HttpResponse executeGet(

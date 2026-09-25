@@ -413,7 +413,7 @@ public final class DatabaseMigrationSteps {
 
   private static MigrationConfig createConfig(
       String serverName, String primaryDomain, String adminContact) {
-    return MigrationConfig.of(
+    return new MigrationConfig(
         POSTGRES.getJdbcUrl(),
         "njall",
         NJALL_PASSWORD,
@@ -434,7 +434,8 @@ public final class DatabaseMigrationSteps {
                     Map.entry(
                         "larpconnect.data.database.migration.username", migrationConfig.username()),
                     Map.entry(
-                        "larpconnect.data.database.migration.password", migrationConfig.password()),
+                        "larpconnect.data.database.migration.password",
+                        migrationConfig.password().orElse("")),
                     Map.entry(
                         "larpconnect.data.database.admin.jdbc-url", migrationConfig.jdbcUrl()),
                     Map.entry("larpconnect.data.database.admin.username", "njall_admin"),

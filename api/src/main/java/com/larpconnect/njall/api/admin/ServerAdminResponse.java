@@ -1,6 +1,7 @@
 package com.larpconnect.njall.api.admin;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.Immutable;
 import com.larpconnect.njall.data.domain.Server;
 
 /** Response protocol emitted by the server admin actor. */
@@ -11,6 +12,7 @@ public sealed interface ServerAdminResponse {
    *
    * @param servers Immutable list of retrieved servers.
    */
+  @Immutable
   record ServerList(ImmutableList<Server> servers) implements ServerAdminResponse {}
 
   /**
@@ -18,6 +20,7 @@ public sealed interface ServerAdminResponse {
    *
    * @param reason Diagnostic explanation of the error.
    */
+  @Immutable
   record Failure(String reason) implements ServerAdminResponse {}
 
   /**

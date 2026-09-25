@@ -42,7 +42,7 @@ final class HttpServerModuleTest {
               @Override
               protected void configure() {
                 bind(new Key<ActorSystem<Void>>() {}).toInstance(system);
-                bind(ServerConfig.class).toInstance(ServerConfig.of("127.0.0.1", 0));
+                bind(ServerConfig.class).toInstance(new ServerConfig("127.0.0.1", 0));
                 bind(RootRoute.class).toInstance(() -> Directives.complete(StatusCodes.OK));
               }
             });

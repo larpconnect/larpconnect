@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.ImmutableList;
+import com.larpconnect.njall.common.telemetry.ApiCall;
 import com.larpconnect.njall.common.telemetry.TraceContext;
 import com.larpconnect.njall.data.domain.ContactType;
 import com.larpconnect.njall.data.domain.RoleType;
@@ -51,12 +52,13 @@ final class AdminRouteTest {
     system.getWhenTerminated().toCompletableFuture().get(5, TimeUnit.SECONDS);
   }
 
-  private static ActorRef<HealthCheckCommand> dummyHealthActor() {
+  private static ActorRef<ApiCall<HealthCheckCommand>> dummyHealthActor() {
     return system.systemActorOf(
         Behaviors.receiveMessage(
             msg -> {
-              if (msg instanceof HealthCheckCommand.CheckHealth cmd) {
-                cmd.replyTo().tell(HealthCheckResponse.healthy());
+              switch (msg.call()) {
+                case HealthCheckCommand.CheckHealth cmd ->
+                    cmd.replyTo().tell(HealthCheckResponse.healthy());
               }
               return Behaviors.same();
             }),
@@ -68,8 +70,9 @@ final class AdminRouteTest {
     return system.systemActorOf(
         Behaviors.receiveMessage(
             msg -> {
-              if (msg instanceof ServerAdminCommand.ListServers cmd) {
-                cmd.replyTo().tell(ServerAdminResponse.success(ImmutableList.of()));
+              switch (msg) {
+                case ServerAdminCommand.ListServers cmd ->
+                    cmd.replyTo().tell(ServerAdminResponse.success(ImmutableList.of()));
               }
               return Behaviors.same();
             }),
@@ -79,9 +82,9 @@ final class AdminRouteTest {
 
   private static Server sampleServer() {
     var contact =
-        ServerContact.of(
+        new ServerContact(
             UUID.randomUUID(), RoleType.ADMIN, ContactType.EMAIL, "admin@larpconnect.com", 0);
-    return Server.of(
+    return new Server(
         UUID.randomUUID(),
         "Test Server",
         "larpconnect.com",
@@ -111,7 +114,7 @@ final class AdminRouteTest {
   }
 
   private static DefaultAdminRoute createRoute(
-      ActorRef<HealthCheckCommand> healthActor, ActorRef<ServerAdminCommand> serverActor) {
+      ActorRef<ApiCall<HealthCheckCommand>> healthActor, ActorRef<ServerAdminCommand> serverActor) {
     return new DefaultAdminRoute(
         healthActor,
         serverActor,
@@ -125,12 +128,13 @@ final class AdminRouteTest {
   @Test
   @DisplayName("GET /api/admin/v1/health returns 200 OK with empty body when healthy")
   void route_healthyResponse_returns200Ok() throws Exception {
-    var healthActor =
+    ActorRef<ApiCall<HealthCheckCommand>> healthActor =
         system.systemActorOf(
-            Behaviors.<HealthCheckCommand>receiveMessage(
+            Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof HealthCheckCommand.CheckHealth cmd) {
-                    cmd.replyTo().tell(HealthCheckResponse.healthy());
+                  switch (msg.call()) {
+                    case HealthCheckCommand.CheckHealth cmd ->
+                        cmd.replyTo().tell(HealthCheckResponse.healthy());
                   }
                   return Behaviors.same();
                 }),
@@ -160,13 +164,14 @@ final class AdminRouteTest {
   @DisplayName("GET /api/admin/v1/health extracts traceparent header and passes TraceContext")
   void route_healthWithTraceparent_passesTraceContext() throws Exception {
     var capturedContext = new AtomicReference<Optional<TraceContext>>();
-    var healthActor =
+    ActorRef<ApiCall<HealthCheckCommand>> healthActor =
         system.systemActorOf(
-            Behaviors.<HealthCheckCommand>receiveMessage(
+            Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof HealthCheckCommand.CheckHealth cmd) {
-                    capturedContext.set(cmd.traceContext());
-                    cmd.replyTo().tell(HealthCheckResponse.healthy());
+                  capturedContext.set(msg.context());
+                  switch (msg.call()) {
+                    case HealthCheckCommand.CheckHealth cmd ->
+                        cmd.replyTo().tell(HealthCheckResponse.healthy());
                   }
                   return Behaviors.same();
                 }),
@@ -188,20 +193,24 @@ final class AdminRouteTest {
             .get(5, TimeUnit.SECONDS);
 
     assertThat(response.status()).isEqualTo(StatusCodes.OK);
-    assertThat(capturedContext.get()).isPresent();
-    assertThat(capturedContext.get().get().traceId()).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
-    assertThat(capturedContext.get().get().spanId()).isEqualTo("00f067aa0ba902b7");
+    assertThat(capturedContext.get())
+        .hasValueSatisfying(
+            ctx -> {
+              assertThat(ctx.traceId()).isEqualTo("4bf92f3577b34da6a3ce929d0e0e4736");
+              assertThat(ctx.spanId()).isEqualTo("00f067aa0ba902b7");
+            });
   }
 
   @Test
   @DisplayName("GET /api/admin/v1/health returns 500 when unhealthy")
   void route_unhealthyResponse_returns500Error() throws Exception {
-    var healthActor =
+    ActorRef<ApiCall<HealthCheckCommand>> healthActor =
         system.systemActorOf(
-            Behaviors.<HealthCheckCommand>receiveMessage(
+            Behaviors.receiveMessage(
                 msg -> {
-                  if (msg instanceof HealthCheckCommand.CheckHealth cmd) {
-                    cmd.replyTo().tell(new HealthCheckResponse.Unhealthy("component degraded"));
+                  switch (msg.call()) {
+                    case HealthCheckCommand.CheckHealth cmd ->
+                        cmd.replyTo().tell(new HealthCheckResponse.Unhealthy("component degraded"));
                   }
                   return Behaviors.same();
                 }),
@@ -230,9 +239,9 @@ final class AdminRouteTest {
   @Test
   @DisplayName("GET /api/admin/v1/health returns 500 on ask timeout")
   void route_healthTimeout_returns500Error() throws Exception {
-    var silentHealthActor =
+    ActorRef<ApiCall<HealthCheckCommand>> silentHealthActor =
         system.systemActorOf(
-            Behaviors.<HealthCheckCommand>receiveMessage(msg -> Behaviors.same()),
+            Behaviors.receiveMessage(msg -> Behaviors.same()),
             "silentHealthActor" + UUID.randomUUID(),
             Props.empty());
 

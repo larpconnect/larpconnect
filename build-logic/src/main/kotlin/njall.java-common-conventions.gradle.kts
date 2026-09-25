@@ -71,7 +71,14 @@ tasks.withType<JavaCompile>().configureEach {
     options.errorprone {
         isEnabled = true
         disableWarningsInGeneratedCode.set(true) // Exempt generated code
-        error("AddNullMarkedToPackageInfo", "ParameterMissingNullable", "RedundantNullCheck")
+        error(
+            "AddNullMarkedToPackageInfo",
+            "ParameterMissingNullable",
+            "RedundantNullCheck",
+            "FieldMissingNullable",
+            "ReturnMissingNullable"
+        )
+        checkOptions.put("Immutable:KnownImmutable", "org.apache.pekko.actor.typed.ActorRef")
     }
 }
 
@@ -119,8 +126,10 @@ tasks.check {
 }
 
 // Define dependency constraints from Version Catalog
+// Note: build-logic precompiled script conventions cannot directly resolve version catalog type-safe accessors.
 dependencies {
     compileOnly("org.jspecify:jspecify:1.0.1")
+    compileOnly("com.google.errorprone:error_prone_annotations:2.50.0")
 
     constraints {
         // Enforce same versions across all subprojects

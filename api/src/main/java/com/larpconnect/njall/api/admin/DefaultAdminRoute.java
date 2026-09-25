@@ -4,7 +4,8 @@ import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
-import com.larpconnect.njall.common.telemetry.TraceContext;
+import com.larpconnect.njall.common.telemetry.ApiCall;
+import com.larpconnect.njall.common.telemetry.TraceparentParser;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -26,7 +27,7 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
   private static final Duration HEALTH_ASK_TIMEOUT = Duration.ofSeconds(2);
   private static final Duration SERVER_ASK_TIMEOUT = Duration.ofSeconds(10);
 
-  private final ActorRef<HealthCheckCommand> healthCheckActor;
+  private final ActorRef<ApiCall<HealthCheckCommand>> healthCheckActor;
   private final ActorRef<ServerAdminCommand> serverAdminActor;
   private final StudioAdminRoute studioAdminRoute;
   private final UserAdminRoute userAdminRoute;
@@ -36,7 +37,7 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
 
   @Inject
   DefaultAdminRoute(
-      ActorRef<HealthCheckCommand> healthCheckActor,
+      ActorRef<ApiCall<HealthCheckCommand>> healthCheckActor,
       ActorRef<ServerAdminCommand> serverAdminActor,
       StudioAdminRoute studioAdminRoute,
       UserAdminRoute userAdminRoute,
@@ -73,13 +74,10 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
 
   private CompletionStage<HealthCheckResponse> askHealthCheck(HttpRequest request) {
     var traceContext =
-        request
-            .getHeader("traceparent")
-            .map(HttpHeader::value)
-            .flatMap(TraceContext::parseTraceparent);
+        request.getHeader("traceparent").map(HttpHeader::value).flatMap(TraceparentParser::parse);
     return ask(
         healthCheckActor,
-        replyTo -> new HealthCheckCommand.CheckHealth(replyTo, traceContext),
+        replyTo -> new ApiCall<>(new HealthCheckCommand.CheckHealth(replyTo), traceContext),
         HEALTH_ASK_TIMEOUT,
         system.scheduler());
   }

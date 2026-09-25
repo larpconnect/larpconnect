@@ -65,7 +65,7 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
                 .setParameter("roleName", roleName)
                 .getSingleResult();
         tx.commit();
-        return AdminRole.of(id, roleName);
+        return new AdminRole(id, roleName);
       } catch (Exception e) {
         tx.rollback();
         throw e;
@@ -74,6 +74,6 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
   }
 
   private AdminRole toRole(AdminRoleEntity entity) {
-    return AdminRole.of(entity.getId(), entity.getRoleName());
+    return new AdminRole(entity.getId(), entity.getRoleName());
   }
 }

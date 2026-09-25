@@ -1,6 +1,6 @@
 ---
 name: njall-java-testing
-description: Handles writing java tests.
+description: Handles writing java tests. Use whenever needing to write or review java unit tests.
 ---
 
 # Skill: Testing
@@ -13,7 +13,7 @@ This skill handles writing tests.
 
 - Tests are written with JUnit 6, AssertJ, and Mockito. They optionally (in
   `:integration`) use cucumber
-- 100% branch coverage is required in testing
+- 90% branch coverage is required in testing
 - `:test` contains centralized test logic and dependencies, `:integration`
   contains integration tests.
 - Tests should be named `<ClassName>[OptionalTestType]Test`. If it is a test of
@@ -66,6 +66,9 @@ This skill handles writing tests.
   both the instructions that are tested as well as ensuring that the branches
   are covered. Always design with testability in mind and make sure things are
   thoroughly tested.
+- When testing records or other objects that have overriden equals and hashCode,
+  prefer comparing the objects directly (still with AssertJ) rather than comparing
+  every field individually.
 
 ### Integration Tests
 

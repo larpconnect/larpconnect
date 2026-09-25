@@ -88,7 +88,7 @@ final class DefaultSessionFactoryFactoryTest {
     var testDriver = registerMockDriver();
     try {
       var factory = new DefaultSessionFactoryFactory();
-      var config = SessionConfig.of("jdbc:mockpg://localhost/test", "user", "pass", 2, 10, 5);
+      var config = new SessionConfig("jdbc:mockpg://localhost/test", "user", "pass", 2, 10, 5);
 
       var sessionFactory = factory.create(config, List.of(DummyEntity.class));
 
@@ -107,7 +107,7 @@ final class DefaultSessionFactoryFactoryTest {
     var testDriver = registerMockDriver();
     try {
       var factory = new DefaultSessionFactoryFactory();
-      var config = SessionConfig.of("jdbc:mockpg://localhost/test", "user", "", true, 2, 10, 5);
+      var config = new SessionConfig("jdbc:mockpg://localhost/test", "user", "", true, 2, 10, 5);
 
       var sessionFactory = factory.create(config, List.of(DummyEntity.class));
 
@@ -126,7 +126,8 @@ final class DefaultSessionFactoryFactoryTest {
     var testDriver = registerMockDriver();
     try {
       var factory = new DefaultSessionFactoryFactory();
-      var config = SessionConfig.of("jdbc:mockpg://localhost/test", "user", null, true, 2, 10, 5);
+      var config =
+          new SessionConfig("jdbc:mockpg://localhost/test", "user", (String) null, true, 2, 10, 5);
 
       var sessionFactory = factory.create(config, List.of(DummyEntity.class));
 

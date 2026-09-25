@@ -1,11 +1,13 @@
 package com.larpconnect.njall.server.cli;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.Immutable;
 import java.util.List;
 import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 /** Encapsulates CLI options for the migrate subcommand. */
+@Immutable
 public record MigrationOptions(
     Optional<String> jdbcUrl,
     Optional<String> username,

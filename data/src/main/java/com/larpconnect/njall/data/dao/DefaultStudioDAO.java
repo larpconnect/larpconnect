@@ -96,7 +96,7 @@ final class DefaultStudioDAO implements StudioDAO {
         var studioId = (UUID) row[1];
         var createdAt = toInstant(row[2]);
         var updatedAt = toInstant(row[3]);
-        return StudioLookup.of(tenantId, studioId, alias, createdAt, updatedAt, null);
+        return new StudioLookup(tenantId, studioId, alias, createdAt, updatedAt, Optional.empty());
       } catch (Exception e) {
         tx.rollback();
         throw e;
@@ -133,7 +133,7 @@ final class DefaultStudioDAO implements StudioDAO {
   }
 
   private StudioLookup toStudio(StudioLookupEntity entity) {
-    return StudioLookup.of(
+    return new StudioLookup(
         entity.getTenantId(),
         entity.getStudioId(),
         entity.getAlias(),

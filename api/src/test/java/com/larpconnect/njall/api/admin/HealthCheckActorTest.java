@@ -2,6 +2,7 @@ package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.larpconnect.njall.common.telemetry.ApiCall;
 import com.larpconnect.njall.common.telemetry.TraceContext;
 import io.dropwizard.metrics5.health.HealthCheck;
 import io.dropwizard.metrics5.health.HealthCheck.Result;
@@ -15,7 +16,8 @@ import org.slf4j.MDC;
 
 final class HealthCheckActorTest {
 
-  private static Behavior<HealthCheckCommand> createBehavior(HealthCheckRegistry registry) {
+  private static Behavior<ApiCall<HealthCheckCommand>> createBehavior(
+      HealthCheckRegistry registry) {
     return HealthCheckActor.create(registry);
   }
 
@@ -35,7 +37,7 @@ final class HealthCheckActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(registry));
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
 
-    testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
+    testKit.run(new ApiCall<>(new HealthCheckCommand.CheckHealth(inbox.getRef())));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(HealthCheckResponse.Healthy.class);
@@ -57,7 +59,7 @@ final class HealthCheckActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(registry));
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
 
-    testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
+    testKit.run(new ApiCall<>(new HealthCheckCommand.CheckHealth(inbox.getRef())));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(HealthCheckResponse.Unhealthy.class);
@@ -81,7 +83,7 @@ final class HealthCheckActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(registry));
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
 
-    testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
+    testKit.run(new ApiCall<>(new HealthCheckCommand.CheckHealth(inbox.getRef())));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(HealthCheckResponse.Unhealthy.class);
@@ -107,7 +109,7 @@ final class HealthCheckActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(registry));
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
 
-    testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
+    testKit.run(new ApiCall<>(new HealthCheckCommand.CheckHealth(inbox.getRef())));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(HealthCheckResponse.Unhealthy.class);
@@ -141,7 +143,7 @@ final class HealthCheckActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(registry));
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
 
-    testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef(), traceContext));
+    testKit.run(new ApiCall<>(new HealthCheckCommand.CheckHealth(inbox.getRef()), traceContext));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(HealthCheckResponse.Healthy.class);
@@ -152,9 +154,10 @@ final class HealthCheckActorTest {
   void extractMdc_withTraceContext_returnsPopulatedMap() {
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
     var traceContext = new TraceContext("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7");
-    var command = new HealthCheckCommand.CheckHealth(inbox.getRef(), traceContext);
+    ApiCall<HealthCheckCommand> apiCall =
+        new ApiCall<>(new HealthCheckCommand.CheckHealth(inbox.getRef()), traceContext);
 
-    var mdc = HealthCheckActor.extractMdc(command);
+    var mdc = HealthCheckActor.extractMdc(apiCall);
 
     assertThat(mdc)
         .containsEntry("trace_id", "4bf92f3577b34da6a3ce929d0e0e4736")
@@ -165,9 +168,10 @@ final class HealthCheckActorTest {
   @DisplayName("extractMdc returns empty map when TraceContext is empty")
   void extractMdc_withoutTraceContext_returnsEmptyMap() {
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
-    var command = new HealthCheckCommand.CheckHealth(inbox.getRef());
+    ApiCall<HealthCheckCommand> apiCall =
+        new ApiCall<>(new HealthCheckCommand.CheckHealth(inbox.getRef()));
 
-    var mdc = HealthCheckActor.extractMdc(command);
+    var mdc = HealthCheckActor.extractMdc(apiCall);
 
     assertThat(mdc).isEmpty();
   }

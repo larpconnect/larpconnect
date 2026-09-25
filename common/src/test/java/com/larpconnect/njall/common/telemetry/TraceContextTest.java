@@ -37,27 +37,27 @@ final class TraceContextTest {
   }
 
   @Test
-  @DisplayName("fromSpanContext extracts traceId and spanId")
-  void fromSpanContext_validSpanContext_returnsTraceContext() {
+  @DisplayName("Constructor with SpanContext extracts traceId and spanId")
+  void constructor_validSpanContext_returnsTraceContext() {
     var spanContext =
         SpanContext.create(
             VALID_TRACE_ID, VALID_SPAN_ID, TraceFlags.getSampled(), TraceState.getDefault());
 
-    var context = TraceContext.fromSpanContext(spanContext);
+    var context = new TraceContext(spanContext);
 
     assertThat(context.traceId()).isEqualTo(VALID_TRACE_ID);
     assertThat(context.spanId()).isEqualTo(VALID_SPAN_ID);
   }
 
   @Test
-  @DisplayName("fromSpan extracts identifiers from active span")
-  void fromSpan_validSpan_returnsTraceContext() {
+  @DisplayName("Constructor with Span extracts identifiers from active span")
+  void constructor_validSpan_returnsTraceContext() {
     var spanContext =
         SpanContext.create(
             VALID_TRACE_ID, VALID_SPAN_ID, TraceFlags.getSampled(), TraceState.getDefault());
     var span = Span.wrap(spanContext);
 
-    var context = TraceContext.fromSpan(span);
+    var context = new TraceContext(span);
 
     assertThat(context.traceId()).isEqualTo(VALID_TRACE_ID);
     assertThat(context.spanId()).isEqualTo(VALID_SPAN_ID);
@@ -85,27 +85,5 @@ final class TraceContextTest {
     assertThatThrownBy(() -> new TraceContext(VALID_TRACE_ID, "00F067AA0BA902B7"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Invalid spanId format");
-  }
-
-  @Test
-  @DisplayName("parseTraceparent parses valid W3C traceparent header string")
-  void parseTraceparent_validHeader_returnsTraceContext() {
-    var rawHeader = "00-" + VALID_TRACE_ID + "-" + VALID_SPAN_ID + "-01";
-    var result = TraceContext.parseTraceparent(rawHeader);
-
-    assertThat(result).isPresent();
-    assertThat(result.get().traceId()).isEqualTo(VALID_TRACE_ID);
-    assertThat(result.get().spanId()).isEqualTo(VALID_SPAN_ID);
-  }
-
-  @Test
-  @DisplayName("parseTraceparent returns empty for null or invalid headers")
-  void parseTraceparent_nullOrInvalid_returnsEmpty() {
-    assertThat(TraceContext.parseTraceparent(null)).isEmpty();
-    assertThat(TraceContext.parseTraceparent("")).isEmpty();
-    assertThat(TraceContext.parseTraceparent("not-a-traceparent")).isEmpty();
-    assertThat(TraceContext.parseTraceparent("01-" + VALID_TRACE_ID + "-" + VALID_SPAN_ID + "-01"))
-        .isEmpty();
-    assertThat(TraceContext.parseTraceparent("00-invalid-" + VALID_SPAN_ID + "-01")).isEmpty();
   }
 }

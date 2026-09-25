@@ -49,7 +49,7 @@ public final class RootEndpointSteps {
                       @Override
                       protected void configure() {
                         // Bind to ephemeral port 0 for test isolation
-                        bind(ServerConfig.class).toInstance(ServerConfig.of("127.0.0.1", 0));
+                        bind(ServerConfig.class).toInstance(new ServerConfig("127.0.0.1", 0));
                         bind(SessionFactoryFactory.class).toInstance(mockFactory);
                       }
                     }));
