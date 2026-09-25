@@ -26,10 +26,6 @@ public record ServerConfig(
   private static final String DEFAULT_ADMIN_CONTACT = "admin@larpconnect.org";
 
   public ServerConfig {
-    requireNonNull(host, "host cannot be null");
-    requireNonNull(name, "name cannot be null");
-    requireNonNull(primaryDomain, "primaryDomain cannot be null");
-    requireNonNull(adminContact, "adminContact cannot be null");
     if (port < MIN_PORT || port > MAX_PORT) {
       throw new IllegalArgumentException("Port must be between 0 and 65535, got: " + port);
     }

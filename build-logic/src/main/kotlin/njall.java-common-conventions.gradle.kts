@@ -64,13 +64,15 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
 
 // ErrorProne configuration
 dependencies {
-    "errorprone"("com.google.errorprone:error_prone_core:2.36.0")
+    "errorprone"("com.google.errorprone:error_prone_core:2.50.0")
 }
 
 tasks.withType<JavaCompile>().configureEach {
     options.errorprone {
         isEnabled = true
         disableWarningsInGeneratedCode.set(true) // Exempt generated code
+        disable("StringConcatToTextBlock")
+        error("AddNullMarkedToPackageInfo", "ParameterMissingNullable", "RedundantNullCheck")
     }
 }
 

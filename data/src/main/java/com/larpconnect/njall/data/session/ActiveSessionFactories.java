@@ -19,9 +19,7 @@ public final class ActiveSessionFactories {
    * @param sessionFactory The session factory to register.
    */
   public void register(SessionFactory sessionFactory) {
-    if (sessionFactory != null) {
-      factories.add(sessionFactory);
-    }
+    factories.add(sessionFactory);
   }
 
   /** Gracefully closes all registered and open session factories. */

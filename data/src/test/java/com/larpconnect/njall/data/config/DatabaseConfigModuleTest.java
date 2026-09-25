@@ -22,10 +22,6 @@ final class DatabaseConfigModuleTest {
     var adminConfig = injector.getInstance(Key.get(SessionConfig.class, NjallAdmin.class));
     var usersConfig = injector.getInstance(Key.get(SessionConfig.class, NjallUsers.class));
 
-    assertThat(dbConfig).isNotNull();
-    assertThat(migrationConfig).isNotNull();
-    assertThat(adminConfig).isNotNull();
-    assertThat(usersConfig).isNotNull();
     assertThat(dbConfig.migration()).isSameAs(migrationConfig);
     assertThat(dbConfig.admin()).isSameAs(adminConfig);
     assertThat(dbConfig.users()).isSameAs(usersConfig);

@@ -13,13 +13,10 @@ import org.junit.jupiter.api.Test;
 final class ActiveSessionFactoriesTest {
 
   @Test
-  @DisplayName("register ignores null and registers active factories")
-  void register_validAndNull_tracksActiveFactories() {
+  @DisplayName("register tracks active factories")
+  void register_validFactory_tracksActiveFactories() {
     var tracker = new ActiveSessionFactories();
     var factory = mock(SessionFactory.class);
-
-    tracker.register(null);
-    assertThat(tracker.activeCount()).isEqualTo(0);
 
     tracker.register(factory);
     assertThat(tracker.activeCount()).isEqualTo(1);

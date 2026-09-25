@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.domain;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.util.List;
@@ -25,11 +23,6 @@ public record Server(
     implements DatabaseObject {
 
   public Server {
-    requireNonNull(id, "id cannot be null");
-    requireNonNull(name, "name cannot be null");
-    requireNonNull(primaryDomain, "primaryDomain cannot be null");
-    requireNonNull(createdOn, "createdOn cannot be null");
-    requireNonNull(contacts, "contacts cannot be null");
     contacts = ImmutableList.copyOf(contacts);
   }
 
@@ -44,12 +37,7 @@ public record Server(
    */
   public Server(
       UUID id, String name, String primaryDomain, Instant createdOn, List<ServerContact> contacts) {
-    this(
-        id,
-        name,
-        primaryDomain,
-        createdOn,
-        ImmutableList.copyOf(requireNonNull(contacts, "contacts cannot be null")));
+    this(id, name, primaryDomain, createdOn, ImmutableList.copyOf(contacts));
   }
 
   /**

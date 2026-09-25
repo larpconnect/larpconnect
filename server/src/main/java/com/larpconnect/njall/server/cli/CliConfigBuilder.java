@@ -1,7 +1,5 @@
 package com.larpconnect.njall.server.cli;
 
-import static java.util.Objects.requireNonNull;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
@@ -26,16 +24,16 @@ public final class CliConfigBuilder {
   }
 
   public CliConfigBuilder(Config baseConfig) {
-    this.baseConfig = requireNonNull(baseConfig, "baseConfig cannot be null");
+    this.baseConfig = baseConfig;
   }
 
   public CliConfigBuilder withConfigFile(Optional<File> configFile) {
-    this.configFile = requireNonNull(configFile, "configFile cannot be null");
+    this.configFile = configFile;
     return this;
   }
 
   public CliConfigBuilder withConfigFile(File configFile) {
-    return withConfigFile(Optional.of(requireNonNull(configFile, "configFile cannot be null")));
+    return withConfigFile(Optional.of(configFile));
   }
 
   public CliConfigBuilder withOverride(String path, @Nullable Object value) {

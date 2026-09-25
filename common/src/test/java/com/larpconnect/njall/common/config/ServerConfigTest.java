@@ -34,38 +34,6 @@ final class ServerConfigTest {
   }
 
   @Test
-  @DisplayName("of throws NullPointerException when host is null")
-  void of_nullHost_throwsNullPointerException() {
-    assertThatThrownBy(() -> ServerConfig.of(null, 8080))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("host cannot be null");
-  }
-
-  @Test
-  @DisplayName("of throws NullPointerException when name is null")
-  void of_nullName_throwsNullPointerException() {
-    assertThatThrownBy(() -> ServerConfig.of("localhost", 8080, null, "domain.com", "admin@test"))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("name cannot be null");
-  }
-
-  @Test
-  @DisplayName("of throws NullPointerException when primaryDomain is null")
-  void of_nullPrimaryDomain_throwsNullPointerException() {
-    assertThatThrownBy(() -> ServerConfig.of("localhost", 8080, "server", null, "admin@test"))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("primaryDomain cannot be null");
-  }
-
-  @Test
-  @DisplayName("of throws NullPointerException when adminContact is null")
-  void of_nullAdminContact_throwsNullPointerException() {
-    assertThatThrownBy(() -> ServerConfig.of("localhost", 8080, "server", "domain.com", null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("adminContact cannot be null");
-  }
-
-  @Test
   @DisplayName("of throws IllegalArgumentException when port is negative")
   void of_negativePort_throwsIllegalArgumentException() {
     assertThatThrownBy(() -> ServerConfig.of("localhost", -1))
@@ -86,11 +54,13 @@ final class ServerConfigTest {
   void fromConfig_validConfig_parsesCorrectly() {
     var typesafeConfig =
         ConfigFactory.parseString(
-            "larpconnect.server.host = \"10.0.0.1\"\n"
-                + "larpconnect.server.port = 9000\n"
-                + "larpconnect.server.name = \"custom-node\"\n"
-                + "larpconnect.server.primary-domain = \"example.org\"\n"
-                + "larpconnect.server.admin-contact = \"contact@example.org\"");
+            """
+            larpconnect.server.host = "10.0.0.1"
+            larpconnect.server.port = 9000
+            larpconnect.server.name = "custom-node"
+            larpconnect.server.primary-domain = "example.org"
+            larpconnect.server.admin-contact = "contact@example.org"
+            """);
     var config = ServerConfig.fromConfig(typesafeConfig);
 
     assertThat(config.host()).isEqualTo("10.0.0.1");

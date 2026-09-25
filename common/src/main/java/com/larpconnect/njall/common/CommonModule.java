@@ -1,7 +1,5 @@
 package com.larpconnect.njall.common;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.inject.AbstractModule;
 import com.larpconnect.njall.common.config.ConfigModule;
 import com.larpconnect.njall.common.health.HealthModule;
@@ -19,7 +17,7 @@ public final class CommonModule extends AbstractModule {
   }
 
   public CommonModule(Config config) {
-    this.config = requireNonNull(config, "config cannot be null");
+    this.config = config;
   }
 
   @Override
@@ -27,5 +25,6 @@ public final class CommonModule extends AbstractModule {
     install(new ConfigModule(config));
     install(new HealthModule());
     install(new TelemetryModule());
+    install(new CommonBindingModule());
   }
 }

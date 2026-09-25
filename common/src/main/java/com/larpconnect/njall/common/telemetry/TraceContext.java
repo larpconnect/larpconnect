@@ -6,6 +6,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanContext;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Immutable correlation context representing an active OpenTelemetry trace and span.
@@ -23,8 +24,6 @@ public record TraceContext(String traceId, String spanId) {
   private static final String TRACEPARENT_SUFFIX = "-01";
 
   public TraceContext {
-    requireNonNull(traceId, "traceId cannot be null");
-    requireNonNull(spanId, "spanId cannot be null");
     if (!TRACE_ID_PATTERN.matcher(traceId).matches()) {
       throw new IllegalArgumentException("Invalid traceId format: " + traceId);
     }
@@ -61,7 +60,7 @@ public record TraceContext(String traceId, String spanId) {
    * @param headerValue the raw header value
    * @return optional containing the parsed trace context, or empty if null or invalid
    */
-  public static Optional<TraceContext> parseTraceparent(String headerValue) {
+  public static Optional<TraceContext> parseTraceparent(@Nullable String headerValue) {
     if (headerValue == null) {
       return Optional.empty();
     }

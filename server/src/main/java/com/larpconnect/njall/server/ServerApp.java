@@ -39,7 +39,7 @@ public final class ServerApp {
     }
   }
 
-  public @Nullable Integer runWithArgs(@Nullable String[] args) {
+  public @Nullable Integer runWithArgs(String @Nullable [] args) {
     return cliRunner.execute(args);
   }
 

@@ -38,7 +38,7 @@ final class DefaultSessionFactoryFactoryTest {
 
     @Override
     public boolean acceptsURL(String url) {
-      return url != null && url.startsWith("jdbc:mockpg:");
+      return url.startsWith("jdbc:mockpg:");
     }
 
     @Override

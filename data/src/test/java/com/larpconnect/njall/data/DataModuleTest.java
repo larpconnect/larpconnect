@@ -9,9 +9,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.common.CommonModule;
-import com.larpconnect.njall.data.config.DatabaseConfig;
-import com.larpconnect.njall.data.dao.ServerDAO;
-import com.larpconnect.njall.data.migration.DatabaseMigrator;
+import com.larpconnect.njall.data.health.AdminDatabaseHealthCheck;
 import com.larpconnect.njall.data.session.SessionFactoryFactory;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +19,7 @@ final class DataModuleTest {
 
   @Test
   @DisplayName("DataModule successfully installs all data submodules")
-  void configure_whenInjected_providesAllDataBindings() {
+  void configure_whenInjected_initializesSuccessfully() {
     var mockFactory = mock(SessionFactoryFactory.class);
     when(mockFactory.create(any(), any())).thenReturn(mock(SessionFactory.class));
 
@@ -37,12 +35,7 @@ final class DataModuleTest {
         Guice.createInjector(
             Modules.override(new CommonModule(), new DataModule()).with(testOverride));
 
-    var dbConfig = injector.getInstance(DatabaseConfig.class);
-    var migrator = injector.getInstance(DatabaseMigrator.class);
-    var serverDao = injector.getInstance(ServerDAO.class);
-
-    assertThat(dbConfig).isNotNull();
-    assertThat(migrator).isNotNull();
-    assertThat(serverDao).isNotNull();
+    assertThat(injector.getInstance(AdminDatabaseHealthCheck.class))
+        .isInstanceOf(AdminDatabaseHealthCheck.class);
   }
 }

@@ -323,15 +323,14 @@ final class UserAdminActorTest {
   }
 
   @Test
-  @DisplayName("onCreateUser rejects null username and accepts explicit status")
-  void onCreateUser_nullUsernameAndExplicitStatus() {
+  @DisplayName("onCreateUser rejects blank username and accepts explicit status")
+  void onCreateUser_blankUsernameAndExplicitStatus() {
     var userDao = mock(AdminUserDAO.class);
     var roleDao = mock(AdminRoleDAO.class);
     var testKit = BehaviorTestKit.create(createBehavior(userDao, roleDao));
     TestInbox<UserAdminResponse> inbox = TestInbox.create();
 
-    testKit.run(
-        new UserAdminCommand.CreateUser(null, AdminUserStatus.ACTIVE, null, inbox.getRef()));
+    testKit.run(new UserAdminCommand.CreateUser("", AdminUserStatus.ACTIVE, null, inbox.getRef()));
     assertThat(inbox.receiveMessage()).isInstanceOf(UserAdminResponse.BadRequest.class);
 
     var disabledUser =

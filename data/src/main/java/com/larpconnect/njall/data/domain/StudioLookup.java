@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.domain;
 
-import static java.util.Objects.requireNonNull;
-
 import java.time.Instant;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -24,14 +22,6 @@ public record StudioLookup(
     Instant updatedAt,
     @Nullable Instant deletedAt)
     implements DatabaseObject {
-
-  public StudioLookup {
-    requireNonNull(tenantId, "tenantId cannot be null");
-    requireNonNull(studioId, "studioId cannot be null");
-    requireNonNull(alias, "alias cannot be null");
-    requireNonNull(createdAt, "createdAt cannot be null");
-    requireNonNull(updatedAt, "updatedAt cannot be null");
-  }
 
   @Override
   public UUID id() {

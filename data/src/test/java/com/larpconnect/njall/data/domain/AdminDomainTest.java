@@ -1,7 +1,6 @@
 package com.larpconnect.njall.data.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.util.List;
@@ -25,10 +24,6 @@ final class AdminDomainTest {
     assertThat(role.id()).isEqualTo(roleId);
     assertThat(role.roleName()).isEqualTo("auditor");
     assertThat(role).isInstanceOf(DatabaseObject.class);
-
-    assertThatThrownBy(() -> AdminRole.of(null, "auditor"))
-        .isInstanceOf(NullPointerException.class);
-    assertThatThrownBy(() -> AdminRole.of(roleId, null)).isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -44,13 +39,6 @@ final class AdminDomainTest {
     assertThat(user.updatedAt()).isEqualTo(now);
     assertThat(user.roles()).containsExactly(role);
     assertThat(user).isInstanceOf(DatabaseObject.class);
-
-    assertThatThrownBy(
-            () -> AdminUser.of(null, "user", AdminUserStatus.ACTIVE, now, now, List.of()))
-        .isInstanceOf(NullPointerException.class);
-    assertThatThrownBy(
-            () -> AdminUser.of(userId, null, AdminUserStatus.ACTIVE, now, now, List.of()))
-        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
@@ -66,12 +54,5 @@ final class AdminDomainTest {
 
     var deletedStudio = StudioLookup.of(tenantId, studioId, "valhalla", now, now, now);
     assertThat(deletedStudio.isDeleted()).isTrue();
-
-    assertThatThrownBy(() -> StudioLookup.of(null, studioId, "valhalla", now, now, null))
-        .isInstanceOf(NullPointerException.class);
-    assertThatThrownBy(() -> StudioLookup.of(tenantId, null, "valhalla", now, now, null))
-        .isInstanceOf(NullPointerException.class);
-    assertThatThrownBy(() -> StudioLookup.of(tenantId, studioId, null, now, now, null))
-        .isInstanceOf(NullPointerException.class);
   }
 }

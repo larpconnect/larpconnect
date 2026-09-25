@@ -63,13 +63,13 @@ public final class CliRunner {
    * @return Null if server runtime should keep executing; integer status code if process should
    *     terminate.
    */
-  public @Nullable Integer execute(@Nullable String[] args) {
+  public @Nullable Integer execute(String @Nullable [] args) {
     var cmd = buildCommandLine();
     var exitCode = executeCommandLine(cmd, args);
     return determineExitStatus(cmd, exitCode);
   }
 
-  private int executeCommandLine(CommandLine cmd, @Nullable String[] args) {
+  private int executeCommandLine(CommandLine cmd, String @Nullable [] args) {
     return cmd.execute(args != null ? args : new String[0]);
   }
 

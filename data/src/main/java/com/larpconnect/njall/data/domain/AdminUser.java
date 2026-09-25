@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.domain;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.util.List;
@@ -27,12 +25,6 @@ public record AdminUser(
     implements DatabaseObject {
 
   public AdminUser {
-    requireNonNull(id, "id cannot be null");
-    requireNonNull(username, "username cannot be null");
-    requireNonNull(status, "status cannot be null");
-    requireNonNull(createdAt, "createdAt cannot be null");
-    requireNonNull(updatedAt, "updatedAt cannot be null");
-    requireNonNull(roles, "roles cannot be null");
     roles = ImmutableList.copyOf(roles);
   }
 
@@ -43,13 +35,7 @@ public record AdminUser(
       Instant createdAt,
       Instant updatedAt,
       List<AdminRole> roles) {
-    this(
-        id,
-        username,
-        status,
-        createdAt,
-        updatedAt,
-        ImmutableList.copyOf(requireNonNull(roles, "roles cannot be null")));
+    this(id, username, status, createdAt, updatedAt, ImmutableList.copyOf(roles));
   }
 
   public static AdminUser of(

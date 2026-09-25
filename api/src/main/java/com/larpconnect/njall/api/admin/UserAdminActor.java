@@ -192,7 +192,7 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
   }
 
   private Optional<UserAdminResponse> validateCreateUserCommand(UserAdminCommand.CreateUser cmd) {
-    if (cmd.username() == null || cmd.username().isBlank()) {
+    if (cmd.username().isBlank()) {
       return Optional.of(UserAdminResponse.badRequest("Username cannot be blank"));
     }
     if (userDao.findByUsername(cmd.username()).isPresent()) {
