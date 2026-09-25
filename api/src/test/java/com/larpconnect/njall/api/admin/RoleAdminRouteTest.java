@@ -49,7 +49,7 @@ final class RoleAdminRouteTest {
   }
 
   private AdminRole sampleRole() {
-    return AdminRole.of(roleId, "security_admin");
+    return new AdminRole(roleId, "security_admin");
   }
 
   private static HttpResponse executeGet(

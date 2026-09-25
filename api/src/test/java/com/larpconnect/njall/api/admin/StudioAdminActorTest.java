@@ -31,7 +31,7 @@ final class StudioAdminActorTest {
   }
 
   private StudioLookup sampleStudio() {
-    return StudioLookup.of(tenantId, studioId, "valhalla", now, now, null);
+    return new StudioLookup(tenantId, studioId, "valhalla", now, now, Optional.empty());
   }
 
   @Test

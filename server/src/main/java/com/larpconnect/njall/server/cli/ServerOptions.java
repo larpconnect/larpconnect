@@ -1,9 +1,11 @@
 package com.larpconnect.njall.server.cli;
 
+import com.google.errorprone.annotations.Immutable;
 import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 /** Encapsulates CLI options for the server subcommand. */
+@Immutable
 public record ServerOptions(
     Optional<String> host,
     Optional<Integer> port,

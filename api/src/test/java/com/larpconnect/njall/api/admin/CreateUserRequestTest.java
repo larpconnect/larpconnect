@@ -11,21 +11,23 @@ import org.junit.jupiter.api.Test;
 final class CreateUserRequestTest {
 
   @Test
-  @DisplayName("of factory instantiates request with null and non-null roles")
-  void of_withAndWithoutRoles() {
-    var reqNullRoles = CreateUserRequest.of("admin", AdminUserStatus.ACTIVE, null);
+  @DisplayName("overloaded constructor instantiates request with null and non-null roles")
+  void constructor_withAndWithoutRoles() {
+    var reqNullRoles = new CreateUserRequest("admin", AdminUserStatus.ACTIVE, (List<String>) null);
     assertThat(reqNullRoles.username()).isEqualTo("admin");
     assertThat(reqNullRoles.status()).isEqualTo(AdminUserStatus.ACTIVE);
-    assertThat(reqNullRoles.roles()).isNull();
+    assertThat(reqNullRoles.roles()).isEmpty();
 
-    var reqWithRoles = CreateUserRequest.of("admin", AdminUserStatus.ACTIVE, List.of("superadmin"));
+    var reqWithRoles =
+        new CreateUserRequest("admin", AdminUserStatus.ACTIVE, List.of("superadmin"));
     assertThat(reqWithRoles.roles()).containsExactly("superadmin");
   }
 
   @Test
-  @DisplayName("constructor copies non-null roles immutably")
+  @DisplayName("constructor copies non-null roles immutably and normalizes null status to UNKNOWN")
   void constructor_copiesRoles() {
     var req = new CreateUserRequest("admin", null, ImmutableList.of("admin_role"));
+    assertThat(req.status()).isEqualTo(AdminUserStatus.UNKNOWN);
     assertThat(req.roles()).containsExactly("admin_role");
   }
 }

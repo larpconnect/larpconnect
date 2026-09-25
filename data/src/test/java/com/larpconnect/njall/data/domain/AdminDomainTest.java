@@ -19,7 +19,7 @@ final class AdminDomainTest {
   @Test
   @DisplayName("AdminRole constructs and validates fields")
   void adminRole_constructsSuccessfully() {
-    var role = AdminRole.of(roleId, "auditor");
+    var role = new AdminRole(roleId, "auditor");
 
     assertThat(role.id()).isEqualTo(roleId);
     assertThat(role.roleName()).isEqualTo("auditor");
@@ -29,8 +29,8 @@ final class AdminDomainTest {
   @Test
   @DisplayName("AdminUser constructs and validates fields")
   void adminUser_constructsSuccessfully() {
-    var role = AdminRole.of(roleId, "security_admin");
-    var user = AdminUser.of(userId, "admin_user", AdminUserStatus.ACTIVE, now, now, List.of(role));
+    var role = new AdminRole(roleId, "security_admin");
+    var user = new AdminUser(userId, "admin_user", AdminUserStatus.ACTIVE, now, now, List.of(role));
 
     assertThat(user.id()).isEqualTo(userId);
     assertThat(user.username()).isEqualTo("admin_user");
@@ -44,15 +44,22 @@ final class AdminDomainTest {
   @Test
   @DisplayName("StudioLookup constructs and checks isDeleted")
   void studioLookup_constructsSuccessfully() {
-    var activeStudio = StudioLookup.of(tenantId, studioId, "valhalla", now, now, null);
+    var activeStudio = new StudioLookup(tenantId, studioId, "valhalla", now, now, (Instant) null);
     assertThat(activeStudio.id()).isEqualTo(studioId);
     assertThat(activeStudio.tenantId()).isEqualTo(tenantId);
     assertThat(activeStudio.studioId()).isEqualTo(studioId);
     assertThat(activeStudio.alias()).isEqualTo("valhalla");
+    assertThat(activeStudio.deletedAt()).isEmpty();
     assertThat(activeStudio.isDeleted()).isFalse();
     assertThat(activeStudio).isInstanceOf(DatabaseObject.class);
 
-    var deletedStudio = StudioLookup.of(tenantId, studioId, "valhalla", now, now, now);
+    var deletedStudio = new StudioLookup(tenantId, studioId, "valhalla", now, now, now);
+    assertThat(deletedStudio.deletedAt()).contains(now);
     assertThat(deletedStudio.isDeleted()).isTrue();
+
+    var explicitOptStudio =
+        new StudioLookup(tenantId, studioId, "valhalla", now, now, java.util.Optional.empty());
+    assertThat(explicitOptStudio.deletedAt()).isEmpty();
+    assertThat(explicitOptStudio.isDeleted()).isFalse();
   }
 }

@@ -16,7 +16,7 @@ final class DefaultFlywayFactoryTest {
   @DisplayName("create returns configured Flyway instance")
   void create_validParameters_returnsConfiguredFlyway() {
     var config =
-        MigrationConfig.of(
+        new MigrationConfig(
             "jdbc:postgresql://localhost:5432/app",
             "njall",
             "pass",

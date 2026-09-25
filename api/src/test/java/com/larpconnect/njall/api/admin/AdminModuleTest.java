@@ -10,6 +10,7 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.common.annotation.Blocking;
+import com.larpconnect.njall.common.telemetry.ApiCall;
 import com.larpconnect.njall.data.dao.ServerDAO;
 import io.dropwizard.metrics5.health.HealthCheck;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
@@ -68,7 +69,7 @@ final class AdminModuleTest {
 
     var adminRoute = injector.getInstance(AdminRoute.class);
     var healthActorRef =
-        injector.getInstance(Key.get(new TypeLiteral<ActorRef<HealthCheckCommand>>() {}));
+        injector.getInstance(Key.get(new TypeLiteral<ActorRef<ApiCall<HealthCheckCommand>>>() {}));
     var serverActorRef =
         injector.getInstance(Key.get(new TypeLiteral<ActorRef<ServerAdminCommand>>() {}));
     var studioActorRef =

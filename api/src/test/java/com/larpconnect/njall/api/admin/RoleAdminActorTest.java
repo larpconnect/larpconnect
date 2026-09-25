@@ -27,7 +27,7 @@ final class RoleAdminActorTest {
   }
 
   private AdminRole sampleRole() {
-    return AdminRole.of(roleId, "security_admin");
+    return new AdminRole(roleId, "security_admin");
   }
 
   @Test

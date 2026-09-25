@@ -23,10 +23,10 @@ final class MigrationConfigTest {
           "server_name", "test-srv", "primary_domain", "test.org", "admin_contact", "admin@test");
 
   @Test
-  @DisplayName("of creates MigrationConfig with valid parameters")
-  void of_validParameters_createsRecord() {
+  @DisplayName("constructor creates MigrationConfig with valid parameters")
+  void constructor_validParameters_createsRecord() {
     var config =
-        MigrationConfig.of(
+        new MigrationConfig(
             VALID_JDBC_URL,
             VALID_USER,
             VALID_PASSWORD,
@@ -36,7 +36,7 @@ final class MigrationConfigTest {
 
     assertThat(config.jdbcUrl()).isEqualTo(VALID_JDBC_URL);
     assertThat(config.username()).isEqualTo(VALID_USER);
-    assertThat(config.password()).isEqualTo(VALID_PASSWORD);
+    assertThat(config.password()).contains(VALID_PASSWORD);
     assertThat(config.trustAuth()).isFalse();
     assertThat(config.hasPassword()).isTrue();
     assertThat(config.schemas()).containsExactlyElementsOf(VALID_SCHEMAS);
@@ -45,10 +45,10 @@ final class MigrationConfigTest {
   }
 
   @Test
-  @DisplayName("of with explicit trustAuth allows null, empty, or blank password")
-  void of_nullOrBlankPasswordWithTrustAuth_setsPasswordAndHasPasswordFalse() {
+  @DisplayName("constructor with explicit trustAuth allows null, empty, or blank password")
+  void constructor_nullOrBlankPasswordWithTrustAuth_setsPasswordAndHasPasswordFalse() {
     var nullConfig =
-        MigrationConfig.of(
+        new MigrationConfig(
             VALID_JDBC_URL,
             VALID_USER,
             null,
@@ -56,12 +56,12 @@ final class MigrationConfigTest {
             VALID_SCHEMAS,
             VALID_DEFAULT_SCHEMA,
             VALID_PLACEHOLDERS);
-    assertThat(nullConfig.password()).isNull();
+    assertThat(nullConfig.password()).isEmpty();
     assertThat(nullConfig.trustAuth()).isTrue();
     assertThat(nullConfig.hasPassword()).isFalse();
 
     var emptyConfig =
-        MigrationConfig.of(
+        new MigrationConfig(
             VALID_JDBC_URL,
             VALID_USER,
             "",
@@ -69,12 +69,12 @@ final class MigrationConfigTest {
             VALID_SCHEMAS,
             VALID_DEFAULT_SCHEMA,
             VALID_PLACEHOLDERS);
-    assertThat(emptyConfig.password()).isEmpty();
+    assertThat(emptyConfig.password()).contains("");
     assertThat(emptyConfig.trustAuth()).isTrue();
     assertThat(emptyConfig.hasPassword()).isFalse();
 
     var blankConfig =
-        MigrationConfig.of(
+        new MigrationConfig(
             VALID_JDBC_URL,
             VALID_USER,
             "   ",
@@ -82,18 +82,17 @@ final class MigrationConfigTest {
             VALID_SCHEMAS,
             VALID_DEFAULT_SCHEMA,
             VALID_PLACEHOLDERS);
-    assertThat(blankConfig.password()).isEqualTo("   ");
+    assertThat(blankConfig.password()).contains("   ");
     assertThat(blankConfig.trustAuth()).isTrue();
     assertThat(blankConfig.hasPassword()).isFalse();
   }
 
   @Test
-  @DisplayName(
-      "of throws IllegalStateException when password is null or blank and trustAuth is false")
-  void of_nullOrBlankPasswordWithoutTrustAuth_throwsIllegalStateException() {
+  @DisplayName("constructor throws when password is null or blank and trustAuth is false")
+  void constructor_nullOrBlankPasswordWithoutTrustAuth_throwsIllegalStateException() {
     assertThatThrownBy(
             () ->
-                MigrationConfig.of(
+                new MigrationConfig(
                     VALID_JDBC_URL,
                     VALID_USER,
                     null,
@@ -107,7 +106,7 @@ final class MigrationConfigTest {
 
     assertThatThrownBy(
             () ->
-                MigrationConfig.of(
+                new MigrationConfig(
                     VALID_JDBC_URL,
                     VALID_USER,
                     "",
@@ -121,8 +120,8 @@ final class MigrationConfigTest {
   }
 
   @Test
-  @DisplayName("fromConfig parses MigrationConfig from valid Config and ServerConfig")
-  void fromConfig_validConfig_parsesCorrectly() {
+  @DisplayName("DatabaseConfigModule parses MigrationConfig from valid Config and ServerConfig")
+  void provideMigrationConfig_validConfig_parsesCorrectly() {
     var typesafeConfig =
         ConfigFactory.parseString(
             """
@@ -135,13 +134,14 @@ final class MigrationConfigTest {
             }
             """);
     var serverConfig =
-        ServerConfig.of("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
+        new ServerConfig("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
 
-    var config = MigrationConfig.fromConfig(typesafeConfig, serverConfig);
+    var module = new DatabaseConfigModule();
+    var config = module.provideMigrationConfig(typesafeConfig, serverConfig);
 
     assertThat(config.jdbcUrl()).isEqualTo("jdbc:postgresql://db:5432/app");
     assertThat(config.username()).isEqualTo("app_migrator");
-    assertThat(config.password()).isEqualTo("pass123");
+    assertThat(config.password()).contains("pass123");
     assertThat(config.trustAuth()).isFalse();
     assertThat(config.hasPassword()).isTrue();
     assertThat(config.schemas()).containsExactly("s1", "s2");
@@ -153,8 +153,9 @@ final class MigrationConfigTest {
   }
 
   @Test
-  @DisplayName("fromConfig parses MigrationConfig when password is empty but trustAuth is true")
-  void fromConfig_emptyPasswordWithTrustAuth_parsesSuccessfully() {
+  @DisplayName(
+      "DatabaseConfigModule parses MigrationConfig when password is empty but trustAuth is true")
+  void provideMigrationConfig_emptyPasswordWithTrustAuth_parsesSuccessfully() {
     var typesafeConfig =
         ConfigFactory.parseString(
             """
@@ -168,19 +169,19 @@ final class MigrationConfigTest {
             }
             """);
     var serverConfig =
-        ServerConfig.of("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
+        new ServerConfig("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
 
-    var config = MigrationConfig.fromConfig(typesafeConfig, serverConfig);
+    var module = new DatabaseConfigModule();
+    var config = module.provideMigrationConfig(typesafeConfig, serverConfig);
 
-    assertThat(config.password()).isEmpty();
+    assertThat(config.password()).contains("");
     assertThat(config.trustAuth()).isTrue();
     assertThat(config.hasPassword()).isFalse();
   }
 
   @Test
-  @DisplayName(
-      "fromConfig throws IllegalStateException when password is empty and trustAuth is false")
-  void fromConfig_emptyPasswordWithoutTrustAuth_throwsIllegalStateException() {
+  @DisplayName("DatabaseConfigModule throws when password is empty and trustAuth is false")
+  void provideMigrationConfig_emptyPasswordWithoutTrustAuth_throwsIllegalStateException() {
     var typesafeConfig =
         ConfigFactory.parseString(
             """
@@ -193,17 +194,19 @@ final class MigrationConfigTest {
             }
             """);
     var serverConfig =
-        ServerConfig.of("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
+        new ServerConfig("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
 
-    assertThatThrownBy(() -> MigrationConfig.fromConfig(typesafeConfig, serverConfig))
+    var module = new DatabaseConfigModule();
+    assertThatThrownBy(() -> module.provideMigrationConfig(typesafeConfig, serverConfig))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining(
             "Database password is required for migration profile with username 'app_migrator'");
   }
 
   @Test
-  @DisplayName("fromConfig inherits global trust-auth when migration section does not declare one")
-  void fromConfig_globalTrustAuth_inheritsSetting() {
+  @DisplayName(
+      "DatabaseConfigModule inherits global trust-auth when migration section does not declare one")
+  void provideMigrationConfig_globalTrustAuth_inheritsSetting() {
     var typesafeConfig =
         ConfigFactory.parseString(
             """
@@ -217,9 +220,10 @@ final class MigrationConfigTest {
             }
             """);
     var serverConfig =
-        ServerConfig.of("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
+        new ServerConfig("0.0.0.0", 8080, "my-server", "my-domain.com", "ops@my-domain.com");
 
-    var config = MigrationConfig.fromConfig(typesafeConfig, serverConfig);
+    var module = new DatabaseConfigModule();
+    var config = module.provideMigrationConfig(typesafeConfig, serverConfig);
     assertThat(config.trustAuth()).isTrue();
   }
 }

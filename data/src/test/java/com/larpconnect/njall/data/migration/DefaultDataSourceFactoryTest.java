@@ -15,7 +15,7 @@ final class DefaultDataSourceFactoryTest {
   @DisplayName("create returns configured PGSimpleDataSource with password")
   void create_validConfig_returnsDataSource() {
     var config =
-        MigrationConfig.of(
+        new MigrationConfig(
             "jdbc:postgresql://localhost:5432/app",
             "njall",
             "pass",
@@ -38,7 +38,7 @@ final class DefaultDataSourceFactoryTest {
       "create returns configured PGSimpleDataSource without password when trustAuth is true")
   void create_trustAuthWithoutPassword_omitsPassword() {
     var config =
-        MigrationConfig.of(
+        new MigrationConfig(
             "jdbc:postgresql://localhost:5432/app",
             "njall",
             null,

@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
+import com.larpconnect.njall.common.telemetry.ApiCall;
 import io.dropwizard.metrics5.health.HealthCheck;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import java.util.Map;
@@ -10,7 +11,7 @@ import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.actor.typed.javadsl.Receive;
 
 /** Object-oriented Apache Pekko Typed actor evaluating Dropwizard health check registries. */
-public final class HealthCheckActor extends AbstractBehavior<HealthCheckCommand> {
+public final class HealthCheckActor extends AbstractBehavior<ApiCall<HealthCheckCommand>> {
 
   private final HealthCheckRegistry registry;
 
@@ -21,41 +22,63 @@ public final class HealthCheckActor extends AbstractBehavior<HealthCheckCommand>
    * @param registry health check registry
    * @return decorated behavior
    */
-  public static Behavior<HealthCheckCommand> create(HealthCheckRegistry registry) {
+  // Safe unchecked cast: Java type erasure prevents ApiCall<HealthCheckCommand>.class literal;
+  // Pekko ActorRef typing guarantees message payload type.
+  @SuppressWarnings("unchecked")
+  public static Behavior<ApiCall<HealthCheckCommand>> create(HealthCheckRegistry registry) {
+    Class<ApiCall<HealthCheckCommand>> messageClass =
+        (Class<ApiCall<HealthCheckCommand>>) (Class<?>) ApiCall.class;
     return Behaviors.withMdc(
-        HealthCheckCommand.class,
+        messageClass,
         Map.of(),
         HealthCheckActor::extractMdc,
         Behaviors.setup(context -> new HealthCheckActor(context, registry)));
   }
 
-  static Map<String, String> extractMdc(HealthCheckCommand cmd) {
-    return switch (cmd) {
-      case HealthCheckCommand.CheckHealth checkHealth ->
-          checkHealth
-              .traceContext()
-              .map(tc -> Map.of("trace_id", tc.traceId(), "span_id", tc.spanId()))
-              .orElseGet(Map::of);
-    };
+  static Map<String, String> extractMdc(ApiCall<? extends HealthCheckCommand> apiCall) {
+    return apiCall
+        .context()
+        .map(tc -> Map.of("trace_id", tc.traceId(), "span_id", tc.spanId()))
+        .orElseGet(Map::of);
   }
 
-  public HealthCheckActor(ActorContext<HealthCheckCommand> context, HealthCheckRegistry registry) {
+  public HealthCheckActor(
+      ActorContext<ApiCall<HealthCheckCommand>> context, HealthCheckRegistry registry) {
     super(context);
     this.registry = registry;
   }
 
   @Override
-  public Receive<HealthCheckCommand> createReceive() {
+  // Safe unchecked cast: Java type erasure prevents ApiCall<HealthCheckCommand>.class literal;
+  // Pekko ActorRef typing guarantees message payload type.
+  @SuppressWarnings("unchecked")
+  public Receive<ApiCall<HealthCheckCommand>> createReceive() {
     return newReceiveBuilder()
-        .onMessage(HealthCheckCommand.CheckHealth.class, this::onCheckHealth)
+        .onMessage((Class<ApiCall<HealthCheckCommand>>) (Class<?>) ApiCall.class, this::onApiCall)
         .build();
   }
 
-  private Behavior<HealthCheckCommand> onCheckHealth(HealthCheckCommand.CheckHealth cmd) {
-    var results = registry.runHealthChecks();
+  private Behavior<ApiCall<HealthCheckCommand>> onApiCall(ApiCall<HealthCheckCommand> apiCall) {
+    return switch (apiCall.call()) {
+      case HealthCheckCommand.CheckHealth checkHealth -> handleCheckHealth(checkHealth);
+    };
+  }
+
+  private Behavior<ApiCall<HealthCheckCommand>> handleCheckHealth(
+      HealthCheckCommand.CheckHealth checkHealth) {
+    var results = runHealthChecks();
     var response = evaluateResults(results);
-    cmd.replyTo().tell(response);
+    sendResponse(checkHealth, response);
     return this;
+  }
+
+  private Map<String, HealthCheck.Result> runHealthChecks() {
+    return registry.runHealthChecks();
+  }
+
+  private void sendResponse(
+      HealthCheckCommand.CheckHealth checkHealth, HealthCheckResponse response) {
+    checkHealth.replyTo().tell(response);
   }
 
   private HealthCheckResponse evaluateResults(Map<String, HealthCheck.Result> results) {

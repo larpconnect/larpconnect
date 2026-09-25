@@ -34,7 +34,7 @@ final class DefaultSessionFactoryFactory implements SessionFactoryFactory {
             .applySetting(AvailableSettings.HIGHLIGHT_SQL, "false");
 
     if (config.hasPassword()) {
-      builder.applySetting(AvailableSettings.JAKARTA_JDBC_PASSWORD, config.password());
+      builder.applySetting(AvailableSettings.JAKARTA_JDBC_PASSWORD, config.password().orElse(null));
     }
 
     return builder.build();

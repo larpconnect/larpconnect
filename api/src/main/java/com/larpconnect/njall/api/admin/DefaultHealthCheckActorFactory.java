@@ -1,6 +1,7 @@
 package com.larpconnect.njall.api.admin;
 
 import com.google.inject.Inject;
+import com.larpconnect.njall.common.telemetry.ApiCall;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import org.apache.pekko.actor.typed.Behavior;
 
@@ -15,7 +16,7 @@ final class DefaultHealthCheckActorFactory implements HealthCheckActorFactory {
   }
 
   @Override
-  public Behavior<HealthCheckCommand> create() {
+  public Behavior<ApiCall<HealthCheckCommand>> create() {
     return HealthCheckActor.create(registry);
   }
 }

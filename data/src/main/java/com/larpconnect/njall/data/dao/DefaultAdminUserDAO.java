@@ -60,6 +60,9 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
 
   @Override
   public AdminUser create(String username, AdminUserStatus status, List<UUID> roleIds) {
+    if (status == AdminUserStatus.UNKNOWN) {
+      throw new IllegalArgumentException("Cannot create admin user with UNKNOWN status");
+    }
     requireNonNull(username, "username cannot be null");
     requireNonNull(status, "status cannot be null");
     requireNonNull(roleIds, "roleIds cannot be null");
@@ -175,9 +178,9 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
   private static AdminUser toUser(AdminUserEntity entity) {
     var roles =
         entity.getRoles().stream()
-            .map(r -> AdminRole.of(r.getId(), r.getRoleName()))
+            .map(r -> new AdminRole(r.getId(), r.getRoleName()))
             .collect(ImmutableList.toImmutableList());
-    return AdminUser.of(
+    return new AdminUser(
         entity.getId(),
         entity.getUsername(),
         entity.getStatus(),

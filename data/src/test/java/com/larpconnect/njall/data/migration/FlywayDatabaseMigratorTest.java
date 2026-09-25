@@ -28,7 +28,7 @@ final class FlywayDatabaseMigratorTest {
   @BeforeEach
   void setUp() {
     config =
-        MigrationConfig.of(
+        new MigrationConfig(
             "jdbc:postgresql://localhost:5432/test",
             "njall",
             "pass",

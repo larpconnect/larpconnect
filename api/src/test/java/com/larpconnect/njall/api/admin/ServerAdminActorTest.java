@@ -27,9 +27,9 @@ final class ServerAdminActorTest {
 
   private static Server sampleServer() {
     var contact =
-        ServerContact.of(
+        new ServerContact(
             UUID.randomUUID(), RoleType.ADMIN, ContactType.EMAIL, "admin@example.com", 0);
-    return Server.of(
+    return new Server(
         UUID.randomUUID(),
         "Test Server",
         "test.larpconnect.com",

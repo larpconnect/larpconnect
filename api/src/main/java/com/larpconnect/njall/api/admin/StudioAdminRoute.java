@@ -150,7 +150,7 @@ public final class StudioAdminRoute extends AllDirectives {
     logger.error("Studio admin actor request failed", error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        AdminErrorResponse.of(500, "Internal server error"),
+        new AdminErrorResponse(500, "Internal server error"),
         Jackson.marshaller(objectMapper));
   }
 
@@ -169,27 +169,27 @@ public final class StudioAdminRoute extends AllDirectives {
       case StudioAdminResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              AdminErrorResponse.of(404, nf.message()),
+              new AdminErrorResponse(404, nf.message()),
               Jackson.marshaller(objectMapper));
       case StudioAdminResponse.Conflict c ->
           complete(
               StatusCodes.CONFLICT,
-              AdminErrorResponse.of(409, c.message()),
+              new AdminErrorResponse(409, c.message()),
               Jackson.marshaller(objectMapper));
       case StudioAdminResponse.BadRequest br ->
           complete(
               StatusCodes.BAD_REQUEST,
-              AdminErrorResponse.of(400, br.message()),
+              new AdminErrorResponse(400, br.message()),
               Jackson.marshaller(objectMapper));
       case StudioAdminResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              AdminErrorResponse.of(500, f.message()),
+              new AdminErrorResponse(500, f.message()),
               Jackson.marshaller(objectMapper));
       default ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              AdminErrorResponse.of(500, "Unknown error"),
+              new AdminErrorResponse(500, "Unknown error"),
               Jackson.marshaller(objectMapper));
     };
   }

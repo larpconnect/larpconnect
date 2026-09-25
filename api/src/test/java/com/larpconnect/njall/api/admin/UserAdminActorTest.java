@@ -3,6 +3,7 @@ package com.larpconnect.njall.api.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
@@ -33,11 +34,11 @@ final class UserAdminActorTest {
   }
 
   private AdminUser sampleUser(List<AdminRole> roles) {
-    return AdminUser.of(userId, "admin_user", AdminUserStatus.ACTIVE, now, now, roles);
+    return new AdminUser(userId, "admin_user", AdminUserStatus.ACTIVE, now, now, roles);
   }
 
   private AdminRole sampleRole() {
-    return AdminRole.of(roleId, "security_admin");
+    return new AdminRole(roleId, "security_admin");
   }
 
   @Test
@@ -60,6 +61,29 @@ final class UserAdminActorTest {
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(UserAdminResponse.UserSingle.class);
     assertThat(((UserAdminResponse.UserSingle) response).user().username()).isEqualTo("admin_user");
+  }
+
+  @Test
+  @DisplayName("onCreateUser normalizes UNKNOWN status to ACTIVE")
+  void onCreateUser_unknownStatus_resolvesToActive() {
+    var userDao = mock(AdminUserDAO.class);
+    var roleDao = mock(AdminRoleDAO.class);
+    var user = sampleUser(List.of());
+
+    when(userDao.findByUsername("admin_user")).thenReturn(Optional.empty());
+    when(userDao.create("admin_user", AdminUserStatus.ACTIVE, List.of())).thenReturn(user);
+
+    var testKit = BehaviorTestKit.create(createBehavior(userDao, roleDao));
+    TestInbox<UserAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(
+        new UserAdminCommand.CreateUser(
+            "admin_user", AdminUserStatus.UNKNOWN, null, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(UserAdminResponse.UserSingle.class);
+    assertThat(((UserAdminResponse.UserSingle) response).user().username()).isEqualTo("admin_user");
+    verify(userDao).create("admin_user", AdminUserStatus.ACTIVE, List.of());
   }
 
   @Test
@@ -334,7 +358,7 @@ final class UserAdminActorTest {
     assertThat(inbox.receiveMessage()).isInstanceOf(UserAdminResponse.BadRequest.class);
 
     var disabledUser =
-        AdminUser.of(userId, "disabled_user", AdminUserStatus.DISABLED, now, now, List.of());
+        new AdminUser(userId, "disabled_user", AdminUserStatus.DISABLED, now, now, List.of());
     when(userDao.findByUsername("disabled_user")).thenReturn(Optional.empty());
     when(userDao.create("disabled_user", AdminUserStatus.DISABLED, List.of()))
         .thenReturn(disabledUser);
@@ -358,10 +382,10 @@ final class UserAdminActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(userDao, roleDao));
     TestInbox<UserAdminResponse> inbox = TestInbox.create();
 
-    testKit.run(new UserAdminCommand.AddRole("admin_user", null, null, inbox.getRef()));
+    testKit.run(new UserAdminCommand.AddRole("admin_user", (UUID) null, null, inbox.getRef()));
     assertThat(inbox.receiveMessage()).isInstanceOf(UserAdminResponse.BadRequest.class);
 
-    testKit.run(new UserAdminCommand.RemoveRole("admin_user", null, null, inbox.getRef()));
+    testKit.run(new UserAdminCommand.RemoveRole("admin_user", (UUID) null, null, inbox.getRef()));
     assertThat(inbox.receiveMessage()).isInstanceOf(UserAdminResponse.BadRequest.class);
   }
 

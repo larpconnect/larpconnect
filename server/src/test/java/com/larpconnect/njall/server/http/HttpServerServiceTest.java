@@ -25,7 +25,7 @@ final class HttpServerServiceTest extends AllDirectives {
     system = ActorSystem.create(Behaviors.empty(), "test-server-lifecycle");
     RootRoute testRoute = () -> pathEndOrSingleSlash(() -> get(() -> complete(StatusCodes.OK, "")));
     serverService =
-        new DefaultHttpServerService(system, ServerConfig.of("127.0.0.1", 0), testRoute);
+        new DefaultHttpServerService(system, new ServerConfig("127.0.0.1", 0), testRoute);
   }
 
   @AfterEach

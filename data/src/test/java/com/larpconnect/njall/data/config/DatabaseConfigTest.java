@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 final class DatabaseConfigTest {
 
   private static final MigrationConfig VALID_MIGRATION =
-      MigrationConfig.of(
+      new MigrationConfig(
           "jdbc:postgresql://localhost:5432/db",
           "user",
           "pass",
@@ -22,15 +22,25 @@ final class DatabaseConfigTest {
           Map.of("k", "v"));
 
   private static final SessionConfig VALID_ADMIN =
-      SessionConfig.of("jdbc:postgresql://localhost:5432/db", "admin", "pass", 2, 10, 5);
+      new SessionConfig("jdbc:postgresql://localhost:5432/db", "admin", "pass", 2, 10, 5);
 
   private static final SessionConfig VALID_USERS =
-      SessionConfig.of("jdbc:postgresql://localhost:5432/db", "users", "pass", 5, 20, 5);
+      new SessionConfig("jdbc:postgresql://localhost:5432/db", "users", "pass", 5, 20, 5);
+
+  private static DatabaseConfig createDatabaseConfig(
+      com.typesafe.config.Config typesafeConfig, ServerConfig serverConfig) {
+    var module = new DatabaseConfigModule();
+    var factory = new DefaultSessionConfigFactory(typesafeConfig);
+    var migrationConfig = module.provideMigrationConfig(typesafeConfig, serverConfig);
+    var adminConfig = module.provideAdminSessionConfig(factory);
+    var usersConfig = module.provideUsersSessionConfig(factory);
+    return module.provideDatabaseConfig(migrationConfig, adminConfig, usersConfig);
+  }
 
   @Test
-  @DisplayName("of creates DatabaseConfig with valid configs")
-  void of_validConfigs_createsRecord() {
-    var dbConfig = DatabaseConfig.of(VALID_MIGRATION, VALID_ADMIN, VALID_USERS);
+  @DisplayName("constructor creates DatabaseConfig with valid configs")
+  void constructor_validConfigs_createsRecord() {
+    var dbConfig = new DatabaseConfig(VALID_MIGRATION, VALID_ADMIN, VALID_USERS);
 
     assertThat(dbConfig.migration()).isSameAs(VALID_MIGRATION);
     assertThat(dbConfig.admin()).isSameAs(VALID_ADMIN);
@@ -38,8 +48,8 @@ final class DatabaseConfigTest {
   }
 
   @Test
-  @DisplayName("fromConfig parses DatabaseConfig correctly")
-  void fromConfig_validConfig_parsesCorrectly() {
+  @DisplayName("DatabaseConfigModule provides DatabaseConfig correctly from Typesafe Config")
+  void createDatabaseConfig_validConfig_parsesCorrectly() {
     var typesafeConfig =
         ConfigFactory.parseString(
             """
@@ -63,11 +73,11 @@ final class DatabaseConfigTest {
                 password = "secret_users"
                 pool { min-size = 5, max-size = 20, timeout-seconds = 5 }
               }
-            }\
+            }
             """);
-    var serverConfig = ServerConfig.of("127.0.0.1", 8080);
+    var serverConfig = new ServerConfig("127.0.0.1", 8080);
 
-    var dbConfig = DatabaseConfig.fromConfig(typesafeConfig, serverConfig);
+    var dbConfig = createDatabaseConfig(typesafeConfig, serverConfig);
 
     assertThat(dbConfig.migration().jdbcUrl()).isEqualTo("jdbc:postgresql://localhost:5432/app");
     assertThat(dbConfig.migration().username()).isEqualTo("njall");
@@ -76,8 +86,8 @@ final class DatabaseConfigTest {
   }
 
   @Test
-  @DisplayName("fromConfig parses DatabaseConfig with global trust-auth enabled")
-  void fromConfig_globalTrustAuth_parsesEmptyPasswordsSuccessfully() {
+  @DisplayName("DatabaseConfigModule creates DatabaseConfig with global trust-auth enabled")
+  void createDatabaseConfig_globalTrustAuth_parsesEmptyPasswordsSuccessfully() {
     var typesafeConfig =
         ConfigFactory.parseString(
             """
@@ -102,11 +112,11 @@ final class DatabaseConfigTest {
                 password = ""
                 pool { min-size = 5, max-size = 20, timeout-seconds = 5 }
               }
-            }\
+            }
             """);
-    var serverConfig = ServerConfig.of("127.0.0.1", 8080);
+    var serverConfig = new ServerConfig("127.0.0.1", 8080);
 
-    var dbConfig = DatabaseConfig.fromConfig(typesafeConfig, serverConfig);
+    var dbConfig = createDatabaseConfig(typesafeConfig, serverConfig);
 
     assertThat(dbConfig.migration().trustAuth()).isTrue();
     assertThat(dbConfig.admin().trustAuth()).isTrue();
@@ -114,9 +124,8 @@ final class DatabaseConfigTest {
   }
 
   @Test
-  @DisplayName(
-      "fromConfig throws IllegalStateException when trust-auth is false and password is empty")
-  void fromConfig_unconfiguredPasswordWithoutTrustAuth_throwsIllegalStateException() {
+  @DisplayName("DatabaseConfigModule throws when trust-auth is false and password is empty")
+  void createDatabaseConfig_unconfiguredPasswordWithoutTrustAuth_throwsIllegalStateException() {
     var typesafeConfig =
         ConfigFactory.parseString(
             """
@@ -141,11 +150,11 @@ final class DatabaseConfigTest {
                 password = "secret_users"
                 pool { min-size = 5, max-size = 20, timeout-seconds = 5 }
               }
-            }\
+            }
             """);
-    var serverConfig = ServerConfig.of("127.0.0.1", 8080);
+    var serverConfig = new ServerConfig("127.0.0.1", 8080);
 
-    assertThatThrownBy(() -> DatabaseConfig.fromConfig(typesafeConfig, serverConfig))
+    assertThatThrownBy(() -> createDatabaseConfig(typesafeConfig, serverConfig))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining(
             "Database password is required for migration profile with username 'njall'");

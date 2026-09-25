@@ -1,9 +1,12 @@
 package com.larpconnect.njall.api.admin;
 
+import com.google.errorprone.annotations.Immutable;
+
 /** Response protocol emitted by the health check actor. */
 public sealed interface HealthCheckResponse {
 
   /** Indicates all evaluated health checks succeeded. */
+  @Immutable
   record Healthy() implements HealthCheckResponse {
     private static final Healthy INSTANCE = new Healthy();
   }
@@ -13,6 +16,7 @@ public sealed interface HealthCheckResponse {
    *
    * @param reason The diagnostic failure reason.
    */
+  @Immutable
   record Unhealthy(String reason) implements HealthCheckResponse {}
 
   /**

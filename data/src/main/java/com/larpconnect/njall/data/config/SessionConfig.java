@@ -1,6 +1,7 @@
 package com.larpconnect.njall.data.config;
 
-import com.typesafe.config.Config;
+import com.google.errorprone.annotations.Immutable;
+import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -8,23 +9,24 @@ import org.jspecify.annotations.Nullable;
  *
  * @param jdbcUrl The JDBC database connection URL.
  * @param username The database user name.
- * @param password The database user password, or null/blank if omitted.
+ * @param password The database user password, or empty if omitted/blank.
  * @param trustAuth Whether passwordless trust authentication is explicitly permitted.
  * @param minPoolSize Minimum connection pool size.
  * @param maxPoolSize Maximum connection pool size.
  * @param timeoutSeconds Connection timeout in seconds.
  */
+@Immutable
 public record SessionConfig(
     String jdbcUrl,
     String username,
-    @Nullable String password,
+    Optional<String> password,
     boolean trustAuth,
     int minPoolSize,
     int maxPoolSize,
     int timeoutSeconds) {
 
   public SessionConfig {
-    if (!trustAuth && (password == null || password.isBlank())) {
+    if (!trustAuth && password.filter(p -> !p.isBlank()).isEmpty()) {
       throw new IllegalStateException(
           "Database password is required for profile with username '"
               + username
@@ -42,28 +44,8 @@ public record SessionConfig(
     }
   }
 
-  /**
-   * Returns true if a non-blank password is provided.
-   *
-   * @return true if password is present and non-blank.
-   */
-  public boolean hasPassword() {
-    return password != null && !password.isBlank();
-  }
-
-  /**
-   * Pure factory method for creating a {@link SessionConfig} with explicit trust authentication.
-   *
-   * @param jdbcUrl The JDBC connection URL.
-   * @param username The database user name.
-   * @param password The database user password, or null if omitted.
-   * @param trustAuth Whether passwordless trust authentication is enabled.
-   * @param minPoolSize Minimum connection pool size.
-   * @param maxPoolSize Maximum connection pool size.
-   * @param timeoutSeconds Connection timeout in seconds.
-   * @return A new {@link SessionConfig} instance.
-   */
-  public static SessionConfig of(
+  /** Overloaded constructor accepting an optional/nullable String password. */
+  public SessionConfig(
       String jdbcUrl,
       String username,
       @Nullable String password,
@@ -71,12 +53,18 @@ public record SessionConfig(
       int minPoolSize,
       int maxPoolSize,
       int timeoutSeconds) {
-    return new SessionConfig(
-        jdbcUrl, username, password, trustAuth, minPoolSize, maxPoolSize, timeoutSeconds);
+    this(
+        jdbcUrl,
+        username,
+        Optional.ofNullable(password),
+        trustAuth,
+        minPoolSize,
+        maxPoolSize,
+        timeoutSeconds);
   }
 
   /**
-   * Convenience factory method defaulting trust authentication to false.
+   * Convenience constructor defaulting trust authentication to false.
    *
    * @param jdbcUrl The JDBC connection URL.
    * @param username The database user name.
@@ -84,43 +72,23 @@ public record SessionConfig(
    * @param minPoolSize Minimum connection pool size.
    * @param maxPoolSize Maximum connection pool size.
    * @param timeoutSeconds Connection timeout in seconds.
-   * @return A new {@link SessionConfig} instance.
    */
-  public static SessionConfig of(
+  public SessionConfig(
       String jdbcUrl,
       String username,
       @Nullable String password,
       int minPoolSize,
       int maxPoolSize,
       int timeoutSeconds) {
-    return of(jdbcUrl, username, password, false, minPoolSize, maxPoolSize, timeoutSeconds);
+    this(jdbcUrl, username, password, false, minPoolSize, maxPoolSize, timeoutSeconds);
   }
 
   /**
-   * Extracts {@link SessionConfig} from Typesafe {@link Config} at the given path.
+   * Returns true if a non-blank password is provided.
    *
-   * @param config The Typesafe configuration tree.
-   * @param path The path to the session configuration section.
-   * @return A new {@link SessionConfig} instance populated from configuration.
+   * @return true if password is present and non-blank.
    */
-  public static SessionConfig fromConfig(Config config, String path) {
-    var sessionSection = config.getConfig(path);
-    var jdbcUrl = sessionSection.getString("jdbc-url");
-    var username = sessionSection.getString("username");
-    var password = sessionSection.hasPath("password") ? sessionSection.getString("password") : null;
-
-    var globalTrustKey = "larpconnect.data.database.trust-auth";
-    var globalTrustAuth = config.hasPath(globalTrustKey) && config.getBoolean(globalTrustKey);
-    var trustAuth =
-        sessionSection.hasPath("trust-auth")
-            ? sessionSection.getBoolean("trust-auth")
-            : globalTrustAuth;
-
-    var poolSection = sessionSection.getConfig("pool");
-    var minPoolSize = poolSection.getInt("min-size");
-    var maxPoolSize = poolSection.getInt("max-size");
-    var timeoutSeconds = poolSection.getInt("timeout-seconds");
-
-    return of(jdbcUrl, username, password, trustAuth, minPoolSize, maxPoolSize, timeoutSeconds);
+  public boolean hasPassword() {
+    return password.filter(p -> !p.isBlank()).isPresent();
   }
 }

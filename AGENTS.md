@@ -105,3 +105,13 @@ This means:
   for committed repository files.
 * **Portable Examples**: Any path examples in documentation or skills must use generic placeholders
   (e.g., `<workspace>`, `<username>`, or relative paths).
+
+---
+
+## 7. Code Quality Requirements
+
+In addition to those enforced by linting tools and in addition to those found in the skills, the following should be strictly enforced:
+
+1. `record` objects are strict data carriers and do not need factory methods.
+2. Parameters are nonnull by default. Unless an object is marked that it can be null, it should be considered not null and should not be tested for nullability.
+3. Immutable objects and immutability contracts should be used whenever possible. This may involve using immutable collections from Guava and/or defensive copies, but it needs to be maintained throughout the system.

@@ -1,6 +1,8 @@
 package com.larpconnect.njall.data.domain;
 
+import com.google.errorprone.annotations.Immutable;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
@@ -12,16 +14,27 @@ import org.jspecify.annotations.Nullable;
  * @param alias The unique studio alias.
  * @param createdAt Creation timestamp.
  * @param updatedAt Last update timestamp.
- * @param deletedAt Soft deletion timestamp, or null if active.
+ * @param deletedAt Soft deletion timestamp, or empty if active.
  */
+@Immutable
 public record StudioLookup(
     UUID tenantId,
     UUID studioId,
     String alias,
     Instant createdAt,
     Instant updatedAt,
-    @Nullable Instant deletedAt)
+    Optional<Instant> deletedAt)
     implements DatabaseObject {
+
+  public StudioLookup(
+      UUID tenantId,
+      UUID studioId,
+      String alias,
+      Instant createdAt,
+      Instant updatedAt,
+      @Nullable Instant deletedAt) {
+    this(tenantId, studioId, alias, createdAt, updatedAt, Optional.ofNullable(deletedAt));
+  }
 
   @Override
   public UUID id() {
@@ -29,16 +42,6 @@ public record StudioLookup(
   }
 
   public boolean isDeleted() {
-    return deletedAt != null;
-  }
-
-  public static StudioLookup of(
-      UUID tenantId,
-      UUID studioId,
-      String alias,
-      Instant createdAt,
-      Instant updatedAt,
-      @Nullable Instant deletedAt) {
-    return new StudioLookup(tenantId, studioId, alias, createdAt, updatedAt, deletedAt);
+    return deletedAt.isPresent();
   }
 }

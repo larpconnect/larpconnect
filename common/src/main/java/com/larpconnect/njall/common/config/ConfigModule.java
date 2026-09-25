@@ -33,6 +33,20 @@ public final class ConfigModule extends AbstractModule {
   @Provides
   @Singleton
   ServerConfig provideServerConfig(Config config) {
-    return ServerConfig.fromConfig(config);
+    var host = config.getString("larpconnect.server.host");
+    var port = config.getInt("larpconnect.server.port");
+    var name =
+        config.hasPath("larpconnect.server.name")
+            ? config.getString("larpconnect.server.name")
+            : ServerConfig.DEFAULT_NAME;
+    var primaryDomain =
+        config.hasPath("larpconnect.server.primary-domain")
+            ? config.getString("larpconnect.server.primary-domain")
+            : ServerConfig.DEFAULT_PRIMARY_DOMAIN;
+    var adminContact =
+        config.hasPath("larpconnect.server.admin-contact")
+            ? config.getString("larpconnect.server.admin-contact")
+            : ServerConfig.DEFAULT_ADMIN_CONTACT;
+    return new ServerConfig(host, port, name, primaryDomain, adminContact);
   }
 }

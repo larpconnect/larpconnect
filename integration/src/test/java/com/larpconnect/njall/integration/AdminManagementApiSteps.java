@@ -217,10 +217,8 @@ public final class AdminManagementApiSteps {
       try {
         rootJson = MAPPER.readTree(response.body());
       } catch (Exception e) {
-        rootJson = null;
+        // Ignored
       }
-    } else {
-      rootJson = null;
     }
   }
 

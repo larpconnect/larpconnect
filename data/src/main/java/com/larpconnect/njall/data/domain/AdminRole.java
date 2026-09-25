@@ -1,5 +1,6 @@
 package com.larpconnect.njall.data.domain;
 
+import com.google.errorprone.annotations.Immutable;
 import java.util.UUID;
 
 /**
@@ -8,9 +9,5 @@ import java.util.UUID;
  * @param id The role UUID.
  * @param roleName The unique canonical role name.
  */
-public record AdminRole(UUID id, String roleName) implements DatabaseObject {
-
-  public static AdminRole of(UUID id, String roleName) {
-    return new AdminRole(id, roleName);
-  }
-}
+@Immutable
+public record AdminRole(UUID id, String roleName) implements DatabaseObject {}

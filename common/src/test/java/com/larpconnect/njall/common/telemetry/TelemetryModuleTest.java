@@ -37,7 +37,7 @@ final class TelemetryModuleTest {
       assertThat(spanContext.getTraceId()).matches("^[0-9a-f]{32}$");
       assertThat(spanContext.getSpanId()).matches("^[0-9a-f]{16}$");
 
-      var traceContext = TraceContext.fromSpan(span);
+      var traceContext = new TraceContext(span);
       assertThat(traceContext.toTraceparent())
           .isEqualTo("00-" + spanContext.getTraceId() + "-" + spanContext.getSpanId() + "-01");
     } finally {

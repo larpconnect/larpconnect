@@ -2,6 +2,7 @@ package com.larpconnect.njall.api.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.larpconnect.njall.common.telemetry.ApiCall;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
 import org.apache.pekko.actor.testkit.typed.javadsl.TestInbox;
@@ -21,7 +22,7 @@ final class HealthCheckActorFactoryTest {
 
     var testKit = BehaviorTestKit.create(behavior);
     TestInbox<HealthCheckResponse> inbox = TestInbox.create();
-    testKit.run(new HealthCheckCommand.CheckHealth(inbox.getRef()));
+    testKit.run(new ApiCall<>(new HealthCheckCommand.CheckHealth(inbox.getRef())));
 
     assertThat(inbox.receiveMessage()).isInstanceOf(HealthCheckResponse.Healthy.class);
   }

@@ -1,12 +1,12 @@
 package com.larpconnect.njall.api.admin;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.Immutable;
 import com.larpconnect.njall.data.dao.AdminRoleDAO;
 import com.larpconnect.njall.data.dao.AdminUserDAO;
 import com.larpconnect.njall.data.domain.AdminRole;
 import com.larpconnect.njall.data.domain.AdminUser;
 import com.larpconnect.njall.data.domain.AdminUserStatus;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -14,7 +14,6 @@ import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.AbstractBehavior;
 import org.apache.pekko.actor.typed.javadsl.ActorContext;
 import org.apache.pekko.actor.typed.javadsl.Receive;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +57,8 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
           yield this;
         }
         case RoleResolution.Success success -> {
-          var status = cmd.status() != null ? cmd.status() : AdminUserStatus.ACTIVE;
+          var status =
+              cmd.status() == AdminUserStatus.UNKNOWN ? AdminUserStatus.ACTIVE : cmd.status();
           var user = userDao.create(cmd.username(), status, success.roleIds());
           cmd.replyTo().tell(UserAdminResponse.single(user));
           yield this;
@@ -117,7 +117,7 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
       }
       var maybeRole = resolveRole(cmd.roleId(), cmd.roleName());
       if (maybeRole.isEmpty()) {
-        var missing = cmd.roleId() != null ? cmd.roleId().toString() : cmd.roleName();
+        var missing = cmd.roleId().map(UUID::toString).or(cmd::roleName).orElse("unspecified");
         cmd.replyTo().tell(UserAdminResponse.badRequest("Role not found: " + missing));
         return this;
       }
@@ -145,7 +145,7 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
       }
       var maybeRole = resolveRole(cmd.roleId(), cmd.roleName());
       if (maybeRole.isEmpty()) {
-        var missing = cmd.roleId() != null ? cmd.roleId().toString() : cmd.roleName();
+        var missing = cmd.roleId().map(UUID::toString).or(cmd::roleName).orElse("unspecified");
         cmd.replyTo().tell(UserAdminResponse.badRequest("Role not found: " + missing));
         return this;
       }
@@ -169,12 +169,12 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
     return maybeUuid.map(userDao::findById).orElseGet(() -> userDao.findByUsername(identifier));
   }
 
-  private Optional<AdminRole> resolveRole(@Nullable UUID roleId, @Nullable String roleName) {
-    if (roleId != null) {
-      return roleDao.findById(roleId);
+  private Optional<AdminRole> resolveRole(Optional<UUID> roleId, Optional<String> roleName) {
+    if (roleId.isPresent()) {
+      return roleDao.findById(roleId.get());
     }
-    if (roleName != null) {
-      return roleDao.findByRoleName(roleName);
+    if (roleName.isPresent()) {
+      return roleDao.findByRoleName(roleName.get());
     }
     return Optional.empty();
   }
@@ -201,8 +201,8 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
     return Optional.empty();
   }
 
-  private RoleResolution resolveRoleIds(@Nullable List<String> initialRoles) {
-    if (initialRoles == null || initialRoles.isEmpty()) {
+  private RoleResolution resolveRoleIds(ImmutableList<String> initialRoles) {
+    if (initialRoles.isEmpty()) {
       return new RoleResolution.Success(ImmutableList.of());
     }
     var roleIds = ImmutableList.<UUID>builder();
@@ -217,8 +217,10 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
   }
 
   private sealed interface RoleResolution {
+    @Immutable
     record Success(ImmutableList<UUID> roleIds) implements RoleResolution {}
 
+    @Immutable
     record MissingRole(String roleIdentifier) implements RoleResolution {}
   }
 }
