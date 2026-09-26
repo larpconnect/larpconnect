@@ -1,13 +1,22 @@
 package com.larpconnect.njall.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.admin.AdminRoute;
 import com.larpconnect.njall.api.http.RootRoute;
+import com.larpconnect.njall.api.studios.StudiosRoute;
 import com.larpconnect.njall.common.annotation.Blocking;
+import com.larpconnect.njall.common.telemetry.TelemetryModule;
+import com.larpconnect.njall.data.dao.AdminRoleDAO;
+import com.larpconnect.njall.data.dao.AdminUserDAO;
+import com.larpconnect.njall.data.dao.DefaultStudioRoleDAO;
+import com.larpconnect.njall.data.dao.ServerDAO;
+import com.larpconnect.njall.data.dao.StudioDAO;
+import com.larpconnect.njall.data.dao.StudioLookupDAO;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -42,31 +51,23 @@ final class ApiModuleTest {
           protected void configure() {
             bind(new TypeLiteral<ActorSystem<Void>>() {}).toInstance(system);
             bind(HealthCheckRegistry.class).toInstance(new HealthCheckRegistry());
-            bind(com.larpconnect.njall.data.dao.ServerDAO.class)
-                .toInstance(
-                    org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.ServerDAO.class));
-            bind(com.larpconnect.njall.data.dao.StudioDAO.class)
-                .toInstance(
-                    org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.StudioDAO.class));
-            bind(com.larpconnect.njall.data.dao.AdminRoleDAO.class)
-                .toInstance(
-                    org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.AdminRoleDAO.class));
-            bind(com.larpconnect.njall.data.dao.AdminUserDAO.class)
-                .toInstance(
-                    org.mockito.Mockito.mock(com.larpconnect.njall.data.dao.AdminUserDAO.class));
+            bind(ServerDAO.class).toInstance(mock(ServerDAO.class));
+            bind(StudioLookupDAO.class).toInstance(mock(StudioLookupDAO.class));
+            bind(StudioDAO.class).toInstance(mock(StudioDAO.class));
+            bind(DefaultStudioRoleDAO.class).toInstance(mock(DefaultStudioRoleDAO.class));
+            bind(AdminRoleDAO.class).toInstance(mock(AdminRoleDAO.class));
+            bind(AdminUserDAO.class).toInstance(mock(AdminUserDAO.class));
             bind(Props.class).annotatedWith(Blocking.class).toInstance(Props.empty());
           }
         };
 
-    var injector =
-        Guice.createInjector(
-            new ApiModule(),
-            new com.larpconnect.njall.common.telemetry.TelemetryModule(),
-            testModule);
+    var injector = Guice.createInjector(new ApiModule(), new TelemetryModule(), testModule);
     var rootRoute = injector.getInstance(RootRoute.class);
     var adminRoute = injector.getInstance(AdminRoute.class);
+    var studiosRoute = injector.getInstance(StudiosRoute.class);
 
-    assertThat(rootRoute).isNotNull();
-    assertThat(adminRoute).isNotNull();
+    assertThat(rootRoute).isInstanceOf(RootRoute.class);
+    assertThat(adminRoute).isInstanceOf(AdminRoute.class);
+    assertThat(studiosRoute).isInstanceOf(StudiosRoute.class);
   }
 }

@@ -11,7 +11,12 @@ import java.util.UUID;
  * @param <T> The database object type managed by this DAO.
  */
 public sealed interface DAO<T extends DatabaseObject>
-    permits ServerDAO, AdminUserDAO, AdminRoleDAO, StudioDAO {
+    permits ServerDAO,
+        AdminUserDAO,
+        AdminRoleDAO,
+        StudioLookupDAO,
+        StudioDAO,
+        DefaultStudioRoleDAO {
 
   /**
    * Retrieves an entity by its unique UUID identifier.

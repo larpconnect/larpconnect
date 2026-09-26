@@ -35,6 +35,10 @@ configure<com.diffplug.gradle.spotless.SpotlessExtension> {
     java {
         googleJavaFormat("1.36.1")
         target("src/**/*.java")
+        
+        shortenFullyQualifiedTypes()
+        importOrder()
+        removeUnusedImports()
     }
 }
 

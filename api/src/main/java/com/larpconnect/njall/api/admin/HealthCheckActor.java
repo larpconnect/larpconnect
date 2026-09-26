@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
+import com.google.common.base.Strings;
 import com.larpconnect.njall.common.telemetry.ApiCall;
 import io.dropwizard.metrics5.health.HealthCheck;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
@@ -92,7 +93,7 @@ public final class HealthCheckActor extends AbstractBehavior<ApiCall<HealthCheck
 
   private static String formatFailure(String name, HealthCheck.Result result) {
     var message = result.getMessage();
-    if (message != null && !message.isBlank()) {
+    if (!Strings.isNullOrEmpty(message)) {
       return name + ": " + message;
     }
     if (result.getError() != null) {

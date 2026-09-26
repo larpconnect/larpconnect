@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -63,7 +65,7 @@ public final class TelemetryTracingSteps {
 
   private void startServer(boolean captureLogs) throws Exception {
     if (captureLogs) {
-      rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+      rootLogger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
       listAppender = new ListAppender<>();
       listAppender.start();
       otelAppender = new OpenTelemetryAppender();
@@ -78,8 +80,7 @@ public final class TelemetryTracingSteps {
     @SuppressWarnings("unchecked")
     var mockQuery = (NativeQuery<Integer>) mock(NativeQuery.class);
     when(mockSessionFactory.openSession()).thenReturn(mockSession);
-    when(mockSession.createNativeQuery(anyString(), org.mockito.ArgumentMatchers.eq(Integer.class)))
-        .thenReturn(mockQuery);
+    when(mockSession.createNativeQuery(anyString(), eq(Integer.class))).thenReturn(mockQuery);
     when(mockQuery.setTimeout(anyInt())).thenReturn(mockQuery);
     when(mockQuery.getSingleResult()).thenReturn(1);
     var mockFactory = mock(SessionFactoryFactory.class);

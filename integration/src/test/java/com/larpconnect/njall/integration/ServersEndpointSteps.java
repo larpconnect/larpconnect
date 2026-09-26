@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
@@ -62,7 +63,7 @@ public final class ServersEndpointSteps {
             .build();
 
     response = client.send(request, HttpResponse.BodyHandlers.ofString());
-    if (response.body() != null && !response.body().isBlank()) {
+    if (!Strings.isNullOrEmpty(response.body())) {
       rootJson = MAPPER.readTree(response.body());
     }
   }

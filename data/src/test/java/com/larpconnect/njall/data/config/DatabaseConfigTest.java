@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.larpconnect.njall.common.config.ServerConfig;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ final class DatabaseConfigTest {
       new SessionConfig("jdbc:postgresql://localhost:5432/db", "users", "pass", 5, 20, 5);
 
   private static DatabaseConfig createDatabaseConfig(
-      com.typesafe.config.Config typesafeConfig, ServerConfig serverConfig) {
+      Config typesafeConfig, ServerConfig serverConfig) {
     var module = new DatabaseConfigModule();
     var factory = new DefaultSessionConfigFactory(typesafeConfig);
     var migrationConfig = module.provideMigrationConfig(typesafeConfig, serverConfig);

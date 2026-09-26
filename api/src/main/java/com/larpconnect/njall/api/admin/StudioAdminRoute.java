@@ -88,13 +88,15 @@ public final class StudioAdminRoute extends AllDirectives {
   }
 
   private Route handleCreateStudio(CreateStudioRequest request) {
-    return onComplete(() -> askCreateStudio(request.alias()), this::mapCreateResponse);
+    return onComplete(
+        () -> askCreateStudio(request.alias(), request.name()), this::mapCreateResponse);
   }
 
-  private CompletionStage<StudioAdminResponse> askCreateStudio(String alias) {
+  private CompletionStage<StudioAdminResponse> askCreateStudio(
+      String alias, Optional<String> name) {
     return ask(
         studioAdminActor,
-        replyTo -> new StudioAdminCommand.CreateStudio(alias, replyTo),
+        replyTo -> new StudioAdminCommand.CreateStudio(alias, name, replyTo),
         askTimeout,
         system.scheduler());
   }

@@ -223,3 +223,46 @@ Feature: Administrative Management REST API
       """
     Then the HTTP response status code is 409
     And the JSON response error has code 409 and non-empty message
+
+  Scenario: Default studio role lifecycle management
+    Given the admin HTTP server is running with database migrations applied
+    When an API admin sends a POST request to "/api/admin/v1/studio-roles" with body:
+      """
+      {
+        "name": "ORGANIZER"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the HTTP response content-type contains "application/json"
+    And the JSON response contains field "name" with value "ORGANIZER"
+    And the response field "id" is remembered as "organizer_role_id"
+    When an API admin sends a GET request to "/api/admin/v1/studio-roles/{organizer_role_id}"
+    Then the HTTP response status code is 200
+    And the JSON response contains field "name" with value "ORGANIZER"
+    When an API admin sends a GET request to "/api/admin/v1/studio-roles"
+    Then the HTTP response status code is 200
+    And the JSON response array contains an item with "name" equal to "ORGANIZER"
+    When an API admin sends a PATCH request to "/api/admin/v1/studio-roles/{organizer_role_id}?update_mask=name" with body:
+      """
+      {
+        "name": "LEAD_ORGANIZER"
+      }
+      """
+    Then the HTTP response status code is 200
+    And the JSON response contains field "name" with value "LEAD_ORGANIZER"
+    When an API admin sends a POST request to "/api/admin/v1/studio-roles" with body:
+      """
+      {
+        "name": "LEAD_ORGANIZER"
+      }
+      """
+    Then the HTTP response status code is 409
+    And the JSON response error has code 409 and non-empty message
+    When an API admin sends a PATCH request to "/api/admin/v1/studio-roles/00000000-0000-0000-0000-000000000000" with body:
+      """
+      {
+        "name": "NON_EXISTENT"
+      }
+      """
+    Then the HTTP response status code is 404
+    And the JSON response error has code 404 and non-empty message

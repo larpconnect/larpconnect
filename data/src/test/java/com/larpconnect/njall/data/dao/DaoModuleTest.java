@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
+import com.larpconnect.njall.data.annotation.NjallUsers;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,14 +14,16 @@ import org.junit.jupiter.api.Test;
 final class DaoModuleTest {
 
   @Test
-  @DisplayName("DaoModule binds ServerDAO to DefaultServerDAO")
-  void configure_whenInjected_providesServerDao() {
+  @DisplayName("DaoModule binds DAOs to their default implementations")
+  void configure_whenInjected_providesDaos() {
     var mockAdminSession = mock(SessionFactory.class);
+    var mockUsersSession = mock(SessionFactory.class);
     var mockModule =
         new AbstractModule() {
           @Override
           protected void configure() {
             bind(SessionFactory.class).annotatedWith(NjallAdmin.class).toInstance(mockAdminSession);
+            bind(SessionFactory.class).annotatedWith(NjallUsers.class).toInstance(mockUsersSession);
           }
         };
 
@@ -29,11 +32,15 @@ final class DaoModuleTest {
     var serverDao = injector.getInstance(ServerDAO.class);
     var roleDao = injector.getInstance(AdminRoleDAO.class);
     var userDao = injector.getInstance(AdminUserDAO.class);
+    var studioLookupDao = injector.getInstance(StudioLookupDAO.class);
     var studioDao = injector.getInstance(StudioDAO.class);
+    var defaultStudioRoleDao = injector.getInstance(DefaultStudioRoleDAO.class);
 
     assertThat(serverDao).isInstanceOf(DefaultServerDAO.class);
     assertThat(roleDao).isInstanceOf(DefaultAdminRoleDAO.class);
     assertThat(userDao).isInstanceOf(DefaultAdminUserDAO.class);
+    assertThat(studioLookupDao).isInstanceOf(DefaultStudioLookupDAO.class);
     assertThat(studioDao).isInstanceOf(DefaultStudioDAO.class);
+    assertThat(defaultStudioRoleDao).isInstanceOf(DefaultDefaultStudioRoleDAO.class);
   }
 }

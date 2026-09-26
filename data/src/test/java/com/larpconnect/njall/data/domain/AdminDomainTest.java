@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ final class AdminDomainTest {
     assertThat(deletedStudio.isDeleted()).isTrue();
 
     var explicitOptStudio =
-        new StudioLookup(tenantId, studioId, "valhalla", now, now, java.util.Optional.empty());
+        new StudioLookup(tenantId, studioId, "valhalla", now, now, Optional.empty());
     assertThat(explicitOptStudio.deletedAt()).isEmpty();
     assertThat(explicitOptStudio.isDeleted()).isFalse();
   }

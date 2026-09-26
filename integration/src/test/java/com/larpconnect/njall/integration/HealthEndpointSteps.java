@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -110,8 +111,7 @@ public final class HealthEndpointSteps {
     var mockSession = mock(Session.class);
     var mockQuery = (NativeQuery<Integer>) mock(NativeQuery.class);
     when(mockSessionFactory.openSession()).thenReturn(mockSession);
-    when(mockSession.createNativeQuery(anyString(), org.mockito.ArgumentMatchers.eq(Integer.class)))
-        .thenReturn(mockQuery);
+    when(mockSession.createNativeQuery(anyString(), eq(Integer.class))).thenReturn(mockQuery);
     when(mockQuery.setTimeout(anyInt())).thenReturn(mockQuery);
     when(mockQuery.getSingleResult()).thenReturn(1);
 
