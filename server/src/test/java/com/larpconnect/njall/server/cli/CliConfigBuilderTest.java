@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.typesafe.config.ConfigFactory;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -217,8 +218,7 @@ final class CliConfigBuilderTest {
           new CliConfigBuilder(base).withConfigFile(Optional.of(tempFile.toFile())).build();
       assertThat(applied.getInt("larpconnect.server.port")).isEqualTo(7777);
 
-      var emptyApplied =
-          new CliConfigBuilder(base).withConfigFile(Optional.<java.io.File>empty()).build();
+      var emptyApplied = new CliConfigBuilder(base).withConfigFile(Optional.<File>empty()).build();
       assertThat(emptyApplied.getInt("larpconnect.server.port")).isEqualTo(8080);
     } finally {
       Files.deleteIfExists(tempFile);
@@ -228,7 +228,7 @@ final class CliConfigBuilderTest {
   @Test
   @DisplayName("withConfigFile throws IllegalArgumentException when file does not exist")
   void withConfigFile_nonExistentFile_throwsException() {
-    var nonExistent = new java.io.File("non_existent_config_file.conf");
+    var nonExistent = new File("non_existent_config_file.conf");
     var builder = new CliConfigBuilder().withConfigFile(nonExistent);
 
     assertThatThrownBy(builder::build)

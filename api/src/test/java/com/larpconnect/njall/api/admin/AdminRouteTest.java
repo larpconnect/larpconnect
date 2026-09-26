@@ -113,12 +113,20 @@ final class AdminRouteTest {
     return new RoleAdminRoute(actor, system, objectMapper);
   }
 
+  private static StudioRoleAdminRoute dummyStudioRoleRoute() {
+    ActorRef<StudioRoleAdminCommand> actor =
+        system.systemActorOf(
+            Behaviors.empty(), "dummyStudioRoleActor" + UUID.randomUUID(), Props.empty());
+    return new StudioRoleAdminRoute(actor, system, objectMapper);
+  }
+
   private static DefaultAdminRoute createRoute(
       ActorRef<ApiCall<HealthCheckCommand>> healthActor, ActorRef<ServerAdminCommand> serverActor) {
     return new DefaultAdminRoute(
         healthActor,
         serverActor,
         dummyStudioRoute(),
+        dummyStudioRoleRoute(),
         dummyUserRoute(),
         dummyRoleRoute(),
         system,

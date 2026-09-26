@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
 import com.larpconnect.njall.data.dao.AdminRoleDAO;
@@ -187,7 +188,7 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
   private void handleError(ActorRef<UserAdminResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in UserAdminActor", operation, error);
     var message = error.getMessage();
-    var reason = message != null && !message.isBlank() ? message : "Error executing " + operation;
+    var reason = !Strings.isNullOrEmpty(message) ? message : "Error executing " + operation;
     replyTo.tell(UserAdminResponse.failure(reason));
   }
 

@@ -23,6 +23,7 @@ public final class AdminModule extends AbstractModule {
     Multibinder.newSetBinder(binder(), HealthCheck.class).addBinding().to(PekkoHealthCheck.class);
     bind(AdminRoute.class).to(DefaultAdminRoute.class);
     bind(StudioAdminRoute.class);
+    bind(StudioRoleAdminRoute.class);
     bind(UserAdminRoute.class);
     bind(RoleAdminRoute.class);
     Multibinder.newSetBinder(binder(), RouteProvider.class)
@@ -31,6 +32,7 @@ public final class AdminModule extends AbstractModule {
     bind(HealthCheckActorFactory.class).to(DefaultHealthCheckActorFactory.class);
     bind(ServerAdminActorFactory.class).to(DefaultServerAdminActorFactory.class);
     bind(StudioAdminActorFactory.class).to(DefaultStudioAdminActorFactory.class);
+    bind(StudioRoleAdminActorFactory.class).to(DefaultStudioRoleAdminActorFactory.class);
     bind(RoleAdminActorFactory.class).to(DefaultRoleAdminActorFactory.class);
     bind(UserAdminActorFactory.class).to(DefaultUserAdminActorFactory.class);
   }
@@ -77,5 +79,12 @@ public final class AdminModule extends AbstractModule {
   ActorRef<UserAdminCommand> provideUserAdminActor(
       ActorSystem<Void> system, UserAdminActorFactory factory, @Blocking Props dispatcher) {
     return system.systemActorOf(factory.create(), "userAdminActor", dispatcher);
+  }
+
+  @Provides
+  @Singleton
+  ActorRef<StudioRoleAdminCommand> provideStudioRoleAdminActor(
+      ActorSystem<Void> system, StudioRoleAdminActorFactory factory, @Blocking Props dispatcher) {
+    return system.systemActorOf(factory.create(), "studioRoleAdminActor", dispatcher);
   }
 }

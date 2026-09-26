@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.ServerDAO;
 import com.larpconnect.njall.data.domain.Server;
@@ -48,7 +49,7 @@ public final class ServerAdminActor extends AbstractBehavior<ServerAdminCommand>
   private void handleError(ActorRef<ServerAdminResponse> replyTo, Exception error) {
     logger.error("Failed to query servers via ServerDAO", error);
     var message = error.getMessage();
-    var reason = message != null && !message.isBlank() ? message : "Error querying servers";
+    var reason = !Strings.isNullOrEmpty(message) ? message : "Error querying servers";
     replyTo.tell(ServerAdminResponse.failure(reason));
   }
 }

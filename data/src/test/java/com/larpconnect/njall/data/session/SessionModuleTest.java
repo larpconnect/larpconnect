@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Key;
+import com.google.inject.util.Modules;
 import com.larpconnect.njall.common.CommonModule;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.annotation.NjallUsers;
@@ -39,7 +40,7 @@ final class SessionModuleTest {
         Guice.createInjector(
             new CommonModule(),
             new DatabaseConfigModule(),
-            com.google.inject.util.Modules.override(new SessionModule()).with(overrideModule));
+            Modules.override(new SessionModule()).with(overrideModule));
 
     var adminSessionFactory = injector.getInstance(Key.get(SessionFactory.class, NjallAdmin.class));
     var usersSessionFactory = injector.getInstance(Key.get(SessionFactory.class, NjallUsers.class));

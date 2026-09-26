@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
@@ -213,7 +214,7 @@ public final class AdminManagementApiSteps {
   }
 
   private void parseResponseBody() throws Exception {
-    if (response.body() != null && !response.body().isBlank()) {
+    if (!Strings.isNullOrEmpty(response.body())) {
       try {
         rootJson = MAPPER.readTree(response.body());
       } catch (Exception e) {
@@ -230,12 +231,55 @@ public final class AdminManagementApiSteps {
     return result;
   }
 
+  @When("an API admin sends a PATCH request to {string} with body:")
+  public void anApiAdminSendsAPatchRequestToWithBody(String path, String docString)
+      throws Exception {
+    var resolvedPath = resolveVariables(path);
+    var resolvedBody = resolveVariables(docString);
+    var client = HttpClient.newHttpClient();
+    var request =
+        HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + boundPort + resolvedPath))
+            .header("Content-Type", "application/json")
+            .timeout(REQUEST_TIMEOUT)
+            .method("PATCH", HttpRequest.BodyPublishers.ofString(resolvedBody))
+            .build();
+
+    response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    parseResponseBody();
+  }
+
+  @Then("the JSON response does not contain field {string}")
+  public void theJsonResponseDoesNotContainField(String field) {
+    assertJsonBodyPresent();
+    assertThat(rootJson.has(field))
+        .withFailMessage("Expected JSON to not contain field %s but it was present", field)
+        .isFalse();
+  }
+
+  @When("the soft-deleted studio timestamp is set for alias {string}")
+  public void theSoftDeletedStudioTimestampIsSetForAlias(String alias) throws Exception {
+    var sql = "UPDATE njall_admin.studios_lookup SET deleted_at = NOW() WHERE alias = ?";
+    try (var conn =
+            DriverManager.getConnection(
+                DatabaseMigrationSteps.getJdbcUrl(),
+                "njall_admin",
+                DatabaseMigrationSteps.getPasswordFor("njall_admin"));
+        var stmt = conn.prepareStatement(sql)) {
+      stmt.setString(1, alias);
+      var updated = stmt.executeUpdate();
+      assertThat(updated).isPositive();
+    }
+  }
+
   private static void truncateAdminTables() throws Exception {
     var sql =
         "TRUNCATE TABLE njall_admin.admin_role_assignments, "
             + "njall_admin.admin_users, "
             + "njall_admin.admin_roles, "
-            + "njall_admin.studios_lookup CASCADE";
+            + "njall_admin.studios_lookup, "
+            + "njall_users.studios, "
+            + "njall_users.default_studio_roles CASCADE";
     try (var conn =
             DriverManager.getConnection(
                 DatabaseMigrationSteps.getJdbcUrl(),

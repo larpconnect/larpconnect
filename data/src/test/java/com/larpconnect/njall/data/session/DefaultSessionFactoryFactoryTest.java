@@ -1,12 +1,22 @@
 package com.larpconnect.njall.data.session;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.larpconnect.njall.data.config.SessionConfig;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
+import java.sql.Statement;
 import java.util.List;
+import java.util.Properties;
+import java.util.logging.Logger;
 import org.hibernate.cfg.AvailableSettings;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,15 +33,15 @@ final class DefaultSessionFactoryFactoryTest {
     }
   }
 
-  static final class TestDriver implements java.sql.Driver {
-    private final java.sql.Connection connection;
+  static final class TestDriver implements Driver {
+    private final Connection connection;
 
-    TestDriver(java.sql.Connection connection) {
+    TestDriver(Connection connection) {
       this.connection = connection;
     }
 
     @Override
-    public java.sql.Connection connect(String url, java.util.Properties info) {
+    public Connection connect(String url, Properties info) {
       return acceptsURL(url) ? connection : null;
     }
 
@@ -41,8 +51,8 @@ final class DefaultSessionFactoryFactoryTest {
     }
 
     @Override
-    public java.sql.DriverPropertyInfo[] getPropertyInfo(String url, java.util.Properties info) {
-      return new java.sql.DriverPropertyInfo[0];
+    public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
+      return new DriverPropertyInfo[0];
     }
 
     @Override
@@ -61,24 +71,23 @@ final class DefaultSessionFactoryFactoryTest {
     }
 
     @Override
-    public java.util.logging.Logger getParentLogger() {
-      return java.util.logging.Logger.getGlobal();
+    public Logger getParentLogger() {
+      return Logger.getGlobal();
     }
   }
 
   private static TestDriver registerMockDriver() throws Exception {
-    var connection = org.mockito.Mockito.mock(java.sql.Connection.class);
-    var meta = org.mockito.Mockito.mock(java.sql.DatabaseMetaData.class);
-    org.mockito.Mockito.when(connection.getMetaData()).thenReturn(meta);
-    org.mockito.Mockito.when(connection.createStatement())
-        .thenAnswer(inv -> org.mockito.Mockito.mock(java.sql.Statement.class));
-    org.mockito.Mockito.when(meta.getDatabaseProductName()).thenReturn("PostgreSQL");
-    org.mockito.Mockito.when(meta.getDatabaseMajorVersion()).thenReturn(16);
-    org.mockito.Mockito.when(meta.getDatabaseMinorVersion()).thenReturn(0);
-    org.mockito.Mockito.when(meta.getDriverName()).thenReturn("Mock Driver");
+    var connection = mock(Connection.class);
+    var meta = mock(DatabaseMetaData.class);
+    when(connection.getMetaData()).thenReturn(meta);
+    when(connection.createStatement()).thenAnswer(inv -> mock(Statement.class));
+    when(meta.getDatabaseProductName()).thenReturn("PostgreSQL");
+    when(meta.getDatabaseMajorVersion()).thenReturn(16);
+    when(meta.getDatabaseMinorVersion()).thenReturn(0);
+    when(meta.getDriverName()).thenReturn("Mock Driver");
 
     var testDriver = new TestDriver(connection);
-    java.sql.DriverManager.registerDriver(testDriver);
+    DriverManager.registerDriver(testDriver);
     return testDriver;
   }
 
@@ -97,7 +106,7 @@ final class DefaultSessionFactoryFactoryTest {
           .isEqualTo("****");
       sessionFactory.close();
     } finally {
-      java.sql.DriverManager.deregisterDriver(testDriver);
+      DriverManager.deregisterDriver(testDriver);
     }
   }
 
@@ -116,7 +125,7 @@ final class DefaultSessionFactoryFactoryTest {
           .isNull();
       sessionFactory.close();
     } finally {
-      java.sql.DriverManager.deregisterDriver(testDriver);
+      DriverManager.deregisterDriver(testDriver);
     }
   }
 
@@ -136,7 +145,7 @@ final class DefaultSessionFactoryFactoryTest {
           .isNull();
       sessionFactory.close();
     } finally {
-      java.sql.DriverManager.deregisterDriver(testDriver);
+      DriverManager.deregisterDriver(testDriver);
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.larpconnect.njall.api.admin;
 
-import com.larpconnect.njall.data.dao.StudioDAO;
+import com.google.common.base.Strings;
+import com.larpconnect.njall.data.dao.StudioLookupDAO;
 import com.larpconnect.njall.data.domain.DeletionFilter;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;
@@ -14,11 +15,12 @@ import org.slf4j.LoggerFactory;
 public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(StudioAdminActor.class);
-  private final StudioDAO studioDao;
+  private final StudioLookupDAO studioLookupDao;
 
-  public StudioAdminActor(ActorContext<StudioAdminCommand> context, StudioDAO studioDao) {
+  public StudioAdminActor(
+      ActorContext<StudioAdminCommand> context, StudioLookupDAO studioLookupDao) {
     super(context);
-    this.studioDao = studioDao;
+    this.studioLookupDao = studioLookupDao;
   }
 
   @Override
@@ -37,13 +39,14 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
         cmd.replyTo().tell(StudioAdminResponse.badRequest("Invalid studio alias: " + cmd.alias()));
         return this;
       }
-      var existing = studioDao.findByAlias(cmd.alias(), DeletionFilter.INCLUDE_DELETED);
+      var existing = studioLookupDao.findByAlias(cmd.alias(), DeletionFilter.INCLUDE_DELETED);
       if (existing.isPresent()) {
         cmd.replyTo()
             .tell(StudioAdminResponse.conflict("Studio alias already exists: " + cmd.alias()));
         return this;
       }
-      var studio = studioDao.create(cmd.alias());
+      var name = cmd.name().filter(n -> !n.isBlank()).orElse(cmd.alias());
+      var studio = studioLookupDao.create(cmd.alias(), name);
       cmd.replyTo().tell(StudioAdminResponse.single(studio));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create studio", e);
@@ -53,7 +56,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onListStudios(StudioAdminCommand.ListStudios cmd) {
     try {
-      var studios = studioDao.list(cmd.filter());
+      var studios = studioLookupDao.list(cmd.filter());
       cmd.replyTo().tell(StudioAdminResponse.list(studios));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "list studios", e);
@@ -63,7 +66,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onGetStudioById(StudioAdminCommand.GetStudioById cmd) {
     try {
-      var studio = studioDao.findById(cmd.studioId(), cmd.filter());
+      var studio = studioLookupDao.findById(cmd.studioId(), cmd.filter());
       if (studio.isPresent()) {
         cmd.replyTo().tell(StudioAdminResponse.single(studio.get()));
       } else {
@@ -77,7 +80,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onGetStudioByAlias(StudioAdminCommand.GetStudioByAlias cmd) {
     try {
-      var studio = studioDao.findByAlias(cmd.alias(), cmd.filter());
+      var studio = studioLookupDao.findByAlias(cmd.alias(), cmd.filter());
       if (studio.isPresent()) {
         cmd.replyTo().tell(StudioAdminResponse.single(studio.get()));
       } else {
@@ -93,7 +96,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
       ActorRef<StudioAdminResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in StudioAdminActor", operation, error);
     var message = error.getMessage();
-    var reason = message != null && !message.isBlank() ? message : "Error executing " + operation;
+    var reason = !Strings.isNullOrEmpty(message) ? message : "Error executing " + operation;
     replyTo.tell(StudioAdminResponse.failure(reason));
   }
 }

@@ -30,6 +30,7 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
   private final ActorRef<ApiCall<HealthCheckCommand>> healthCheckActor;
   private final ActorRef<ServerAdminCommand> serverAdminActor;
   private final StudioAdminRoute studioAdminRoute;
+  private final StudioRoleAdminRoute studioRoleAdminRoute;
   private final UserAdminRoute userAdminRoute;
   private final RoleAdminRoute roleAdminRoute;
   private final ActorSystem<Void> system;
@@ -40,6 +41,7 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
       ActorRef<ApiCall<HealthCheckCommand>> healthCheckActor,
       ActorRef<ServerAdminCommand> serverAdminActor,
       StudioAdminRoute studioAdminRoute,
+      StudioRoleAdminRoute studioRoleAdminRoute,
       UserAdminRoute userAdminRoute,
       RoleAdminRoute roleAdminRoute,
       ActorSystem<Void> system,
@@ -47,6 +49,7 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
     this.healthCheckActor = healthCheckActor;
     this.serverAdminActor = serverAdminActor;
     this.studioAdminRoute = studioAdminRoute;
+    this.studioRoleAdminRoute = studioRoleAdminRoute;
     this.userAdminRoute = userAdminRoute;
     this.roleAdminRoute = roleAdminRoute;
     this.system = system;
@@ -63,6 +66,7 @@ final class DefaultAdminRoute extends AllDirectives implements AdminRoute {
             PathMatchers.separateOnSlashes("api/admin/v1/servers"),
             () -> pathEndOrSingleSlash(() -> get(this::handleServers))),
         studioAdminRoute.route(),
+        studioRoleAdminRoute.route(),
         userAdminRoute.route(),
         roleAdminRoute.route());
   }

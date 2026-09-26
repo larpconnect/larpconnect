@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api.admin;
 
+import com.google.common.base.Strings;
 import com.larpconnect.njall.data.dao.AdminRoleDAO;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;
@@ -90,7 +91,7 @@ public final class RoleAdminActor extends AbstractBehavior<RoleAdminCommand> {
   private void handleError(ActorRef<RoleAdminResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in RoleAdminActor", operation, error);
     var message = error.getMessage();
-    var reason = message != null && !message.isBlank() ? message : "Error executing " + operation;
+    var reason = !Strings.isNullOrEmpty(message) ? message : "Error executing " + operation;
     replyTo.tell(RoleAdminResponse.failure(reason));
   }
 }
