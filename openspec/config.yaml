@@ -7,11 +7,12 @@ context: |
   
   Tech Stack:
     - Java 25 LTS
-    - HA Proxy
+    - HAProxy
     - Gradle (Kotlin DSL)
     - PostgreSQL 18+
     - RabbitMQ
     - Memcached 
+    - SeaweedFS
   Core Libraries:
     - SLF4J
     - Logback
@@ -29,6 +30,7 @@ context: |
     - Mockito
     - Testcontainers
     - Jacoco
+    - Docker Compose
   Linting:
     - Spotless
     - SpotBugs
@@ -39,7 +41,13 @@ context: |
     - `bom` (java platform) depends on all of the local modules
     - `parent` (java platform) sets the versions for all of the modules
     - `build-logic` contains core gradle patterns
-
+    - `api` represents the primary HTTP API
+    - `common` shared libraries and utilities. Does not use Pekko.
+    - `data` components that interact with the database.
+    - `integration` the place for integration (multicomponent) testing. General tests are written
+      with cucumber. Also includes ArchUnit tests.
+    - `server` represents the primary application and bootstrap code.
+    - `test` represents shared test libraries and utilities.
 
 rules:
   proposal:

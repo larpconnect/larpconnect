@@ -29,13 +29,64 @@ for the needs of LARPers, with a heavy focus on:
 
 ## Development
 
-To build the project run:
+### Building the Project
 
-```java
+```bash
 ./gradlew build
 ```
 
-To launch a local server for development you can use `./gradlew composeStart` and then shut down with `./gradlew composeClean` (or `./gradlew composeDown` to shut it down but preserve its state for the next start).
+To run all quality gates, formatting checks, and tests:
+
+```bash
+./gradlew check
+```
+
+### Local Multi-Container Environment (Docker Compose)
+
+The local development environment uses Docker Compose to orchestrate PostgreSQL (with PostGIS), Flyway schema migrations, the backend application server, and an HAProxy ingress gateway.
+
+To launch the stack in the background:
+
+```bash
+./gradlew composeStart
+```
+
+To view logs from running services:
+
+```bash
+./gradlew composeLogs
+```
+
+#### Accessing Services
+
+Traffic is routed through the **HAProxy** ingress gateway:
+- **Plain HTTP:** [http://localhost:8080](http://localhost:8080)
+- **Encrypted TLS (HTTPS):** [https://localhost:8443](https://localhost:8443)
+
+The backend application server (`larpconnect-server`) is isolated within internal Docker bridge networks (`edge` and `internal`) and does not publish ports directly to the host machine. Outgoing HTTP responses have internal W3C `traceparent` headers stripped at the proxy layer.
+
+#### TLS Certificates and Secrets
+
+- On first launch, `./gradlew composeStart` automatically generates a database secret in `.env` and a self-signed RSA development certificate bundle in `docker/haproxy/certs/haproxy.pem`.
+- To generate the TLS certificate independently without Gradle:
+  ```bash
+  ./docker/haproxy/generate-certs.sh
+  ```
+- Both `.env` and `docker/haproxy/certs/*.pem` are excluded from version control via `.gitignore`.
+
+#### Stopping and Cleaning Up
+
+- **Stop and preserve state:**
+  ```bash
+  ./gradlew composeStop
+  ```
+  Stops containers and removes networks while preserving database data volumes, `.env`, and TLS certificates.
+
+- **Full clean reset:**
+  ```bash
+  ./gradlew composeStopClean
+  ```
+  Stops containers, deletes persistent database volumes, and deletes local `.env` and TLS certificate files.
 
 ---
 

@@ -23,4 +23,5 @@
 | Server | The part of the application that hosts the API and is exposed to the outside world | | |
 | Webfinger | An account lookup service specified by RFC 7033 | | |
 | JRD | JSON Resource Descriptor - the response format for Webfinger lookups | | |
-
+| reverse proxy | A server that sits in front of one or more web servers and forwards client requests to them. We use HAProxy for this. | Used to handle SSL termination, load balancing, and other concerns that are not specific to the application | |
+| master | An outdated term for the primary (or main) system | | Do not use this word. Use "main," "primary," "active," or "leader," depending on context. |

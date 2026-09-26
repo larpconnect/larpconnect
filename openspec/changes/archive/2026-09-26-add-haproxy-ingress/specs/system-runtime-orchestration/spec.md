@@ -1,10 +1,6 @@
-# system-runtime-orchestration Specification
+# system-runtime-orchestration Specification Delta
 
-## Purpose
-
-Multi-container orchestration via Docker Compose and Gradle lifecycle tasks, managing PostgreSQL initialization, healthcheck barriers, sequential schema migration execution, and HTTP server runtime startup.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Multi-Container Service Orchestration via Docker Compose
 The system SHALL provide a Docker Compose configuration defining four coordinated services: `postgres`, `migrate`, `server`, and `haproxy`. The `postgres` service SHALL start the database engine and report readiness via healthcheck. The `migrate` service SHALL execute database migrations via the `migrate` CLI subcommand only after `postgres` reports healthy, running as an ephemeral task that exits upon completion. The `server` service SHALL launch the HTTP server runtime via the `server` CLI subcommand only after `postgres` is healthy and the `migrate` service has completed successfully (exit code 0). The `haproxy` service SHALL provide the public ingress gateway exposing HTTP on port 8080 and TLS on port 8443, routing traffic to `server:8080`, performing active health checks against `/api/admin/v1/health`, and stripping the W3C `traceparent` header from responses returned to clients. Docker Compose network isolation SHALL segment containers into an `edge` network connecting `haproxy` and `server`, and an `internal` network connecting `server`, `migrate`, and `postgres`. The `server` container SHALL NOT publish any ports to the host network.
@@ -30,17 +26,6 @@ The system SHALL provide a Docker Compose configuration defining four coordinate
 - **WHEN** container execution progresses
 - **THEN** the `server` container SHALL NOT be started
 - **AND** the compose deployment terminates with an error status
-
-### Requirement: Automated PostgreSQL Cluster Initialization
-The `postgres` service SHALL use the `postgis/postgis:18-3.6-alpine` image and mount initialization scripts into `/docker-entrypoint-initdb.d/`. On initial database cluster creation, an executable initialization shell script SHALL dynamically provision database roles `njall` (superuser), `njall_admin`, `njall_users`, and `njall_system` with passwords derived from `NJALL_DB_SECRET`, grant admin options on user roles to `njall`, set the `larpconnect` database owner to `njall`, and enable the `postgis` extension.
-
-#### Scenario: First-boot database provisioning
-- **GIVEN** an uninitialized Postgres volume
-- **WHEN** the `postgres` service starts for the first time
-- **THEN** roles `njall`, `njall_admin`, `njall_users`, and `njall_system` are created with derived passwords
-- **AND** the `larpconnect` database is owned by `njall`
-- **AND** the `postgis` extension is created and ready for spatial queries
-- **AND** the healthcheck `pg_isready -U postgres -d larpconnect` reports healthy
 
 ### Requirement: Gradle Lifecycle Tasks for Compose Orchestration
 The root Gradle build SHALL define lifecycle tasks for managing the containerized environment:

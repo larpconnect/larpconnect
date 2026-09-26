@@ -12,6 +12,8 @@ services:
     volumes:
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
       - postgres_data:/var/lib/postgresql
+    networks:
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d larpconnect"]
       interval: 2s
@@ -28,6 +30,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - internal
     environment:
       LARPCONNECT_DATA_DATABASE_MIGRATION_JDBC_URL: jdbc:postgresql://postgres:5432/larpconnect
       LARPCONNECT_DATA_DATABASE_MIGRATION_USERNAME: njall
@@ -46,8 +50,9 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    ports:
-      - "${PORT:-8080}:8080"
+    networks:
+      - edge
+      - internal
     environment:
       LARPCONNECT_DATA_DATABASE_ADMIN_JDBC_URL: jdbc:postgresql://postgres:5432/larpconnect
       LARPCONNECT_DATA_DATABASE_ADMIN_USERNAME: njall_admin
@@ -60,5 +65,25 @@ services:
     command: ["server"]
     restart: unless-stopped
 
+  haproxy:
+    image: haproxy:3.1-alpine
+    container_name: larpconnect-haproxy
+    depends_on:
+      server:
+        condition: service_started
+    ports:
+      - "${PORT:-8080}:8080"
+      - "${TLS_PORT:-8443}:8443"
+    volumes:
+      - ./docker/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./docker/haproxy/certs:/usr/local/etc/haproxy/certs:ro
+    networks:
+      - edge
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+
+networks:
+  edge:
+  internal:
