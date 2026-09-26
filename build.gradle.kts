@@ -1,6 +1,9 @@
 import java.security.SecureRandom
 import java.util.HexFormat
 
+import javax.inject.Inject
+import org.gradle.process.ExecOperations
+
 /*
  * Root project build script providing Docker Compose orchestration tasks.
  */
@@ -22,9 +25,34 @@ abstract class GenerateComposeEnvTask : DefaultTask() {
     }
 }
 
-abstract class ComposeCleanTask : Exec() {
+abstract class GenerateComposeTlsTask @Inject constructor(
+    private val execOperations: ExecOperations
+) : DefaultTask() {
+    @get:OutputFile
+    abstract val certFile: RegularFileProperty
+
+    @get:InputFile
+    abstract val scriptFile: RegularFileProperty
+
+    @TaskAction
+    fun generate() {
+        val target = certFile.get().asFile
+        if (!target.exists()) {
+            val script = scriptFile.get().asFile
+            execOperations.exec {
+                commandLine("bash", script.absolutePath)
+            }
+            logger.lifecycle("Generated local HAProxy TLS certificate: ${target.path}")
+        }
+    }
+}
+
+abstract class ComposeStopCleanTask : Exec() {
     @get:Internal
     abstract val envFile: RegularFileProperty
+
+    @get:Internal
+    abstract val certFile: RegularFileProperty
 
     init {
         commandLine("docker", "compose", "down", "-v")
@@ -38,6 +66,11 @@ abstract class ComposeCleanTask : Exec() {
             target.delete()
             logger.lifecycle("Removed local environment file: .env")
         }
+        val targetCert = certFile.orNull?.asFile
+        if (targetCert != null && targetCert.exists()) {
+            targetCert.delete()
+            logger.lifecycle("Removed local certificate file: ${targetCert.path}")
+        }
     }
 }
 
@@ -45,24 +78,25 @@ val generateComposeEnv = tasks.register<GenerateComposeEnvTask>("generateCompose
     group = "application"
     description = "Generates a random master secret seed into .env if the file is absent."
     envFile.convention(layout.projectDirectory.file(".env"))
-    mustRunAfter("composeClean")
+    mustRunAfter("composeStopClean")
 }
 
-tasks.register<Exec>("composeUp") {
+val generateComposeTls = tasks.register<GenerateComposeTlsTask>("generateComposeTls") {
     group = "application"
-    description = "Builds application distribution and launches Docker Compose stack (attached)."
-    dependsOn(generateComposeEnv, ":server:installDist")
-    commandLine("docker", "compose", "up", "--build")
+    description = "Generates a self-signed TLS certificate bundle into docker/haproxy/certs/haproxy.pem if absent."
+    certFile.convention(layout.projectDirectory.file("docker/haproxy/certs/haproxy.pem"))
+    scriptFile.convention(layout.projectDirectory.file("docker/haproxy/generate-certs.sh"))
+    mustRunAfter("composeStopClean")
 }
 
 tasks.register<Exec>("composeStart") {
     group = "application"
     description = "Builds application distribution and launches Docker Compose stack in background (-d)."
-    dependsOn(generateComposeEnv, ":server:installDist")
+    dependsOn(generateComposeEnv, generateComposeTls, ":server:installDist")
     commandLine("docker", "compose", "up", "--build", "-d")
 }
 
-tasks.register<Exec>("composeDown") {
+tasks.register<Exec>("composeStop") {
     group = "application"
     description = "Stops and tears down Docker Compose containers and networks."
     commandLine("docker", "compose", "down")
@@ -74,10 +108,11 @@ tasks.register<Exec>("composeLogs") {
     commandLine("docker", "compose", "logs", "-f")
 }
 
-tasks.register<ComposeCleanTask>("composeClean") {
+tasks.register<ComposeStopCleanTask>("composeStopClean") {
     group = "application"
-    description = "Tears down Docker Compose services, wipes persistent database volume, and removes .env."
+    description = "Tears down Docker Compose services, wipes persistent database volume, and removes .env and TLS certificates."
     envFile.convention(layout.projectDirectory.file(".env"))
+    certFile.convention(layout.projectDirectory.file("docker/haproxy/certs/haproxy.pem"))
 }
 
 

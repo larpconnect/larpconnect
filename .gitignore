@@ -65,3 +65,9 @@ build
 .env
 .env.*
 !.env.example
+
+# Local Ingress TLS Certificates
+docker/haproxy/certs/*.pem
+docker/haproxy/certs/*.key
+docker/haproxy/certs/*.crt
+!docker/haproxy/certs/.gitkeep
