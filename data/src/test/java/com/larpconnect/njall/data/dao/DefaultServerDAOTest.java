@@ -62,7 +62,7 @@ final class DefaultServerDAOTest {
     var result = dao.findById(serverId);
 
     assertThat(result).isPresent();
-    var server = result.get();
+    var server = result.orElseThrow();
     assertThat(server.id()).isEqualTo(serverId);
     assertThat(server.name()).isEqualTo("alpha");
     assertThat(server.primaryDomain()).isEqualTo("alpha.org");

@@ -57,8 +57,8 @@ final class DefaultStudioDAOTest {
     var result = dao.findById(tenantId);
 
     assertThat(result).isPresent();
-    assertThat(result.get().id()).isEqualTo(tenantId);
-    assertThat(result.get().name()).isEqualTo("Valhalla");
+    assertThat(result.orElseThrow().id()).isEqualTo(tenantId);
+    assertThat(result.orElseThrow().name()).isEqualTo("Valhalla");
     verify(tx).commit();
   }
 
@@ -84,8 +84,8 @@ final class DefaultStudioDAOTest {
     var result = dao.getStudio(tenantId);
 
     assertThat(result).isPresent();
-    assertThat(result.get().id()).isEqualTo(tenantId);
-    assertThat(result.get().name()).isEqualTo("Valhalla");
+    assertThat(result.orElseThrow().id()).isEqualTo(tenantId);
+    assertThat(result.orElseThrow().name()).isEqualTo("Valhalla");
     verify(tx).commit();
   }
 

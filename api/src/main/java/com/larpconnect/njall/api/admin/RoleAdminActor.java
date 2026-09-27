@@ -16,7 +16,7 @@ public final class RoleAdminActor extends AbstractBehavior<RoleAdminCommand> {
   private final Logger logger = LoggerFactory.getLogger(RoleAdminActor.class);
   private final AdminRoleDAO roleDao;
 
-  public RoleAdminActor(ActorContext<RoleAdminCommand> context, AdminRoleDAO roleDao) {
+  RoleAdminActor(ActorContext<RoleAdminCommand> context, AdminRoleDAO roleDao) {
     super(context);
     this.roleDao = roleDao;
   }
@@ -62,12 +62,13 @@ public final class RoleAdminActor extends AbstractBehavior<RoleAdminCommand> {
 
   private Behavior<RoleAdminCommand> onGetRoleById(RoleAdminCommand.GetRoleById cmd) {
     try {
-      var role = roleDao.findById(cmd.roleId());
-      if (role.isPresent()) {
-        cmd.replyTo().tell(RoleAdminResponse.single(role.get()));
-      } else {
-        cmd.replyTo().tell(RoleAdminResponse.notFound("Role not found: " + cmd.roleId()));
-      }
+      roleDao
+          .findById(cmd.roleId())
+          .ifPresentOrElse(
+              role -> cmd.replyTo().tell(RoleAdminResponse.single(role)),
+              () ->
+                  cmd.replyTo()
+                      .tell(RoleAdminResponse.notFound("Role not found: " + cmd.roleId())));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get role by id", e);
     }
@@ -76,12 +77,13 @@ public final class RoleAdminActor extends AbstractBehavior<RoleAdminCommand> {
 
   private Behavior<RoleAdminCommand> onGetRoleByName(RoleAdminCommand.GetRoleByName cmd) {
     try {
-      var role = roleDao.findByRoleName(cmd.roleName());
-      if (role.isPresent()) {
-        cmd.replyTo().tell(RoleAdminResponse.single(role.get()));
-      } else {
-        cmd.replyTo().tell(RoleAdminResponse.notFound("Role not found: " + cmd.roleName()));
-      }
+      roleDao
+          .findByRoleName(cmd.roleName())
+          .ifPresentOrElse(
+              role -> cmd.replyTo().tell(RoleAdminResponse.single(role)),
+              () ->
+                  cmd.replyTo()
+                      .tell(RoleAdminResponse.notFound("Role not found: " + cmd.roleName())));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get role by name", e);
     }

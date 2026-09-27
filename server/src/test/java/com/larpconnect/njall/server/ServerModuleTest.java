@@ -150,6 +150,7 @@ final class ServerModuleTest {
   private interface CircularNodeB {}
 
   private static final class DefaultCircularNodeA implements CircularNodeA {
+    // Retained for Guice circular dependency injection test resolution.
     @SuppressWarnings("unused")
     private final CircularNodeB b;
 
@@ -160,6 +161,7 @@ final class ServerModuleTest {
   }
 
   private static final class DefaultCircularNodeB implements CircularNodeB {
+    // Retained for Guice circular dependency injection test resolution.
     @SuppressWarnings("unused")
     private final CircularNodeA a;
 

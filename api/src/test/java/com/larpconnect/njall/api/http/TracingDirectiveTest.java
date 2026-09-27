@@ -110,7 +110,7 @@ final class TracingDirectiveTest {
     var route =
         tracingDirective.trace(
             () -> {
-              throw new RuntimeException("Route failure");
+              throw new IllegalStateException("Route failure");
             });
     var handler = route.seal().function(system);
 

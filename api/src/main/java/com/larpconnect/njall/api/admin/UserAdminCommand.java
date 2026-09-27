@@ -21,6 +21,8 @@ public sealed interface UserAdminCommand {
       ActorRef<UserAdminResponse> replyTo)
       implements UserAdminCommand {
 
+    // Required because Java overload resolution chooses canonical constructor when passing
+    // null roles matching ImmutableList overload specificity.
     @SuppressWarnings("RedundantNullCheck")
     public CreateUser {
       status = status != null ? status : AdminUserStatus.UNKNOWN;

@@ -43,7 +43,7 @@ public final class HealthCheckActor extends AbstractBehavior<ApiCall<HealthCheck
         .orElseGet(Map::of);
   }
 
-  public HealthCheckActor(
+  HealthCheckActor(
       ActorContext<ApiCall<HealthCheckCommand>> context, HealthCheckRegistry registry) {
     super(context);
     this.registry = registry;

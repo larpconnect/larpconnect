@@ -109,15 +109,14 @@ public final class CliConfigBuilder {
   }
 
   private Config loadFileConfig() {
-    return configFile
-        .map(
-            file -> {
-              if (!file.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified configuration file does not exist: " + file.getPath());
-              }
-              return ConfigFactory.parseFile(file);
-            })
-        .orElseGet(ConfigFactory::empty);
+    return configFile.map(CliConfigBuilder::parseConfigFile).orElseGet(ConfigFactory::empty);
+  }
+
+  private static Config parseConfigFile(File file) {
+    if (!file.exists()) {
+      throw new IllegalArgumentException(
+          "Specified configuration file does not exist: " + file.getPath());
+    }
+    return ConfigFactory.parseFile(file);
   }
 }

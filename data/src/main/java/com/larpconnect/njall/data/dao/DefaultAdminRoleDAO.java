@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.dao;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -22,7 +20,6 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
 
   @Override
   public Optional<AdminRole> findById(UUID id) {
-    requireNonNull(id, "id cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var entity = session.find(AdminRoleEntity.class, id);
       return Optional.ofNullable(entity).map(this::toRole);
@@ -31,7 +28,6 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
 
   @Override
   public Optional<AdminRole> findByRoleName(String roleName) {
-    requireNonNull(roleName, "roleName cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var hql = "from AdminRoleEntity where roleName = :roleName";
       var entity =
@@ -54,7 +50,6 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
 
   @Override
   public AdminRole create(String roleName) {
-    requireNonNull(roleName, "roleName cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {

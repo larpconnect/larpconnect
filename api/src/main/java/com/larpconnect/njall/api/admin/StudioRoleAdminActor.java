@@ -18,8 +18,7 @@ public final class StudioRoleAdminActor extends AbstractBehavior<StudioRoleAdmin
   private final Logger logger = LoggerFactory.getLogger(StudioRoleAdminActor.class);
   private final DefaultStudioRoleDAO roleDao;
 
-  public StudioRoleAdminActor(
-      ActorContext<StudioRoleAdminCommand> context, DefaultStudioRoleDAO roleDao) {
+  StudioRoleAdminActor(ActorContext<StudioRoleAdminCommand> context, DefaultStudioRoleDAO roleDao) {
     super(context);
     this.roleDao = roleDao;
   }
@@ -88,12 +87,13 @@ public final class StudioRoleAdminActor extends AbstractBehavior<StudioRoleAdmin
   }
 
   private void executeGetRoleById(UUID roleId, ActorRef<StudioRoleAdminResponse> replyTo) {
-    var role = roleDao.findById(roleId);
-    if (role.isPresent()) {
-      replyTo.tell(StudioRoleAdminResponse.single(role.get()));
-    } else {
-      replyTo.tell(StudioRoleAdminResponse.notFound("Default studio role not found: " + roleId));
-    }
+    roleDao
+        .findById(roleId)
+        .ifPresentOrElse(
+            role -> replyTo.tell(StudioRoleAdminResponse.single(role)),
+            () ->
+                replyTo.tell(
+                    StudioRoleAdminResponse.notFound("Default studio role not found: " + roleId)));
   }
 
   private Behavior<StudioRoleAdminCommand> onUpdateRole(StudioRoleAdminCommand.UpdateRole cmd) {
@@ -126,27 +126,28 @@ public final class StudioRoleAdminActor extends AbstractBehavior<StudioRoleAdmin
   }
 
   private void handleUnchangedRole(UUID roleId, ActorRef<StudioRoleAdminResponse> replyTo) {
-    var existing = roleDao.findById(roleId);
-    if (existing.isPresent()) {
-      replyTo.tell(StudioRoleAdminResponse.single(existing.get()));
-    } else {
-      replyTo.tell(StudioRoleAdminResponse.notFound("Default studio role not found: " + roleId));
-    }
+    roleDao
+        .findById(roleId)
+        .ifPresentOrElse(
+            existing -> replyTo.tell(StudioRoleAdminResponse.single(existing)),
+            () ->
+                replyTo.tell(
+                    StudioRoleAdminResponse.notFound("Default studio role not found: " + roleId)));
   }
 
   private boolean hasNameConflict(UUID roleId, String name) {
-    var existingWithName = roleDao.findByName(name);
-    return existingWithName.isPresent() && !existingWithName.get().id().equals(roleId);
+    return roleDao.findByName(name).map(r -> !r.id().equals(roleId)).orElse(false);
   }
 
   private void applyRoleUpdate(
       UUID roleId, String name, ActorRef<StudioRoleAdminResponse> replyTo) {
-    var updated = roleDao.update(roleId, name);
-    if (updated.isPresent()) {
-      replyTo.tell(StudioRoleAdminResponse.single(updated.get()));
-    } else {
-      replyTo.tell(StudioRoleAdminResponse.notFound("Default studio role not found: " + roleId));
-    }
+    roleDao
+        .update(roleId, name)
+        .ifPresentOrElse(
+            updated -> replyTo.tell(StudioRoleAdminResponse.single(updated)),
+            () ->
+                replyTo.tell(
+                    StudioRoleAdminResponse.notFound("Default studio role not found: " + roleId)));
   }
 
   private void replyBadRequest(ActorRef<StudioRoleAdminResponse> replyTo, String message) {

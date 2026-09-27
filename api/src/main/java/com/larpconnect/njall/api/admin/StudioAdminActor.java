@@ -19,7 +19,7 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
   private final StudioLookupDAO studioLookupDao;
   private final StudioLookupCache studioLookupCache;
 
-  public StudioAdminActor(
+  StudioAdminActor(
       ActorContext<StudioAdminCommand> context,
       StudioLookupDAO studioLookupDao,
       StudioLookupCache studioLookupCache) {
@@ -97,12 +97,13 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onGetStudioById(StudioAdminCommand.GetStudioById cmd) {
     try {
-      var studio = studioLookupDao.findById(cmd.studioId(), cmd.filter());
-      if (studio.isPresent()) {
-        cmd.replyTo().tell(StudioAdminResponse.single(studio.get()));
-      } else {
-        cmd.replyTo().tell(StudioAdminResponse.notFound("Studio not found: " + cmd.studioId()));
-      }
+      studioLookupDao
+          .findById(cmd.studioId(), cmd.filter())
+          .ifPresentOrElse(
+              studio -> cmd.replyTo().tell(StudioAdminResponse.single(studio)),
+              () ->
+                  cmd.replyTo()
+                      .tell(StudioAdminResponse.notFound("Studio not found: " + cmd.studioId())));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get studio by id", e);
     }
@@ -111,12 +112,13 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onGetStudioByAlias(StudioAdminCommand.GetStudioByAlias cmd) {
     try {
-      var studio = studioLookupDao.findByAlias(cmd.alias(), cmd.filter());
-      if (studio.isPresent()) {
-        cmd.replyTo().tell(StudioAdminResponse.single(studio.get()));
-      } else {
-        cmd.replyTo().tell(StudioAdminResponse.notFound("Studio not found: " + cmd.alias()));
-      }
+      studioLookupDao
+          .findByAlias(cmd.alias(), cmd.filter())
+          .ifPresentOrElse(
+              studio -> cmd.replyTo().tell(StudioAdminResponse.single(studio)),
+              () ->
+                  cmd.replyTo()
+                      .tell(StudioAdminResponse.notFound("Studio not found: " + cmd.alias())));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get studio by alias", e);
     }
