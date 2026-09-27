@@ -1,6 +1,7 @@
 package com.larpconnect.njall.api.admin;
 
 import com.google.common.base.Strings;
+import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.dao.StudioLookupDAO;
 import com.larpconnect.njall.data.domain.DeletionFilter;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -16,11 +17,15 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private final Logger logger = LoggerFactory.getLogger(StudioAdminActor.class);
   private final StudioLookupDAO studioLookupDao;
+  private final StudioLookupCache studioLookupCache;
 
   public StudioAdminActor(
-      ActorContext<StudioAdminCommand> context, StudioLookupDAO studioLookupDao) {
+      ActorContext<StudioAdminCommand> context,
+      StudioLookupDAO studioLookupDao,
+      StudioLookupCache studioLookupCache) {
     super(context);
     this.studioLookupDao = studioLookupDao;
+    this.studioLookupCache = studioLookupCache;
   }
 
   @Override
@@ -35,23 +40,49 @@ public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand>
 
   private Behavior<StudioAdminCommand> onCreateStudio(StudioAdminCommand.CreateStudio cmd) {
     try {
-      if (!AdminValidation.isValidIdentifier(cmd.alias())) {
-        cmd.replyTo().tell(StudioAdminResponse.badRequest("Invalid studio alias: " + cmd.alias()));
-        return this;
-      }
-      var existing = studioLookupDao.findByAlias(cmd.alias(), DeletionFilter.INCLUDE_DELETED);
-      if (existing.isPresent()) {
-        cmd.replyTo()
-            .tell(StudioAdminResponse.conflict("Studio alias already exists: " + cmd.alias()));
-        return this;
-      }
-      var name = cmd.name().filter(n -> !n.isBlank()).orElse(cmd.alias());
-      var studio = studioLookupDao.create(cmd.alias(), name);
-      cmd.replyTo().tell(StudioAdminResponse.single(studio));
+      executeCreateStudio(cmd);
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create studio", e);
     }
     return this;
+  }
+
+  private void executeCreateStudio(StudioAdminCommand.CreateStudio cmd) {
+    if (rejectIfInvalidAlias(cmd.alias(), cmd.replyTo())) {
+      return;
+    }
+    if (rejectIfDuplicateAlias(cmd.alias(), cmd.replyTo())) {
+      return;
+    }
+    createAndReplyStudio(cmd.alias(), resolveStudioName(cmd), cmd.replyTo());
+  }
+
+  private boolean rejectIfInvalidAlias(String alias, ActorRef<StudioAdminResponse> replyTo) {
+    if (!AdminValidation.isValidIdentifier(alias)) {
+      replyTo.tell(StudioAdminResponse.badRequest("Invalid studio alias: " + alias));
+      return true;
+    }
+    return false;
+  }
+
+  private boolean rejectIfDuplicateAlias(String alias, ActorRef<StudioAdminResponse> replyTo) {
+    var existing = studioLookupDao.findByAlias(alias, DeletionFilter.INCLUDE_DELETED);
+    if (existing.isPresent()) {
+      replyTo.tell(StudioAdminResponse.conflict("Studio alias already exists: " + alias));
+      return true;
+    }
+    return false;
+  }
+
+  private String resolveStudioName(StudioAdminCommand.CreateStudio cmd) {
+    return cmd.name().filter(n -> !n.isBlank()).orElse(cmd.alias());
+  }
+
+  private void createAndReplyStudio(
+      String alias, String name, ActorRef<StudioAdminResponse> replyTo) {
+    var studio = studioLookupDao.create(alias, name);
+    studioLookupCache.refresh();
+    replyTo.tell(StudioAdminResponse.single(studio));
   }
 
   private Behavior<StudioAdminCommand> onListStudios(StudioAdminCommand.ListStudios cmd) {

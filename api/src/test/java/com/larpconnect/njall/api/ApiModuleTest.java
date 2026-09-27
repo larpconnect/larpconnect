@@ -11,6 +11,7 @@ import com.larpconnect.njall.api.http.RootRoute;
 import com.larpconnect.njall.api.studios.StudiosRoute;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.common.telemetry.TelemetryModule;
+import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.dao.AdminRoleDAO;
 import com.larpconnect.njall.data.dao.AdminUserDAO;
 import com.larpconnect.njall.data.dao.DefaultStudioRoleDAO;
@@ -54,6 +55,7 @@ final class ApiModuleTest {
             bind(ServerDAO.class).toInstance(mock(ServerDAO.class));
             bind(StudioLookupDAO.class).toInstance(mock(StudioLookupDAO.class));
             bind(StudioDAO.class).toInstance(mock(StudioDAO.class));
+            bind(StudioLookupCache.class).toInstance(mock(StudioLookupCache.class));
             bind(DefaultStudioRoleDAO.class).toInstance(mock(DefaultStudioRoleDAO.class));
             bind(AdminRoleDAO.class).toInstance(mock(AdminRoleDAO.class));
             bind(AdminUserDAO.class).toInstance(mock(AdminUserDAO.class));

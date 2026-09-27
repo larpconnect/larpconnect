@@ -8,6 +8,7 @@ import com.google.common.base.Strings;
 import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
+import com.larpconnect.njall.data.cache.StudioLookupCacheService;
 import com.larpconnect.njall.server.ServerModule;
 import com.larpconnect.njall.server.http.HttpServerService;
 import com.typesafe.config.Config;
@@ -25,6 +26,7 @@ import java.sql.DriverManager;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorSystem;
 
@@ -36,6 +38,7 @@ public final class AdminManagementApiSteps {
 
   private final Map<String, String> rememberedIds = new HashMap<>();
   private HttpServerService serverService;
+  private StudioLookupCacheService cacheService;
   private ActorSystem<Void> system;
   private int boundPort;
   private HttpResponse<String> response;
@@ -50,11 +53,14 @@ public final class AdminManagementApiSteps {
   @After("@AdminApi")
   public void tearDown() throws Exception {
     if (serverService != null) {
-      serverService.stop().toCompletableFuture().get(5, TimeUnit.SECONDS);
+      serverService.stop().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    }
+    if (cacheService != null && cacheService.isRunning()) {
+      cacheService.stopAsync().awaitTerminated(15, TimeUnit.SECONDS);
     }
     if (system != null) {
       system.terminate();
-      system.getWhenTerminated().toCompletableFuture().get(5, TimeUnit.SECONDS);
+      system.getWhenTerminated().toCompletableFuture().get(10, TimeUnit.SECONDS);
     }
   }
 
@@ -63,10 +69,13 @@ public final class AdminManagementApiSteps {
     var config = buildIntegrationConfig(DatabaseMigrationSteps.getJdbcUrl());
     var injector = Guice.createInjector(new ServerModule(config));
 
+    cacheService = injector.getInstance(StudioLookupCacheService.class);
+    cacheService.startAsync().awaitRunning(30, TimeUnit.SECONDS);
+
     serverService = injector.getInstance(HttpServerService.class);
     system = injector.getInstance(Key.get(new TypeLiteral<ActorSystem<Void>>() {}));
 
-    serverService.start().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    serverService.start().toCompletableFuture().get(30, TimeUnit.SECONDS);
     boundPort = serverService.getBoundPort();
     assertThat(boundPort).isPositive();
   }
@@ -269,6 +278,37 @@ public final class AdminManagementApiSteps {
       stmt.setString(1, alias);
       var updated = stmt.executeUpdate();
       assertThat(updated).isPositive();
+    }
+    if (cacheService != null) {
+      cacheService.refresh();
+    }
+  }
+
+  @Given("a studio exists in the database with alias {string} and name {string}")
+  public void aStudioExistsInTheDatabaseWithAliasAndName(String alias, String name)
+      throws Exception {
+    var tenantId = UUID.randomUUID();
+    var studioId = UUID.randomUUID();
+    var userSql = "INSERT INTO njall_users.studios (id, name) VALUES (?, ?)";
+    var adminSql =
+        "INSERT INTO njall_admin.studios_lookup (tenant_id, studio_id, alias, created_at,"
+            + " updated_at) VALUES (?, ?, ?, NOW(), NOW())";
+    try (var conn =
+        DriverManager.getConnection(
+            DatabaseMigrationSteps.getJdbcUrl(),
+            "njall",
+            DatabaseMigrationSteps.getPasswordFor("njall"))) {
+      try (var stmt = conn.prepareStatement(userSql)) {
+        stmt.setObject(1, tenantId);
+        stmt.setString(2, name);
+        stmt.executeUpdate();
+      }
+      try (var stmt = conn.prepareStatement(adminSql)) {
+        stmt.setObject(1, tenantId);
+        stmt.setObject(2, studioId);
+        stmt.setString(3, alias);
+        stmt.executeUpdate();
+      }
     }
   }
 

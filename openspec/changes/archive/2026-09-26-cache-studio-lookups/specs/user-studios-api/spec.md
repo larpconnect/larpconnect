@@ -1,10 +1,6 @@
-# user-studios-api Specification
+# user-studios-api Specification Delta
 
-## Purpose
-
-User-facing HTTP endpoints under `/api/studios/{studio-id}/v1` providing segmented, single-tenant access to studio information using the `njall_users` session factory with internal tenant ID isolation.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: User Studio Retrieval Endpoint
 The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/studio` allowing clients to retrieve details of a specific **Studio**. The `{studio-id}` path segment SHALL accept either a public `studioId` UUID or a unique `alias` string, and SHALL NOT accept internal database `tenant_id` values. The system SHALL resolve `{studio-id}` directly in-memory against the `StudioLookupCache` to determine the corresponding internal `tenant_id`. If `{studio-id}` is not found or is marked as soft-deleted, the system SHALL return HTTP 404 Not Found directly on the HTTP route without database queries or actor dispatching. Upon resolving `tenant_id`, the system SHALL dispatch a request to `StudioActor` to query the **Studio** from the user data layer via `StudioDAO` using an active `@NjallUsers` session configured with `app.tenant_id = :tenant_id`, and SHALL return HTTP 200 OK containing the public `studioId`, `alias`, and `name`. The response SHALL NOT expose the internal `tenant_id`.

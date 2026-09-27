@@ -75,11 +75,13 @@ final class ServerAppTest {
     var mockRegistrar = mock(ShutdownHookRegistrar.class);
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "server-app-test");
     var mockHttpService = mock(HttpServerService.class);
+    var cacheService = new TestStudioLookupCacheService();
     var binding = mock(ServerBinding.class);
 
     when(mockHttpService.start()).thenReturn(CompletableFuture.completedFuture(binding));
 
-    var realService = new DefaultServerManagerService(mockRegistrar, system, mockHttpService);
+    var realService =
+        new DefaultServerManagerService(mockRegistrar, system, mockHttpService, cacheService);
     when(mockInjector.getInstance(ServerManagerService.class)).thenReturn(realService);
 
     var app = spy(new ServerApp());
@@ -106,11 +108,13 @@ final class ServerAppTest {
     var mockRegistrar = mock(ShutdownHookRegistrar.class);
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "server-app-fail-test");
     var mockHttpService = mock(HttpServerService.class);
+    var cacheService = new TestStudioLookupCacheService();
 
     when(mockHttpService.start())
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failure")));
 
-    var realService = new DefaultServerManagerService(mockRegistrar, system, mockHttpService);
+    var realService =
+        new DefaultServerManagerService(mockRegistrar, system, mockHttpService, cacheService);
     when(mockInjector.getInstance(ServerManagerService.class)).thenReturn(realService);
 
     var app = spy(new ServerApp());
