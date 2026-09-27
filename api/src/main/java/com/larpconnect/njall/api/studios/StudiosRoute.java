@@ -5,6 +5,8 @@ import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.http.RouteProvider;
+import com.larpconnect.njall.data.cache.StudioLookupCache;
+import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -23,6 +25,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
 
   private final Logger logger = LoggerFactory.getLogger(StudiosRoute.class);
 
+  private final StudioLookupCache studioLookupCache;
   private final ActorRef<StudioCommand> studioActor;
   private final ActorSystem<Void> system;
   private final ObjectMapper objectMapper;
@@ -30,15 +33,20 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
 
   @Inject
   StudiosRoute(
-      ActorRef<StudioCommand> studioActor, ActorSystem<Void> system, ObjectMapper objectMapper) {
-    this(studioActor, system, objectMapper, Duration.ofSeconds(20));
+      StudioLookupCache studioLookupCache,
+      ActorRef<StudioCommand> studioActor,
+      ActorSystem<Void> system,
+      ObjectMapper objectMapper) {
+    this(studioLookupCache, studioActor, system, objectMapper, Duration.ofSeconds(20));
   }
 
   StudiosRoute(
+      StudioLookupCache studioLookupCache,
       ActorRef<StudioCommand> studioActor,
       ActorSystem<Void> system,
       ObjectMapper objectMapper,
       Duration askTimeout) {
+    this.studioLookupCache = studioLookupCache;
     this.studioActor = studioActor;
     this.system = system;
     this.objectMapper = objectMapper;
@@ -59,15 +67,43 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
   }
 
   private Route handleGetStudio(String studioIdParam) {
-    return onComplete(() -> askGetStudio(studioIdParam), this::mapResponse);
+    return studioLookupCache
+        .findByIdOrAlias(studioIdParam)
+        .filter(this::isActive)
+        .map(this::dispatchGetStudio)
+        .orElseGet(() -> completeNotFound(studioIdParam));
   }
 
-  private CompletionStage<StudioActorResponse> askGetStudio(String studioIdParam) {
+  private boolean isActive(StudioLookup lookup) {
+    return !lookup.isDeleted();
+  }
+
+  private Route dispatchGetStudio(StudioLookup lookup) {
+    return onComplete(() -> askGetStudio(lookup), this::mapResponse);
+  }
+
+  private CompletionStage<StudioActorResponse> askGetStudio(StudioLookup lookup) {
     return ask(
         studioActor,
-        replyTo -> new StudioCommand.GetStudio(studioIdParam, replyTo),
+        replyTo -> createGetStudioCommand(lookup, replyTo),
         askTimeout,
         system.scheduler());
+  }
+
+  private StudioCommand.GetStudio createGetStudioCommand(
+      StudioLookup lookup, ActorRef<StudioActorResponse> replyTo) {
+    return new StudioCommand.GetStudio(lookup, replyTo);
+  }
+
+  private Route completeNotFound(String studioIdParam) {
+    return complete(
+        StatusCodes.NOT_FOUND,
+        createNotFoundErrorResponse(studioIdParam),
+        Jackson.marshaller(objectMapper));
+  }
+
+  private StudioErrorResponse createNotFoundErrorResponse(String studioIdParam) {
+    return new StudioErrorResponse(404, "Studio not found: " + studioIdParam);
   }
 
   private Route mapResponse(Try<StudioActorResponse> responseTry) {
@@ -80,12 +116,12 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
       case StudioActorResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              new StudioErrorResponse(404, nf.message()),
+              createErrorResponse(404, nf.message()),
               Jackson.marshaller(objectMapper));
       case StudioActorResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              new StudioErrorResponse(500, f.message()),
+              createErrorResponse(500, f.message()),
               Jackson.marshaller(objectMapper));
     };
   }
@@ -94,7 +130,11 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
     logger.error("Studio actor request failed", error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        new StudioErrorResponse(500, "Internal server error"),
+        createErrorResponse(500, "Internal server error"),
         Jackson.marshaller(objectMapper));
+  }
+
+  private StudioErrorResponse createErrorResponse(int status, String message) {
+    return new StudioErrorResponse(status, message);
   }
 }

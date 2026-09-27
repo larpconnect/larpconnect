@@ -1,11 +1,17 @@
 package com.larpconnect.njall.api.studios;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.larpconnect.njall.data.cache.StudioLookupCache;
+import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +33,9 @@ final class StudiosRouteTest {
   private static ActorSystem<Void> system;
   private static ObjectMapper objectMapper;
 
+  private final UUID tenantId = UUID.randomUUID();
   private final UUID studioId = UUID.randomUUID();
+  private final Instant now = Instant.now();
 
   @BeforeAll
   static void setUp() {
@@ -50,9 +58,20 @@ final class StudiosRouteTest {
     return handler.apply(HttpRequest.GET(path)).toCompletableFuture().get(5, TimeUnit.SECONDS);
   }
 
+  private StudioLookup sampleLookup() {
+    return new StudioLookup(tenantId, studioId, "valiant", now, now, Optional.empty());
+  }
+
+  private StudioLookup sampleDeletedLookup() {
+    return new StudioLookup(tenantId, studioId, "valiant", now, now, Optional.of(now));
+  }
+
   @Test
-  @DisplayName("GET /api/studios/{alias}/v1/studio returns 200 OK when found")
+  @DisplayName("GET /api/studios/{alias}/v1/studio returns 200 OK when found in cache and actor")
   void getStudio_success() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+
     var studioResponse = new StudioResponse(studioId, "valiant", "Valiant Games");
     ActorRef<StudioCommand> actor =
         system.systemActorOf(
@@ -66,7 +85,7 @@ final class StudiosRouteTest {
             "studioActorSuccess" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new StudiosRoute(actor, system, objectMapper);
+    var route = new StudiosRoute(cache, actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");
@@ -74,8 +93,46 @@ final class StudiosRouteTest {
   }
 
   @Test
+  @DisplayName("GET /api/studios/{alias}/v1/studio returns 404 when cache does not contain studio")
+  void getStudio_cacheMiss_returnsNotFound() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("missing")).thenReturn(Optional.empty());
+
+    ActorRef<StudioCommand> actor =
+        system.systemActorOf(
+            Behaviors.empty(), "studioActorUnreached" + UUID.randomUUID(), Props.empty());
+
+    var route = new StudiosRoute(cache, actor, system, objectMapper);
+    var handler = route.route().seal().function(system);
+
+    var response = executeGet(handler, "/api/studios/missing/v1/studio");
+    assertThat(response.status()).isEqualTo(StatusCodes.NOT_FOUND);
+  }
+
+  @Test
+  @DisplayName(
+      "GET /api/studios/{alias}/v1/studio returns 404 when studio in cache is soft-deleted")
+  void getStudio_softDeletedInCache_returnsNotFound() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleDeletedLookup()));
+
+    ActorRef<StudioCommand> actor =
+        system.systemActorOf(
+            Behaviors.empty(), "studioActorDeletedUnreached" + UUID.randomUUID(), Props.empty());
+
+    var route = new StudiosRoute(cache, actor, system, objectMapper);
+    var handler = route.route().seal().function(system);
+
+    var response = executeGet(handler, "/api/studios/valiant/v1/studio");
+    assertThat(response.status()).isEqualTo(StatusCodes.NOT_FOUND);
+  }
+
+  @Test
   @DisplayName("GET /api/studios/{alias}/v1/studio returns 404 when actor replies with NotFound")
   void getStudio_actorRepliesNotFound() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+
     ActorRef<StudioCommand> actor =
         system.systemActorOf(
             Behaviors.receiveMessage(
@@ -88,7 +145,7 @@ final class StudiosRouteTest {
             "studioActorNotFound" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new StudiosRoute(actor, system, objectMapper);
+    var route = new StudiosRoute(cache, actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");
@@ -98,6 +155,9 @@ final class StudiosRouteTest {
   @Test
   @DisplayName("GET /api/studios/{alias}/v1/studio returns 500 when actor replies with Failure")
   void getStudio_actorRepliesFailure() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+
     ActorRef<StudioCommand> actor =
         system.systemActorOf(
             Behaviors.receiveMessage(
@@ -110,7 +170,7 @@ final class StudiosRouteTest {
             "studioActorFailure" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new StudiosRoute(actor, system, objectMapper);
+    var route = new StudiosRoute(cache, actor, system, objectMapper);
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");
@@ -120,11 +180,14 @@ final class StudiosRouteTest {
   @Test
   @DisplayName("GET /api/studios/{alias}/v1/studio returns 500 when actor times out")
   void getStudio_actorTimesOut() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+
     ActorRef<StudioCommand> actor =
         system.systemActorOf(
             Behaviors.empty(), "studioActorTimeout" + UUID.randomUUID(), Props.empty());
 
-    var route = new StudiosRoute(actor, system, objectMapper, Duration.ofMillis(50));
+    var route = new StudiosRoute(cache, actor, system, objectMapper, Duration.ofMillis(50));
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");

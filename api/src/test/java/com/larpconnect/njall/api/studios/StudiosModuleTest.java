@@ -10,8 +10,8 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.common.annotation.Blocking;
+import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.dao.StudioDAO;
-import com.larpconnect.njall.data.dao.StudioLookupDAO;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -42,7 +42,7 @@ final class StudiosModuleTest {
   @DisplayName("StudiosModule binds StudiosRoute, RouteProvider, and StudioActor")
   void configure_bindsExpectedDependencies() {
     var studioDao = mock(StudioDAO.class);
-    var studioLookupDao = mock(StudioLookupDAO.class);
+    var studioLookupCache = mock(StudioLookupCache.class);
 
     var testModule =
         new AbstractModule() {
@@ -51,7 +51,7 @@ final class StudiosModuleTest {
             bind(new TypeLiteral<ActorSystem<Void>>() {}).toInstance(system);
             bind(Props.class).annotatedWith(Blocking.class).toInstance(Props.empty());
             bind(StudioDAO.class).toInstance(studioDao);
-            bind(StudioLookupDAO.class).toInstance(studioLookupDao);
+            bind(StudioLookupCache.class).toInstance(studioLookupCache);
             bind(ObjectMapper.class).toInstance(new ObjectMapper());
           }
         };

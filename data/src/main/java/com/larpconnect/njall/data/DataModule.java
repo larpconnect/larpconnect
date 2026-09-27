@@ -1,6 +1,7 @@
 package com.larpconnect.njall.data;
 
 import com.google.inject.AbstractModule;
+import com.larpconnect.njall.data.cache.CacheModule;
 import com.larpconnect.njall.data.config.DatabaseConfigModule;
 import com.larpconnect.njall.data.dao.DaoModule;
 import com.larpconnect.njall.data.health.DataHealthModule;
@@ -17,5 +18,6 @@ public final class DataModule extends AbstractModule {
     install(new SessionModule());
     install(new DaoModule());
     install(new DataHealthModule());
+    install(new CacheModule());
   }
 }

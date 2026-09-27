@@ -59,3 +59,13 @@ Feature: User Space Studios REST API
     When an API admin sends a GET request to "/api/studios/abandoned_studio/v1/studio"
     Then the HTTP response status code is 404
     And the JSON response error has code 404 and non-empty message
+
+  Scenario: Pre-existing studio created before server startup is served from warm cache
+    Given a studio exists in the database with alias "prewarmed" and name "Prewarmed Games"
+    And the admin HTTP server is running with database migrations applied
+    When an API admin sends a GET request to "/api/studios/prewarmed/v1/studio"
+    Then the HTTP response status code is 200
+    And the HTTP response content-type contains "application/json"
+    And the JSON response contains field "alias" with value "prewarmed"
+    And the JSON response contains field "name" with value "Prewarmed Games"
+    And the JSON response does not contain field "tenantId"

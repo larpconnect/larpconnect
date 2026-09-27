@@ -2,6 +2,7 @@ package com.larpconnect.njall.server;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.larpconnect.njall.data.cache.StudioLookupCacheService;
 import com.larpconnect.njall.server.http.HttpServerService;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -22,22 +23,30 @@ final class DefaultServerManagerService extends AbstractIdleService
   private final ShutdownHookRegistrar shutdownHookRegistrar;
   private final ActorSystem<Void> actorSystem;
   private final HttpServerService httpServerService;
+  private final StudioLookupCacheService studioLookupCacheService;
   private @Nullable Thread shutdownHook;
 
   @Inject
   DefaultServerManagerService(
       ShutdownHookRegistrar shutdownHookRegistrar,
       ActorSystem<Void> actorSystem,
-      HttpServerService httpServerService) {
+      HttpServerService httpServerService,
+      StudioLookupCacheService studioLookupCacheService) {
     this.shutdownHookRegistrar = shutdownHookRegistrar;
     this.actorSystem = actorSystem;
     this.httpServerService = httpServerService;
+    this.studioLookupCacheService = studioLookupCacheService;
   }
 
   @Override
   protected void startUp() throws Exception {
     initShutdownHook();
+    startStudioCacheService();
     startHttpServer();
+  }
+
+  private void startStudioCacheService() {
+    studioLookupCacheService.startAsync().awaitRunning();
   }
 
   private void initShutdownHook() {
@@ -76,8 +85,17 @@ final class DefaultServerManagerService extends AbstractIdleService
   @Override
   protected void shutDown() throws Exception {
     stopHttpServer();
+    stopStudioCacheService();
     unregisterShutdownHook();
     runCoordinatedShutdown();
+  }
+
+  private void stopStudioCacheService() {
+    try {
+      studioLookupCacheService.stopAsync().awaitTerminated();
+    } catch (Exception e) {
+      logger.warn("Failed to cleanly stop studio lookup cache service", e);
+    }
   }
 
   private void unregisterShutdownHook() {

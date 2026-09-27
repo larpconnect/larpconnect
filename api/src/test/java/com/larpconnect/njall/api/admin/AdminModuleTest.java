@@ -12,6 +12,7 @@ import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.common.telemetry.ApiCall;
+import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.dao.AdminRoleDAO;
 import com.larpconnect.njall.data.dao.AdminUserDAO;
 import com.larpconnect.njall.data.dao.DefaultStudioRoleDAO;
@@ -51,6 +52,7 @@ final class AdminModuleTest {
     var roleDao = mock(AdminRoleDAO.class);
     var userDao = mock(AdminUserDAO.class);
     var studioRoleDao = mock(DefaultStudioRoleDAO.class);
+    var studioLookupCache = mock(StudioLookupCache.class);
     var testModule =
         new AbstractModule() {
           @Override
@@ -59,6 +61,7 @@ final class AdminModuleTest {
             bind(HealthCheckRegistry.class).toInstance(new HealthCheckRegistry());
             bind(ServerDAO.class).toInstance(serverDao);
             bind(StudioLookupDAO.class).toInstance(studioLookupDao);
+            bind(StudioLookupCache.class).toInstance(studioLookupCache);
             bind(AdminRoleDAO.class).toInstance(roleDao);
             bind(AdminUserDAO.class).toInstance(userDao);
             bind(DefaultStudioRoleDAO.class).toInstance(studioRoleDao);

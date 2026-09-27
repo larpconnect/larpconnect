@@ -8,6 +8,7 @@ import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.common.annotation.Blocking;
+import com.larpconnect.njall.data.cache.StudioLookupCacheService;
 import com.larpconnect.njall.data.session.ActiveSessionFactories;
 import com.larpconnect.njall.server.http.HttpServerService;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ final class ServerBindingModuleTest {
   void configure_providesRequiredBindings() throws Exception {
     var mockFactories = mock(ActiveSessionFactories.class);
     var mockHttpServerService = mock(HttpServerService.class);
+    var cacheService = new TestStudioLookupCacheService();
 
     var mockDependenciesModule =
         new AbstractModule() {
@@ -31,6 +33,7 @@ final class ServerBindingModuleTest {
           protected void configure() {
             bind(ActiveSessionFactories.class).toInstance(mockFactories);
             bind(HttpServerService.class).toInstance(mockHttpServerService);
+            bind(StudioLookupCacheService.class).toInstance(cacheService);
           }
         };
 
