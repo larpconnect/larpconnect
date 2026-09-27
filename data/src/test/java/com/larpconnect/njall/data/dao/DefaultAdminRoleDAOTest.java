@@ -45,8 +45,8 @@ final class DefaultAdminRoleDAOTest {
     var result = dao.findById(roleId);
 
     assertThat(result).isPresent();
-    assertThat(result.get().id()).isEqualTo(roleId);
-    assertThat(result.get().roleName()).isEqualTo("auditor");
+    assertThat(result.orElseThrow().id()).isEqualTo(roleId);
+    assertThat(result.orElseThrow().roleName()).isEqualTo("auditor");
   }
 
   @Test
@@ -74,7 +74,7 @@ final class DefaultAdminRoleDAOTest {
     var result = dao.findByRoleName("auditor");
 
     assertThat(result).isPresent();
-    assertThat(result.get().roleName()).isEqualTo("auditor");
+    assertThat(result.orElseThrow().roleName()).isEqualTo("auditor");
   }
 
   @Test

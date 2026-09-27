@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 /** Default implementation of {@link TracingDirective} using OpenTelemetry. */
 final class DefaultTracingDirective extends AllDirectives implements TracingDirective {
 
-  private static final Logger logger = LoggerFactory.getLogger(DefaultTracingDirective.class);
+  private final Logger logger = LoggerFactory.getLogger(DefaultTracingDirective.class);
   private static final String TRACEPARENT_HEADER = "traceparent";
 
   private final Tracer tracer;

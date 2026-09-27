@@ -54,9 +54,9 @@ final class DefaultAdminUserDAOTest {
     var result = dao.findById(userId);
 
     assertThat(result).isPresent();
-    assertThat(result.get().username()).isEqualTo("admin_test");
-    assertThat(result.get().roles()).hasSize(1);
-    assertThat(result.get().roles().getFirst().roleName()).isEqualTo("auditor");
+    assertThat(result.orElseThrow().username()).isEqualTo("admin_test");
+    assertThat(result.orElseThrow().roles()).hasSize(1);
+    assertThat(result.orElseThrow().roles().getFirst().roleName()).isEqualTo("auditor");
   }
 
   @Test
@@ -75,7 +75,7 @@ final class DefaultAdminUserDAOTest {
     var result = dao.findByUsername("admin_test");
 
     assertThat(result).isPresent();
-    assertThat(result.get().id()).isEqualTo(userId);
+    assertThat(result.orElseThrow().id()).isEqualTo(userId);
   }
 
   @Test

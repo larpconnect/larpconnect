@@ -143,7 +143,7 @@ public final class TelemetryTracingSteps {
   public void theTelemetryResponseShouldIncludeAValidW3cTraceparentHeader() {
     var header = response.headers().firstValue("traceparent");
     assertThat(header).isPresent();
-    assertThat(header.get()).matches(W3C_TRACEPARENT_PATTERN);
+    assertThat(header.orElseThrow()).matches(W3C_TRACEPARENT_PATTERN);
   }
 
   @Then("the telemetry response trace ID should not be {string}")

@@ -61,7 +61,7 @@ final class DefaultStudioLookupDAOTest {
     var result = dao.findById(studioId);
 
     assertThat(result).isPresent();
-    assertThat(result.get().alias()).isEqualTo("valhalla");
+    assertThat(result.orElseThrow().alias()).isEqualTo("valhalla");
 
     var resultActive = dao.findById(studioId, DeletionFilter.ACTIVE_ONLY);
     assertThat(resultActive).isPresent();
@@ -93,7 +93,7 @@ final class DefaultStudioLookupDAOTest {
     var result = dao.findByAlias("valhalla");
 
     assertThat(result).isPresent();
-    assertThat(result.get().studioId()).isEqualTo(studioId);
+    assertThat(result.orElseThrow().studioId()).isEqualTo(studioId);
 
     var resultActive = dao.findByAlias("valhalla", DeletionFilter.ACTIVE_ONLY);
     assertThat(resultActive).isPresent();
@@ -216,7 +216,7 @@ final class DefaultStudioLookupDAOTest {
     var result = dao.softDelete(studioId);
 
     assertThat(result).isPresent();
-    assertThat(result.get().isDeleted()).isTrue();
+    assertThat(result.orElseThrow().isDeleted()).isTrue();
     verify(tx).commit();
   }
 

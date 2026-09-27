@@ -15,6 +15,8 @@ public record CreateUserRequest(
     @JsonProperty("status") AdminUserStatus status,
     @JsonProperty("roles") ImmutableList<String> roles) {
 
+  // Required because Java overload resolution chooses canonical constructor when passing
+  // ImmutableList with null status, or null roles typed as ImmutableList.
   @SuppressWarnings("RedundantNullCheck")
   public CreateUserRequest {
     status = status != null ? status : AdminUserStatus.UNKNOWN;

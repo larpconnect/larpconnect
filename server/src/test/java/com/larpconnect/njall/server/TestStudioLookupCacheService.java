@@ -46,7 +46,7 @@ final class TestStudioLookupCacheService extends AbstractIdleService
   protected void startUp() throws Exception {
     eventLog.add("cache.startUp");
     if (failStart) {
-      throw new RuntimeException("Forced cache start failure");
+      throw new IllegalStateException("Forced cache start failure");
     }
   }
 
@@ -54,7 +54,7 @@ final class TestStudioLookupCacheService extends AbstractIdleService
   protected void shutDown() throws Exception {
     eventLog.add("cache.shutDown");
     if (failStop) {
-      throw new RuntimeException("Forced cache stop failure");
+      throw new IllegalStateException("Forced cache stop failure");
     }
   }
 

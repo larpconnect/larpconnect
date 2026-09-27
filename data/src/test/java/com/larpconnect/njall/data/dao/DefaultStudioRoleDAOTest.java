@@ -46,8 +46,8 @@ final class DefaultStudioRoleDAOTest {
     var result = dao.findById(roleId);
 
     assertThat(result).isPresent();
-    assertThat(result.get().id()).isEqualTo(roleId);
-    assertThat(result.get().name()).isEqualTo("ORGANIZER");
+    assertThat(result.orElseThrow().id()).isEqualTo(roleId);
+    assertThat(result.orElseThrow().name()).isEqualTo("ORGANIZER");
   }
 
   @Test
@@ -65,8 +65,8 @@ final class DefaultStudioRoleDAOTest {
     var result = dao.findByName("ORGANIZER");
 
     assertThat(result).isPresent();
-    assertThat(result.get().id()).isEqualTo(roleId);
-    assertThat(result.get().name()).isEqualTo("ORGANIZER");
+    assertThat(result.orElseThrow().id()).isEqualTo(roleId);
+    assertThat(result.orElseThrow().name()).isEqualTo("ORGANIZER");
   }
 
   @Test
@@ -134,7 +134,7 @@ final class DefaultStudioRoleDAOTest {
     var result = dao.update(roleId, "LEAD_ORGANIZER");
 
     assertThat(result).isPresent();
-    assertThat(result.get().name()).isEqualTo("LEAD_ORGANIZER");
+    assertThat(result.orElseThrow().name()).isEqualTo("LEAD_ORGANIZER");
     verify(session).merge(entity);
     verify(tx).commit();
   }

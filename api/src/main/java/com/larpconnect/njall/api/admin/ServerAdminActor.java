@@ -24,7 +24,7 @@ public final class ServerAdminActor extends AbstractBehavior<ServerAdminCommand>
   private final Logger logger = LoggerFactory.getLogger(ServerAdminActor.class);
   private final ServerDAO serverDao;
 
-  public ServerAdminActor(ActorContext<ServerAdminCommand> context, ServerDAO serverDao) {
+  ServerAdminActor(ActorContext<ServerAdminCommand> context, ServerDAO serverDao) {
     super(context);
     this.serverDao = serverDao;
   }

@@ -25,7 +25,6 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
 
   @Override
   public Optional<AdminUser> findById(UUID id) {
-    requireNonNull(id, "id cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var entity = session.find(AdminUserEntity.class, id);
       return Optional.ofNullable(entity).map(DefaultAdminUserDAO::toUser);
@@ -34,7 +33,6 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
 
   @Override
   public Optional<AdminUser> findByUsername(String username) {
-    requireNonNull(username, "username cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var hql = "from AdminUserEntity u left join fetch u.roles where u.username = :username";
       var entity =
@@ -63,9 +61,6 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
     if (status == AdminUserStatus.UNKNOWN) {
       throw new IllegalArgumentException("Cannot create admin user with UNKNOWN status");
     }
-    requireNonNull(username, "username cannot be null");
-    requireNonNull(status, "status cannot be null");
-    requireNonNull(roleIds, "roleIds cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
@@ -105,8 +100,6 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
 
   @Override
   public AdminUser addRole(UUID userId, UUID roleId) {
-    requireNonNull(userId, "userId cannot be null");
-    requireNonNull(roleId, "roleId cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
@@ -141,8 +134,6 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
 
   @Override
   public AdminUser removeRole(UUID userId, UUID roleId) {
-    requireNonNull(userId, "userId cannot be null");
-    requireNonNull(roleId, "roleId cannot be null");
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {

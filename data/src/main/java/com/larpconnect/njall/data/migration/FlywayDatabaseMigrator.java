@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Flyway-backed implementation of {@link DatabaseMigrator} with transient connection lifecycles.
  */
-public final class FlywayDatabaseMigrator implements DatabaseMigrator {
+final class FlywayDatabaseMigrator implements DatabaseMigrator {
 
   private final Logger logger = LoggerFactory.getLogger(FlywayDatabaseMigrator.class);
 

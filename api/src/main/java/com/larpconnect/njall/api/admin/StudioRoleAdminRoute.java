@@ -76,7 +76,7 @@ public final class StudioRoleAdminRoute extends AllDirectives {
                             new AdminErrorResponse(404, "Invalid role UUID: " + idStr),
                             Jackson.marshaller(objectMapper));
                       }
-                      var roleId = maybeUuid.get();
+                      var roleId = maybeUuid.orElseThrow();
                       return concat(
                           get(() -> handleGetRole(roleId)),
                           patch(

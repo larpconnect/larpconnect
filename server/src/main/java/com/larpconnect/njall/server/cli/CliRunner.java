@@ -40,20 +40,7 @@ public final class CliRunner {
 
   private static IFactory createCommandFactory(
       ServerCommand serverCommand, MigrateCommand migrateCommand) {
-    return new IFactory() {
-      @Override
-      // Safe unchecked cast mapping known command classes to explicit command instances
-      @SuppressWarnings("unchecked")
-      public <K> K create(Class<K> cls) throws Exception {
-        if (cls == ServerCommand.class) {
-          return (K) serverCommand;
-        }
-        if (cls == MigrateCommand.class) {
-          return (K) migrateCommand;
-        }
-        return CommandLine.defaultFactory().create(cls);
-      }
-    };
+    return new DefaultCommandFactory(serverCommand, migrateCommand);
   }
 
   /**
@@ -124,5 +111,26 @@ public final class CliRunner {
       }
     }
     return false;
+  }
+
+  private static final class DefaultCommandFactory implements IFactory {
+    private final ServerCommand serverCommand;
+    private final MigrateCommand migrateCommand;
+
+    DefaultCommandFactory(ServerCommand serverCommand, MigrateCommand migrateCommand) {
+      this.serverCommand = serverCommand;
+      this.migrateCommand = migrateCommand;
+    }
+
+    @Override
+    public <K> K create(Class<K> cls) throws Exception {
+      if (cls == ServerCommand.class) {
+        return cls.cast(serverCommand);
+      }
+      if (cls == MigrateCommand.class) {
+        return cls.cast(migrateCommand);
+      }
+      return CommandLine.defaultFactory().create(cls);
+    }
   }
 }

@@ -13,6 +13,8 @@ public record RoleAssignmentRequest(
     @JsonProperty("roleId") Optional<UUID> roleId,
     @JsonProperty("roleName") Optional<String> roleName) {
 
+  // Required because Java overload resolution chooses canonical constructor when passing
+  // Optional references directly.
   @SuppressWarnings("RedundantNullCheck")
   public RoleAssignmentRequest {
     roleId = roleId != null ? roleId : Optional.empty();

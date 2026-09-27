@@ -18,7 +18,7 @@ public final class StudioActor extends AbstractBehavior<StudioCommand> {
   private final Logger logger = LoggerFactory.getLogger(StudioActor.class);
   private final StudioDAO studioDao;
 
-  public StudioActor(ActorContext<StudioCommand> context, StudioDAO studioDao) {
+  StudioActor(ActorContext<StudioCommand> context, StudioDAO studioDao) {
     super(context);
     this.studioDao = studioDao;
   }
@@ -38,15 +38,15 @@ public final class StudioActor extends AbstractBehavior<StudioCommand> {
   }
 
   private void fetchAndReplyStudio(StudioLookup lookup, ActorRef<StudioActorResponse> replyTo) {
-    var maybeStudio = studioDao.findById(lookup.tenantId());
-    if (maybeStudio.isPresent()) {
-      var studio = maybeStudio.get();
-      var response = createStudioResponse(lookup, studio);
-      replyTo.tell(StudioActorResponse.success(response));
-    } else {
-      replyTo.tell(
-          StudioActorResponse.notFound("Studio not found for tenant: " + lookup.tenantId()));
-    }
+    studioDao
+        .findById(lookup.tenantId())
+        .ifPresentOrElse(
+            studio ->
+                replyTo.tell(StudioActorResponse.success(createStudioResponse(lookup, studio))),
+            () ->
+                replyTo.tell(
+                    StudioActorResponse.notFound(
+                        "Studio not found for tenant: " + lookup.tenantId())));
   }
 
   private StudioResponse createStudioResponse(StudioLookup lookup, Studio studio) {

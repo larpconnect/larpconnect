@@ -20,13 +20,13 @@ description: Guidance for high quality java code.
 ### Core Architectural Principles
 
 - Type and Null Safety: Developers must prioritize rigorous type safety and the
-  mitigation of null-related vulnerabilities. The use of Optional<T> is
+  mitigation of null-related vulnerabilities. The use of `Optional<T>` is
   mandatory for return types where a value may be absent. Direct invocation of
   .get() on an Optional instance is prohibited; developers should employ
   `orElseThrow(Supplier)` or equivalent safe-access patterns. Assume values that
   are not annotated as `Nullable` or explicitly contracted as such in some other
   way are non-null by default.
-- Modern Java Implementation: All source code shall target JDK 21 or later.
+- Modern Java Implementation: All source code shall target JDK 25 or later.
   Implementation should leverage contemporary features, specifically Records for
   immutable data carriers, Sealed Classes and Interfaces for restricted type
   hierarchies, and Pattern Matching within switch expressions to enhance code

@@ -25,7 +25,7 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
   private final AdminUserDAO userDao;
   private final AdminRoleDAO roleDao;
 
-  public UserAdminActor(
+  UserAdminActor(
       ActorContext<UserAdminCommand> context, AdminUserDAO userDao, AdminRoleDAO roleDao) {
     super(context);
     this.userDao = userDao;
@@ -48,7 +48,7 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
     try {
       var validationError = validateCreateUserCommand(cmd);
       if (validationError.isPresent()) {
-        cmd.replyTo().tell(validationError.get());
+        cmd.replyTo().tell(validationError.orElseThrow());
         return this;
       }
       return switch (resolveRoleIds(cmd.initialRoles())) {
@@ -83,12 +83,13 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
 
   private Behavior<UserAdminCommand> onGetUserById(UserAdminCommand.GetUserById cmd) {
     try {
-      var user = userDao.findById(cmd.userId());
-      if (user.isPresent()) {
-        cmd.replyTo().tell(UserAdminResponse.single(user.get()));
-      } else {
-        cmd.replyTo().tell(UserAdminResponse.notFound("User not found: " + cmd.userId()));
-      }
+      userDao
+          .findById(cmd.userId())
+          .ifPresentOrElse(
+              user -> cmd.replyTo().tell(UserAdminResponse.single(user)),
+              () ->
+                  cmd.replyTo()
+                      .tell(UserAdminResponse.notFound("User not found: " + cmd.userId())));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get user by id", e);
     }
@@ -97,12 +98,13 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
 
   private Behavior<UserAdminCommand> onGetUserByUsername(UserAdminCommand.GetUserByUsername cmd) {
     try {
-      var user = userDao.findByUsername(cmd.username());
-      if (user.isPresent()) {
-        cmd.replyTo().tell(UserAdminResponse.single(user.get()));
-      } else {
-        cmd.replyTo().tell(UserAdminResponse.notFound("User not found: " + cmd.username()));
-      }
+      userDao
+          .findByUsername(cmd.username())
+          .ifPresentOrElse(
+              user -> cmd.replyTo().tell(UserAdminResponse.single(user)),
+              () ->
+                  cmd.replyTo()
+                      .tell(UserAdminResponse.notFound("User not found: " + cmd.username())));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get user by username", e);
     }
@@ -122,8 +124,8 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
         cmd.replyTo().tell(UserAdminResponse.badRequest("Role not found: " + missing));
         return this;
       }
-      var user = maybeUser.get();
-      var role = maybeRole.get();
+      var user = maybeUser.orElseThrow();
+      var role = maybeRole.orElseThrow();
       boolean alreadyHas = user.roles().stream().anyMatch(r -> r.id().equals(role.id()));
       if (alreadyHas) {
         cmd.replyTo().tell(UserAdminResponse.single(user));
@@ -150,8 +152,8 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
         cmd.replyTo().tell(UserAdminResponse.badRequest("Role not found: " + missing));
         return this;
       }
-      var user = maybeUser.get();
-      var role = maybeRole.get();
+      var user = maybeUser.orElseThrow();
+      var role = maybeRole.orElseThrow();
       boolean has = user.roles().stream().anyMatch(r -> r.id().equals(role.id()));
       if (!has) {
         cmd.replyTo().tell(UserAdminResponse.single(user));
@@ -171,13 +173,7 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
   }
 
   private Optional<AdminRole> resolveRole(Optional<UUID> roleId, Optional<String> roleName) {
-    if (roleId.isPresent()) {
-      return roleDao.findById(roleId.get());
-    }
-    if (roleName.isPresent()) {
-      return roleDao.findByRoleName(roleName.get());
-    }
-    return Optional.empty();
+    return roleId.flatMap(roleDao::findById).or(() -> roleName.flatMap(roleDao::findByRoleName));
   }
 
   private Optional<AdminRole> resolveRoleByIdentifier(String identifier) {
@@ -212,7 +208,7 @@ public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
       if (maybeRole.isEmpty()) {
         return new RoleResolution.MissingRole(roleStr);
       }
-      roleIds.add(maybeRole.get().id());
+      roleIds.add(maybeRole.orElseThrow().id());
     }
     return new RoleResolution.Success(roleIds.build());
   }
