@@ -30,7 +30,7 @@ opentelemetry-instrumentation = "2.31.1-alpha"
 # Testing Frameworks
 assertj = "3.27.7"
 junit = "6.1.3"
-mockito = "5.23.0"
+mockito = "5.24.0"
 cucumber = "7.34.8"
 archunit = "1.5.0"
 
