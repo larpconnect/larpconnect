@@ -154,6 +154,133 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
+  /api/studios/{studio-id}/v1/links:
+    post:
+      summary: Create a studio link
+      description: Creates a new external link resource for the specified studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLinkRequest'
+      responses:
+        '201':
+          description: Link created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/links/{id}:
+    get:
+      summary: Retrieve a studio link
+      description: Fetches a single external link by ID for the specified studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Link UUID.
+      responses:
+        '200':
+          description: Link retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update a studio link (AIP-134)
+      description: Updates an existing studio link resource conforming to Google AIP-134.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Link UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of fields to update (e.g. 'url,summary').
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLinkRequest'
+      responses:
+        '200':
+          description: Link updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft delete a studio link
+      description: Soft deletes an existing studio link resource.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Link UUID.
+      responses:
+        '204':
+          description: Link deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
   /api/admin/v1/studio-roles:
     get:
       summary: List default studio roles
@@ -733,3 +860,77 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ServerContact'
+
+    Link:
+      type: object
+      required:
+        - id
+        - linkType
+        - url
+        - mediaType
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        linkType:
+          type: string
+          example: "website"
+        url:
+          type: string
+          format: uri
+          example: "https://valiant.example.com"
+        mediaType:
+          type: string
+          example: "text/html"
+        summary:
+          type: string
+          example: "Official Studio Homepage"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-09-28T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-09-28T12:00:00Z"
+
+    CreateLinkRequest:
+      type: object
+      required:
+        - linkType
+        - url
+      properties:
+        linkType:
+          type: string
+          example: "website"
+        url:
+          type: string
+          format: uri
+          example: "https://valiant.example.com"
+        mediaType:
+          type: string
+          default: "text/html"
+          example: "text/html"
+        summary:
+          type: string
+          example: "Official Studio Homepage"
+
+    UpdateLinkRequest:
+      type: object
+      properties:
+        linkType:
+          type: string
+          example: "website"
+        url:
+          type: string
+          format: uri
+          example: "https://updated.example.com"
+        mediaType:
+          type: string
+          example: "text/html"
+        summary:
+          type: string
+          example: "Updated Homepage"
