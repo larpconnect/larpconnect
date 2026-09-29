@@ -17,7 +17,7 @@ import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.util.Modules;
-import com.larpconnect.njall.api.admin.HealthCheckActorFactory;
+import com.larpconnect.njall.api.admin.health.HealthCheckActorFactory;
 import com.larpconnect.njall.common.config.ServerConfig;
 import com.larpconnect.njall.data.session.SessionFactoryFactory;
 import com.larpconnect.njall.server.ServerModule;

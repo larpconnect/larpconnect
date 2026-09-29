@@ -1,0 +1,317 @@
+package com.larpconnect.njall.api.admin.studios;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.google.common.collect.ImmutableList;
+import com.larpconnect.njall.data.cache.StudioLookupCache;
+import com.larpconnect.njall.data.dao.StudioLookupDAO;
+import com.larpconnect.njall.data.domain.DeletionFilter;
+import com.larpconnect.njall.data.domain.StudioLookup;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
+import org.apache.pekko.actor.testkit.typed.javadsl.TestInbox;
+import org.apache.pekko.actor.typed.Behavior;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+final class StudioAdminActorTest {
+
+  private final UUID tenantId = UUID.randomUUID();
+  private final UUID studioId = UUID.randomUUID();
+  private final Instant now = Instant.now();
+
+  private Behavior<StudioAdminCommand> createBehavior(
+      StudioLookupDAO studioDao, StudioLookupCache cache) {
+    return Behaviors.setup(context -> new StudioAdminActor(context, studioDao, cache));
+  }
+
+  private StudioLookup sampleStudio() {
+    return new StudioLookup(tenantId, studioId, "valhalla", now, now, Optional.empty());
+  }
+
+  @Test
+  @DisplayName("onCreateStudio creates studio and refreshes cache when alias is valid and unique")
+  void onCreateStudio_success() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    var studio = sampleStudio();
+    when(studioDao.findByAlias("valhalla", DeletionFilter.INCLUDE_DELETED))
+        .thenReturn(Optional.empty());
+    when(studioDao.create("valhalla", "valhalla")).thenReturn(studio);
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(new StudioAdminCommand.CreateStudio("valhalla", inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.StudioSingle.class);
+    assertThat(((StudioAdminResponse.StudioSingle) response).studio().alias())
+        .isEqualTo("valhalla");
+    verify(cache).refresh();
+  }
+
+  @Test
+  @DisplayName("onCreateStudio creates studio with custom name and refreshes cache")
+  void onCreateStudio_withCustomName_success() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    var studio = sampleStudio();
+    when(studioDao.findByAlias("valhalla", DeletionFilter.INCLUDE_DELETED))
+        .thenReturn(Optional.empty());
+    when(studioDao.create("valhalla", "Valhalla Gaming")).thenReturn(studio);
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(
+        new StudioAdminCommand.CreateStudio(
+            "valhalla", Optional.of("Valhalla Gaming"), inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.StudioSingle.class);
+    verify(cache).refresh();
+  }
+
+  @Test
+  @DisplayName("onCreateStudio falls back to alias when custom name is blank and refreshes cache")
+  void onCreateStudio_withBlankCustomName_fallsBackToAlias() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    var studio = sampleStudio();
+    when(studioDao.findByAlias("valhalla", DeletionFilter.INCLUDE_DELETED))
+        .thenReturn(Optional.empty());
+    when(studioDao.create("valhalla", "valhalla")).thenReturn(studio);
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(
+        new StudioAdminCommand.CreateStudio("valhalla", Optional.of("   "), inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.StudioSingle.class);
+    verify(cache).refresh();
+  }
+
+  @Test
+  @DisplayName("onCreateStudio rejects invalid alias format without refreshing cache")
+  void onCreateStudio_invalidAlias_rejects() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(new StudioAdminCommand.CreateStudio("Invalid-Alias", inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.BadRequest.class);
+    verify(cache, never()).refresh();
+  }
+
+  @Test
+  @DisplayName("onCreateStudio rejects duplicate alias with conflict without refreshing cache")
+  void onCreateStudio_duplicateAlias_conflict() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    when(studioDao.findByAlias("valhalla", DeletionFilter.INCLUDE_DELETED))
+        .thenReturn(Optional.of(sampleStudio()));
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(new StudioAdminCommand.CreateStudio("valhalla", inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.Conflict.class);
+    verify(cache, never()).refresh();
+  }
+
+  @Test
+  @DisplayName("onCreateStudio replies with error when DAO throws exception without refreshing")
+  void onCreateStudio_daoError() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    when(studioDao.findByAlias(anyString(), any(DeletionFilter.class)))
+        .thenThrow(new RuntimeException("DB down"));
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(new StudioAdminCommand.CreateStudio("valhalla", inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.Failure.class);
+    verify(cache, never()).refresh();
+  }
+
+  @Test
+  @DisplayName("onListStudios returns studio list")
+  void onListStudios_success() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    var studio = sampleStudio();
+    when(studioDao.list(DeletionFilter.ACTIVE_ONLY)).thenReturn(ImmutableList.of(studio));
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(new StudioAdminCommand.ListStudios(DeletionFilter.ACTIVE_ONLY, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.StudioList.class);
+    assertThat(((StudioAdminResponse.StudioList) response).studios()).containsExactly(studio);
+  }
+
+  @Test
+  @DisplayName("onListStudios replies with error on DAO failure")
+  void onListStudios_daoError() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    when(studioDao.list(any(DeletionFilter.class))).thenThrow(new RuntimeException("DB down"));
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(new StudioAdminCommand.ListStudios(DeletionFilter.ACTIVE_ONLY, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.Failure.class);
+  }
+
+  @Test
+  @DisplayName("onGetStudioById returns single when found and notFound when missing")
+  void onGetStudioById_foundAndNotFound() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    var studio = sampleStudio();
+    when(studioDao.findById(studioId, DeletionFilter.ACTIVE_ONLY)).thenReturn(Optional.of(studio));
+    var missingId = UUID.randomUUID();
+    when(studioDao.findById(missingId, DeletionFilter.ACTIVE_ONLY)).thenReturn(Optional.empty());
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(
+        new StudioAdminCommand.GetStudioById(studioId, DeletionFilter.ACTIVE_ONLY, inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(StudioAdminResponse.StudioSingle.class);
+
+    testKit.run(
+        new StudioAdminCommand.GetStudioById(
+            missingId, DeletionFilter.ACTIVE_ONLY, inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(StudioAdminResponse.NotFound.class);
+  }
+
+  @Test
+  @DisplayName("onGetStudioById replies with error on DAO failure")
+  void onGetStudioById_daoError() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    when(studioDao.findById(any(), any(DeletionFilter.class)))
+        .thenThrow(new RuntimeException("DB down"));
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(
+        new StudioAdminCommand.GetStudioById(studioId, DeletionFilter.ACTIVE_ONLY, inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(StudioAdminResponse.Failure.class);
+  }
+
+  @Test
+  @DisplayName("onGetStudioByAlias returns single when found and notFound when missing")
+  void onGetStudioByAlias_foundAndNotFound() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    var studio = sampleStudio();
+    when(studioDao.findByAlias("valhalla", DeletionFilter.ACTIVE_ONLY))
+        .thenReturn(Optional.of(studio));
+    when(studioDao.findByAlias("unknown", DeletionFilter.ACTIVE_ONLY)).thenReturn(Optional.empty());
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(
+        new StudioAdminCommand.GetStudioByAlias(
+            "valhalla", DeletionFilter.ACTIVE_ONLY, inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(StudioAdminResponse.StudioSingle.class);
+
+    testKit.run(
+        new StudioAdminCommand.GetStudioByAlias(
+            "unknown", DeletionFilter.ACTIVE_ONLY, inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(StudioAdminResponse.NotFound.class);
+  }
+
+  @Test
+  @DisplayName("onGetStudioByAlias replies with error on DAO failure")
+  void onGetStudioByAlias_daoError() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    when(studioDao.findByAlias(anyString(), any(DeletionFilter.class)))
+        .thenThrow(new RuntimeException("DB down"));
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(
+        new StudioAdminCommand.GetStudioByAlias(
+            "valhalla", DeletionFilter.ACTIVE_ONLY, inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(StudioAdminResponse.Failure.class);
+  }
+
+  @Test
+  @DisplayName("DefaultStudioAdminActorFactory creates behavior successfully")
+  void factory_createsBehavior() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    var factory = new DefaultStudioAdminActorFactory(studioDao, cache);
+    assertThat(factory.create()).isNotNull();
+  }
+
+  @Test
+  @DisplayName("handleError falls back to default reason when exception message is null")
+  void onCreateStudio_daoErrorWithNullMessage() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    when(studioDao.findByAlias(anyString(), any(DeletionFilter.class)))
+        .thenThrow(new RuntimeException());
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(new StudioAdminCommand.CreateStudio("valhalla", inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.Failure.class);
+    assertThat(((StudioAdminResponse.Failure) response).message())
+        .contains("Error executing create studio");
+  }
+
+  @Test
+  @DisplayName("handleError falls back to default reason when exception message is empty")
+  void onCreateStudio_daoErrorWithEmptyMessage() {
+    var studioDao = mock(StudioLookupDAO.class);
+    var cache = mock(StudioLookupCache.class);
+    when(studioDao.findByAlias(anyString(), any(DeletionFilter.class)))
+        .thenThrow(new RuntimeException(""));
+
+    var testKit = BehaviorTestKit.create(createBehavior(studioDao, cache));
+    TestInbox<StudioAdminResponse> inbox = TestInbox.create();
+
+    testKit.run(new StudioAdminCommand.CreateStudio("valhalla", inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(StudioAdminResponse.Failure.class);
+    assertThat(((StudioAdminResponse.Failure) response).message())
+        .contains("Error executing create studio");
+  }
+}

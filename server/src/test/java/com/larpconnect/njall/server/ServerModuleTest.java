@@ -18,7 +18,7 @@ import com.google.inject.ProvisionException;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
 import com.larpconnect.njall.api.admin.AdminRoute;
-import com.larpconnect.njall.api.admin.ServerAdminCommand;
+import com.larpconnect.njall.api.admin.servers.ServerAdminCommand;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.session.SessionFactoryFactory;

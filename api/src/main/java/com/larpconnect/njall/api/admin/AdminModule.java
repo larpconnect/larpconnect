@@ -1,90 +1,32 @@
 package com.larpconnect.njall.api.admin;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
+import com.larpconnect.njall.api.admin.common.AdminCommonModule;
+import com.larpconnect.njall.api.admin.health.HealthAdminModule;
+import com.larpconnect.njall.api.admin.roles.RolesAdminModule;
+import com.larpconnect.njall.api.admin.servers.ServersAdminModule;
+import com.larpconnect.njall.api.admin.studioroles.StudioRolesAdminModule;
+import com.larpconnect.njall.api.admin.studios.StudiosAdminModule;
+import com.larpconnect.njall.api.admin.users.UsersAdminModule;
 import com.larpconnect.njall.api.http.RouteProvider;
-import com.larpconnect.njall.common.annotation.Blocking;
-import com.larpconnect.njall.common.telemetry.ApiCall;
-import io.dropwizard.metrics5.health.HealthCheck;
-import org.apache.pekko.actor.typed.ActorRef;
-import org.apache.pekko.actor.typed.ActorSystem;
-import org.apache.pekko.actor.typed.Props;
 
-/** Guice module configuring administrative routes, health checks, and actor bindings. */
+/** Guice module configuring administrative routes and installing all admin submodules. */
 public final class AdminModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    Multibinder.newSetBinder(binder(), HealthCheck.class).addBinding().to(PekkoHealthCheck.class);
+    install(new AdminCommonModule());
+    install(new HealthAdminModule());
+    install(new ServersAdminModule());
+    install(new StudiosAdminModule());
+    install(new StudioRolesAdminModule());
+    install(new UsersAdminModule());
+    install(new RolesAdminModule());
+
     bind(AdminRoute.class).to(DefaultAdminRoute.class);
-    bind(StudioAdminRoute.class);
-    bind(StudioRoleAdminRoute.class);
-    bind(UserAdminRoute.class);
-    bind(RoleAdminRoute.class);
     Multibinder.newSetBinder(binder(), RouteProvider.class)
         .addBinding()
         .to(DefaultAdminRoute.class);
-    bind(HealthCheckActorFactory.class).to(DefaultHealthCheckActorFactory.class);
-    bind(ServerAdminActorFactory.class).to(DefaultServerAdminActorFactory.class);
-    bind(StudioAdminActorFactory.class).to(DefaultStudioAdminActorFactory.class);
-    bind(StudioRoleAdminActorFactory.class).to(DefaultStudioRoleAdminActorFactory.class);
-    bind(RoleAdminActorFactory.class).to(DefaultRoleAdminActorFactory.class);
-    bind(UserAdminActorFactory.class).to(DefaultUserAdminActorFactory.class);
-  }
-
-  @Provides
-  @Singleton
-  ObjectMapper provideObjectMapper() {
-    return JsonMapper.builder()
-        .findAndAddModules()
-        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-        .build();
-  }
-
-  @Provides
-  @Singleton
-  ActorRef<ApiCall<HealthCheckCommand>> provideHealthCheckActor(
-      ActorSystem<Void> system, HealthCheckActorFactory factory) {
-    return system.systemActorOf(factory.create(), "healthCheckActor", Props.empty());
-  }
-
-  @Provides
-  @Singleton
-  ActorRef<ServerAdminCommand> provideServerAdminActor(
-      ActorSystem<Void> system, ServerAdminActorFactory factory, @Blocking Props dispatcher) {
-    return system.systemActorOf(factory.create(), "serverAdminActor", dispatcher);
-  }
-
-  @Provides
-  @Singleton
-  ActorRef<StudioAdminCommand> provideStudioAdminActor(
-      ActorSystem<Void> system, StudioAdminActorFactory factory, @Blocking Props dispatcher) {
-    return system.systemActorOf(factory.create(), "studioAdminActor", dispatcher);
-  }
-
-  @Provides
-  @Singleton
-  ActorRef<RoleAdminCommand> provideRoleAdminActor(
-      ActorSystem<Void> system, RoleAdminActorFactory factory, @Blocking Props dispatcher) {
-    return system.systemActorOf(factory.create(), "roleAdminActor", dispatcher);
-  }
-
-  @Provides
-  @Singleton
-  ActorRef<UserAdminCommand> provideUserAdminActor(
-      ActorSystem<Void> system, UserAdminActorFactory factory, @Blocking Props dispatcher) {
-    return system.systemActorOf(factory.create(), "userAdminActor", dispatcher);
-  }
-
-  @Provides
-  @Singleton
-  ActorRef<StudioRoleAdminCommand> provideStudioRoleAdminActor(
-      ActorSystem<Void> system, StudioRoleAdminActorFactory factory, @Blocking Props dispatcher) {
-    return system.systemActorOf(factory.create(), "studioRoleAdminActor", dispatcher);
   }
 }

@@ -37,7 +37,7 @@ archunit = "1.5.1"
 # Build Quality Plugins
 spotless = "8.10.2"
 spotbugs = "6.5.8"
-errorprone-plugin = "5.1.0"
+errorprone-plugin = "5.1.1"
 
 [libraries]
 guava-bom = { group = "com.google.guava", name = "guava-bom", version.ref = "guava"}
