@@ -35,7 +35,7 @@ cucumber = "8.0.2"
 archunit = "1.5.1"
 
 # Build Quality Plugins
-spotless = "8.10.2"
+spotless = "8.10.3"
 spotbugs = "6.5.8"
 errorprone-plugin = "5.1.1"
 
