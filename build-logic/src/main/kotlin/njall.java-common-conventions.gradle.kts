@@ -74,6 +74,7 @@ dependencies {
 tasks.withType<JavaCompile>().configureEach {
     options.errorprone {
         isEnabled = true
+        disableAllWarnings = false
         disableWarningsInGeneratedCode.set(true) // Exempt generated code
         error(
             "AddNullMarkedToPackageInfo",

@@ -1,0 +1,282 @@
+package com.larpconnect.njall.api.admin.users;
+
+import static java.util.Objects.requireNonNull;
+import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
+import com.larpconnect.njall.api.admin.common.AdminErrorResponse;
+import com.larpconnect.njall.api.admin.common.AdminValidation;
+import com.larpconnect.njall.api.admin.roles.RoleAssignmentRequest;
+import java.time.Duration;
+import java.util.concurrent.CompletionStage;
+import org.apache.pekko.actor.typed.ActorRef;
+import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.model.StatusCode;
+import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.PathMatchers;
+import org.apache.pekko.http.javadsl.server.Route;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scala.util.Try;
+
+/** HTTP route handling user management and role assignment operations. */
+public final class UserAdminRoute extends AllDirectives {
+
+  private final Logger logger = LoggerFactory.getLogger(UserAdminRoute.class);
+  private static final String ADD_ROLE_SUFFIX = ":addRole";
+  private static final String REMOVE_ROLE_SUFFIX = ":removeRole";
+
+  private final ActorRef<UserAdminCommand> userAdminActor;
+  private final ActorSystem<Void> system;
+  private final ObjectMapper objectMapper;
+  private final Duration askTimeout;
+
+  @Inject
+  UserAdminRoute(
+      ActorRef<UserAdminCommand> userAdminActor,
+      ActorSystem<Void> system,
+      ObjectMapper objectMapper) {
+    this(userAdminActor, system, objectMapper, Duration.ofSeconds(20));
+  }
+
+  /**
+   * Package-private constructor allowing custom ask timeouts during unit testing.
+   *
+   * @param userAdminActor actor handling user administration commands
+   * @param system typed actor system
+   * @param objectMapper Jackson object mapper
+   * @param askTimeout timeout duration for ask operations
+   */
+  UserAdminRoute(
+      ActorRef<UserAdminCommand> userAdminActor,
+      ActorSystem<Void> system,
+      ObjectMapper objectMapper,
+      Duration askTimeout) {
+    this.userAdminActor = requireNonNull(userAdminActor, "userAdminActor cannot be null");
+    this.system = requireNonNull(system, "system cannot be null");
+    this.objectMapper = requireNonNull(objectMapper, "objectMapper cannot be null");
+    this.askTimeout = requireNonNull(askTimeout, "askTimeout cannot be null");
+  }
+
+  /**
+   * Pure factory method constructing a {@link UserAdminRoute} instance.
+   *
+   * @param userAdminActor The user admin actor reference.
+   * @param system The ActorSystem.
+   * @param objectMapper The ObjectMapper for JSON marshalling.
+   * @return A configured route instance.
+   */
+  public static UserAdminRoute create(
+      ActorRef<UserAdminCommand> userAdminActor,
+      ActorSystem<Void> system,
+      ObjectMapper objectMapper) {
+    return new UserAdminRoute(userAdminActor, system, objectMapper);
+  }
+
+  /**
+   * Pure factory method constructing a {@link UserAdminRoute} instance with a custom ask timeout.
+   *
+   * @param userAdminActor The user admin actor reference.
+   * @param system The ActorSystem.
+   * @param objectMapper The ObjectMapper for JSON marshalling.
+   * @param askTimeout The custom ask timeout duration.
+   * @return A configured route instance.
+   */
+  public static UserAdminRoute create(
+      ActorRef<UserAdminCommand> userAdminActor,
+      ActorSystem<Void> system,
+      ObjectMapper objectMapper,
+      Duration askTimeout) {
+    return new UserAdminRoute(userAdminActor, system, objectMapper, askTimeout);
+  }
+
+  public Route route() {
+    return pathPrefix(
+        PathMatchers.separateOnSlashes("api/admin/v1/users"),
+        () ->
+            concat(
+                pathEndOrSingleSlash(
+                    () ->
+                        concat(
+                            get(this::handleListUsers),
+                            post(
+                                () ->
+                                    entity(
+                                        Jackson.unmarshaller(objectMapper, CreateUserRequest.class),
+                                        this::handleCreateUser)))),
+                path(PathMatchers.segment(), this::handleUserSegment),
+                pathPrefix(
+                    PathMatchers.segment(),
+                    id ->
+                        concat(
+                            path(
+                                ADD_ROLE_SUFFIX,
+                                () ->
+                                    post(
+                                        () ->
+                                            entity(
+                                                Jackson.unmarshaller(
+                                                    objectMapper, RoleAssignmentRequest.class),
+                                                req -> handleAddRole(id, req)))),
+                            path(
+                                REMOVE_ROLE_SUFFIX,
+                                () ->
+                                    post(
+                                        () ->
+                                            entity(
+                                                Jackson.unmarshaller(
+                                                    objectMapper, RoleAssignmentRequest.class),
+                                                req -> handleRemoveRole(id, req))))))));
+  }
+
+  private Route handleUserSegment(String segment) {
+    if (segment.endsWith(ADD_ROLE_SUFFIX)) {
+      var id = segment.substring(0, segment.length() - ADD_ROLE_SUFFIX.length());
+      return post(
+          () ->
+              entity(
+                  Jackson.unmarshaller(objectMapper, RoleAssignmentRequest.class),
+                  req -> handleAddRole(id, req)));
+    }
+    if (segment.endsWith(REMOVE_ROLE_SUFFIX)) {
+      var id = segment.substring(0, segment.length() - REMOVE_ROLE_SUFFIX.length());
+      return post(
+          () ->
+              entity(
+                  Jackson.unmarshaller(objectMapper, RoleAssignmentRequest.class),
+                  req -> handleRemoveRole(id, req)));
+    }
+    return get(() -> handleGetUser(segment));
+  }
+
+  private Route handleCreateUser(CreateUserRequest request) {
+    return onComplete(() -> askCreateUser(request), this::mapCreateResponse);
+  }
+
+  private CompletionStage<UserAdminResponse> askCreateUser(CreateUserRequest request) {
+    return ask(
+        userAdminActor,
+        replyTo ->
+            new UserAdminCommand.CreateUser(
+                request.username(), request.status(), request.roles(), replyTo),
+        askTimeout,
+        system.scheduler());
+  }
+
+  private Route handleListUsers() {
+    return onComplete(this::askListUsers, this::mapOkResponse);
+  }
+
+  private CompletionStage<UserAdminResponse> askListUsers() {
+    return ask(userAdminActor, UserAdminCommand.ListUsers::new, askTimeout, system.scheduler());
+  }
+
+  private Route handleGetUser(String identifier) {
+    return onComplete(() -> askGetUser(identifier), this::mapOkResponse);
+  }
+
+  private CompletionStage<UserAdminResponse> askGetUser(String identifier) {
+    var maybeUuid = AdminValidation.tryParseUuid(identifier);
+    return ask(
+        userAdminActor,
+        replyTo ->
+            maybeUuid
+                .map(uuid -> (UserAdminCommand) new UserAdminCommand.GetUserById(uuid, replyTo))
+                .orElseGet(() -> new UserAdminCommand.GetUserByUsername(identifier, replyTo)),
+        askTimeout,
+        system.scheduler());
+  }
+
+  private Route handleAddRole(String userIdentifier, RoleAssignmentRequest req) {
+    return onComplete(() -> askAddRole(userIdentifier, req), this::mapOkResponse);
+  }
+
+  private CompletionStage<UserAdminResponse> askAddRole(
+      String userIdentifier, RoleAssignmentRequest req) {
+    return ask(
+        userAdminActor,
+        replyTo ->
+            new UserAdminCommand.AddRole(userIdentifier, req.roleId(), req.roleName(), replyTo),
+        askTimeout,
+        system.scheduler());
+  }
+
+  private Route handleRemoveRole(String userIdentifier, RoleAssignmentRequest req) {
+    return onComplete(() -> askRemoveRole(userIdentifier, req), this::mapOkResponse);
+  }
+
+  private CompletionStage<UserAdminResponse> askRemoveRole(
+      String userIdentifier, RoleAssignmentRequest req) {
+    return ask(
+        userAdminActor,
+        replyTo ->
+            new UserAdminCommand.RemoveRole(userIdentifier, req.roleId(), req.roleName(), replyTo),
+        askTimeout,
+        system.scheduler());
+  }
+
+  private Route mapCreateResponse(Try<UserAdminResponse> responseTry) {
+    if (responseTry.isFailure()) {
+      return handleActorFailure(responseTry.failed().get());
+    }
+    return mapSuccessResponse(responseTry.get(), StatusCodes.CREATED);
+  }
+
+  private Route mapOkResponse(Try<UserAdminResponse> responseTry) {
+    if (responseTry.isFailure()) {
+      return handleActorFailure(responseTry.failed().get());
+    }
+    return mapSuccessResponse(responseTry.get(), StatusCodes.OK);
+  }
+
+  private Route handleActorFailure(Throwable error) {
+    logger.error("User admin actor request failed", error);
+    return complete(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        new AdminErrorResponse(500, "Internal server error"),
+        Jackson.marshaller(objectMapper));
+  }
+
+  private Route mapSuccessResponse(UserAdminResponse response, StatusCode successStatus) {
+    return switch (response) {
+      case UserAdminResponse.UserSingle single ->
+          complete(successStatus, single.user(), Jackson.marshaller(objectMapper));
+      case UserAdminResponse.UserList list ->
+          completeOK(list.users(), Jackson.marshaller(objectMapper));
+      default -> mapErrorResponse(response);
+    };
+  }
+
+  private Route mapErrorResponse(UserAdminResponse response) {
+    return switch (response) {
+      case UserAdminResponse.NotFound nf ->
+          complete(
+              StatusCodes.NOT_FOUND,
+              new AdminErrorResponse(404, nf.message()),
+              Jackson.marshaller(objectMapper));
+      case UserAdminResponse.Conflict c ->
+          complete(
+              StatusCodes.CONFLICT,
+              new AdminErrorResponse(409, c.message()),
+              Jackson.marshaller(objectMapper));
+      case UserAdminResponse.BadRequest br ->
+          complete(
+              StatusCodes.BAD_REQUEST,
+              new AdminErrorResponse(400, br.message()),
+              Jackson.marshaller(objectMapper));
+      case UserAdminResponse.Failure f ->
+          complete(
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              new AdminErrorResponse(500, f.message()),
+              Jackson.marshaller(objectMapper));
+      default ->
+          complete(
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              new AdminErrorResponse(500, "Unknown error"),
+              Jackson.marshaller(objectMapper));
+    };
+  }
+}

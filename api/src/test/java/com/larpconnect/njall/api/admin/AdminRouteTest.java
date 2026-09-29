@@ -6,6 +6,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.ImmutableList;
+import com.larpconnect.njall.api.admin.health.HealthAdminRoute;
+import com.larpconnect.njall.api.admin.health.HealthCheckCommand;
+import com.larpconnect.njall.api.admin.health.HealthCheckResponse;
+import com.larpconnect.njall.api.admin.roles.RoleAdminCommand;
+import com.larpconnect.njall.api.admin.roles.RoleAdminRoute;
+import com.larpconnect.njall.api.admin.servers.ServerAdminCommand;
+import com.larpconnect.njall.api.admin.servers.ServerAdminResponse;
+import com.larpconnect.njall.api.admin.servers.ServersAdminRoute;
+import com.larpconnect.njall.api.admin.studioroles.StudioRoleAdminCommand;
+import com.larpconnect.njall.api.admin.studioroles.StudioRoleAdminRoute;
+import com.larpconnect.njall.api.admin.studios.StudioAdminCommand;
+import com.larpconnect.njall.api.admin.studios.StudioAdminRoute;
+import com.larpconnect.njall.api.admin.users.UserAdminCommand;
+import com.larpconnect.njall.api.admin.users.UserAdminRoute;
 import com.larpconnect.njall.common.telemetry.ApiCall;
 import com.larpconnect.njall.common.telemetry.TraceContext;
 import com.larpconnect.njall.data.domain.ContactType;
@@ -96,41 +110,39 @@ final class AdminRouteTest {
     ActorRef<StudioAdminCommand> actor =
         system.systemActorOf(
             Behaviors.empty(), "dummyStudioActor" + UUID.randomUUID(), Props.empty());
-    return new StudioAdminRoute(actor, system, objectMapper);
+    return StudioAdminRoute.create(actor, system, objectMapper);
   }
 
   private static UserAdminRoute dummyUserRoute() {
     ActorRef<UserAdminCommand> actor =
         system.systemActorOf(
             Behaviors.empty(), "dummyUserActor" + UUID.randomUUID(), Props.empty());
-    return new UserAdminRoute(actor, system, objectMapper);
+    return UserAdminRoute.create(actor, system, objectMapper);
   }
 
   private static RoleAdminRoute dummyRoleRoute() {
     ActorRef<RoleAdminCommand> actor =
         system.systemActorOf(
             Behaviors.empty(), "dummyRoleActor" + UUID.randomUUID(), Props.empty());
-    return new RoleAdminRoute(actor, system, objectMapper);
+    return RoleAdminRoute.create(actor, system, objectMapper);
   }
 
   private static StudioRoleAdminRoute dummyStudioRoleRoute() {
     ActorRef<StudioRoleAdminCommand> actor =
         system.systemActorOf(
             Behaviors.empty(), "dummyStudioRoleActor" + UUID.randomUUID(), Props.empty());
-    return new StudioRoleAdminRoute(actor, system, objectMapper);
+    return StudioRoleAdminRoute.create(actor, system, objectMapper);
   }
 
   private static DefaultAdminRoute createRoute(
       ActorRef<ApiCall<HealthCheckCommand>> healthActor, ActorRef<ServerAdminCommand> serverActor) {
     return new DefaultAdminRoute(
-        healthActor,
-        serverActor,
+        HealthAdminRoute.create(healthActor, system),
+        ServersAdminRoute.create(serverActor, system, objectMapper),
         dummyStudioRoute(),
         dummyStudioRoleRoute(),
         dummyUserRoute(),
-        dummyRoleRoute(),
-        system,
-        objectMapper);
+        dummyRoleRoute());
   }
 
   @Test
