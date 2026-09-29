@@ -14,6 +14,7 @@ import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.model.StatusCode;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
@@ -159,9 +160,7 @@ public final class LinksRoute extends AllDirectives implements RouteProvider {
         system.scheduler());
   }
 
-  private Route mapResponse(
-      Try<LinkActorResponse> responseTry,
-      org.apache.pekko.http.javadsl.model.StatusCode successStatus) {
+  private Route mapResponse(Try<LinkActorResponse> responseTry, StatusCode successStatus) {
     if (responseTry.isFailure()) {
       return handleActorFailure(responseTry.failed().get());
     }
