@@ -8,6 +8,7 @@ import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.admin.AdminRoute;
 import com.larpconnect.njall.api.http.RootRoute;
+import com.larpconnect.njall.api.studios.LinksRoute;
 import com.larpconnect.njall.api.studios.StudiosRoute;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.common.telemetry.TelemetryModule;
@@ -15,6 +16,7 @@ import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.dao.AdminRoleDAO;
 import com.larpconnect.njall.data.dao.AdminUserDAO;
 import com.larpconnect.njall.data.dao.DefaultStudioRoleDAO;
+import com.larpconnect.njall.data.dao.LinkDAO;
 import com.larpconnect.njall.data.dao.ServerDAO;
 import com.larpconnect.njall.data.dao.StudioDAO;
 import com.larpconnect.njall.data.dao.StudioLookupDAO;
@@ -55,6 +57,7 @@ final class ApiModuleTest {
             bind(ServerDAO.class).toInstance(mock(ServerDAO.class));
             bind(StudioLookupDAO.class).toInstance(mock(StudioLookupDAO.class));
             bind(StudioDAO.class).toInstance(mock(StudioDAO.class));
+            bind(LinkDAO.class).toInstance(mock(LinkDAO.class));
             bind(StudioLookupCache.class).toInstance(mock(StudioLookupCache.class));
             bind(DefaultStudioRoleDAO.class).toInstance(mock(DefaultStudioRoleDAO.class));
             bind(AdminRoleDAO.class).toInstance(mock(AdminRoleDAO.class));
@@ -67,9 +70,11 @@ final class ApiModuleTest {
     var rootRoute = injector.getInstance(RootRoute.class);
     var adminRoute = injector.getInstance(AdminRoute.class);
     var studiosRoute = injector.getInstance(StudiosRoute.class);
+    var linksRoute = injector.getInstance(LinksRoute.class);
 
     assertThat(rootRoute).isInstanceOf(RootRoute.class);
     assertThat(adminRoute).isInstanceOf(AdminRoute.class);
     assertThat(studiosRoute).isInstanceOf(StudiosRoute.class);
+    assertThat(linksRoute).isInstanceOf(LinksRoute.class);
   }
 }

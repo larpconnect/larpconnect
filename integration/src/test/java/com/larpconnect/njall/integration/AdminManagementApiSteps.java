@@ -258,6 +258,50 @@ public final class AdminManagementApiSteps {
     parseResponseBody();
   }
 
+  @When("an API admin sends a DELETE request to {string}")
+  public void anApiAdminSendsADeleteRequestTo(String path) throws Exception {
+    var resolvedPath = resolveVariables(path);
+    var client = HttpClient.newHttpClient();
+    var request =
+        HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + boundPort + resolvedPath))
+            .timeout(REQUEST_TIMEOUT)
+            .DELETE()
+            .build();
+
+    response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    parseResponseBody();
+  }
+
+  @Then("the JSON response contains non-null field {string}")
+  public void theJsonResponseContainsNonNullField(String field) {
+    assertJsonBodyPresent();
+    var node = rootJson.path(field);
+    assertThat(node.isNull() || node.isMissingNode())
+        .withFailMessage("Expected JSON field %s to be non-null but was missing or null", field)
+        .isFalse();
+  }
+
+  @Then("the entity for remembered link {string} has deleted_on populated in database")
+  public void theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(String key)
+      throws Exception {
+    assertThat(rememberedIds).containsKey(key);
+    var linkId = UUID.fromString(rememberedIds.get(key));
+    var sql = "SELECT deleted_on FROM njall_users.entities WHERE id = ?";
+    try (var conn =
+            DriverManager.getConnection(
+                DatabaseMigrationSteps.getJdbcUrl(),
+                "njall",
+                DatabaseMigrationSteps.getPasswordFor("njall"));
+        var stmt = conn.prepareStatement(sql)) {
+      stmt.setObject(1, linkId);
+      try (var rs = stmt.executeQuery()) {
+        assertThat(rs.next()).isTrue();
+        assertThat(rs.getTimestamp("deleted_on")).isNotNull();
+      }
+    }
+  }
+
   @Then("the JSON response does not contain field {string}")
   public void theJsonResponseDoesNotContainField(String field) {
     assertJsonBodyPresent();
