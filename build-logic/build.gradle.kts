@@ -17,4 +17,5 @@ dependencies {
     implementation(libs.spotless.plugin)
     implementation(libs.spotbugs.plugin)
     implementation(libs.errorprone.plugin.dep)
+    implementation(libs.kotlin.plugin)
 }
