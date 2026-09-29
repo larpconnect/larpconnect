@@ -39,6 +39,10 @@ spotless = "8.10.2"
 spotbugs = "6.5.8"
 errorprone-plugin = "5.1.1"
 
+# Build 
+
+kotlin-build = "2.4.20"
+
 [libraries]
 guava-bom = { group = "com.google.guava", name = "guava-bom", version.ref = "guava"}
 guava = { group = "com.google.guava", name = "guava" }
@@ -103,9 +107,9 @@ testcontainers-junit-jupiter = { group = "org.testcontainers", name = "testconta
 spotless-plugin = { group = "com.diffplug.spotless", name = "spotless-plugin-gradle", version.ref = "spotless" }
 spotbugs-plugin = { group = "com.github.spotbugs.snom", name = "spotbugs-gradle-plugin", version.ref = "spotbugs" }
 errorprone-plugin-dep = { group = "net.ltgt.gradle", name = "gradle-errorprone-plugin", version.ref = "errorprone-plugin" }
+kotlin-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin-build" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs" }
 errorprone = { id = "net.ltgt.errorprone", version.ref = "errorprone-plugin" }
-
