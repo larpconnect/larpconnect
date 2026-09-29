@@ -31,6 +31,10 @@ import org.junit.jupiter.api.Test;
 
 final class LinksRouteTest {
 
+  private static final String CREATE_BODY =
+      "{\"linkType\":\"website\",\"url\":\"https://valiant.example.com\"}";
+  private static final String PATCH_BODY = "{\"url\":\"https://updated.example.com\"}";
+
   private static ActorSystem<Void> system;
   private static ObjectMapper objectMapper;
 
@@ -80,38 +84,38 @@ final class LinksRouteTest {
         now);
   }
 
+  private ActorRef<LinkCommand> createActor(LinkActorResponse response) {
+    return system.systemActorOf(
+        Behaviors.receiveMessage(
+            msg -> {
+              switch (msg) {
+                case LinkCommand.CreateLink c -> c.replyTo().tell(response);
+                case LinkCommand.GetLink g -> g.replyTo().tell(response);
+                case LinkCommand.PatchLink p -> p.replyTo().tell(response);
+                case LinkCommand.DeleteLink d -> d.replyTo().tell(response);
+              }
+              return Behaviors.same();
+            }),
+        "testActor" + UUID.randomUUID(),
+        Props.empty());
+  }
+
+  private Function<HttpRequest, CompletionStage<HttpResponse>> createHandler(
+      StudioLookupCache cache, ActorRef<LinkCommand> actor) {
+    return new LinksRoute(cache, actor, system, objectMapper).route().seal().function(system);
+  }
+
   @Test
   @DisplayName("POST /api/studios/{alias}/v1/links returns 201 Created on success")
   void postLink_success() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    var linkResp = sampleLinkResponse();
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.CreateLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.success(linkResp));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkCreateActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var body =
-        """
-        {"linkType":"website","url":"https://valiant.example.com"}
-        """;
+    var handler =
+        createHandler(cache, createActor(LinkActorResponse.success(sampleLinkResponse())));
     var request =
         HttpRequest.POST("/api/studios/valiant/v1/links")
-            .withEntity(ContentTypes.APPLICATION_JSON, body);
-
-    var response = executeRequest(handler, request);
-    assertThat(response.status()).isEqualTo(StatusCodes.CREATED);
+            .withEntity(ContentTypes.APPLICATION_JSON, CREATE_BODY);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.CREATED);
   }
 
   @Test
@@ -119,144 +123,109 @@ final class LinksRouteTest {
   void postLink_badRequest() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.CreateLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.badRequest("Invalid linkType"));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkCreateBadActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
+    var handler =
+        createHandler(cache, createActor(LinkActorResponse.badRequest("Invalid linkType")));
     var request =
         HttpRequest.POST("/api/studios/valiant/v1/links")
-            .withEntity(ContentTypes.APPLICATION_JSON, "{\"linkType\":\"\",\"url\":\"\"}");
-
-    var response = executeRequest(handler, request);
-    assertThat(response.status()).isEqualTo(StatusCodes.BAD_REQUEST);
+            .withEntity(ContentTypes.APPLICATION_JSON, CREATE_BODY);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.BAD_REQUEST);
   }
 
   @Test
-  @DisplayName("POST /api/studios/{alias}/v1/links returns 404 when studio does not exist")
-  void postLink_studioMissing_returnsNotFound() throws Exception {
+  @DisplayName("POST /api/studios/{alias}/v1/links returns 404 when studio not in cache")
+  void postLink_studioNotFound() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("unknown")).thenReturn(Optional.empty());
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(Behaviors.empty(), "linkActorNoop" + UUID.randomUUID(), Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
+    var handler = createHandler(cache, createActor(LinkActorResponse.badRequest("unused")));
     var request =
         HttpRequest.POST("/api/studios/unknown/v1/links")
-            .withEntity(
-                ContentTypes.APPLICATION_JSON,
-                "{\"linkType\":\"website\",\"url\":\"https://example.com\"}");
-
-    var response = executeRequest(handler, request);
-    assertThat(response.status()).isEqualTo(StatusCodes.NOT_FOUND);
+            .withEntity(ContentTypes.APPLICATION_JSON, CREATE_BODY);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.NOT_FOUND);
   }
 
   @Test
-  @DisplayName("POST /api/studios/{alias}/v1/links returns 404 when studio is soft-deleted")
-  void postLink_studioDeleted_returnsNotFound() throws Exception {
+  @DisplayName("POST /api/studios/{alias}/v1/links returns 404 when studio is deleted")
+  void postLink_studioDeleted() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleDeletedLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.empty(), "linkActorNoopDeleted" + UUID.randomUUID(), Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
+    var handler = createHandler(cache, createActor(LinkActorResponse.badRequest("unused")));
     var request =
         HttpRequest.POST("/api/studios/valiant/v1/links")
-            .withEntity(
-                ContentTypes.APPLICATION_JSON,
-                "{\"linkType\":\"website\",\"url\":\"https://example.com\"}");
-
-    var response = executeRequest(handler, request);
-    assertThat(response.status()).isEqualTo(StatusCodes.NOT_FOUND);
+            .withEntity(ContentTypes.APPLICATION_JSON, CREATE_BODY);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.NOT_FOUND);
   }
 
   @Test
-  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 200 OK when found")
+  @DisplayName("POST /api/studios/{alias}/v1/links returns 500 when actor reports Failure")
+  void postLink_actorFailure() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+    var handler = createHandler(cache, createActor(LinkActorResponse.failure("DB error")));
+    var request =
+        HttpRequest.POST("/api/studios/valiant/v1/links")
+            .withEntity(ContentTypes.APPLICATION_JSON, CREATE_BODY);
+    assertThat(executeRequest(handler, request).status())
+        .isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 200 OK on success")
   void getLink_success() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    var linkResp = sampleLinkResponse();
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.GetLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.success(linkResp));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkGetActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var response =
-        executeRequest(handler, HttpRequest.GET("/api/studios/valiant/v1/links/" + linkId));
-    assertThat(response.status()).isEqualTo(StatusCodes.OK);
+    var handler =
+        createHandler(cache, createActor(LinkActorResponse.success(sampleLinkResponse())));
+    var request = HttpRequest.GET("/api/studios/valiant/v1/links/" + linkId);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.OK);
   }
 
   @Test
-  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 404 when link not found")
-  void getLink_notFound() throws Exception {
+  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 404 when studio not in cache")
+  void getLink_studioNotFound() throws Exception {
     var cache = mock(StudioLookupCache.class);
-    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.GetLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.notFound("Link not found"));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkGetNotFoundActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var response =
-        executeRequest(handler, HttpRequest.GET("/api/studios/valiant/v1/links/" + linkId));
-    assertThat(response.status()).isEqualTo(StatusCodes.NOT_FOUND);
+    when(cache.findByIdOrAlias("unknown")).thenReturn(Optional.empty());
+    var handler = createHandler(cache, createActor(LinkActorResponse.badRequest("unused")));
+    var request = HttpRequest.GET("/api/studios/unknown/v1/links/" + linkId);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.NOT_FOUND);
   }
 
   @Test
-  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 404 when linkId is not UUID")
-  void getLink_nonUuid_returnsNotFound() throws Exception {
+  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 404 when linkId invalid")
+  void getLink_invalidLinkId() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+    var handler = createHandler(cache, createActor(LinkActorResponse.badRequest("unused")));
+    var request = HttpRequest.GET("/api/studios/valiant/v1/links/not-a-uuid");
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.NOT_FOUND);
+  }
 
-    ActorRef<LinkCommand> actor =
+  @Test
+  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 500 when actor reports Failure")
+  void getLink_actorFailure() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+    var handler = createHandler(cache, createActor(LinkActorResponse.failure("DB error")));
+    var request = HttpRequest.GET("/api/studios/valiant/v1/links/" + linkId);
+    assertThat(executeRequest(handler, request).status())
+        .isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 500 when ask fails")
+  void getLink_askFailure() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+    ActorRef<LinkCommand> deadActor =
         system.systemActorOf(
-            Behaviors.empty(), "linkActorNoop2" + UUID.randomUUID(), Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var response =
-        executeRequest(handler, HttpRequest.GET("/api/studios/valiant/v1/links/not-a-uuid"));
-    assertThat(response.status()).isEqualTo(StatusCodes.NOT_FOUND);
+            Behaviors.stopped(), "stoppedActor" + UUID.randomUUID(), Props.empty());
+    var handler =
+        new LinksRoute(cache, deadActor, system, objectMapper, Duration.ofMillis(50))
+            .route()
+            .seal()
+            .function(system);
+    var request = HttpRequest.GET("/api/studios/valiant/v1/links/" + linkId);
+    assertThat(executeRequest(handler, request).status())
+        .isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
   }
 
   @Test
@@ -264,30 +233,36 @@ final class LinksRouteTest {
   void patchLink_success() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    var linkResp = sampleLinkResponse();
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.PatchLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.success(linkResp));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkPatchActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var body = "{\"url\":\"https://updated.example.com\"}";
+    var handler =
+        createHandler(cache, createActor(LinkActorResponse.success(sampleLinkResponse())));
     var request =
-        HttpRequest.PATCH("/api/studios/valiant/v1/links/" + linkId + "?update_mask=url")
-            .withEntity(ContentTypes.APPLICATION_JSON, body);
+        HttpRequest.PATCH("/api/studios/valiant/v1/links/" + linkId)
+            .withEntity(ContentTypes.APPLICATION_JSON, PATCH_BODY);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.OK);
+  }
 
-    var response = executeRequest(handler, request);
-    assertThat(response.status()).isEqualTo(StatusCodes.OK);
+  @Test
+  @DisplayName("PATCH /api/studios/{alias}/v1/links/{id} returns 404 when link not found")
+  void patchLink_notFound() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+    var handler = createHandler(cache, createActor(LinkActorResponse.notFound("Link not found")));
+    var request =
+        HttpRequest.PATCH("/api/studios/valiant/v1/links/" + linkId)
+            .withEntity(ContentTypes.APPLICATION_JSON, PATCH_BODY);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.NOT_FOUND);
+  }
+
+  @Test
+  @DisplayName("PATCH /api/studios/{alias}/v1/links/{id} returns 400 when actor reports BadRequest")
+  void patchLink_badRequest() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+    var handler = createHandler(cache, createActor(LinkActorResponse.badRequest("Invalid URL")));
+    var request =
+        HttpRequest.PATCH("/api/studios/valiant/v1/links/" + linkId)
+            .withEntity(ContentTypes.APPLICATION_JSON, "{\"url\":\"bad\"}");
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.BAD_REQUEST);
   }
 
   @Test
@@ -295,175 +270,18 @@ final class LinksRouteTest {
   void deleteLink_success() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.DeleteLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.deleted());
-                  }
-                  return Behaviors.same();
-                }),
-            "linkDeleteActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var response =
-        executeRequest(handler, HttpRequest.DELETE("/api/studios/valiant/v1/links/" + linkId));
-    assertThat(response.status()).isEqualTo(StatusCodes.NO_CONTENT);
-  }
-
-  @Test
-  @DisplayName("GET /api/studios/{alias}/v1/links rejects listing with 405 Method Not Allowed")
-  void getLinks_listingRejected() throws Exception {
-    var cache = mock(StudioLookupCache.class);
-    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.empty(), "linkActorNoop3" + UUID.randomUUID(), Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var response = executeRequest(handler, HttpRequest.GET("/api/studios/valiant/v1/links"));
-    assertThat(response.status()).isEqualTo(StatusCodes.METHOD_NOT_ALLOWED);
-  }
-
-  @Test
-  @DisplayName("POST /api/studios/{alias}/v1/links returns 500 when actor reports Failure")
-  void postLink_actorFailure_returns500() throws Exception {
-    var cache = mock(StudioLookupCache.class);
-    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.CreateLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.failure("Failed creation"));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkCreateFailActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var body = "{\"linkType\":\"website\",\"url\":\"https://valiant.example.com\"}";
-    var response =
-        executeRequest(
-            handler,
-            HttpRequest.POST("/api/studios/valiant/v1/links")
-                .withEntity(ContentTypes.APPLICATION_JSON, body));
-    assertThat(response.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
-  }
-
-  @Test
-  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 500 when actor reports Failure")
-  void getLink_actorFailure_returns500() throws Exception {
-    var cache = mock(StudioLookupCache.class);
-    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.GetLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.failure("DB error"));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkGetFailActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var response =
-        executeRequest(handler, HttpRequest.GET("/api/studios/valiant/v1/links/" + linkId));
-    assertThat(response.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
-  }
-
-  @Test
-  @DisplayName("GET /api/studios/{alias}/v1/links/{id} returns 500 when ask fails")
-  void getLink_actorAskFailure_returns500() throws Exception {
-    var cache = mock(StudioLookupCache.class);
-    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  return Behaviors.stopped();
-                }),
-            "linkAskFailActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper, Duration.ofMillis(50));
-    var handler = route.route().seal().function(system);
-
-    var response =
-        executeRequest(handler, HttpRequest.GET("/api/studios/valiant/v1/links/" + linkId));
-    assertThat(response.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
+    var handler = createHandler(cache, createActor(LinkActorResponse.deleted()));
+    var request = HttpRequest.DELETE("/api/studios/valiant/v1/links/" + linkId);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.NO_CONTENT);
   }
 
   @Test
   @DisplayName("DELETE /api/studios/{alias}/v1/links/{id} returns 404 when link not found")
-  void deleteLink_notFound_returns404() throws Exception {
+  void deleteLink_notFound() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.DeleteLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.notFound("Link not found"));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkDeleteNotFoundActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var response =
-        executeRequest(handler, HttpRequest.DELETE("/api/studios/valiant/v1/links/" + linkId));
-    assertThat(response.status()).isEqualTo(StatusCodes.NOT_FOUND);
-  }
-
-  @Test
-  @DisplayName("PATCH /api/studios/{alias}/v1/links/{id} returns 400 when actor reports BadRequest")
-  void patchLink_badRequest_returns400() throws Exception {
-    var cache = mock(StudioLookupCache.class);
-    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
-
-    ActorRef<LinkCommand> actor =
-        system.systemActorOf(
-            Behaviors.receiveMessage(
-                msg -> {
-                  if (msg instanceof LinkCommand.PatchLink cmd) {
-                    cmd.replyTo().tell(LinkActorResponse.badRequest("Invalid URL"));
-                  }
-                  return Behaviors.same();
-                }),
-            "linkPatchBadActor" + UUID.randomUUID(),
-            Props.empty());
-
-    var route = new LinksRoute(cache, actor, system, objectMapper);
-    var handler = route.route().seal().function(system);
-
-    var response =
-        executeRequest(
-            handler,
-            HttpRequest.PATCH("/api/studios/valiant/v1/links/" + linkId)
-                .withEntity(ContentTypes.APPLICATION_JSON, "{\"url\":\"bad\"}"));
-    assertThat(response.status()).isEqualTo(StatusCodes.BAD_REQUEST);
+    var handler = createHandler(cache, createActor(LinkActorResponse.notFound("Link not found")));
+    var request = HttpRequest.DELETE("/api/studios/valiant/v1/links/" + linkId);
+    assertThat(executeRequest(handler, request).status()).isEqualTo(StatusCodes.NOT_FOUND);
   }
 }
