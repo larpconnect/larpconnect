@@ -58,5 +58,13 @@
             <message key="matchxpath.match"
                      value="Types must not end with 'Impl' (e.g. '&lt;InterfaceName&gt;Impl'). Follow the project naming convention and use 'Default&lt;InterfaceName&gt;' instead."/>
         </module>
+
+        <!-- Enforce maximum 8 parameters for methods and constructors in non-record classes -->
+        <module name="MatchXpath">
+            <property name="query"
+                      value="//(METHOD_DEF | CTOR_DEF)[not(ancestor::RECORD_DEF) and count(PARAMETERS/PARAMETER_DEF) > 8]"/>
+            <message key="matchxpath.match"
+                     value="Non-record methods and constructors must declare at most 8 parameters."/>
+        </module>
     </module>
 </module>

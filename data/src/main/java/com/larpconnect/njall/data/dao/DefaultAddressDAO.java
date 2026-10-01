@@ -3,6 +3,7 @@ package com.larpconnect.njall.data.dao;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Doubles;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
@@ -24,6 +25,54 @@ final class DefaultAddressDAO implements AddressDAO {
           "\\[\\s*(-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s*,"
               + "\\s*(-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s*\\]");
 
+  private static final String SET_TENANT_CONFIG =
+      "SELECT set_config('app.tenant_id', :tenantId, true)";
+
+  private static final String SQL_FIND_BY_ID =
+      """
+      SELECT a.id, a.location_id, a.address_type, a.address_line_1, a.address_line_2,
+             a.address_line_3, a.locality, a.administrative_area, a.postal_code,
+             a.country_code, ST_AsGeoJSON(a.geom)
+      FROM njall_users.addresses a
+      JOIN njall_users.entities e ON e.tenant_id = a.tenant_id AND e.id = a.location_id
+      WHERE a.tenant_id = :tenantId AND a.location_id = :locationId AND a.id = :addressId
+        AND e.deleted_on IS NULL
+      """;
+
+  private static final String SQL_LIST_BY_LOCATION =
+      """
+      SELECT a.id, a.location_id, a.address_type, a.address_line_1, a.address_line_2,
+             a.address_line_3, a.locality, a.administrative_area, a.postal_code,
+             a.country_code, ST_AsGeoJSON(a.geom)
+      FROM njall_users.addresses a
+      JOIN njall_users.entities e ON e.tenant_id = a.tenant_id AND e.id = a.location_id
+      WHERE a.tenant_id = :tenantId AND a.location_id = :locationId
+        AND e.deleted_on IS NULL
+      ORDER BY a.id ASC
+      """;
+
+  private static final String SQL_CHECK_LOCATION_ACTIVE =
+      """
+      SELECT count(1) FROM njall_users.locations l
+      JOIN njall_users.entities e ON e.tenant_id = l.tenant_id AND e.id = l.id
+      WHERE l.tenant_id = :tenantId AND l.id = :locationId AND e.deleted_on IS NULL
+      """;
+
+  private static final String SQL_UPDATE_GEOM =
+      """
+      UPDATE njall_users.addresses SET geom =
+        ST_SetSRID(ST_GeomFromGeoJSON(cast(:geomJson as text)), 4326)::geography
+      WHERE tenant_id = :tenantId AND id = :addressId
+      """;
+
+  private static final String SQL_CLEAR_GEOM =
+      "UPDATE njall_users.addresses SET geom = NULL "
+          + "WHERE tenant_id = :tenantId AND id = :addressId";
+
+  private static final String SQL_LOAD_GEOM =
+      "SELECT ST_AsGeoJSON(geom) FROM njall_users.addresses "
+          + "WHERE tenant_id = :tenantId AND id = :addressId";
+
   private final Provider<SessionFactory> sessionFactoryProvider;
 
   @Inject
@@ -37,19 +86,9 @@ final class DefaultAddressDAO implements AddressDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var sql =
-            "SELECT a.id, a.location_id, a.address_type, a.address_line_1, a.address_line_2,"
-                + " a.address_line_3, a.locality, a.administrative_area, a.postal_code,"
-                + " a.country_code, ST_AsGeoJSON(a.geom) "
-                + "FROM njall_users.addresses a "
-                + "JOIN njall_users.entities e ON e.tenant_id = a.tenant_id AND e.id ="
-                + " a.location_id "
-                + "WHERE a.tenant_id = :tenantId AND a.location_id = :locationId AND a.id ="
-                + " :addressId "
-                + "  AND e.deleted_on IS NULL";
         List<?> rows =
             session
-                .createNativeQuery(sql, Object[].class)
+                .createNativeQuery(SQL_FIND_BY_ID, Object[].class)
                 .setParameter("tenantId", tenantId)
                 .setParameter("locationId", locationId)
                 .setParameter("addressId", addressId)
@@ -76,19 +115,9 @@ final class DefaultAddressDAO implements AddressDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var sql =
-            "SELECT a.id, a.location_id, a.address_type, a.address_line_1, a.address_line_2,"
-                + " a.address_line_3, a.locality, a.administrative_area, a.postal_code,"
-                + " a.country_code, ST_AsGeoJSON(a.geom) "
-                + "FROM njall_users.addresses a "
-                + "JOIN njall_users.entities e ON e.tenant_id = a.tenant_id AND e.id ="
-                + " a.location_id "
-                + "WHERE a.tenant_id = :tenantId AND a.location_id = :locationId "
-                + "  AND e.deleted_on IS NULL "
-                + "ORDER BY a.id ASC";
         List<?> rows =
             session
-                .createNativeQuery(sql, Object[].class)
+                .createNativeQuery(SQL_LIST_BY_LOCATION, Object[].class)
                 .setParameter("tenantId", tenantId)
                 .setParameter("locationId", locationId)
                 .getResultList();
@@ -148,25 +177,23 @@ final class DefaultAddressDAO implements AddressDAO {
   @Override
   public ImmutableList<Address> list() {
     throw new UnsupportedOperationException(
-        "Direct address listing requires location context; use listByLocation(tenantId,"
-            + " locationId)");
+        """
+        Direct address listing requires location context; use listByLocation(tenantId, \
+        locationId)\
+        """);
   }
 
   private void setTenantContext(Session session, UUID tenantId) {
     session
-        .createNativeQuery("SELECT set_config('app.tenant_id', :tenantId, true)", String.class)
+        .createNativeQuery(SET_TENANT_CONFIG, String.class)
         .setParameter("tenantId", tenantId.toString())
         .getSingleResult();
   }
 
   private static boolean isLocationActive(Session session, UUID tenantId, UUID locationId) {
-    var checkSql =
-        "SELECT count(1) FROM njall_users.locations l "
-            + "JOIN njall_users.entities e ON e.tenant_id = l.tenant_id AND e.id = l.id "
-            + "WHERE l.tenant_id = :tenantId AND l.id = :locationId AND e.deleted_on IS NULL";
     var count =
         session
-            .createNativeQuery(checkSql, Long.class)
+            .createNativeQuery(SQL_CHECK_LOCATION_ACTIVE, Long.class)
             .setParameter("tenantId", tenantId)
             .setParameter("locationId", locationId)
             .getSingleResult();
@@ -191,18 +218,16 @@ final class DefaultAddressDAO implements AddressDAO {
         }
         var addressId = UUID.randomUUID();
         var entity =
-            new AddressEntity(
-                b.tenantId(),
-                addressId,
-                b.locationId(),
-                b.addressType().name(),
-                b.addressLine1(),
-                b.addressLine2(),
-                b.addressLine3(),
-                b.locality(),
-                b.administrativeArea(),
-                b.postalCode(),
-                b.countryCode());
+            AddressEntity.builder(b.tenantId(), addressId, b.locationId())
+                .addressType(b.addressType().name())
+                .addressLine1(b.addressLine1())
+                .addressLine2(b.addressLine2())
+                .addressLine3(b.addressLine3())
+                .locality(b.locality())
+                .administrativeArea(b.administrativeArea())
+                .postalCode(b.postalCode())
+                .countryCode(b.countryCode())
+                .build();
         session.persist(entity);
 
         if (b.geom() != null) {
@@ -300,12 +325,8 @@ final class DefaultAddressDAO implements AddressDAO {
 
   private static void updateGeom(
       Session session, UUID tenantId, UUID addressId, GeoJsonPoint point) {
-    var geomSql =
-        "UPDATE njall_users.addresses SET geom ="
-            + " ST_SetSRID(ST_GeomFromGeoJSON(cast(:geomJson as text)), 4326)::geography "
-            + "WHERE tenant_id = :tenantId AND id = :addressId";
     session
-        .createNativeQuery(geomSql, Void.class)
+        .createNativeQuery(SQL_UPDATE_GEOM, Void.class)
         .setParameter("tenantId", tenantId)
         .setParameter("addressId", addressId)
         .setParameter("geomJson", toGeoJsonString(point))
@@ -313,23 +334,17 @@ final class DefaultAddressDAO implements AddressDAO {
   }
 
   private static void clearGeom(Session session, UUID tenantId, UUID addressId) {
-    var clearSql =
-        "UPDATE njall_users.addresses SET geom = NULL "
-            + "WHERE tenant_id = :tenantId AND id = :addressId";
     session
-        .createNativeQuery(clearSql, Void.class)
+        .createNativeQuery(SQL_CLEAR_GEOM, Void.class)
         .setParameter("tenantId", tenantId)
         .setParameter("addressId", addressId)
         .executeUpdate();
   }
 
   private static @Nullable GeoJsonPoint loadGeom(Session session, UUID tenantId, UUID addressId) {
-    var geomSql =
-        "SELECT ST_AsGeoJSON(geom) FROM njall_users.addresses "
-            + "WHERE tenant_id = :tenantId AND id = :addressId";
     List<?> rows =
         session
-            .createNativeQuery(geomSql, String.class)
+            .createNativeQuery(SQL_LOAD_GEOM, String.class)
             .setParameter("tenantId", tenantId)
             .setParameter("addressId", addressId)
             .getResultList();
@@ -355,11 +370,9 @@ final class DefaultAddressDAO implements AddressDAO {
   }
 
   private static String toGeoJsonString(GeoJsonPoint point) {
-    return "{\"type\":\"Point\",\"coordinates\":["
-        + point.longitude()
-        + ","
-        + point.latitude()
-        + "]}";
+    return """
+        {"type":"Point","coordinates":[%s,%s]}"""
+        .formatted(point.longitude(), point.latitude());
   }
 
   private static Optional<GeoJsonPoint> parseGeoJson(@Nullable String geoJson) {
@@ -368,9 +381,11 @@ final class DefaultAddressDAO implements AddressDAO {
     }
     var matcher = COORD_PATTERN.matcher(geoJson);
     if (matcher.find()) {
-      var lon = Double.parseDouble(matcher.group(1));
-      var lat = Double.parseDouble(matcher.group(2));
-      return Optional.of(new GeoJsonPoint(lon, lat));
+      var lon = Doubles.tryParse(matcher.group(1));
+      var lat = Doubles.tryParse(matcher.group(2));
+      if (lon != null && lat != null) {
+        return Optional.of(new GeoJsonPoint(lon, lat));
+      }
     }
     return Optional.empty();
   }

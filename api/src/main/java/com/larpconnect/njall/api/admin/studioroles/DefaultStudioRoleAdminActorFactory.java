@@ -1,7 +1,7 @@
 package com.larpconnect.njall.api.admin.studioroles;
 
 import com.google.inject.Inject;
-import com.larpconnect.njall.data.dao.DefaultStudioRoleDAO;
+import com.larpconnect.njall.data.dao.StudioRoleDAO;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.ActorContext;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
@@ -12,10 +12,10 @@ import org.apache.pekko.actor.typed.javadsl.Behaviors;
  */
 final class DefaultStudioRoleAdminActorFactory implements StudioRoleAdminActorFactory {
 
-  private final DefaultStudioRoleDAO roleDao;
+  private final StudioRoleDAO roleDao;
 
   @Inject
-  DefaultStudioRoleAdminActorFactory(DefaultStudioRoleDAO roleDao) {
+  DefaultStudioRoleAdminActorFactory(StudioRoleDAO roleDao) {
     this.roleDao = roleDao;
   }
 

@@ -53,16 +53,8 @@ class StudioLookupEntity {
     return tenantId;
   }
 
-  void setTenantId(UUID tenantId) {
-    this.tenantId = tenantId;
-  }
-
   UUID getStudioId() {
     return studioId;
-  }
-
-  void setStudioId(UUID studioId) {
-    this.studioId = studioId;
   }
 
   String getAlias() {
@@ -75,10 +67,6 @@ class StudioLookupEntity {
 
   Instant getCreatedAt() {
     return createdAt;
-  }
-
-  void setCreatedAt(Instant createdAt) {
-    this.createdAt = createdAt;
   }
 
   Instant getUpdatedAt() {

@@ -15,10 +15,7 @@ final class AddressEntityTest {
     var id = UUID.randomUUID();
     var locationId = UUID.randomUUID();
 
-    var entity = new AddressEntity();
-    entity.setTenantId(tenantId);
-    entity.setId(id);
-    entity.setLocationId(locationId);
+    var entity = new AddressEntity(tenantId, id, locationId);
     entity.setAddressType("PHYSICAL");
     entity.setAddressLine1("123 Main St");
     entity.setAddressLine2("Suite 100");
@@ -42,25 +39,23 @@ final class AddressEntityTest {
   }
 
   @Test
-  @DisplayName("AddressEntity constructor sets all fields correctly")
-  void addressEntity_constructor() {
+  @DisplayName("AddressEntity builder sets all fields correctly")
+  void addressEntity_builder() {
     var tenantId = UUID.randomUUID();
     var id = UUID.randomUUID();
     var locationId = UUID.randomUUID();
 
     var entity =
-        new AddressEntity(
-            tenantId,
-            id,
-            locationId,
-            "PHYSICAL",
-            "123 Main St",
-            "Suite 100",
-            "Bldg B",
-            "Seattle",
-            "WA",
-            "98101",
-            "US");
+        AddressEntity.builder(tenantId, id, locationId)
+            .addressType("PHYSICAL")
+            .addressLine1("123 Main St")
+            .addressLine2("Suite 100")
+            .addressLine3("Bldg B")
+            .locality("Seattle")
+            .administrativeArea("WA")
+            .postalCode("98101")
+            .countryCode("US")
+            .build();
 
     assertThat(entity.getTenantId()).isEqualTo(tenantId);
     assertThat(entity.getId()).isEqualTo(id);

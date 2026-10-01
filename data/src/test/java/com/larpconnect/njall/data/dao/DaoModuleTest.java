@@ -34,7 +34,7 @@ final class DaoModuleTest {
     var userDao = injector.getInstance(AdminUserDAO.class);
     var studioLookupDao = injector.getInstance(StudioLookupDAO.class);
     var studioDao = injector.getInstance(StudioDAO.class);
-    var defaultStudioRoleDao = injector.getInstance(DefaultStudioRoleDAO.class);
+    var studioRoleDao = injector.getInstance(StudioRoleDAO.class);
     var linkDao = injector.getInstance(LinkDAO.class);
     var locationDao = injector.getInstance(LocationDAO.class);
     var addressDao = injector.getInstance(AddressDAO.class);
@@ -44,7 +44,7 @@ final class DaoModuleTest {
     assertThat(userDao).isInstanceOf(DefaultAdminUserDAO.class);
     assertThat(studioLookupDao).isInstanceOf(DefaultStudioLookupDAO.class);
     assertThat(studioDao).isInstanceOf(DefaultStudioDAO.class);
-    assertThat(defaultStudioRoleDao).isInstanceOf(DefaultDefaultStudioRoleDAO.class);
+    assertThat(studioRoleDao).isInstanceOf(DefaultStudioRoleDAO.class);
     assertThat(linkDao).isInstanceOf(DefaultLinkDAO.class);
     assertThat(locationDao).isInstanceOf(DefaultLocationDAO.class);
     assertThat(addressDao).isInstanceOf(DefaultAddressDAO.class);

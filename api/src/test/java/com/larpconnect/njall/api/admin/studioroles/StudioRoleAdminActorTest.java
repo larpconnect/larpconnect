@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.dao.DefaultStudioRoleDAO;
+import com.larpconnect.njall.data.dao.StudioRoleDAO;
 import com.larpconnect.njall.data.domain.DefaultStudioRole;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,7 +20,7 @@ final class StudioRoleAdminActorTest {
 
   private final UUID roleId = UUID.randomUUID();
 
-  private Behavior<StudioRoleAdminCommand> createBehavior(DefaultStudioRoleDAO roleDao) {
+  private Behavior<StudioRoleAdminCommand> createBehavior(StudioRoleDAO roleDao) {
     return Behaviors.setup(context -> new StudioRoleAdminActor(context, roleDao));
   }
 
@@ -31,7 +31,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onCreateRole creates role when name is valid and unique")
   void onCreateRole_success() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var role = sampleRole();
     when(roleDao.findByName("ORGANIZER")).thenReturn(Optional.empty());
     when(roleDao.create("ORGANIZER")).thenReturn(role);
@@ -50,7 +50,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onCreateRole rejects blank name")
   void onCreateRole_blankName_rejects() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
     TestInbox<StudioRoleAdminResponse> inbox = TestInbox.create();
 
@@ -63,7 +63,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onCreateRole returns conflict when name already exists")
   void onCreateRole_duplicate_conflict() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     when(roleDao.findByName("ORGANIZER")).thenReturn(Optional.of(sampleRole()));
 
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
@@ -78,7 +78,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onListRoles returns list of roles")
   void onListRoles_success() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var role = sampleRole();
     when(roleDao.list()).thenReturn(ImmutableList.of(role));
 
@@ -95,7 +95,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onGetRoleById returns role when present")
   void onGetRoleById_found() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var role = sampleRole();
     when(roleDao.findById(roleId)).thenReturn(Optional.of(role));
 
@@ -111,7 +111,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onGetRoleById returns notFound when missing")
   void onGetRoleById_notFound() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     when(roleDao.findById(roleId)).thenReturn(Optional.empty());
 
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
@@ -126,7 +126,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onUpdateRole updates role name successfully conforming to AIP-134")
   void onUpdateRole_success() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var updatedRole = new DefaultStudioRole(roleId, "LEAD_ORGANIZER");
     when(roleDao.findByName("LEAD_ORGANIZER")).thenReturn(Optional.empty());
     when(roleDao.update(roleId, "LEAD_ORGANIZER")).thenReturn(Optional.of(updatedRole));
@@ -147,7 +147,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onUpdateRole ignores name when mask does not include name")
   void onUpdateRole_maskWithoutName_returnsExisting() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var existingRole = sampleRole();
     when(roleDao.findById(roleId)).thenReturn(Optional.of(existingRole));
 
@@ -167,7 +167,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onUpdateRole rejects blank name")
   void onUpdateRole_blankName_rejects() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
     TestInbox<StudioRoleAdminResponse> inbox = TestInbox.create();
 
@@ -181,7 +181,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onUpdateRole returns conflict when name belongs to another role")
   void onUpdateRole_conflict() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var anotherRole = new DefaultStudioRole(UUID.randomUUID(), "TAKEN");
     when(roleDao.findByName("TAKEN")).thenReturn(Optional.of(anotherRole));
 
@@ -198,7 +198,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onUpdateRole returns notFound when role does not exist")
   void onUpdateRole_notFound() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     when(roleDao.findByName("NEW_NAME")).thenReturn(Optional.empty());
     when(roleDao.update(roleId, "NEW_NAME")).thenReturn(Optional.empty());
 
@@ -216,7 +216,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onUpdateRole allows keeping the same name for the same role")
   void onUpdateRole_sameNameSameRole_success() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var existingRole = sampleRole();
     when(roleDao.findByName("ORGANIZER")).thenReturn(Optional.of(existingRole));
     when(roleDao.update(roleId, "ORGANIZER")).thenReturn(Optional.of(existingRole));
@@ -235,7 +235,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onUpdateRole returns notFound when mask does not include name and role missing")
   void onUpdateRole_maskWithoutName_notFound() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     when(roleDao.findById(roleId)).thenReturn(Optional.empty());
 
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
@@ -252,7 +252,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onCreateRole handles DAO exception with message")
   void onCreateRole_daoError() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     when(roleDao.findByName("ORGANIZER")).thenThrow(new RuntimeException("DB error"));
 
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
@@ -268,7 +268,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onListRoles handles DAO exception with null message")
   void onListRoles_daoErrorNullMessage() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     when(roleDao.list()).thenThrow(new RuntimeException());
 
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
@@ -285,7 +285,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onGetRoleById handles DAO exception with empty message")
   void onGetRoleById_daoErrorEmptyMessage() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     when(roleDao.findById(roleId)).thenThrow(new RuntimeException(""));
 
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
@@ -302,7 +302,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("onUpdateRole handles DAO exception")
   void onUpdateRole_daoError() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     when(roleDao.findByName("ORGANIZER")).thenThrow(new RuntimeException("Update failed"));
 
     var testKit = BehaviorTestKit.create(createBehavior(roleDao));
@@ -319,7 +319,7 @@ final class StudioRoleAdminActorTest {
   @Test
   @DisplayName("DefaultStudioRoleAdminActorFactory creates behavior successfully")
   void factory_createsBehavior() {
-    var roleDao = mock(DefaultStudioRoleDAO.class);
+    var roleDao = mock(StudioRoleDAO.class);
     var factory = new DefaultStudioRoleAdminActorFactory(roleDao);
     assertThat(factory.create()).isNotNull();
   }

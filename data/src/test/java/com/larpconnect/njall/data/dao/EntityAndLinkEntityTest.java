@@ -16,12 +16,8 @@ final class EntityAndLinkEntityTest {
     var id = UUID.randomUUID();
     var now = Instant.now();
 
-    var entity = new EntityBaseEntity();
-    entity.setTenantId(tenantId);
-    entity.setId(id);
-    entity.setEntityType("Link");
+    var entity = new EntityBaseEntity(tenantId, id, "Link", null, now, now, null);
     entity.setSummary("Summary");
-    entity.setCreatedOn(now);
     entity.setUpdatedOn(now);
     entity.setDeletedOn(null);
 
@@ -43,9 +39,7 @@ final class EntityAndLinkEntityTest {
     var tenantId = UUID.randomUUID();
     var id = UUID.randomUUID();
 
-    var link = new LinkEntity();
-    link.setTenantId(tenantId);
-    link.setId(id);
+    var link = new LinkEntity(tenantId, id, "old", "old", "old");
     link.setLinkType("discord");
     link.setUrl("https://discord.gg");
     link.setMediaType("text/html");

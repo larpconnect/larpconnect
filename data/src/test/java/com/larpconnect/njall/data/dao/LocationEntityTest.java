@@ -14,9 +14,7 @@ final class LocationEntityTest {
     var tenantId = UUID.randomUUID();
     var id = UUID.randomUUID();
 
-    var location = new LocationEntity();
-    location.setTenantId(tenantId);
-    location.setId(id);
+    var location = new LocationEntity(tenantId, id, "Initial Name");
     location.setName("Main Campsite");
 
     assertThat(location.getTenantId()).isEqualTo(tenantId);

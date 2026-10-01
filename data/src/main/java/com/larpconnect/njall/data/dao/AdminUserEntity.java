@@ -70,10 +70,6 @@ class AdminUserEntity {
     return id;
   }
 
-  void setId(UUID id) {
-    this.id = id;
-  }
-
   String getUsername() {
     return username;
   }
@@ -92,10 +88,6 @@ class AdminUserEntity {
 
   Instant getCreatedAt() {
     return createdAt;
-  }
-
-  void setCreatedAt(Instant createdAt) {
-    this.createdAt = createdAt;
   }
 
   Instant getUpdatedAt() {

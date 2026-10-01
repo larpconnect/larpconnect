@@ -16,6 +16,27 @@ import org.hibernate.SessionFactory;
 
 final class DefaultAdminUserDAO implements AdminUserDAO {
 
+  private static final String HQL_FIND_BY_USERNAME =
+      "from AdminUserEntity u left join fetch u.roles where u.username = :username";
+  private static final String HQL_LIST =
+      "from AdminUserEntity u left join fetch u.roles order by u.username asc";
+  private static final String SQL_INSERT_USER =
+      """
+      INSERT INTO njall_admin.admin_users (username, status)
+      VALUES (:username, CAST(:status AS njall_admin.tstatus))
+      RETURNING id
+      """;
+  private static final String SQL_INSERT_ROLE_ASSIGNMENT =
+      """
+      INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id)
+      VALUES (:userId, :roleId) ON CONFLICT DO NOTHING
+      """;
+  private static final String SQL_DELETE_ROLE_ASSIGNMENT =
+      """
+      DELETE FROM njall_admin.admin_role_assignments
+      WHERE admin_user_id = :userId AND role_id = :roleId
+      """;
+
   private final Provider<SessionFactory> sessionFactoryProvider;
 
   @Inject
@@ -34,10 +55,9 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
   @Override
   public Optional<AdminUser> findByUsername(String username) {
     try (var session = sessionFactoryProvider.get().openSession()) {
-      var hql = "from AdminUserEntity u left join fetch u.roles where u.username = :username";
       var entity =
           session
-              .createQuery(hql, AdminUserEntity.class)
+              .createQuery(HQL_FIND_BY_USERNAME, AdminUserEntity.class)
               .setParameter("username", username)
               .uniqueResult();
       return Optional.ofNullable(entity).map(DefaultAdminUserDAO::toUser);
@@ -47,8 +67,7 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
   @Override
   public ImmutableList<AdminUser> list() {
     try (var session = sessionFactoryProvider.get().openSession()) {
-      var hql = "from AdminUserEntity u left join fetch u.roles order by u.username asc";
-      var entities = session.createQuery(hql, AdminUserEntity.class).list();
+      var entities = session.createQuery(HQL_LIST, AdminUserEntity.class).list();
       return entities.stream()
           .distinct()
           .map(DefaultAdminUserDAO::toUser)
@@ -64,23 +83,16 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
-        var insertUserSql =
-            "INSERT INTO njall_admin.admin_users (username, status) "
-                + "VALUES (:username, CAST(:status AS njall_admin.tstatus)) "
-                + "RETURNING id";
         var userId =
             session
-                .createNativeQuery(insertUserSql, UUID.class)
+                .createNativeQuery(SQL_INSERT_USER, UUID.class)
                 .setParameter("username", username)
                 .setParameter("status", status.name())
                 .getSingleResult();
 
-        var insertRoleSql =
-            "INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id) "
-                + "VALUES (:userId, :roleId) ON CONFLICT DO NOTHING";
         for (var roleId : roleIds) {
           session
-              .createNativeQuery(insertRoleSql, Void.class)
+              .createNativeQuery(SQL_INSERT_ROLE_ASSIGNMENT, Void.class)
               .setParameter("userId", userId)
               .setParameter("roleId", roleId)
               .executeUpdate();
@@ -115,11 +127,8 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
         if (roleEntity == null) {
           throw new IllegalArgumentException("Role not found: " + roleId);
         }
-        var insertRoleSql =
-            "INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id) "
-                + "VALUES (:userId, :roleId) ON CONFLICT DO NOTHING";
         session
-            .createNativeQuery(insertRoleSql, Void.class)
+            .createNativeQuery(SQL_INSERT_ROLE_ASSIGNMENT, Void.class)
             .setParameter("userId", userId)
             .setParameter("roleId", roleId)
             .executeUpdate();
@@ -153,11 +162,8 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
         if (roleEntity == null) {
           throw new IllegalArgumentException("Role not found: " + roleId);
         }
-        var deleteSql =
-            "DELETE FROM njall_admin.admin_role_assignments "
-                + "WHERE admin_user_id = :userId AND role_id = :roleId";
         session
-            .createNativeQuery(deleteSql, Void.class)
+            .createNativeQuery(SQL_DELETE_ROLE_ASSIGNMENT, Void.class)
             .setParameter("userId", userId)
             .setParameter("roleId", roleId)
             .executeUpdate();

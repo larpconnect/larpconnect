@@ -61,24 +61,12 @@ class EntityBaseEntity {
     return tenantId;
   }
 
-  void setTenantId(UUID tenantId) {
-    this.tenantId = tenantId;
-  }
-
   UUID getId() {
     return id;
   }
 
-  void setId(UUID id) {
-    this.id = id;
-  }
-
   String getEntityType() {
     return entityType;
-  }
-
-  void setEntityType(String entityType) {
-    this.entityType = entityType;
   }
 
   @Nullable String getSummary() {
@@ -91,10 +79,6 @@ class EntityBaseEntity {
 
   Instant getCreatedOn() {
     return createdOn;
-  }
-
-  void setCreatedOn(Instant createdOn) {
-    this.createdOn = createdOn;
   }
 
   Instant getUpdatedOn() {

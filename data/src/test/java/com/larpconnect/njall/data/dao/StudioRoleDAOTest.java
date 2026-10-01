@@ -21,11 +21,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-final class DefaultStudioRoleDAOTest {
+final class StudioRoleDAOTest {
 
   private SessionFactory sessionFactory;
   private Session session;
-  private DefaultDefaultStudioRoleDAO dao;
+  private DefaultStudioRoleDAO dao;
 
   private final UUID roleId = UUID.randomUUID();
 
@@ -34,7 +34,7 @@ final class DefaultStudioRoleDAOTest {
     sessionFactory = mock(SessionFactory.class);
     session = mock(Session.class);
     when(sessionFactory.openSession()).thenReturn(session);
-    dao = new DefaultDefaultStudioRoleDAO(() -> sessionFactory);
+    dao = new DefaultStudioRoleDAO(() -> sessionFactory);
   }
 
   @Test

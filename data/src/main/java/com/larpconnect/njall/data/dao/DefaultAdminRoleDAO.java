@@ -11,6 +11,12 @@ import org.hibernate.SessionFactory;
 
 final class DefaultAdminRoleDAO implements AdminRoleDAO {
 
+  private static final String HQL_FIND_BY_ROLE_NAME =
+      "from AdminRoleEntity where roleName = :roleName";
+  private static final String HQL_LIST = "from AdminRoleEntity order by roleName asc";
+  private static final String SQL_INSERT_ROLE =
+      "INSERT INTO njall_admin.admin_roles (role_name) VALUES (:roleName) RETURNING id";
+
   private final Provider<SessionFactory> sessionFactoryProvider;
 
   @Inject
@@ -29,10 +35,9 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
   @Override
   public Optional<AdminRole> findByRoleName(String roleName) {
     try (var session = sessionFactoryProvider.get().openSession()) {
-      var hql = "from AdminRoleEntity where roleName = :roleName";
       var entity =
           session
-              .createQuery(hql, AdminRoleEntity.class)
+              .createQuery(HQL_FIND_BY_ROLE_NAME, AdminRoleEntity.class)
               .setParameter("roleName", roleName)
               .uniqueResult();
       return Optional.ofNullable(entity).map(this::toRole);
@@ -42,8 +47,7 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
   @Override
   public ImmutableList<AdminRole> list() {
     try (var session = sessionFactoryProvider.get().openSession()) {
-      var hql = "from AdminRoleEntity order by roleName asc";
-      var entities = session.createQuery(hql, AdminRoleEntity.class).list();
+      var entities = session.createQuery(HQL_LIST, AdminRoleEntity.class).list();
       return entities.stream().map(this::toRole).collect(ImmutableList.toImmutableList());
     }
   }
@@ -53,10 +57,9 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
-        var sql = "INSERT INTO njall_admin.admin_roles (role_name) VALUES (:roleName) RETURNING id";
         var id =
             session
-                .createNativeQuery(sql, UUID.class)
+                .createNativeQuery(SQL_INSERT_ROLE, UUID.class)
                 .setParameter("roleName", roleName)
                 .getSingleResult();
         tx.commit();

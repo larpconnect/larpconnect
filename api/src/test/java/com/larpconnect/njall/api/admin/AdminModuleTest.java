@@ -28,9 +28,9 @@ import com.larpconnect.njall.common.telemetry.ApiCall;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.dao.AdminRoleDAO;
 import com.larpconnect.njall.data.dao.AdminUserDAO;
-import com.larpconnect.njall.data.dao.DefaultStudioRoleDAO;
 import com.larpconnect.njall.data.dao.ServerDAO;
 import com.larpconnect.njall.data.dao.StudioLookupDAO;
+import com.larpconnect.njall.data.dao.StudioRoleDAO;
 import io.dropwizard.metrics5.health.HealthCheck;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import java.util.Set;
@@ -64,7 +64,7 @@ final class AdminModuleTest {
     var studioLookupDao = mock(StudioLookupDAO.class);
     var roleDao = mock(AdminRoleDAO.class);
     var userDao = mock(AdminUserDAO.class);
-    var studioRoleDao = mock(DefaultStudioRoleDAO.class);
+    var studioRoleDao = mock(StudioRoleDAO.class);
     var studioLookupCache = mock(StudioLookupCache.class);
     var testModule =
         new AbstractModule() {
@@ -77,7 +77,7 @@ final class AdminModuleTest {
             bind(StudioLookupCache.class).toInstance(studioLookupCache);
             bind(AdminRoleDAO.class).toInstance(roleDao);
             bind(AdminUserDAO.class).toInstance(userDao);
-            bind(DefaultStudioRoleDAO.class).toInstance(studioRoleDao);
+            bind(StudioRoleDAO.class).toInstance(studioRoleDao);
             bind(Props.class).annotatedWith(Blocking.class).toInstance(Props.empty());
           }
         };

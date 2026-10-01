@@ -1,7 +1,7 @@
 package com.larpconnect.njall.api.admin.studioroles;
 
 import com.google.common.base.Strings;
-import com.larpconnect.njall.data.dao.DefaultStudioRoleDAO;
+import com.larpconnect.njall.data.dao.StudioRoleDAO;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory;
 public final class StudioRoleAdminActor extends AbstractBehavior<StudioRoleAdminCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(StudioRoleAdminActor.class);
-  private final DefaultStudioRoleDAO roleDao;
+  private final StudioRoleDAO roleDao;
 
-  StudioRoleAdminActor(ActorContext<StudioRoleAdminCommand> context, DefaultStudioRoleDAO roleDao) {
+  StudioRoleAdminActor(ActorContext<StudioRoleAdminCommand> context, StudioRoleDAO roleDao) {
     super(context);
     this.roleDao = roleDao;
   }

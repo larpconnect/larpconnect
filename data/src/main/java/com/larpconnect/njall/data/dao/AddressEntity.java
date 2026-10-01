@@ -50,53 +50,78 @@ class AddressEntity {
 
   AddressEntity() {}
 
-  AddressEntity(
-      UUID tenantId,
-      UUID id,
-      UUID locationId,
-      String addressType,
-      String addressLine1,
-      String addressLine2,
-      String addressLine3,
-      String locality,
-      String administrativeArea,
-      String postalCode,
-      String countryCode) {
+  AddressEntity(UUID tenantId, UUID id, UUID locationId) {
     this.tenantId = tenantId;
     this.id = id;
     this.locationId = locationId;
-    this.addressType = addressType;
-    this.addressLine1 = addressLine1;
-    this.addressLine2 = addressLine2;
-    this.addressLine3 = addressLine3;
-    this.locality = locality;
-    this.administrativeArea = administrativeArea;
-    this.postalCode = postalCode;
-    this.countryCode = countryCode;
+  }
+
+  static Builder builder(UUID tenantId, UUID id, UUID locationId) {
+    return new Builder(tenantId, id, locationId);
   }
 
   UUID getTenantId() {
     return tenantId;
   }
 
-  void setTenantId(UUID tenantId) {
-    this.tenantId = tenantId;
-  }
-
   UUID getId() {
     return id;
-  }
-
-  void setId(UUID id) {
-    this.id = id;
   }
 
   UUID getLocationId() {
     return locationId;
   }
 
-  void setLocationId(UUID locationId) {
-    this.locationId = locationId;
+  static final class Builder {
+    private final AddressEntity entity;
+
+    Builder(UUID tenantId, UUID id, UUID locationId) {
+      this.entity = new AddressEntity(tenantId, id, locationId);
+    }
+
+    Builder addressType(String addressType) {
+      entity.setAddressType(addressType);
+      return this;
+    }
+
+    Builder addressLine1(String addressLine1) {
+      entity.setAddressLine1(addressLine1);
+      return this;
+    }
+
+    Builder addressLine2(String addressLine2) {
+      entity.setAddressLine2(addressLine2);
+      return this;
+    }
+
+    Builder addressLine3(String addressLine3) {
+      entity.setAddressLine3(addressLine3);
+      return this;
+    }
+
+    Builder locality(String locality) {
+      entity.setLocality(locality);
+      return this;
+    }
+
+    Builder administrativeArea(String administrativeArea) {
+      entity.setAdministrativeArea(administrativeArea);
+      return this;
+    }
+
+    Builder postalCode(String postalCode) {
+      entity.setPostalCode(postalCode);
+      return this;
+    }
+
+    Builder countryCode(String countryCode) {
+      entity.setCountryCode(countryCode);
+      return this;
+    }
+
+    AddressEntity build() {
+      return entity;
+    }
   }
 
   String getAddressType() {

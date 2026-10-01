@@ -11,6 +11,9 @@ import org.hibernate.SessionFactory;
 
 final class DefaultStudioDAO implements StudioDAO {
 
+  private static final String SET_TENANT_CONFIG =
+      "SELECT set_config('app.tenant_id', :tenantId, true)";
+
   private final Provider<SessionFactory> sessionFactoryProvider;
 
   @Inject
@@ -24,16 +27,11 @@ final class DefaultStudioDAO implements StudioDAO {
       var tx = session.beginTransaction();
       try {
         session
-            .createNativeQuery("SELECT set_config('app.tenant_id', :tenantId, true)", String.class)
+            .createNativeQuery(SET_TENANT_CONFIG, String.class)
             .setParameter("tenantId", tenantId.toString())
             .getSingleResult();
 
-        var hql = "from StudioEntity where id = :tenantId";
-        var entity =
-            session
-                .createQuery(hql, StudioEntity.class)
-                .setParameter("tenantId", tenantId)
-                .uniqueResult();
+        var entity = session.find(StudioEntity.class, tenantId);
         tx.commit();
         return Optional.ofNullable(entity).map(this::toStudio);
       } catch (Exception e) {
