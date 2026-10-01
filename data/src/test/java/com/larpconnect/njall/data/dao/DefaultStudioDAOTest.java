@@ -18,6 +18,7 @@ import org.hibernate.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 final class DefaultStudioDAOTest {
 
@@ -126,8 +127,16 @@ final class DefaultStudioDAOTest {
         .thenReturn(configQuery);
     when(configQuery.setParameter(eq("tenantId"), any())).thenReturn(configQuery);
     when(configQuery.getSingleResult()).thenThrow(new RuntimeException("DB error"));
+    Mockito.doThrow(new RuntimeException("Rollback error")).when(tx).rollback();
 
-    assertThatThrownBy(() -> dao.findById(tenantId)).isInstanceOf(RuntimeException.class);
+    assertThatThrownBy(() -> dao.findById(tenantId))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("DB error")
+        .satisfies(
+            e -> {
+              assertThat(e.getSuppressed()).hasSize(1);
+              assertThat(e.getSuppressed()[0]).hasMessage("Rollback error");
+            });
     verify(tx).rollback();
   }
 

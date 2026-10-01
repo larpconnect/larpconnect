@@ -59,7 +59,11 @@ final class DefaultDefaultStudioRoleDAO implements DefaultStudioRoleDAO {
         tx.commit();
         return new DefaultStudioRole(id, name);
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }
@@ -80,7 +84,11 @@ final class DefaultDefaultStudioRoleDAO implements DefaultStudioRoleDAO {
         tx.commit();
         return Optional.of(toRole(entity));
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }

@@ -27,6 +27,7 @@
 | Actor | An entity that can send and receive federated messages (e.g., users, studios, groups) | | |
 | Collections | An entity that can hold references to an ordered set of other entities | | |
 | Locations | A place in the physical world | | |
+| Address | A physical, mailing, or geospatial destination associated with a location | | |
 | System | A specific style of meeting or game, e.g. Vampire: The Masquerade | | |
 | Campaigns | A series of events run under the same system (or lack of system) | | |
 | Games | An event run under a campaign. | | When discussing events unconnected to campaigns. |

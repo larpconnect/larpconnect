@@ -106,7 +106,11 @@ final class DefaultStudioLookupDAO implements StudioLookupDAO {
         var updatedAt = toInstant(lookupRow[2]);
         return new StudioLookup(tenantId, studioId, alias, createdAt, updatedAt, Optional.empty());
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }
@@ -134,7 +138,11 @@ final class DefaultStudioLookupDAO implements StudioLookupDAO {
         tx.commit();
         return Optional.of(toStudio(entity));
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }

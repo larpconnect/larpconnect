@@ -92,7 +92,11 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
                 session.find(AdminUserEntity.class, userId), "Created user entity cannot be null");
         return toUser(entity);
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }
@@ -126,7 +130,11 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
                 session.find(AdminUserEntity.class, userId), "User entity cannot be null");
         return toUser(updated);
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }
@@ -160,7 +168,11 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
                 session.find(AdminUserEntity.class, userId), "User entity cannot be null");
         return toUser(updated);
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }

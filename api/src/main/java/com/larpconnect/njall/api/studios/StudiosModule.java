@@ -23,6 +23,11 @@ public final class StudiosModule extends AbstractModule {
     bind(LinksRoute.class).in(Scopes.SINGLETON);
     Multibinder.newSetBinder(binder(), RouteProvider.class).addBinding().to(LinksRoute.class);
     bind(LinkActorFactory.class).to(DefaultLinkActorFactory.class);
+
+    bind(LocationsRoute.class).in(Scopes.SINGLETON);
+    Multibinder.newSetBinder(binder(), RouteProvider.class).addBinding().to(LocationsRoute.class);
+    bind(LocationActorFactory.class).to(DefaultLocationActorFactory.class);
+    bind(AddressActorFactory.class).to(DefaultAddressActorFactory.class);
   }
 
   @Provides
@@ -37,5 +42,19 @@ public final class StudiosModule extends AbstractModule {
   ActorRef<LinkCommand> provideLinkActor(
       ActorSystem<Void> system, LinkActorFactory factory, @Blocking Props dispatcher) {
     return system.systemActorOf(factory.create(), "linkActor", dispatcher);
+  }
+
+  @Provides
+  @Singleton
+  ActorRef<LocationCommand> provideLocationActor(
+      ActorSystem<Void> system, LocationActorFactory factory, @Blocking Props dispatcher) {
+    return system.systemActorOf(factory.create(), "locationActor", dispatcher);
+  }
+
+  @Provides
+  @Singleton
+  ActorRef<AddressCommand> provideAddressActor(
+      ActorSystem<Void> system, AddressActorFactory factory, @Blocking Props dispatcher) {
+    return system.systemActorOf(factory.create(), "addressActor", dispatcher);
   }
 }

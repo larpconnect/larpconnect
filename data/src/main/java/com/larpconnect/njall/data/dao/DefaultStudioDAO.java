@@ -37,7 +37,11 @@ final class DefaultStudioDAO implements StudioDAO {
         tx.commit();
         return Optional.ofNullable(entity).map(this::toStudio);
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }
