@@ -62,7 +62,7 @@ final class TracingDirectiveTest {
     assertThat(response.status()).isEqualTo(StatusCodes.OK);
     var traceHeader = response.getHeader("traceparent");
     assertThat(traceHeader).isPresent();
-    assertThat(traceHeader.get().value()).matches(W3C_PATTERN);
+    assertThat(traceHeader.orElseThrow().value()).matches(W3C_PATTERN);
   }
 
   @Test
@@ -99,7 +99,7 @@ final class TracingDirectiveTest {
 
     var traceHeader = response.getHeader("traceparent");
     assertThat(traceHeader).isPresent();
-    var headerValue = traceHeader.get().value();
+    var headerValue = traceHeader.orElseThrow().value();
     assertThat(headerValue).matches(W3C_PATTERN);
     assertThat(headerValue).doesNotContain("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   }

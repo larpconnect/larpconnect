@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing user-space tenanted link operations. */
-public final class LinkActor extends AbstractBehavior<LinkCommand> {
+final class LinkActor extends AbstractBehavior<LinkCommand> {
 
   private static final String DEFAULT_MEDIA_TYPE = "text/html";
   private final Logger logger = LoggerFactory.getLogger(LinkActor.class);
@@ -42,7 +42,7 @@ public final class LinkActor extends AbstractBehavior<LinkCommand> {
     try {
       var validationError = LinkValidation.validateCreate(cmd.request());
       if (validationError.isPresent()) {
-        cmd.replyTo().tell(LinkActorResponse.badRequest(validationError.get()));
+        cmd.replyTo().tell(LinkActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
       executeCreate(cmd.tenantId(), cmd.request(), cmd.replyTo());
@@ -81,7 +81,7 @@ public final class LinkActor extends AbstractBehavior<LinkCommand> {
     try {
       var validationError = LinkValidation.validateUpdate(cmd.request());
       if (validationError.isPresent()) {
-        cmd.replyTo().tell(LinkActorResponse.badRequest(validationError.get()));
+        cmd.replyTo().tell(LinkActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
       executePatch(cmd.tenantId(), cmd.linkId(), cmd.request(), cmd.updateMask(), cmd.replyTo());
@@ -129,7 +129,7 @@ public final class LinkActor extends AbstractBehavior<LinkCommand> {
   private Optional<String> selectField(
       Optional<Set<String>> maskFields, String fieldName, Optional<String> requestValue) {
     if (maskFields.isPresent()) {
-      return maskFields.get().contains(fieldName) ? requestValue : Optional.empty();
+      return maskFields.orElseThrow().contains(fieldName) ? requestValue : Optional.empty();
     }
     return requestValue;
   }

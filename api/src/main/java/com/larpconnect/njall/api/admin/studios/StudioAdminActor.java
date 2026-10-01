@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing studio administration and lifecycle management operations. */
-public final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand> {
+final class StudioAdminActor extends AbstractBehavior<StudioAdminCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(StudioAdminActor.class);
   private final StudioLookupDAO studioLookupDao;

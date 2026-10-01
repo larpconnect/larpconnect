@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing administrative role management operations. */
-public final class RoleAdminActor extends AbstractBehavior<RoleAdminCommand> {
+final class RoleAdminActor extends AbstractBehavior<RoleAdminCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(RoleAdminActor.class);
   private final AdminRoleDAO roleDao;

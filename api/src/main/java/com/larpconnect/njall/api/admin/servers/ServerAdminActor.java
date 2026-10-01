@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  * larpconnect.blocking-dispatcher}) to isolate synchronous database interactions from the default
  * actor system thread pool.
  */
-public final class ServerAdminActor extends AbstractBehavior<ServerAdminCommand> {
+final class ServerAdminActor extends AbstractBehavior<ServerAdminCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(ServerAdminActor.class);
   private final ServerDAO serverDao;

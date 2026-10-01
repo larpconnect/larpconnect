@@ -12,6 +12,7 @@ import java.util.concurrent.CompletionStage;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
+import org.apache.pekko.http.javadsl.model.StatusCode;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
@@ -116,12 +117,12 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
       case StudioActorResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              createErrorResponse(404, nf.message()),
+              createErrorResponse(StatusCodes.NOT_FOUND, nf.message()),
               Jackson.marshaller(objectMapper));
       case StudioActorResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              createErrorResponse(500, f.message()),
+              createErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, f.message()),
               Jackson.marshaller(objectMapper));
     };
   }
@@ -130,11 +131,11 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
     logger.error("Studio actor request failed", error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        createErrorResponse(500, "Internal server error"),
+        createErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error"),
         Jackson.marshaller(objectMapper));
   }
 
-  private StudioErrorResponse createErrorResponse(int status, String message) {
-    return new StudioErrorResponse(status, message);
+  private StudioErrorResponse createErrorResponse(StatusCode status, String message) {
+    return new StudioErrorResponse(status.intValue(), message);
   }
 }

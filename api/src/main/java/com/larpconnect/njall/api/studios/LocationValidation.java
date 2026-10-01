@@ -20,7 +20,7 @@ final class LocationValidation {
 
   static Optional<String> validatePatch(UpdateLocationRequest request) {
     if (request.name().isPresent()) {
-      var name = request.name().get();
+      var name = request.name().orElseThrow();
       if (name.isBlank()) {
         return Optional.of("Location name must not be blank");
       }

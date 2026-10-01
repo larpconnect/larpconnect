@@ -13,30 +13,30 @@ import org.jspecify.annotations.Nullable;
  * Builds composite Typesafe {@link Config} instances by layering CLI options and external
  * configuration files atop default configurations.
  */
-public final class CliConfigBuilder {
+final class CliConfigBuilder {
 
   private final Map<String, Object> overrides = new HashMap<>();
   private final Config baseConfig;
   private Optional<File> configFile = Optional.empty();
 
-  public CliConfigBuilder() {
+  CliConfigBuilder() {
     this(ConfigFactory.load());
   }
 
-  public CliConfigBuilder(Config baseConfig) {
+  CliConfigBuilder(Config baseConfig) {
     this.baseConfig = baseConfig;
   }
 
-  public CliConfigBuilder withConfigFile(Optional<File> configFile) {
+  CliConfigBuilder withConfigFile(Optional<File> configFile) {
     this.configFile = configFile;
     return this;
   }
 
-  public CliConfigBuilder withConfigFile(File configFile) {
+  CliConfigBuilder withConfigFile(File configFile) {
     return withConfigFile(Optional.of(configFile));
   }
 
-  public CliConfigBuilder withOverride(String path, @Nullable Object value) {
+  CliConfigBuilder withOverride(String path, @Nullable Object value) {
     if (value != null) {
       if (value instanceof List<?> list && list.isEmpty()) {
         return this;
@@ -46,7 +46,7 @@ public final class CliConfigBuilder {
     return this;
   }
 
-  public CliConfigBuilder withServerOptions(@Nullable ServerOptions options) {
+  CliConfigBuilder withServerOptions(@Nullable ServerOptions options) {
     if (options == null) {
       return this;
     }
@@ -62,7 +62,7 @@ public final class CliConfigBuilder {
     return this;
   }
 
-  public CliConfigBuilder withMigrationOptions(@Nullable MigrationOptions options) {
+  CliConfigBuilder withMigrationOptions(@Nullable MigrationOptions options) {
     if (options == null) {
       return this;
     }
@@ -94,7 +94,7 @@ public final class CliConfigBuilder {
     return this;
   }
 
-  public Config build() {
+  Config build() {
     var cliConfig = parseCliConfig();
     var fileConfig = loadFileConfig();
     return mergeConfigs(cliConfig, fileConfig);

@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing user-space subordinate location address operations. */
-public final class AddressActor extends AbstractBehavior<AddressCommand> {
+final class AddressActor extends AbstractBehavior<AddressCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(AddressActor.class);
   private final AddressDAO addressDao;
@@ -43,7 +43,7 @@ public final class AddressActor extends AbstractBehavior<AddressCommand> {
     try {
       var validationError = AddressValidation.validateCreate(cmd.request());
       if (validationError.isPresent()) {
-        cmd.replyTo().tell(AddressActorResponse.badRequest(validationError.get()));
+        cmd.replyTo().tell(AddressActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
       executeCreate(cmd.tenantId(), cmd.locationId(), cmd.request(), cmd.replyTo());
@@ -114,7 +114,7 @@ public final class AddressActor extends AbstractBehavior<AddressCommand> {
     try {
       var validationError = AddressValidation.validatePatch(cmd.request());
       if (validationError.isPresent()) {
-        cmd.replyTo().tell(AddressActorResponse.badRequest(validationError.get()));
+        cmd.replyTo().tell(AddressActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
       executePatch(
@@ -188,7 +188,7 @@ public final class AddressActor extends AbstractBehavior<AddressCommand> {
   private <T> Optional<T> selectField(
       Optional<Set<String>> maskFields, String fieldName, Optional<T> requestValue) {
     if (maskFields.isPresent()) {
-      return maskFields.get().contains(fieldName) ? requestValue : Optional.empty();
+      return maskFields.orElseThrow().contains(fieldName) ? requestValue : Optional.empty();
     }
     return requestValue;
   }
