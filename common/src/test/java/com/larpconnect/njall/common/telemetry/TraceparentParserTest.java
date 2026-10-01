@@ -16,8 +16,8 @@ final class TraceparentParserTest {
     var rawHeader = "00-" + VALID_TRACE_ID + "-" + VALID_SPAN_ID + "-01";
     var result = TraceparentParser.parse(rawHeader);
     assertThat(result).isPresent();
-    assertThat(result.get().traceId()).isEqualTo(VALID_TRACE_ID);
-    assertThat(result.get().spanId()).isEqualTo(VALID_SPAN_ID);
+    assertThat(result.orElseThrow().traceId()).isEqualTo(VALID_TRACE_ID);
+    assertThat(result.orElseThrow().spanId()).isEqualTo(VALID_SPAN_ID);
   }
 
   @Test

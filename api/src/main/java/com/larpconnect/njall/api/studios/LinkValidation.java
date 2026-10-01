@@ -59,7 +59,7 @@ final class LinkValidation {
     if (!isValidUri(request.url())) {
       return Optional.of("url must be a valid URI");
     }
-    if (request.mediaType().isPresent() && request.mediaType().get().isBlank()) {
+    if (request.mediaType().isPresent() && request.mediaType().orElseThrow().isBlank()) {
       return Optional.of("mediaType must not be blank if provided");
     }
     return Optional.empty();
@@ -72,13 +72,13 @@ final class LinkValidation {
    * @return Error message if invalid, or empty if valid.
    */
   static Optional<String> validateUpdate(UpdateLinkRequest request) {
-    if (request.linkType().isPresent() && request.linkType().get().isBlank()) {
+    if (request.linkType().isPresent() && request.linkType().orElseThrow().isBlank()) {
       return Optional.of("linkType must not be blank");
     }
-    if (request.url().isPresent() && !isValidUri(request.url().get())) {
+    if (request.url().isPresent() && !isValidUri(request.url().orElseThrow())) {
       return Optional.of("url must be a valid URI");
     }
-    if (request.mediaType().isPresent() && request.mediaType().get().isBlank()) {
+    if (request.mediaType().isPresent() && request.mediaType().orElseThrow().isBlank()) {
       return Optional.of("mediaType must not be blank");
     }
     return Optional.empty();

@@ -171,35 +171,37 @@ public final class LinksRoute extends AllDirectives implements RouteProvider {
       case LinkActorResponse.BadRequest br ->
           complete(
               StatusCodes.BAD_REQUEST,
-              createErrorResponse(400, br.message()),
+              createErrorResponse(StatusCodes.BAD_REQUEST, br.message()),
               Jackson.marshaller(objectMapper));
       case LinkActorResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              createErrorResponse(404, nf.message()),
+              createErrorResponse(StatusCodes.NOT_FOUND, nf.message()),
               Jackson.marshaller(objectMapper));
       case LinkActorResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              createErrorResponse(500, f.message()),
+              createErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, f.message()),
               Jackson.marshaller(objectMapper));
     };
   }
 
   private Route completeNotFound(String message) {
     return complete(
-        StatusCodes.NOT_FOUND, createErrorResponse(404, message), Jackson.marshaller(objectMapper));
+        StatusCodes.NOT_FOUND,
+        createErrorResponse(StatusCodes.NOT_FOUND, message),
+        Jackson.marshaller(objectMapper));
   }
 
   private Route handleActorFailure(Throwable error) {
     logger.error("Link actor request failed", error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        createErrorResponse(500, "Internal server error"),
+        createErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error"),
         Jackson.marshaller(objectMapper));
   }
 
-  private StudioErrorResponse createErrorResponse(int status, String message) {
-    return new StudioErrorResponse(status, message);
+  private StudioErrorResponse createErrorResponse(StatusCode status, String message) {
+    return new StudioErrorResponse(status.intValue(), message);
   }
 }

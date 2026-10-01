@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing default studio role management operations. */
-public final class StudioRoleAdminActor extends AbstractBehavior<StudioRoleAdminCommand> {
+final class StudioRoleAdminActor extends AbstractBehavior<StudioRoleAdminCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(StudioRoleAdminActor.class);
   private final StudioRoleDAO roleDao;

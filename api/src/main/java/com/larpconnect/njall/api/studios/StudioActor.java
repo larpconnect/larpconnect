@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing user-space tenanted studio operations. */
-public final class StudioActor extends AbstractBehavior<StudioCommand> {
+final class StudioActor extends AbstractBehavior<StudioCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(StudioActor.class);
   private final StudioDAO studioDao;

@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * High-performance Caffeine-backed implementation of {@link StudioLookupCacheService} managed as a
  * Guava {@link AbstractScheduledService}.
  */
-public final class DefaultStudioLookupCacheService extends AbstractScheduledService
+final class DefaultStudioLookupCacheService extends AbstractScheduledService
     implements StudioLookupCacheService {
 
   private static final String CONFIG_KEY = "larpconnect.data.cache.studio-lookup.refresh-interval";

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing user administration and role assignment operations. */
-public final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
+final class UserAdminActor extends AbstractBehavior<UserAdminCommand> {
 
   private final Logger logger = LoggerFactory.getLogger(UserAdminActor.class);
   private final AdminUserDAO userDao;

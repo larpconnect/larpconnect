@@ -307,17 +307,17 @@ public final class LocationsRoute extends AllDirectives implements RouteProvider
       case LocationActorResponse.BadRequest br ->
           complete(
               StatusCodes.BAD_REQUEST,
-              createErrorResponse(400, br.message()),
+              createErrorResponse(StatusCodes.BAD_REQUEST, br.message()),
               Jackson.marshaller(objectMapper));
       case LocationActorResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              createErrorResponse(404, nf.message()),
+              createErrorResponse(StatusCodes.NOT_FOUND, nf.message()),
               Jackson.marshaller(objectMapper));
       case LocationActorResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              createErrorResponse(500, f.message()),
+              createErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, f.message()),
               Jackson.marshaller(objectMapper));
     };
   }
@@ -336,35 +336,37 @@ public final class LocationsRoute extends AllDirectives implements RouteProvider
       case AddressActorResponse.BadRequest br ->
           complete(
               StatusCodes.BAD_REQUEST,
-              createErrorResponse(400, br.message()),
+              createErrorResponse(StatusCodes.BAD_REQUEST, br.message()),
               Jackson.marshaller(objectMapper));
       case AddressActorResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              createErrorResponse(404, nf.message()),
+              createErrorResponse(StatusCodes.NOT_FOUND, nf.message()),
               Jackson.marshaller(objectMapper));
       case AddressActorResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              createErrorResponse(500, f.message()),
+              createErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, f.message()),
               Jackson.marshaller(objectMapper));
     };
   }
 
   private Route completeNotFound(String message) {
     return complete(
-        StatusCodes.NOT_FOUND, createErrorResponse(404, message), Jackson.marshaller(objectMapper));
+        StatusCodes.NOT_FOUND,
+        createErrorResponse(StatusCodes.NOT_FOUND, message),
+        Jackson.marshaller(objectMapper));
   }
 
   private Route handleActorFailure(String entityType, Throwable error) {
     logger.error("{} actor request failed", entityType, error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        createErrorResponse(500, "Internal server error"),
+        createErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error"),
         Jackson.marshaller(objectMapper));
   }
 
-  private StudioErrorResponse createErrorResponse(int status, String message) {
-    return new StudioErrorResponse(status, message);
+  private StudioErrorResponse createErrorResponse(StatusCode status, String message) {
+    return new StudioErrorResponse(status.intValue(), message);
   }
 }

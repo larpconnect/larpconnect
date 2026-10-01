@@ -1,6 +1,5 @@
 package com.larpconnect.njall.api.admin.users;
 
-import static java.util.Objects.requireNonNull;
 import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,10 +54,10 @@ public final class UserAdminRoute extends AllDirectives {
       ActorSystem<Void> system,
       ObjectMapper objectMapper,
       Duration askTimeout) {
-    this.userAdminActor = requireNonNull(userAdminActor, "userAdminActor cannot be null");
-    this.system = requireNonNull(system, "system cannot be null");
-    this.objectMapper = requireNonNull(objectMapper, "objectMapper cannot be null");
-    this.askTimeout = requireNonNull(askTimeout, "askTimeout cannot be null");
+    this.userAdminActor = userAdminActor;
+    this.system = system;
+    this.objectMapper = objectMapper;
+    this.askTimeout = askTimeout;
   }
 
   /**

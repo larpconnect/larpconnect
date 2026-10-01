@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.http;
 
-import static java.util.Objects.requireNonNull;
-
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import java.util.Set;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
@@ -10,13 +9,13 @@ import org.apache.pekko.http.javadsl.server.Route;
 
 final class DefaultRootRoute extends AllDirectives implements RootRoute {
 
-  private final Set<RouteProvider> routeProviders;
+  private final ImmutableSet<RouteProvider> routeProviders;
   private final TracingDirective tracingDirective;
 
   @Inject
   DefaultRootRoute(Set<RouteProvider> routeProviders, TracingDirective tracingDirective) {
-    this.routeProviders = Set.copyOf(routeProviders);
-    this.tracingDirective = requireNonNull(tracingDirective, "tracingDirective cannot be null");
+    this.routeProviders = ImmutableSet.copyOf(routeProviders);
+    this.tracingDirective = tracingDirective;
   }
 
   @Override

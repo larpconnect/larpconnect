@@ -20,18 +20,19 @@ final class AddressValidation {
 
   static Optional<String> validatePatch(UpdateAddressRequest request) {
     if (request.addressLine1().isPresent()) {
-      var err = validateAddressLine1(request.addressLine1().get());
+      var err = validateAddressLine1(request.addressLine1().orElseThrow());
       if (err.isPresent()) {
         return err;
       }
     }
     if (request.postalCode().isPresent()) {
-      var code = request.postalCode().get();
+      var code = request.postalCode().orElseThrow();
       if (code.isBlank() || code.length() > 20) {
         return Optional.of("postalCode must not exceed 20 characters");
       }
     }
-    if (request.countryCode().isPresent() && request.countryCode().get().trim().length() != 2) {
+    if (request.countryCode().isPresent()
+        && request.countryCode().orElseThrow().trim().length() != 2) {
       return Optional.of("countryCode must be a 2-letter ISO 3166-1 alpha-2 code");
     }
     return Optional.empty();

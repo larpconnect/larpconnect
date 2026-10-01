@@ -12,7 +12,7 @@ import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.actor.typed.javadsl.Receive;
 
 /** Object-oriented Apache Pekko Typed actor evaluating Dropwizard health check registries. */
-public final class HealthCheckActor extends AbstractBehavior<ApiCall<HealthCheckCommand>> {
+final class HealthCheckActor extends AbstractBehavior<ApiCall<HealthCheckCommand>> {
 
   private final HealthCheckRegistry registry;
 
