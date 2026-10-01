@@ -15,6 +15,26 @@ import org.hibernate.SessionFactory;
 
 final class DefaultStudioLookupDAO implements StudioLookupDAO {
 
+  private static final String HQL_FIND_BY_STUDIO_ID_ACTIVE =
+      "from StudioLookupEntity where studioId = :studioId and deletedAt is null";
+  private static final String HQL_FIND_BY_STUDIO_ID_ALL =
+      "from StudioLookupEntity where studioId = :studioId";
+
+  private static final String HQL_FIND_BY_ALIAS_ACTIVE =
+      "from StudioLookupEntity where alias = :alias and deletedAt is null";
+  private static final String HQL_FIND_BY_ALIAS_ALL =
+      "from StudioLookupEntity where alias = :alias";
+
+  private static final String HQL_LIST_ACTIVE =
+      "from StudioLookupEntity where deletedAt is null order by alias asc";
+  private static final String HQL_LIST_ALL = "from StudioLookupEntity order by alias asc";
+
+  private static final String SQL_INSERT_STUDIO =
+      "INSERT INTO njall_users.studios (name) VALUES (:name) RETURNING id";
+  private static final String SQL_INSERT_STUDIO_LOOKUP =
+      "INSERT INTO njall_admin.studios_lookup (tenant_id, alias) VALUES (:tenantId, :alias) "
+          + "RETURNING studio_id, created_at, updated_at";
+
   private final Provider<SessionFactory> sessionFactoryProvider;
 
   @Inject
@@ -30,9 +50,7 @@ final class DefaultStudioLookupDAO implements StudioLookupDAO {
   @Override
   public Optional<StudioLookup> findById(UUID studioId, DeletionFilter filter) {
     try (var session = sessionFactoryProvider.get().openSession()) {
-      var hql =
-          "from StudioLookupEntity where studioId = :studioId"
-              + (filter.includesDeleted() ? "" : " and deletedAt is null");
+      var hql = filter.includesDeleted() ? HQL_FIND_BY_STUDIO_ID_ALL : HQL_FIND_BY_STUDIO_ID_ACTIVE;
       var entity =
           session
               .createQuery(hql, StudioLookupEntity.class)
@@ -50,9 +68,7 @@ final class DefaultStudioLookupDAO implements StudioLookupDAO {
   @Override
   public Optional<StudioLookup> findByAlias(String alias, DeletionFilter filter) {
     try (var session = sessionFactoryProvider.get().openSession()) {
-      var hql =
-          "from StudioLookupEntity where alias = :alias"
-              + (filter.includesDeleted() ? "" : " and deletedAt is null");
+      var hql = filter.includesDeleted() ? HQL_FIND_BY_ALIAS_ALL : HQL_FIND_BY_ALIAS_ACTIVE;
       var entity =
           session
               .createQuery(hql, StudioLookupEntity.class)
@@ -70,10 +86,7 @@ final class DefaultStudioLookupDAO implements StudioLookupDAO {
   @Override
   public ImmutableList<StudioLookup> list(DeletionFilter filter) {
     try (var session = sessionFactoryProvider.get().openSession()) {
-      var hql =
-          "from StudioLookupEntity"
-              + (filter.includesDeleted() ? "" : " where deletedAt is null")
-              + " order by alias asc";
+      var hql = filter.includesDeleted() ? HQL_LIST_ALL : HQL_LIST_ACTIVE;
       var entities = session.createQuery(hql, StudioLookupEntity.class).list();
       return entities.stream().map(this::toStudio).collect(ImmutableList.toImmutableList());
     }
@@ -84,19 +97,15 @@ final class DefaultStudioLookupDAO implements StudioLookupDAO {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
-        var studioSql = "INSERT INTO njall_users.studios (name) VALUES (:name) RETURNING id";
         var tenantId =
             session
-                .createNativeQuery(studioSql, UUID.class)
+                .createNativeQuery(SQL_INSERT_STUDIO, UUID.class)
                 .setParameter("name", name)
                 .getSingleResult();
 
-        var lookupSql =
-            "INSERT INTO njall_admin.studios_lookup (tenant_id, alias) VALUES (:tenantId, :alias) "
-                + "RETURNING studio_id, created_at, updated_at";
         var lookupRow =
             session
-                .createNativeQuery(lookupSql, Object[].class)
+                .createNativeQuery(SQL_INSERT_STUDIO_LOOKUP, Object[].class)
                 .setParameter("tenantId", tenantId)
                 .setParameter("alias", alias)
                 .getSingleResult();
@@ -121,10 +130,9 @@ final class DefaultStudioLookupDAO implements StudioLookupDAO {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
-        var hql = "from StudioLookupEntity where studioId = :studioId and deletedAt is null";
         var entity =
             session
-                .createQuery(hql, StudioLookupEntity.class)
+                .createQuery(HQL_FIND_BY_STUDIO_ID_ACTIVE, StudioLookupEntity.class)
                 .setParameter("studioId", studioId)
                 .uniqueResult();
         if (entity == null) {

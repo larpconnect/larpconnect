@@ -2,7 +2,7 @@ package com.larpconnect.njall.data.domain;
 
 import java.util.UUID;
 
-/** Base sealed interface for all persistent domain entities and records in Project Njall. */
+/** Base sealed interface for all persistent domain entities and records in Njall. */
 public sealed interface DatabaseObject
     permits Server,
         AdminUser,

@@ -14,7 +14,6 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
-import org.hibernate.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +37,7 @@ final class DefaultStudioDAOTest {
 
   @Test
   @DisplayName("findById sets app.tenant_id in transaction and returns Studio")
+  // Suppressed due to Hibernate generic query mocking type erasure.
   @SuppressWarnings("unchecked")
   void findById_success() {
     var tx = mock(Transaction.class);
@@ -49,22 +49,21 @@ final class DefaultStudioDAOTest {
     when(configQuery.setParameter(eq("tenantId"), any())).thenReturn(configQuery);
     when(configQuery.getSingleResult()).thenReturn(tenantId.toString());
 
-    Query<StudioEntity> hqlQuery = mock(Query.class);
-    when(session.createQuery(contains("from StudioEntity"), eq(StudioEntity.class)))
-        .thenReturn(hqlQuery);
-    when(hqlQuery.setParameter("tenantId", tenantId)).thenReturn(hqlQuery);
-    when(hqlQuery.uniqueResult()).thenReturn(new StudioEntity(tenantId, "Valhalla"));
+    when(session.find(StudioEntity.class, tenantId))
+        .thenReturn(new StudioEntity(tenantId, "Valhalla"));
 
     var result = dao.findById(tenantId);
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(tenantId);
     assertThat(result.orElseThrow().name()).isEqualTo("Valhalla");
+    verify(session).find(StudioEntity.class, tenantId);
     verify(tx).commit();
   }
 
   @Test
   @DisplayName("getStudio delegates to findById")
+  // Suppressed due to Hibernate generic query mocking type erasure.
   @SuppressWarnings("unchecked")
   void getStudio_delegatesToFindById() {
     var tx = mock(Transaction.class);
@@ -76,22 +75,21 @@ final class DefaultStudioDAOTest {
     when(configQuery.setParameter(eq("tenantId"), any())).thenReturn(configQuery);
     when(configQuery.getSingleResult()).thenReturn(tenantId.toString());
 
-    Query<StudioEntity> hqlQuery = mock(Query.class);
-    when(session.createQuery(contains("from StudioEntity"), eq(StudioEntity.class)))
-        .thenReturn(hqlQuery);
-    when(hqlQuery.setParameter("tenantId", tenantId)).thenReturn(hqlQuery);
-    when(hqlQuery.uniqueResult()).thenReturn(new StudioEntity(tenantId, "Valhalla"));
+    when(session.find(StudioEntity.class, tenantId))
+        .thenReturn(new StudioEntity(tenantId, "Valhalla"));
 
     var result = dao.getStudio(tenantId);
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(tenantId);
     assertThat(result.orElseThrow().name()).isEqualTo("Valhalla");
+    verify(session).find(StudioEntity.class, tenantId);
     verify(tx).commit();
   }
 
   @Test
   @DisplayName("findById returns empty when entity not found")
+  // Suppressed due to Hibernate generic query mocking type erasure.
   @SuppressWarnings("unchecked")
   void findById_notFound() {
     var tx = mock(Transaction.class);
@@ -103,20 +101,18 @@ final class DefaultStudioDAOTest {
     when(configQuery.setParameter(eq("tenantId"), any())).thenReturn(configQuery);
     when(configQuery.getSingleResult()).thenReturn(tenantId.toString());
 
-    Query<StudioEntity> hqlQuery = mock(Query.class);
-    when(session.createQuery(contains("from StudioEntity"), eq(StudioEntity.class)))
-        .thenReturn(hqlQuery);
-    when(hqlQuery.setParameter("tenantId", tenantId)).thenReturn(hqlQuery);
-    when(hqlQuery.uniqueResult()).thenReturn(null);
+    when(session.find(StudioEntity.class, tenantId)).thenReturn(null);
 
     var result = dao.findById(tenantId);
 
     assertThat(result).isEmpty();
+    verify(session).find(StudioEntity.class, tenantId);
     verify(tx).commit();
   }
 
   @Test
   @DisplayName("findById rollbacks on exception")
+  // Suppressed due to Hibernate generic query mocking type erasure.
   @SuppressWarnings("unchecked")
   void findById_rollbackOnException() {
     var tx = mock(Transaction.class);

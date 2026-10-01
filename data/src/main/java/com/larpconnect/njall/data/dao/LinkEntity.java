@@ -44,16 +44,8 @@ class LinkEntity {
     return tenantId;
   }
 
-  void setTenantId(UUID tenantId) {
-    this.tenantId = tenantId;
-  }
-
   UUID getId() {
     return id;
-  }
-
-  void setId(UUID id) {
-    this.id = id;
   }
 
   String getLinkType() {

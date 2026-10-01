@@ -16,7 +16,7 @@ public sealed interface DAO<T extends DatabaseObject>
         AdminRoleDAO,
         StudioLookupDAO,
         StudioDAO,
-        DefaultStudioRoleDAO,
+        StudioRoleDAO,
         LinkDAO,
         LocationDAO,
         AddressDAO {

@@ -29,10 +29,6 @@ class AdminRoleEntity {
     return id;
   }
 
-  void setId(UUID id) {
-    this.id = id;
-  }
-
   String getRoleName() {
     return roleName;
   }

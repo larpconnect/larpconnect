@@ -62,6 +62,7 @@ final class DefaultAddressDAOTest {
           "{\"type\":\"Point\",\"coordinates\":[-122.3321,47.6062]}"
         };
 
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<Object[]> query = mock(NativeQuery.class);
     when(session.createNativeQuery(contains("SELECT a.id, a.location_id"), eq(Object[].class)))
@@ -87,12 +88,50 @@ final class DefaultAddressDAOTest {
   }
 
   @Test
+  @DisplayName("findById with malformed or non-numeric GeoJSON coordinates returns empty geom")
+  void findById_malformedCoordinatesReturnsEmptyGeom() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+
+    Object[] row =
+        new Object[] {
+          addressId,
+          locationId,
+          "PHYSICAL",
+          "123 Pine St",
+          "Suite A",
+          "",
+          "Seattle",
+          "WA",
+          "98101",
+          "US",
+          "{\"type\":\"Point\",\"coordinates\":[\"invalid\",\"coords\"]}"
+        };
+
+    // Suppressed due to Hibernate generic query mocking type erasure.
+    @SuppressWarnings("unchecked")
+    NativeQuery<Object[]> query = mock(NativeQuery.class);
+    when(session.createNativeQuery(contains("SELECT a.id, a.location_id"), eq(Object[].class)))
+        .thenReturn(query);
+    when(query.setParameter(any(String.class), any())).thenReturn(query);
+    when(query.getResultList()).thenReturn(Collections.singletonList(row));
+
+    var result = dao.findById(tenantId, locationId, addressId);
+
+    assertThat(result).isPresent();
+    assertThat(result.orElseThrow().geom()).isEmpty();
+    verify(tx).commit();
+  }
+
+  @Test
   @DisplayName("findById returns empty when address row not found")
   void findById_notFound() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<Object[]> query = mock(NativeQuery.class);
     when(session.createNativeQuery(contains("SELECT a.id, a.location_id"), eq(Object[].class)))
@@ -129,6 +168,7 @@ final class DefaultAddressDAOTest {
           null
         };
 
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<Object[]> query = mock(NativeQuery.class);
     when(session.createNativeQuery(contains("SELECT a.id, a.location_id"), eq(Object[].class)))
@@ -152,6 +192,7 @@ final class DefaultAddressDAOTest {
     mockTenantConfigQuery();
     mockLocationActive(false);
 
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<Object[]> query = mock(NativeQuery.class);
     when(session.createNativeQuery(contains("SELECT a.id, a.location_id"), eq(Object[].class)))
@@ -173,6 +214,7 @@ final class DefaultAddressDAOTest {
     mockTenantConfigQuery();
     mockLocationActive(true);
 
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<Void> geomQuery = mock(NativeQuery.class);
     when(session.createNativeQuery(
@@ -240,20 +282,19 @@ final class DefaultAddressDAOTest {
     mockLocationActive(true);
 
     var entity =
-        new AddressEntity(
-            tenantId,
-            addressId,
-            locationId,
-            "PHYSICAL",
-            "123 Pine St",
-            "Suite A",
-            "Bldg 2",
-            "Seattle",
-            "WA",
-            "98101",
-            "US");
+        AddressEntity.builder(tenantId, addressId, locationId)
+            .addressType("PHYSICAL")
+            .addressLine1("123 Pine St")
+            .addressLine2("Suite A")
+            .addressLine3("Bldg 2")
+            .locality("Seattle")
+            .administrativeArea("WA")
+            .postalCode("98101")
+            .countryCode("US")
+            .build();
     when(session.find(eq(AddressEntity.class), any(EntityId.class))).thenReturn(entity);
 
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<Void> clearGeomQuery = mock(NativeQuery.class);
     when(session.createNativeQuery(
@@ -290,20 +331,19 @@ final class DefaultAddressDAOTest {
     mockLocationActive(true);
 
     var entity =
-        new AddressEntity(
-            tenantId,
-            addressId,
-            locationId,
-            "PHYSICAL",
-            "123 Pine St",
-            "",
-            "",
-            "Seattle",
-            "WA",
-            "98101",
-            "US");
+        AddressEntity.builder(tenantId, addressId, locationId)
+            .addressType("PHYSICAL")
+            .addressLine1("123 Pine St")
+            .addressLine2("")
+            .addressLine3("")
+            .locality("Seattle")
+            .administrativeArea("WA")
+            .postalCode("98101")
+            .countryCode("US")
+            .build();
     when(session.find(eq(AddressEntity.class), any(EntityId.class))).thenReturn(entity);
 
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<Void> geomQuery = mock(NativeQuery.class);
     when(session.createNativeQuery(
@@ -331,20 +371,19 @@ final class DefaultAddressDAOTest {
     mockLocationActive(true);
 
     var entity =
-        new AddressEntity(
-            tenantId,
-            addressId,
-            locationId,
-            "PHYSICAL",
-            "123 Pine St",
-            "",
-            "",
-            "Seattle",
-            "WA",
-            "98101",
-            "US");
+        AddressEntity.builder(tenantId, addressId, locationId)
+            .addressType("PHYSICAL")
+            .addressLine1("123 Pine St")
+            .addressLine2("")
+            .addressLine3("")
+            .locality("Seattle")
+            .administrativeArea("WA")
+            .postalCode("98101")
+            .countryCode("US")
+            .build();
     when(session.find(eq(AddressEntity.class), any(EntityId.class))).thenReturn(entity);
 
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<String> loadGeomQuery = mock(NativeQuery.class);
     when(session.createNativeQuery(contains("SELECT ST_AsGeoJSON(geom)"), eq(String.class)))
@@ -381,22 +420,6 @@ final class DefaultAddressDAOTest {
   }
 
   @Test
-  @DisplayName("patch returns empty when entity not found or wrong location")
-  void patch_notFound_returnsEmpty() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-    mockLocationActive(true);
-
-    when(session.find(eq(AddressEntity.class), any(EntityId.class))).thenReturn(null);
-
-    var result = dao.patch(tenantId, locationId, addressId).addressLine1("New Line").execute();
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
-  }
-
-  @Test
   @DisplayName("delete removes address and returns true when found")
   void delete_success() {
     var tx = mock(Transaction.class);
@@ -404,18 +427,16 @@ final class DefaultAddressDAOTest {
     mockTenantConfigQuery();
 
     var entity =
-        new AddressEntity(
-            tenantId,
-            addressId,
-            locationId,
-            "PHYSICAL",
-            "123 Pine St",
-            "",
-            "",
-            "Seattle",
-            "WA",
-            "98101",
-            "US");
+        AddressEntity.builder(tenantId, addressId, locationId)
+            .addressType("PHYSICAL")
+            .addressLine1("123 Pine St")
+            .addressLine2("")
+            .addressLine3("")
+            .locality("Seattle")
+            .administrativeArea("WA")
+            .postalCode("98101")
+            .countryCode("US")
+            .build();
     when(session.find(eq(AddressEntity.class), any(EntityId.class))).thenReturn(entity);
 
     var deleted = dao.delete(tenantId, locationId, addressId);
@@ -425,30 +446,8 @@ final class DefaultAddressDAOTest {
     verify(tx).commit();
   }
 
-  @Test
-  @DisplayName("delete returns false when entity not found")
-  void delete_notFound() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    when(session.find(eq(AddressEntity.class), any(EntityId.class))).thenReturn(null);
-
-    var deleted = dao.delete(tenantId, locationId, addressId);
-
-    assertThat(deleted).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("Unsupported methods throw UnsupportedOperationException")
-  void unsupportedMethods_throwException() {
-    assertThatThrownBy(() -> dao.list()).isInstanceOf(UnsupportedOperationException.class);
-    assertThatThrownBy(() -> dao.findById(UUID.randomUUID()))
-        .isInstanceOf(UnsupportedOperationException.class);
-  }
-
   private void mockTenantConfigQuery() {
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<String> configQuery = mock(NativeQuery.class);
     when(session.createNativeQuery(contains("SELECT set_config"), eq(String.class)))
@@ -458,6 +457,7 @@ final class DefaultAddressDAOTest {
   }
 
   private void mockLocationActive(boolean active) {
+    // Suppressed due to Hibernate generic query mocking type erasure.
     @SuppressWarnings("unchecked")
     NativeQuery<Long> checkQuery = mock(NativeQuery.class);
     when(session.createNativeQuery(

@@ -14,6 +14,8 @@ import org.hibernate.SessionFactory;
 final class DefaultLocationDAO implements LocationDAO {
 
   private static final String ENTITY_TYPE_LOCATION = "Location";
+  private static final String SET_TENANT_CONFIG =
+      "SELECT set_config('app.tenant_id', :tenantId, true)";
 
   private final Provider<SessionFactory> sessionFactoryProvider;
 
@@ -145,7 +147,7 @@ final class DefaultLocationDAO implements LocationDAO {
 
   private void setTenantContext(Session session, UUID tenantId) {
     session
-        .createNativeQuery("SELECT set_config('app.tenant_id', :tenantId, true)", String.class)
+        .createNativeQuery(SET_TENANT_CONFIG, String.class)
         .setParameter("tenantId", tenantId.toString())
         .getSingleResult();
   }

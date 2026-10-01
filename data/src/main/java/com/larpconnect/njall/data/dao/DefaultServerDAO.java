@@ -15,6 +15,10 @@ import org.jspecify.annotations.Nullable;
 
 final class DefaultServerDAO implements ServerDAO {
 
+  private static final String HQL_FIND_ALL_SERVERS = "from ServerEntity";
+  private static final String HQL_FIND_ALL_CONTACTS =
+      "from ServerContactEntity order by ordering asc";
+
   private final Provider<SessionFactory> sessionFactoryProvider;
 
   @Inject
@@ -64,12 +68,11 @@ final class DefaultServerDAO implements ServerDAO {
   }
 
   private List<ServerEntity> findAllServerEntities(Session session) {
-    return session.createQuery("from ServerEntity", ServerEntity.class).list();
+    return session.createQuery(HQL_FIND_ALL_SERVERS, ServerEntity.class).list();
   }
 
   private List<ServerContactEntity> findAllContactEntities(Session session) {
-    var hql = "from ServerContactEntity order by ordering asc";
-    return session.createQuery(hql, ServerContactEntity.class).list();
+    return session.createQuery(HQL_FIND_ALL_CONTACTS, ServerContactEntity.class).list();
   }
 
   private Server toServer(ServerEntity entity, ImmutableList<ServerContact> contacts) {

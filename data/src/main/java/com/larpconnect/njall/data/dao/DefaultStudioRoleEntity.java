@@ -29,10 +29,6 @@ class DefaultStudioRoleEntity {
     return id;
   }
 
-  void setId(UUID id) {
-    this.id = id;
-  }
-
   String getName() {
     return name;
   }

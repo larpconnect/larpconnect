@@ -17,7 +17,7 @@ public final class DaoModule extends AbstractModule {
     bind(AdminUserDAO.class).to(DefaultAdminUserDAO.class).in(Scopes.SINGLETON);
     bind(StudioLookupDAO.class).to(DefaultStudioLookupDAO.class).in(Scopes.SINGLETON);
     bind(StudioDAO.class).to(DefaultStudioDAO.class).in(Scopes.SINGLETON);
-    bind(DefaultStudioRoleDAO.class).to(DefaultDefaultStudioRoleDAO.class).in(Scopes.SINGLETON);
+    bind(StudioRoleDAO.class).to(DefaultStudioRoleDAO.class).in(Scopes.SINGLETON);
     bind(LinkDAO.class).to(DefaultLinkDAO.class).in(Scopes.SINGLETON);
     bind(LocationDAO.class).to(DefaultLocationDAO.class).in(Scopes.SINGLETON);
     bind(AddressDAO.class).to(DefaultAddressDAO.class).in(Scopes.SINGLETON);
