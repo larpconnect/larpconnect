@@ -1,7 +1,5 @@
 package com.larpconnect.njall.data.dao;
 
-import static java.util.Objects.requireNonNull;
-
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -39,7 +37,11 @@ final class DefaultLinkDAO implements LinkDAO {
         }
         return Optional.of(toLink(entity, link));
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }
@@ -52,41 +54,24 @@ final class DefaultLinkDAO implements LinkDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var insertEntitySql =
-            "INSERT INTO njall_users.entities (tenant_id, entity_type, summary) "
-                + "VALUES (:tenantId, :entityType, :summary) "
-                + "RETURNING id";
-        var linkId =
-            session
-                .createNativeQuery(insertEntitySql, UUID.class)
-                .setParameter("tenantId", tenantId)
-                .setParameter("entityType", ENTITY_TYPE_LINK)
-                .setParameter("summary", summary.orElse(null))
-                .getSingleResult();
-
-        var insertLinkSql =
-            "INSERT INTO njall_users.links (tenant_id, id, link_type, url, media_type) "
-                + "VALUES (:tenantId, :linkId, :linkType, :url, :mediaType)";
-        session
-            .createNativeQuery(insertLinkSql, Void.class)
-            .setParameter("tenantId", tenantId)
-            .setParameter("linkId", linkId)
-            .setParameter("linkType", linkType)
-            .setParameter("url", url)
-            .setParameter("mediaType", mediaType)
-            .executeUpdate();
-
-        var entityId = new EntityId(tenantId, linkId);
+        var linkId = UUID.randomUUID();
+        var now = Instant.now();
         var entity =
-            requireNonNull(
-                session.find(EntityBaseEntity.class, entityId), "Persisted entity cannot be null");
-        var link =
-            requireNonNull(
-                session.find(LinkEntity.class, entityId), "Persisted link cannot be null");
+            new EntityBaseEntity(
+                tenantId, linkId, ENTITY_TYPE_LINK, summary.orElse(null), now, now, null);
+        session.persist(entity);
+
+        var link = new LinkEntity(tenantId, linkId, linkType, url, mediaType);
+        session.persist(link);
+
         tx.commit();
         return toLink(entity, link);
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }
@@ -121,7 +106,11 @@ final class DefaultLinkDAO implements LinkDAO {
         tx.commit();
         return Optional.of(toLink(entity, link));
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }
@@ -146,7 +135,11 @@ final class DefaultLinkDAO implements LinkDAO {
         tx.commit();
         return true;
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }

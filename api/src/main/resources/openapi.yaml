@@ -565,6 +565,318 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
+  /api/studios/{studio-id}/v1/locations:
+    post:
+      summary: Create a studio venue location
+      description: Persists a new physical venue location entity for the specified tenant studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLocationRequest'
+      responses:
+        '201':
+          description: Location created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/locations/{id}:
+    get:
+      summary: Retrieve location details
+      description: Returns details of an active venue location under the specified tenant studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Location UUID.
+      responses:
+        '200':
+          description: Location retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update location fields
+      description: Applies partial updates to an active venue location (Google AIP-134).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Location UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of field names to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLocationRequest'
+      responses:
+        '200':
+          description: Location updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft-delete location
+      description: Soft-deletes a venue location by setting its deleted_on timestamp.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Location UUID.
+      responses:
+        '204':
+          description: Location soft-deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/locations/{location-id}/addresses:
+    get:
+      summary: List location addresses
+      description: Returns all subordinate addresses associated with an active venue location.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: location-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Location UUID.
+      responses:
+        '200':
+          description: List of subordinate addresses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Address'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      summary: Create subordinate address
+      description: Adds a subordinate address with optional GeoJSON Point to an active location.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: location-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Location UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAddressRequest'
+      responses:
+        '201':
+          description: Address created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/locations/{location-id}/addresses/{id}:
+    get:
+      summary: Retrieve subordinate address
+      description: Returns details of a specific address under an active location.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: location-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Location UUID.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Address UUID.
+      responses:
+        '200':
+          description: Address retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update subordinate address
+      description: Applies partial updates to a subordinate address (Google AIP-134).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: location-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Location UUID.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Address UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of field names to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAddressRequest'
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Delete subordinate address
+      description: Physically deletes a subordinate address row.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: location-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Location UUID.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Address UUID.
+      responses:
+        '204':
+          description: Address deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
 components:
   headers:
     Traceparent:
@@ -934,3 +1246,189 @@ components:
         summary:
           type: string
           example: "Updated Homepage"
+
+    GeoJsonPoint:
+      type: object
+      required:
+        - type
+        - coordinates
+      properties:
+        type:
+          type: string
+          enum: [Point]
+          example: "Point"
+        coordinates:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: number
+          example: [-122.3321, 47.6062]
+
+    AddressType:
+      type: string
+      enum: [PHYSICAL, MAILING, PO_BOX, BILLING, OTHER]
+      example: "PHYSICAL"
+
+    Location:
+      type: object
+      required:
+        - id
+        - name
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        name:
+          type: string
+          example: "Camp Whispering Pines"
+        summary:
+          type: string
+          example: "Main outdoor event campsite"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+
+    CreateLocationRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "Camp Whispering Pines"
+        summary:
+          type: string
+          example: "Main outdoor event campsite"
+
+    UpdateLocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Camp Whispering Pines - North"
+        summary:
+          type: string
+          example: "Updated campsite description"
+
+    Address:
+      type: object
+      required:
+        - id
+        - locationId
+        - addressType
+        - addressLine1
+        - locality
+        - administrativeArea
+        - postalCode
+        - countryCode
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        locationId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        addressType:
+          $ref: '#/components/schemas/AddressType'
+        addressLine1:
+          type: string
+          example: "123 Camp Road"
+        addressLine2:
+          type: string
+          example: "Building B"
+        addressLine3:
+          type: string
+        locality:
+          type: string
+          example: "Pineville"
+        administrativeArea:
+          type: string
+          example: "WA"
+        postalCode:
+          type: string
+          example: "98101"
+        countryCode:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: "US"
+        geom:
+          $ref: '#/components/schemas/GeoJsonPoint'
+
+    CreateAddressRequest:
+      type: object
+      required:
+        - addressType
+        - addressLine1
+        - locality
+        - administrativeArea
+        - postalCode
+        - countryCode
+      properties:
+        addressType:
+          $ref: '#/components/schemas/AddressType'
+        addressLine1:
+          type: string
+          example: "123 Camp Road"
+        addressLine2:
+          type: string
+          example: "Building B"
+        addressLine3:
+          type: string
+        locality:
+          type: string
+          example: "Pineville"
+        administrativeArea:
+          type: string
+          example: "WA"
+        postalCode:
+          type: string
+          example: "98101"
+        countryCode:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: "US"
+        geom:
+          $ref: '#/components/schemas/GeoJsonPoint'
+
+    UpdateAddressRequest:
+      type: object
+      properties:
+        addressType:
+          $ref: '#/components/schemas/AddressType'
+        addressLine1:
+          type: string
+          example: "125 Camp Road"
+        addressLine2:
+          type: string
+        addressLine3:
+          type: string
+        locality:
+          type: string
+          example: "Pineville"
+        administrativeArea:
+          type: string
+          example: "WA"
+        postalCode:
+          type: string
+          example: "98101"
+        countryCode:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: "US"
+        geom:
+          $ref: '#/components/schemas/GeoJsonPoint'
+

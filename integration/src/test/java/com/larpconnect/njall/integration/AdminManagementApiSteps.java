@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.inject.Guice;
 import com.google.inject.Key;
@@ -302,6 +303,31 @@ public final class AdminManagementApiSteps {
     }
   }
 
+  @Then("the entity for remembered location {string} has deleted_on populated in database")
+  public void theEntityForRememberedLocationHasDeletedOnPopulatedInDatabase(String key)
+      throws Exception {
+    theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
+  }
+
+  @Then("the JSON response path {string} has value {string}")
+  public void theJsonResponsePathHasValue(String path, String expectedValue) {
+    assertJsonBodyPresent();
+    var parts = Splitter.on('.').split(path);
+    var current = rootJson;
+    for (var part : parts) {
+      current = current.path(part);
+    }
+    assertThat(current.asText()).isEqualTo(expectedValue);
+  }
+
+  @Then("the JSON response coordinate at index {int} is {double}")
+  public void theJsonResponseCoordinateAtIndexIs(int index, double expectedValue) {
+    assertJsonBodyPresent();
+    var coordNode = rootJson.path("geom").path("coordinates").get(index);
+    assertThat(coordNode).isNotNull();
+    assertThat(coordNode.asDouble()).isEqualTo(expectedValue);
+  }
+
   @Then("the JSON response does not contain field {string}")
   public void theJsonResponseDoesNotContainField(String field) {
     assertJsonBodyPresent();
@@ -363,6 +389,7 @@ public final class AdminManagementApiSteps {
             + "njall_admin.admin_roles, "
             + "njall_admin.studios_lookup, "
             + "njall_users.studios, "
+            + "njall_users.entities, "
             + "njall_users.default_studio_roles CASCADE";
     try (var conn =
             DriverManager.getConnection(

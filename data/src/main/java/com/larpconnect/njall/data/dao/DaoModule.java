@@ -19,6 +19,8 @@ public final class DaoModule extends AbstractModule {
     bind(StudioDAO.class).to(DefaultStudioDAO.class).in(Scopes.SINGLETON);
     bind(DefaultStudioRoleDAO.class).to(DefaultDefaultStudioRoleDAO.class).in(Scopes.SINGLETON);
     bind(LinkDAO.class).to(DefaultLinkDAO.class).in(Scopes.SINGLETON);
+    bind(LocationDAO.class).to(DefaultLocationDAO.class).in(Scopes.SINGLETON);
+    bind(AddressDAO.class).to(DefaultAddressDAO.class).in(Scopes.SINGLETON);
 
     var adminEntities =
         Multibinder.newSetBinder(binder(), new TypeLiteral<Class<?>>() {}, NjallAdmin.class);
@@ -31,6 +33,8 @@ public final class DaoModule extends AbstractModule {
     adminEntities.addBinding().toInstance(DefaultStudioRoleEntity.class);
     adminEntities.addBinding().toInstance(EntityBaseEntity.class);
     adminEntities.addBinding().toInstance(LinkEntity.class);
+    adminEntities.addBinding().toInstance(LocationEntity.class);
+    adminEntities.addBinding().toInstance(AddressEntity.class);
 
     var userEntities =
         Multibinder.newSetBinder(binder(), new TypeLiteral<Class<?>>() {}, NjallUsers.class);
@@ -38,5 +42,7 @@ public final class DaoModule extends AbstractModule {
     userEntities.addBinding().toInstance(DefaultStudioRoleEntity.class);
     userEntities.addBinding().toInstance(EntityBaseEntity.class);
     userEntities.addBinding().toInstance(LinkEntity.class);
+    userEntities.addBinding().toInstance(LocationEntity.class);
+    userEntities.addBinding().toInstance(AddressEntity.class);
   }
 }

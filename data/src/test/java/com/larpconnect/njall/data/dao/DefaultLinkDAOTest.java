@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -138,38 +139,22 @@ final class DefaultLinkDAOTest {
 
   @Test
   @DisplayName("create inserts entity and link and returns Link record")
-  @SuppressWarnings("unchecked")
   void create_success() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
 
     mockTenantConfigQuery();
 
-    NativeQuery<UUID> insertEntityQuery = mock(NativeQuery.class);
-    when(session.createNativeQuery(contains("INSERT INTO njall_users.entities"), eq(UUID.class)))
-        .thenReturn(insertEntityQuery);
-    when(insertEntityQuery.setParameter(any(String.class), any())).thenReturn(insertEntityQuery);
-    when(insertEntityQuery.getSingleResult()).thenReturn(linkId);
-
-    NativeQuery<Void> insertLinkQuery = mock(NativeQuery.class);
-    when(session.createNativeQuery(contains("INSERT INTO njall_users.links"), eq(Void.class)))
-        .thenReturn(insertLinkQuery);
-    when(insertLinkQuery.setParameter(any(String.class), any())).thenReturn(insertLinkQuery);
-
-    var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "My Discord", now, now, null);
-    var link = new LinkEntity(tenantId, linkId, "discord", "https://discord.gg/test", "text/html");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(LinkEntity.class, entityId)).thenReturn(link);
-
     var result =
         dao.create(
             tenantId, "discord", "https://discord.gg/test", "text/html", Optional.of("My Discord"));
 
-    assertThat(result.id()).isEqualTo(linkId);
     assertThat(result.linkType()).isEqualTo("discord");
+    assertThat(result.url()).isEqualTo("https://discord.gg/test");
+    assertThat(result.mediaType()).isEqualTo("text/html");
     assertThat(result.summary()).contains("My Discord");
+    verify(session).persist(any(EntityBaseEntity.class));
+    verify(session).persist(any(LinkEntity.class));
     verify(tx).commit();
   }
 
@@ -180,8 +165,9 @@ final class DefaultLinkDAOTest {
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
-    when(session.createNativeQuery(contains("INSERT INTO njall_users.entities"), eq(UUID.class)))
-        .thenThrow(new RuntimeException("Insert error"));
+    doThrow(new RuntimeException("Persist error"))
+        .when(session)
+        .persist(any(EntityBaseEntity.class));
 
     assertThatThrownBy(
             () ->
@@ -374,14 +360,22 @@ final class DefaultLinkDAOTest {
   }
 
   @Test
-  @DisplayName("softDelete rollbacks on error")
+  @DisplayName("softDelete rollbacks on error and suppresses rollback exception")
   void softDelete_error_rollbacks() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     when(session.createNativeQuery(contains("set_config"), eq(String.class)))
         .thenThrow(new RuntimeException("DB error"));
+    doThrow(new RuntimeException("Rollback error")).when(tx).rollback();
 
-    assertThatThrownBy(() -> dao.softDelete(tenantId, linkId)).isInstanceOf(RuntimeException.class);
+    assertThatThrownBy(() -> dao.softDelete(tenantId, linkId))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("DB error")
+        .satisfies(
+            e -> {
+              assertThat(e.getSuppressed()).hasSize(1);
+              assertThat(e.getSuppressed()[0]).hasMessage("Rollback error");
+            });
     verify(tx).rollback();
   }
 

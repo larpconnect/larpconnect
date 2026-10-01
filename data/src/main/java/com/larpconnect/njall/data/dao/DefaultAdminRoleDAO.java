@@ -62,7 +62,11 @@ final class DefaultAdminRoleDAO implements AdminRoleDAO {
         tx.commit();
         return new AdminRole(id, roleName);
       } catch (Exception e) {
-        tx.rollback();
+        try {
+          tx.rollback();
+        } catch (Exception rollbackException) {
+          e.addSuppressed(rollbackException);
+        }
         throw e;
       }
     }

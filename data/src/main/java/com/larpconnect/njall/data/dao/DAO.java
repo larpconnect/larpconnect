@@ -17,7 +17,9 @@ public sealed interface DAO<T extends DatabaseObject>
         StudioLookupDAO,
         StudioDAO,
         DefaultStudioRoleDAO,
-        LinkDAO {
+        LinkDAO,
+        LocationDAO,
+        AddressDAO {
 
   /**
    * Retrieves an entity by its unique UUID identifier.

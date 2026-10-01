@@ -9,12 +9,10 @@
 | DTO | A data transfer object | Referring to a serialized data object that is being used in the system | |
 | DAO | A data access object | Referring to an abstraction for working with DTOs | | |
 | Plane | A horizontal cut through the layers of the application that requests pass through | | |
-| Verticle | A slice of the application that centers on a specific responsibility | Discussing end-to-end functionality (e.g., admin) | |
-| Data plane | Refers to the underlying data components of the system and their representation in the software, everything from the ORM and data representations back to the actual database and file store | | |
-| API plane | Refers to the parts of the system that are facing to the user and that handle security, communication, etc | | |
-| Application plane | Refers ot the internal workings of the application itself and internal communication over either an event bus or message queue | | |
-| Admin verticle | Refers to the part of the system that manages the administration of the _server_ as opposed to the individual tenants | | |
-| User verticle | Refers to the part of the system that manages the day-to-day actions of users, studios, etc | | |
+| Verticle | A slice of the application that centers on a specific responsibility, a cross-cutting concern. | | Discussing end-to-end functionality (e.g., admin). This is usually a plane. |
+| Data plane | Refers to queries and http calls that go to the tenant side of the system. Includes the user plane but not the admin plane. | | |
+| Admin plane | Refers to the part of the system that manages the administration of the _server_ as opposed to the individual tenants | | |
+| User plane | Refers to the part of the system that manages the day-to-day actions of users, studios, etc. | | |
 | Module | A gradle module (e.g., :server) with a set of code that is compiled OR a guice module specifying bindings that are used at runtime | | |
 | Library module | Any gradle module that does not have the ability to run on its own and that exists to provide functionality to other modules | | |
 | Application module | Any gradle module that is capable of being executed. Has a main method | | |

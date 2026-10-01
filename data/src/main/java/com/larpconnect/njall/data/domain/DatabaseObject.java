@@ -4,7 +4,15 @@ import java.util.UUID;
 
 /** Base sealed interface for all persistent domain entities and records in Project Njall. */
 public sealed interface DatabaseObject
-    permits Server, AdminUser, AdminRole, StudioLookup, Studio, DefaultStudioRole, Link {
+    permits Server,
+        AdminUser,
+        AdminRole,
+        StudioLookup,
+        Studio,
+        DefaultStudioRole,
+        Link,
+        Location,
+        Address {
 
   /**
    * Returns the unique identifier of the persistent database object.
