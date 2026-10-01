@@ -37,6 +37,28 @@ services:
       LARPCONNECT_DATA_DATABASE_MIGRATION_USERNAME: njall
       LARPCONNECT_DATA_DATABASE_MIGRATION_PASSWORD: njall_migration_${NJALL_DB_SECRET}
     command: ["migrate"]
+  seed:
+    image: postgis/postgis:18-3.6-alpine
+    container_name: larpconnect-seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - internal
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: larpconnect
+      PGUSER: njall_admin
+      PGPASSWORD: njall_admin_${NJALL_DB_SECRET}
+    volumes:
+      - ./docker/postgres/seed:/docker-seed:ro
+    entrypoint:
+      - "sh"
+      - "-c"
+      - 'for f in /docker-seed/*.sql; do [ -f "$$f" ] && psql -v ON_ERROR_STOP=1 -f "$$f"; done'
     restart: "no"
 
   server:
@@ -49,6 +71,8 @@ services:
       postgres:
         condition: service_healthy
       migrate:
+        condition: service_completed_successfully
+      seed:
         condition: service_completed_successfully
     networks:
       - edge
