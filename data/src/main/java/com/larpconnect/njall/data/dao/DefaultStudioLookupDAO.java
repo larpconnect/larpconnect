@@ -32,8 +32,10 @@ final class DefaultStudioLookupDAO implements StudioLookupDAO {
   private static final String SQL_INSERT_STUDIO =
       "INSERT INTO njall_users.studios (name) VALUES (:name) RETURNING id";
   private static final String SQL_INSERT_STUDIO_LOOKUP =
-      "INSERT INTO njall_admin.studios_lookup (tenant_id, alias) VALUES (:tenantId, :alias) "
-          + "RETURNING studio_id, created_at, updated_at";
+      """
+      INSERT INTO njall_admin.studios_lookup (tenant_id, alias) VALUES (:tenantId, :alias)
+      RETURNING studio_id, created_at, updated_at
+      """;
 
   private final Provider<SessionFactory> sessionFactoryProvider;
 

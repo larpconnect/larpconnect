@@ -63,8 +63,10 @@ public non-sealed interface AddressDAO extends DAO<Address> {
   @Override
   default Optional<Address> findById(UUID id) {
     throw new UnsupportedOperationException(
-        "Direct address lookup requires tenant and location context; use findById(tenantId,"
-            + " locationId, addressId)");
+        """
+        Direct address lookup requires tenant and location context; use findById(tenantId, \
+        locationId, addressId)\
+        """);
   }
 
   /** Fluid builder for persisting a new subordinate address. */

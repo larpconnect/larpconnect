@@ -29,33 +29,41 @@ final class DefaultAddressDAO implements AddressDAO {
       "SELECT set_config('app.tenant_id', :tenantId, true)";
 
   private static final String SQL_FIND_BY_ID =
-      "SELECT a.id, a.location_id, a.address_type, a.address_line_1, a.address_line_2,"
-          + " a.address_line_3, a.locality, a.administrative_area, a.postal_code,"
-          + " a.country_code, ST_AsGeoJSON(a.geom) "
-          + "FROM njall_users.addresses a "
-          + "JOIN njall_users.entities e ON e.tenant_id = a.tenant_id AND e.id = a.location_id "
-          + "WHERE a.tenant_id = :tenantId AND a.location_id = :locationId AND a.id = :addressId "
-          + "  AND e.deleted_on IS NULL";
+      """
+      SELECT a.id, a.location_id, a.address_type, a.address_line_1, a.address_line_2,
+             a.address_line_3, a.locality, a.administrative_area, a.postal_code,
+             a.country_code, ST_AsGeoJSON(a.geom)
+      FROM njall_users.addresses a
+      JOIN njall_users.entities e ON e.tenant_id = a.tenant_id AND e.id = a.location_id
+      WHERE a.tenant_id = :tenantId AND a.location_id = :locationId AND a.id = :addressId
+        AND e.deleted_on IS NULL
+      """;
 
   private static final String SQL_LIST_BY_LOCATION =
-      "SELECT a.id, a.location_id, a.address_type, a.address_line_1, a.address_line_2,"
-          + " a.address_line_3, a.locality, a.administrative_area, a.postal_code,"
-          + " a.country_code, ST_AsGeoJSON(a.geom) "
-          + "FROM njall_users.addresses a "
-          + "JOIN njall_users.entities e ON e.tenant_id = a.tenant_id AND e.id = a.location_id "
-          + "WHERE a.tenant_id = :tenantId AND a.location_id = :locationId "
-          + "  AND e.deleted_on IS NULL "
-          + "ORDER BY a.id ASC";
+      """
+      SELECT a.id, a.location_id, a.address_type, a.address_line_1, a.address_line_2,
+             a.address_line_3, a.locality, a.administrative_area, a.postal_code,
+             a.country_code, ST_AsGeoJSON(a.geom)
+      FROM njall_users.addresses a
+      JOIN njall_users.entities e ON e.tenant_id = a.tenant_id AND e.id = a.location_id
+      WHERE a.tenant_id = :tenantId AND a.location_id = :locationId
+        AND e.deleted_on IS NULL
+      ORDER BY a.id ASC
+      """;
 
   private static final String SQL_CHECK_LOCATION_ACTIVE =
-      "SELECT count(1) FROM njall_users.locations l "
-          + "JOIN njall_users.entities e ON e.tenant_id = l.tenant_id AND e.id = l.id "
-          + "WHERE l.tenant_id = :tenantId AND l.id = :locationId AND e.deleted_on IS NULL";
+      """
+      SELECT count(1) FROM njall_users.locations l
+      JOIN njall_users.entities e ON e.tenant_id = l.tenant_id AND e.id = l.id
+      WHERE l.tenant_id = :tenantId AND l.id = :locationId AND e.deleted_on IS NULL
+      """;
 
   private static final String SQL_UPDATE_GEOM =
-      "UPDATE njall_users.addresses SET geom ="
-          + " ST_SetSRID(ST_GeomFromGeoJSON(cast(:geomJson as text)), 4326)::geography "
-          + "WHERE tenant_id = :tenantId AND id = :addressId";
+      """
+      UPDATE njall_users.addresses SET geom =
+        ST_SetSRID(ST_GeomFromGeoJSON(cast(:geomJson as text)), 4326)::geography
+      WHERE tenant_id = :tenantId AND id = :addressId
+      """;
 
   private static final String SQL_CLEAR_GEOM =
       "UPDATE njall_users.addresses SET geom = NULL "
@@ -169,8 +177,10 @@ final class DefaultAddressDAO implements AddressDAO {
   @Override
   public ImmutableList<Address> list() {
     throw new UnsupportedOperationException(
-        "Direct address listing requires location context; use listByLocation(tenantId,"
-            + " locationId)");
+        """
+        Direct address listing requires location context; use listByLocation(tenantId, \
+        locationId)\
+        """);
   }
 
   private void setTenantContext(Session session, UUID tenantId) {
@@ -360,11 +370,9 @@ final class DefaultAddressDAO implements AddressDAO {
   }
 
   private static String toGeoJsonString(GeoJsonPoint point) {
-    return "{\"type\":\"Point\",\"coordinates\":["
-        + point.longitude()
-        + ","
-        + point.latitude()
-        + "]}";
+    return """
+        {"type":"Point","coordinates":[%s,%s]}"""
+        .formatted(point.longitude(), point.latitude());
   }
 
   private static Optional<GeoJsonPoint> parseGeoJson(@Nullable String geoJson) {

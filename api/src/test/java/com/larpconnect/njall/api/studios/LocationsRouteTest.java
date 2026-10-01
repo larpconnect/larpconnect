@@ -36,9 +36,16 @@ final class LocationsRouteTest {
   private static final String CREATE_LOCATION_BODY = "{\"name\":\"Camp Whispering Pines\"}";
   private static final String PATCH_LOCATION_BODY = "{\"name\":\"Camp Whispering Pines - North\"}";
   private static final String CREATE_ADDRESS_BODY =
-      "{\"addressType\":\"PHYSICAL\",\"addressLine1\":\"123 Forest Rd\","
-          + "\"locality\":\"Pineville\",\"administrativeArea\":\"WA\","
-          + "\"postalCode\":\"98101\",\"countryCode\":\"US\"}";
+      """
+      {
+        "addressType": "PHYSICAL",
+        "addressLine1": "123 Forest Rd",
+        "locality": "Pineville",
+        "administrativeArea": "WA",
+        "postalCode": "98101",
+        "countryCode": "US"
+      }
+      """;
   private static final String PATCH_ADDRESS_BODY = "{\"addressLine1\":\"125 Forest Rd\"}";
 
   private static ActorSystem<Void> system;

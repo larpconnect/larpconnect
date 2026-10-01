@@ -21,15 +21,21 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
   private static final String HQL_LIST =
       "from AdminUserEntity u left join fetch u.roles order by u.username asc";
   private static final String SQL_INSERT_USER =
-      "INSERT INTO njall_admin.admin_users (username, status) "
-          + "VALUES (:username, CAST(:status AS njall_admin.tstatus)) "
-          + "RETURNING id";
+      """
+      INSERT INTO njall_admin.admin_users (username, status)
+      VALUES (:username, CAST(:status AS njall_admin.tstatus))
+      RETURNING id
+      """;
   private static final String SQL_INSERT_ROLE_ASSIGNMENT =
-      "INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id) "
-          + "VALUES (:userId, :roleId) ON CONFLICT DO NOTHING";
+      """
+      INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id)
+      VALUES (:userId, :roleId) ON CONFLICT DO NOTHING
+      """;
   private static final String SQL_DELETE_ROLE_ASSIGNMENT =
-      "DELETE FROM njall_admin.admin_role_assignments "
-          + "WHERE admin_user_id = :userId AND role_id = :roleId";
+      """
+      DELETE FROM njall_admin.admin_role_assignments
+      WHERE admin_user_id = :userId AND role_id = :roleId
+      """;
 
   private final Provider<SessionFactory> sessionFactoryProvider;
 
