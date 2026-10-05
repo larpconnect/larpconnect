@@ -3,7 +3,7 @@
 
 [versions]
 # Core Runtime Libraries
-guava = "33.7.1-jre"
+guava = "33.7.2-jre"
 guice = "7.0.0"
 mug = "11.1"
 pekko = "2.0.0-M4"
