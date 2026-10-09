@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin.roles;
 
 import com.google.common.base.Strings;
 import com.larpconnect.njall.api.admin.common.AdminValidation;
-import com.larpconnect.njall.data.dao.AdminRoleDAO;
+import com.larpconnect.njall.data.dao.admin.AdminRoleDAO;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.AbstractBehavior;

@@ -1,7 +1,7 @@
 package com.larpconnect.njall.api.admin.studioroles;
 
 import com.google.inject.Inject;
-import com.larpconnect.njall.data.dao.StudioRoleDAO;
+import com.larpconnect.njall.data.dao.admin.StudioRoleDAO;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.ActorContext;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;

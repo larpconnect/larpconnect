@@ -1,7 +1,7 @@
 package com.larpconnect.njall.api.admin.studioroles;
 
 import com.google.common.base.Strings;
-import com.larpconnect.njall.data.dao.StudioRoleDAO;
+import com.larpconnect.njall.data.dao.admin.StudioRoleDAO;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;

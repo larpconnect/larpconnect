@@ -7,8 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.dao.AdminRoleDAO;
-import com.larpconnect.njall.data.dao.AdminUserDAO;
+import com.larpconnect.njall.data.dao.admin.AdminRoleDAO;
+import com.larpconnect.njall.data.dao.admin.AdminUserDAO;
 import com.larpconnect.njall.data.domain.AdminRole;
 import com.larpconnect.njall.data.domain.AdminUser;
 import com.larpconnect.njall.data.domain.AdminUserStatus;

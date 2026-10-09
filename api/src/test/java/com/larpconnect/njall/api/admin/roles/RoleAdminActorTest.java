@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.dao.AdminRoleDAO;
+import com.larpconnect.njall.data.dao.admin.AdminRoleDAO;
 import com.larpconnect.njall.data.domain.AdminRole;
 import java.util.Optional;
 import java.util.UUID;

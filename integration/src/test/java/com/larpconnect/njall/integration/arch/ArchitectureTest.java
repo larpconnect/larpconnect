@@ -20,8 +20,14 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.hibernate.SessionFactory;
 
 /** ArchUnit architectural invariants for Project Njall. */
@@ -55,6 +61,14 @@ final class ArchitectureTest {
           .resideInAPackage("com.larpconnect.njall..")
           .should(notDependOnAncestorPackages())
           .as("Package dependencies within com.larpconnect.njall must go down or out, never up");
+
+  @ArchTest
+  public static final ArchRule packages_must_not_exceed_twenty_types =
+      classes()
+          .that()
+          .resideInAPackage("com.larpconnect.njall..")
+          .should(notExceedTwentyTypesPerPackage())
+          .as("Packages within com.larpconnect.njall must not exceed 20 types");
 
   private static final DescribedPredicate<JavaClass> ARE_RECORDS =
       DescribedPredicate.describe("are records", JavaClass::isRecord);
@@ -287,5 +301,129 @@ final class ArchitectureTest {
     return element.isAnnotatedWith("org.jspecify.annotations.Nullable")
         || element.isAnnotatedWith("org.checkerframework.checker.nullness.qual.Nullable")
         || element.isAnnotatedWith("javax.annotation.Nullable");
+  }
+
+  private static ArchCondition<JavaClass> notExceedTwentyTypesPerPackage() {
+    return new ArchCondition<>(
+        "not exceed 20 types per package and contain @NullMarked package-info") {
+      private final Map<String, List<JavaClass>> classesByPackage = new HashMap<>();
+
+      @Override
+      public void init(Collection<JavaClass> allObjectsToTest) {
+        classesByPackage.clear();
+      }
+
+      @Override
+      public void check(JavaClass javaClass, ConditionEvents events) {
+        var pkg = javaClass.getPackageName();
+        if (isWithinNjall(pkg)) {
+          classesByPackage.computeIfAbsent(pkg, k -> new ArrayList<>()).add(javaClass);
+        }
+      }
+
+      @Override
+      public void finish(ConditionEvents events) {
+        for (var entry : classesByPackage.entrySet()) {
+          evaluatePackage(entry.getKey(), entry.getValue(), events);
+        }
+      }
+    };
+  }
+
+  private static void evaluatePackage(String pkg, List<JavaClass> classes, ConditionEvents events) {
+    checkPackageInfo(pkg, classes, events);
+    var counted = computeCountedTypes(classes);
+    if (counted.size() > 20) {
+      var names = counted.stream().map(JavaClass::getSimpleName).sorted().toList();
+      var message =
+          String.format(
+              "Package '%s' has %d types (maximum allowed is 20): %s", pkg, counted.size(), names);
+      events.add(SimpleConditionEvent.violated(classes.getFirst(), message));
+    }
+  }
+
+  private static void checkPackageInfo(
+      String pkg, List<JavaClass> classes, ConditionEvents events) {
+    var hasValidPackageInfo =
+        classes.stream()
+            .anyMatch(
+                c ->
+                    c.getSimpleName().equals("package-info")
+                        && c.isAnnotatedWith("org.jspecify.annotations.NullMarked"));
+    if (!hasValidPackageInfo) {
+      events.add(
+          SimpleConditionEvent.violated(
+              classes.getFirst(),
+              String.format("Package '%s' is missing @NullMarked package-info.java", pkg)));
+    }
+  }
+
+  private static List<JavaClass> computeCountedTypes(List<JavaClass> classes) {
+    var candidates = new ArrayList<JavaClass>();
+    for (var javaClass : classes) {
+      if (!shouldSkipFromTypeCount(javaClass)) {
+        candidates.add(javaClass);
+      }
+    }
+
+    var interfaces =
+        candidates.stream()
+            .filter(JavaClass::isInterface)
+            .map(JavaClass::getSimpleName)
+            .collect(Collectors.toSet());
+
+    var counted = new ArrayList<JavaClass>();
+    var pairedSeen = new HashSet<String>();
+    for (var candidate : candidates) {
+      var name = candidate.getSimpleName();
+      if (name.startsWith("Default")) {
+        var ifaceName = name.substring("Default".length());
+        if (interfaces.contains(ifaceName) && pairedSeen.add(ifaceName)) {
+          continue;
+        }
+      }
+      counted.add(candidate);
+    }
+    return counted;
+  }
+
+  private static boolean shouldSkipFromTypeCount(JavaClass javaClass) {
+    if (javaClass.getSimpleName().equals("package-info")) {
+      return true;
+    }
+    if (javaClass.isEnum()) {
+      return true;
+    }
+    if (javaClass.isNestedClass() && isPrivateNested(javaClass)) {
+      return true;
+    }
+    if (isGuiceModule(javaClass) && !javaClass.getModifiers().contains(JavaModifier.PUBLIC)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Traverses enclosing classes to determine if the class is nested within a private type. Under
+   * the Java Language Specification, nested records and interfaces declared inside private
+   * interfaces are implicitly {@code public static} in bytecode, so inspecting only the immediate
+   * type's modifiers is insufficient.
+   */
+  private static boolean isPrivateNested(JavaClass javaClass) {
+    if (javaClass.getModifiers().contains(JavaModifier.PRIVATE)) {
+      return true;
+    }
+    var enclosing = javaClass.getEnclosingClass();
+    while (enclosing.isPresent()) {
+      if (enclosing.get().getModifiers().contains(JavaModifier.PRIVATE)) {
+        return true;
+      }
+      enclosing = enclosing.get().getEnclosingClass();
+    }
+    return false;
+  }
+
+  private static boolean isGuiceModule(JavaClass javaClass) {
+    return javaClass.isAssignableTo("com.google.inject.Module");
   }
 }

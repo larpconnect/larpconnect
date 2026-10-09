@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin.studios;
 
 import com.google.inject.Inject;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
-import com.larpconnect.njall.data.dao.StudioLookupDAO;
+import com.larpconnect.njall.data.dao.studios.StudioLookupDAO;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.ActorContext;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;

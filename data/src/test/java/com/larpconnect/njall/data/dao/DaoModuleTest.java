@@ -7,6 +7,15 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.admin.AdminRoleDAO;
+import com.larpconnect.njall.data.dao.admin.AdminUserDAO;
+import com.larpconnect.njall.data.dao.admin.StudioRoleDAO;
+import com.larpconnect.njall.data.dao.servers.ServerDAO;
+import com.larpconnect.njall.data.dao.studios.AddressDAO;
+import com.larpconnect.njall.data.dao.studios.LinkDAO;
+import com.larpconnect.njall.data.dao.studios.LocationDAO;
+import com.larpconnect.njall.data.dao.studios.StudioDAO;
+import com.larpconnect.njall.data.dao.studios.StudioLookupDAO;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,14 +48,14 @@ final class DaoModuleTest {
     var locationDao = injector.getInstance(LocationDAO.class);
     var addressDao = injector.getInstance(AddressDAO.class);
 
-    assertThat(serverDao).isInstanceOf(DefaultServerDAO.class);
-    assertThat(roleDao).isInstanceOf(DefaultAdminRoleDAO.class);
-    assertThat(userDao).isInstanceOf(DefaultAdminUserDAO.class);
-    assertThat(studioLookupDao).isInstanceOf(DefaultStudioLookupDAO.class);
-    assertThat(studioDao).isInstanceOf(DefaultStudioDAO.class);
-    assertThat(studioRoleDao).isInstanceOf(DefaultStudioRoleDAO.class);
-    assertThat(linkDao).isInstanceOf(DefaultLinkDAO.class);
-    assertThat(locationDao).isInstanceOf(DefaultLocationDAO.class);
-    assertThat(addressDao).isInstanceOf(DefaultAddressDAO.class);
+    assertThat(serverDao).isInstanceOf(ServerDAO.class);
+    assertThat(roleDao).isInstanceOf(AdminRoleDAO.class);
+    assertThat(userDao).isInstanceOf(AdminUserDAO.class);
+    assertThat(studioLookupDao).isInstanceOf(StudioLookupDAO.class);
+    assertThat(studioDao).isInstanceOf(StudioDAO.class);
+    assertThat(studioRoleDao).isInstanceOf(StudioRoleDAO.class);
+    assertThat(linkDao).isInstanceOf(LinkDAO.class);
+    assertThat(locationDao).isInstanceOf(LocationDAO.class);
+    assertThat(addressDao).isInstanceOf(AddressDAO.class);
   }
 }

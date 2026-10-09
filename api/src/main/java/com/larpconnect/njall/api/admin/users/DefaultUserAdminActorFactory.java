@@ -1,8 +1,8 @@
 package com.larpconnect.njall.api.admin.users;
 
 import com.google.inject.Inject;
-import com.larpconnect.njall.data.dao.AdminRoleDAO;
-import com.larpconnect.njall.data.dao.AdminUserDAO;
+import com.larpconnect.njall.data.dao.admin.AdminRoleDAO;
+import com.larpconnect.njall.data.dao.admin.AdminUserDAO;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.ActorContext;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;

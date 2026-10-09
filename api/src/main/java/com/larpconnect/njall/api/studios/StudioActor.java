@@ -1,7 +1,7 @@
 package com.larpconnect.njall.api.studios;
 
 import com.google.common.base.Strings;
-import com.larpconnect.njall.data.dao.StudioDAO;
+import com.larpconnect.njall.data.dao.studios.StudioDAO;
 import com.larpconnect.njall.data.domain.Studio;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import org.apache.pekko.actor.typed.ActorRef;

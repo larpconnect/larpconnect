@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin.servers;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.dao.ServerDAO;
+import com.larpconnect.njall.data.dao.servers.ServerDAO;
 import com.larpconnect.njall.data.domain.Server;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;

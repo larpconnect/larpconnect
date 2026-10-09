@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.dao.ServerDAO;
+import com.larpconnect.njall.data.dao.servers.ServerDAO;
 import com.larpconnect.njall.data.domain.ContactType;
 import com.larpconnect.njall.data.domain.RoleType;
 import com.larpconnect.njall.data.domain.Server;
