@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import com.github.benmanes.caffeine.cache.Ticker;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.larpconnect.njall.data.dao.StudioLookupDAO;
+import com.larpconnect.njall.data.dao.studios.StudioLookupDAO;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.DisplayName;

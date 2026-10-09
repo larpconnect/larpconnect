@@ -5,6 +5,9 @@ import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.http.RouteProvider;
+import com.larpconnect.njall.api.studios.common.StudioErrorResponse;
+import com.larpconnect.njall.api.studios.links.LinksRoute;
+import com.larpconnect.njall.api.studios.locations.LocationsRoute;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
@@ -21,13 +24,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.util.Try;
 
-/** HTTP route handling user-space tenanted studio retrieval. */
+/** HTTP route handling user-space tenanted studio retrieval and aggregating subordinate routes. */
 public final class StudiosRoute extends AllDirectives implements RouteProvider {
 
   private final Logger logger = LoggerFactory.getLogger(StudiosRoute.class);
 
   private final StudioLookupCache studioLookupCache;
   private final ActorRef<StudioCommand> studioActor;
+  private final LinksRoute linksRoute;
+  private final LocationsRoute locationsRoute;
   private final ActorSystem<Void> system;
   private final ObjectMapper objectMapper;
   private final Duration askTimeout;
@@ -36,19 +41,32 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
   StudiosRoute(
       StudioLookupCache studioLookupCache,
       ActorRef<StudioCommand> studioActor,
+      LinksRoute linksRoute,
+      LocationsRoute locationsRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
-    this(studioLookupCache, studioActor, system, objectMapper, Duration.ofSeconds(20));
+    this(
+        studioLookupCache,
+        studioActor,
+        linksRoute,
+        locationsRoute,
+        system,
+        objectMapper,
+        Duration.ofSeconds(20));
   }
 
   StudiosRoute(
       StudioLookupCache studioLookupCache,
       ActorRef<StudioCommand> studioActor,
+      LinksRoute linksRoute,
+      LocationsRoute locationsRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper,
       Duration askTimeout) {
     this.studioLookupCache = studioLookupCache;
     this.studioActor = studioActor;
+    this.linksRoute = linksRoute;
+    this.locationsRoute = locationsRoute;
     this.system = system;
     this.objectMapper = objectMapper;
     this.askTimeout = askTimeout;
@@ -56,6 +74,11 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
 
   @Override
   public Route route() {
+    // Concatenate non-overlapping child routes; specific path prefixes avoid route shadowing
+    return concat(studioRoute(), locationsRoute.route(), linksRoute.route());
+  }
+
+  private Route studioRoute() {
     return pathPrefix(
         PathMatchers.separateOnSlashes("api/studios"),
         () ->

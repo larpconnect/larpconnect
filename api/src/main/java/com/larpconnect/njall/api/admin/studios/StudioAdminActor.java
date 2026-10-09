@@ -3,7 +3,7 @@ package com.larpconnect.njall.api.admin.studios;
 import com.google.common.base.Strings;
 import com.larpconnect.njall.api.admin.common.AdminValidation;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
-import com.larpconnect.njall.data.dao.StudioLookupDAO;
+import com.larpconnect.njall.data.dao.studios.StudioLookupDAO;
 import com.larpconnect.njall.data.domain.DeletionFilter;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;

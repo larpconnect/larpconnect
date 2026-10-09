@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.larpconnect.njall.data.dao.StudioDAO;
+import com.larpconnect.njall.data.dao.studios.StudioDAO;
 import com.larpconnect.njall.data.domain.Studio;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Instant;

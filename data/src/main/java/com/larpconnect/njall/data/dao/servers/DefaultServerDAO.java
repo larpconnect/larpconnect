@@ -1,0 +1,113 @@
+package com.larpconnect.njall.data.dao.servers;
+
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.larpconnect.njall.data.annotation.NjallAdmin;
+import com.larpconnect.njall.data.domain.Server;
+import com.larpconnect.njall.data.domain.ServerContact;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.jspecify.annotations.Nullable;
+
+final class DefaultServerDAO implements ServerDAO {
+
+  private static final String HQL_FIND_ALL_SERVERS = "from ServerEntity";
+  private static final String HQL_FIND_ALL_CONTACTS =
+      "from ServerContactEntity order by ordering asc";
+
+  private final Provider<SessionFactory> sessionFactoryProvider;
+
+  @Inject
+  DefaultServerDAO(@NjallAdmin Provider<SessionFactory> sessionFactoryProvider) {
+    this.sessionFactoryProvider = sessionFactoryProvider;
+  }
+
+  @Override
+  public Optional<Server> findById(UUID id) {
+    try (var session = sessionFactoryProvider.get().openSession()) {
+      return executeFindById(session, id);
+    }
+  }
+
+  @Override
+  public ImmutableList<Server> list() {
+    try (var session = sessionFactoryProvider.get().openSession()) {
+      return executeList(session);
+    }
+  }
+
+  private Optional<Server> executeFindById(Session session, UUID id) {
+    var entity = findServerEntity(session, id);
+    if (entity == null) {
+      return Optional.empty();
+    }
+    var contacts = loadContacts(session);
+    return Optional.of(toServer(entity, contacts));
+  }
+
+  private ImmutableList<Server> executeList(Session session) {
+    var serverEntities = findAllServerEntities(session);
+    if (serverEntities.isEmpty()) {
+      return ImmutableList.of();
+    }
+    var contacts = loadContacts(session);
+    return assembleServers(serverEntities, contacts);
+  }
+
+  private ImmutableList<ServerContact> loadContacts(Session session) {
+    var contactEntities = findAllContactEntities(session);
+    return assembleContacts(contactEntities);
+  }
+
+  private @Nullable ServerEntity findServerEntity(Session session, UUID id) {
+    return session.find(ServerEntity.class, id);
+  }
+
+  private List<ServerEntity> findAllServerEntities(Session session) {
+    return session.createQuery(HQL_FIND_ALL_SERVERS, ServerEntity.class).list();
+  }
+
+  private List<ServerContactEntity> findAllContactEntities(Session session) {
+    return session.createQuery(HQL_FIND_ALL_CONTACTS, ServerContactEntity.class).list();
+  }
+
+  private Server toServer(ServerEntity entity, ImmutableList<ServerContact> contacts) {
+    return new Server(
+        entity.getId(),
+        entity.getName(),
+        entity.getPrimaryDomain(),
+        entity.getCreatedOn(),
+        contacts);
+  }
+
+  private ImmutableList<Server> assembleServers(
+      List<ServerEntity> entities, ImmutableList<ServerContact> contacts) {
+    return entities.stream()
+        .map(
+            entity ->
+                new Server(
+                    entity.getId(),
+                    entity.getName(),
+                    entity.getPrimaryDomain(),
+                    entity.getCreatedOn(),
+                    contacts))
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  private ImmutableList<ServerContact> assembleContacts(List<ServerContactEntity> entities) {
+    return entities.stream()
+        .map(
+            entity ->
+                new ServerContact(
+                    entity.getId(),
+                    entity.getRoleType(),
+                    entity.getContactType(),
+                    entity.getContact(),
+                    entity.getOrdering()))
+        .collect(ImmutableList.toImmutableList());
+  }
+}

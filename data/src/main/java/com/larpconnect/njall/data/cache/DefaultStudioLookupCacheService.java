@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.errorprone.annotations.Immutable;
 import com.google.inject.Inject;
-import com.larpconnect.njall.data.dao.StudioLookupDAO;
+import com.larpconnect.njall.data.dao.studios.StudioLookupDAO;
 import com.larpconnect.njall.data.domain.DeletionFilter;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import com.typesafe.config.Config;

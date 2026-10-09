@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.larpconnect.njall.api.studios.links.LinksRoute;
+import com.larpconnect.njall.api.studios.locations.LocationsRoute;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
@@ -22,6 +24,7 @@ import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.japi.function.Function;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,6 +61,20 @@ final class StudiosRouteTest {
     return handler.apply(HttpRequest.GET(path)).toCompletableFuture().get(5, TimeUnit.SECONDS);
   }
 
+  private StudiosRoute createRoute(StudioLookupCache cache, ActorRef<StudioCommand> actor) {
+    return createRoute(cache, actor, Duration.ofSeconds(20));
+  }
+
+  private StudiosRoute createRoute(
+      StudioLookupCache cache, ActorRef<StudioCommand> actor, Duration timeout) {
+    var linksRoute = mock(LinksRoute.class);
+    var locationsRoute = mock(LocationsRoute.class);
+    when(linksRoute.route()).thenReturn(Directives.reject());
+    when(locationsRoute.route()).thenReturn(Directives.reject());
+    return new StudiosRoute(
+        cache, actor, linksRoute, locationsRoute, system, objectMapper, timeout);
+  }
+
   private StudioLookup sampleLookup() {
     return new StudioLookup(tenantId, studioId, "valiant", now, now, Optional.empty());
   }
@@ -85,7 +102,7 @@ final class StudiosRouteTest {
             "studioActorSuccess" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new StudiosRoute(cache, actor, system, objectMapper);
+    var route = createRoute(cache, actor);
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");
@@ -102,7 +119,7 @@ final class StudiosRouteTest {
         system.systemActorOf(
             Behaviors.empty(), "studioActorUnreached" + UUID.randomUUID(), Props.empty());
 
-    var route = new StudiosRoute(cache, actor, system, objectMapper);
+    var route = createRoute(cache, actor);
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/missing/v1/studio");
@@ -120,7 +137,7 @@ final class StudiosRouteTest {
         system.systemActorOf(
             Behaviors.empty(), "studioActorDeletedUnreached" + UUID.randomUUID(), Props.empty());
 
-    var route = new StudiosRoute(cache, actor, system, objectMapper);
+    var route = createRoute(cache, actor);
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");
@@ -145,7 +162,7 @@ final class StudiosRouteTest {
             "studioActorNotFound" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new StudiosRoute(cache, actor, system, objectMapper);
+    var route = createRoute(cache, actor);
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");
@@ -170,7 +187,7 @@ final class StudiosRouteTest {
             "studioActorFailure" + UUID.randomUUID(),
             Props.empty());
 
-    var route = new StudiosRoute(cache, actor, system, objectMapper);
+    var route = createRoute(cache, actor);
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");
@@ -187,7 +204,7 @@ final class StudiosRouteTest {
         system.systemActorOf(
             Behaviors.empty(), "studioActorTimeout" + UUID.randomUUID(), Props.empty());
 
-    var route = new StudiosRoute(cache, actor, system, objectMapper, Duration.ofMillis(50));
+    var route = createRoute(cache, actor, Duration.ofMillis(50));
     var handler = route.route().seal().function(system);
 
     var response = executeGet(handler, "/api/studios/valiant/v1/studio");
