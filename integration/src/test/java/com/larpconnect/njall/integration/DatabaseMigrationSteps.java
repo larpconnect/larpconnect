@@ -367,6 +367,14 @@ public final class DatabaseMigrationSteps {
     }
   }
 
+  @Then("materialized view {string} can be refreshed concurrently")
+  public void materializedViewCanBeRefreshedConcurrently(String viewName) throws Exception {
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
+        var stmt = conn.createStatement()) {
+      stmt.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY " + viewName);
+    }
+  }
+
   @Then("table {string} has row level security enabled")
   public void tableHasRowLevelSecurityEnabled(String fullTable) throws Exception {
     var parts = Splitter.on('.').splitToList(fullTable);

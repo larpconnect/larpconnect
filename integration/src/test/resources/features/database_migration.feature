@@ -32,3 +32,11 @@ Feature: Flyway Database Migration and Bootstrap Provisioning
     Given the bootstrap database migration has already been executed
     When the database migrator executes the bootstrap migration again
     Then zero migrations are applied
+
+  Scenario: Reactions schema and materialized view provisioning
+    Given the bootstrap database migration has already been executed
+    Then table "njall_users.reactions" exists and is owned by "njall"
+    And table "njall_users.reactions" has row level security enabled
+    And role "njall_users" has USAGE on schema "njall_users" and SELECT on table "reaction_counts"
+    And materialized view "njall_users.reaction_counts" can be refreshed concurrently
+
