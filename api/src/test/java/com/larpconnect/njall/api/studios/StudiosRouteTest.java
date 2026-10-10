@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.larpconnect.njall.api.studios.events.EventsRoute;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
 import com.larpconnect.njall.api.studios.locations.LocationsRoute;
 import com.larpconnect.njall.api.studios.tags.TagsRoute;
@@ -71,11 +72,16 @@ final class StudiosRouteTest {
     var linksRoute = mock(LinksRoute.class);
     var locationsRoute = mock(LocationsRoute.class);
     var tagsRoute = mock(TagsRoute.class);
+    var eventsRoute = mock(EventsRoute.class);
     when(linksRoute.route()).thenReturn(Directives.reject());
     when(locationsRoute.route()).thenReturn(Directives.reject());
     when(tagsRoute.route()).thenReturn(Directives.reject());
-    return new StudiosRoute(
-        cache, actor, linksRoute, locationsRoute, tagsRoute, system, objectMapper, timeout);
+    when(eventsRoute.route()).thenReturn(Directives.reject());
+    var route =
+        new StudiosRoute(
+            cache, actor, linksRoute, locationsRoute, tagsRoute, eventsRoute, system, objectMapper);
+    route.setAskTimeoutForTesting(timeout);
+    return route;
   }
 
   private StudioLookup sampleLookup() {

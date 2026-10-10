@@ -2,10 +2,10 @@ package com.larpconnect.njall.data.dao.studios;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
-import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.common.DaoCommonModule;
 
 /** Guice module configuring Studio, Location, Address, and Link DAO bindings and entities. */
 public final class StudiosDaoModule extends AbstractModule {
@@ -18,9 +18,11 @@ public final class StudiosDaoModule extends AbstractModule {
     bind(LocationDAO.class).to(DefaultLocationDAO.class).in(Scopes.SINGLETON);
     bind(AddressDAO.class).to(DefaultAddressDAO.class).in(Scopes.SINGLETON);
     bind(HashtagDAO.class).to(DefaultHashtagDAO.class).in(Scopes.SINGLETON);
+    bind(EventDAO.class).to(DefaultEventDAO.class).in(Scopes.SINGLETON);
 
     var adminEntities =
-        Multibinder.newSetBinder(binder(), new TypeLiteral<Class<?>>() {}, NjallAdmin.class);
+        Multibinder.newSetBinder(
+            binder(), DaoCommonModule.ENTITY_CLASS_TYPE_LITERAL, NjallAdmin.class);
     adminEntities.addBinding().toInstance(StudioLookupEntity.class);
     adminEntities.addBinding().toInstance(StudioEntity.class);
     adminEntities.addBinding().toInstance(LinkEntity.class);
@@ -28,14 +30,17 @@ public final class StudiosDaoModule extends AbstractModule {
     adminEntities.addBinding().toInstance(AddressEntity.class);
     adminEntities.addBinding().toInstance(HashtagEntity.class);
     adminEntities.addBinding().toInstance(HashtagEntityMapping.class);
+    adminEntities.addBinding().toInstance(EventEntity.class);
 
     var userEntities =
-        Multibinder.newSetBinder(binder(), new TypeLiteral<Class<?>>() {}, NjallUsers.class);
+        Multibinder.newSetBinder(
+            binder(), DaoCommonModule.ENTITY_CLASS_TYPE_LITERAL, NjallUsers.class);
     userEntities.addBinding().toInstance(StudioEntity.class);
     userEntities.addBinding().toInstance(LinkEntity.class);
     userEntities.addBinding().toInstance(LocationEntity.class);
     userEntities.addBinding().toInstance(AddressEntity.class);
     userEntities.addBinding().toInstance(HashtagEntity.class);
     userEntities.addBinding().toInstance(HashtagEntityMapping.class);
+    userEntities.addBinding().toInstance(EventEntity.class);
   }
 }

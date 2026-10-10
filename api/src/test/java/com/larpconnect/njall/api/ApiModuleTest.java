@@ -9,6 +9,7 @@ import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.admin.AdminRoute;
 import com.larpconnect.njall.api.http.RootRoute;
 import com.larpconnect.njall.api.studios.StudiosRoute;
+import com.larpconnect.njall.api.studios.events.EventsRoute;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
 import com.larpconnect.njall.api.studios.locations.LocationsRoute;
 import com.larpconnect.njall.api.studios.tags.TagsRoute;
@@ -20,6 +21,7 @@ import com.larpconnect.njall.data.dao.admin.AdminUserDAO;
 import com.larpconnect.njall.data.dao.admin.StudioRoleDAO;
 import com.larpconnect.njall.data.dao.servers.ServerDAO;
 import com.larpconnect.njall.data.dao.studios.AddressDAO;
+import com.larpconnect.njall.data.dao.studios.EventDAO;
 import com.larpconnect.njall.data.dao.studios.HashtagDAO;
 import com.larpconnect.njall.data.dao.studios.LinkDAO;
 import com.larpconnect.njall.data.dao.studios.LocationDAO;
@@ -66,6 +68,7 @@ final class ApiModuleTest {
             bind(LocationDAO.class).toInstance(mock(LocationDAO.class));
             bind(AddressDAO.class).toInstance(mock(AddressDAO.class));
             bind(HashtagDAO.class).toInstance(mock(HashtagDAO.class));
+            bind(EventDAO.class).toInstance(mock(EventDAO.class));
             bind(StudioLookupCache.class).toInstance(mock(StudioLookupCache.class));
             bind(StudioRoleDAO.class).toInstance(mock(StudioRoleDAO.class));
             bind(AdminRoleDAO.class).toInstance(mock(AdminRoleDAO.class));
@@ -81,6 +84,7 @@ final class ApiModuleTest {
     var linksRoute = injector.getInstance(LinksRoute.class);
     var locationsRoute = injector.getInstance(LocationsRoute.class);
     var tagsRoute = injector.getInstance(TagsRoute.class);
+    var eventsRoute = injector.getInstance(EventsRoute.class);
 
     assertThat(rootRoute).isInstanceOf(RootRoute.class);
     assertThat(adminRoute).isInstanceOf(AdminRoute.class);
@@ -88,5 +92,6 @@ final class ApiModuleTest {
     assertThat(linksRoute).isInstanceOf(LinksRoute.class);
     assertThat(locationsRoute).isInstanceOf(LocationsRoute.class);
     assertThat(tagsRoute).isInstanceOf(TagsRoute.class);
+    assertThat(eventsRoute).isInstanceOf(EventsRoute.class);
   }
 }

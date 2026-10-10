@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.common.StudioErrorResponse;
+import com.larpconnect.njall.api.studios.events.EventsRoute;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
 import com.larpconnect.njall.api.studios.locations.LocationsRoute;
 import com.larpconnect.njall.api.studios.tags.TagsRoute;
@@ -35,9 +36,10 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
   private final LinksRoute linksRoute;
   private final LocationsRoute locationsRoute;
   private final TagsRoute tagsRoute;
+  private final EventsRoute eventsRoute;
   private final ActorSystem<Void> system;
   private final ObjectMapper objectMapper;
-  private final Duration askTimeout;
+  private Duration askTimeout;
 
   @Inject
   StudiosRoute(
@@ -46,42 +48,33 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
       LinksRoute linksRoute,
       LocationsRoute locationsRoute,
       TagsRoute tagsRoute,
+      EventsRoute eventsRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
-    this(
-        studioLookupCache,
-        studioActor,
-        linksRoute,
-        locationsRoute,
-        tagsRoute,
-        system,
-        objectMapper,
-        Duration.ofSeconds(20));
-  }
-
-  StudiosRoute(
-      StudioLookupCache studioLookupCache,
-      ActorRef<StudioCommand> studioActor,
-      LinksRoute linksRoute,
-      LocationsRoute locationsRoute,
-      TagsRoute tagsRoute,
-      ActorSystem<Void> system,
-      ObjectMapper objectMapper,
-      Duration askTimeout) {
     this.studioLookupCache = studioLookupCache;
     this.studioActor = studioActor;
     this.linksRoute = linksRoute;
     this.locationsRoute = locationsRoute;
     this.tagsRoute = tagsRoute;
+    this.eventsRoute = eventsRoute;
     this.system = system;
     this.objectMapper = objectMapper;
+    this.askTimeout = Duration.ofSeconds(20);
+  }
+
+  void setAskTimeoutForTesting(Duration askTimeout) {
     this.askTimeout = askTimeout;
   }
 
   @Override
   public Route route() {
     // Concatenate non-overlapping child routes; specific path prefixes avoid route shadowing
-    return concat(studioRoute(), locationsRoute.route(), linksRoute.route(), tagsRoute.route());
+    return concat(
+        studioRoute(),
+        locationsRoute.route(),
+        linksRoute.route(),
+        tagsRoute.route(),
+        eventsRoute.route());
   }
 
   private Route studioRoute() {
