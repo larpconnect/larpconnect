@@ -160,6 +160,30 @@ public final class AdminManagementApiSteps {
         .isTrue();
   }
 
+  @Then("the JSON response array does not contain an item with {string} equal to {string}")
+  public void theJsonResponseArrayDoesNotContainAnItemWithEqualTo(
+      String field, String expectedValue) {
+    assertJsonBodyPresent();
+    assertThat(rootJson.isArray()).isTrue();
+    var found = false;
+    for (var node : rootJson) {
+      if (expectedValue.equals(node.path(field).asText())) {
+        found = true;
+        break;
+      }
+    }
+    assertThat(found)
+        .withFailMessage("Array unexpectedly contains item with %s=%s", field, expectedValue)
+        .isFalse();
+  }
+
+  @Then("the JSON response array has length {int}")
+  public void theJsonResponseArrayHasLength(int expectedLength) {
+    assertJsonBodyPresent();
+    assertThat(rootJson.isArray()).isTrue();
+    assertThat(rootJson.size()).isEqualTo(expectedLength);
+  }
+
   @Then("the JSON response array {string} contains {string}")
   public void theJsonResponseArrayContains(String arrayField, String expectedValue) {
     assertJsonBodyPresent();
@@ -283,6 +307,13 @@ public final class AdminManagementApiSteps {
         .isFalse();
   }
 
+  @Then("the JSON response field {string} is null")
+  public void theJsonResponseFieldIsNull(String field) {
+    assertJsonBodyPresent();
+    var node = rootJson.path(field);
+    assertThat(node.isNull() || node.isMissingNode()).isTrue();
+  }
+
   @Then("the entity for remembered link {string} has deleted_on populated in database")
   public void theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(String key)
       throws Exception {
@@ -313,6 +344,14 @@ public final class AdminManagementApiSteps {
   // njall_users.entities base table under Common Table Inheritance (CTI).
   @Then("the entity for remembered tag {string} has deleted_on populated in database")
   public void theEntityForRememberedTagHasDeletedOnPopulatedInDatabase(String key)
+      throws Exception {
+    theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
+  }
+
+  // Delegates to the link step because events share the unified
+  // njall_users.entities base table under Common Table Inheritance (CTI).
+  @Then("the entity for remembered event {string} has deleted_on populated in database")
+  public void theEntityForRememberedEventHasDeletedOnPopulatedInDatabase(String key)
       throws Exception {
     theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
   }

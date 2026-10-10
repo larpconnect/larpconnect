@@ -876,6 +876,156 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
+  /api/studios/{studio-id}/v1/events:
+    get:
+      summary: List studio events
+      description: Returns all active events associated with the specified tenant studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      responses:
+        '200':
+          description: List of active events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      summary: Create a studio event
+      description: Persists a new event entity for the specified tenant studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/events/{id}:
+    get:
+      summary: Retrieve event details
+      description: Returns details of an active event under the specified tenant studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event UUID.
+      responses:
+        '200':
+          description: Event retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update event fields
+      description: Applies partial updates to an active studio event (Google AIP-134).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of field names to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft-delete event
+      description: Soft-deletes a studio event by setting its deleted_on timestamp.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event UUID.
+      responses:
+        '204':
+          description: Event soft-deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
   /api/studios/{studio-id}/v1/locations/{location-id}/addresses:
     get:
       summary: List location addresses
@@ -1699,4 +1849,89 @@ components:
           example: "US"
         geom:
           $ref: '#/components/schemas/GeoJsonPoint'
+
+    Event:
+      type: object
+      required:
+        - id
+        - title
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        title:
+          type: string
+          example: "Autumn Harvest Festival"
+        summary:
+          type: string
+          example: "Annual community roleplay weekend"
+        locationId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-10-25T18:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          example: "2026-10-27T12:00:00Z"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+
+    CreateEventRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: "Autumn Harvest Festival"
+        summary:
+          type: string
+          example: "Annual community roleplay weekend"
+        locationId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-10-25T18:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          example: "2026-10-27T12:00:00Z"
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Autumn Harvest Festival - Rescheduled"
+        summary:
+          type: string
+          example: "Updated gathering summary"
+        locationId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-10-26T18:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          example: "2026-10-28T12:00:00Z"
 
