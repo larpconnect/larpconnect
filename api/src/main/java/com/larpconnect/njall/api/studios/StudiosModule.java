@@ -9,6 +9,7 @@ import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.addresses.AddressesModule;
 import com.larpconnect.njall.api.studios.links.LinksModule;
 import com.larpconnect.njall.api.studios.locations.LocationsModule;
+import com.larpconnect.njall.api.studios.tags.TagsModule;
 import com.larpconnect.njall.common.annotation.Blocking;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -22,6 +23,7 @@ public final class StudiosModule extends AbstractModule {
     install(new LinksModule());
     install(new AddressesModule());
     install(new LocationsModule());
+    install(new TagsModule());
 
     bind(StudiosRoute.class).in(Scopes.SINGLETON);
     Multibinder.newSetBinder(binder(), RouteProvider.class).addBinding().to(StudiosRoute.class);

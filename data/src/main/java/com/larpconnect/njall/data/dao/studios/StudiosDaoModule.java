@@ -17,6 +17,7 @@ public final class StudiosDaoModule extends AbstractModule {
     bind(LinkDAO.class).to(DefaultLinkDAO.class).in(Scopes.SINGLETON);
     bind(LocationDAO.class).to(DefaultLocationDAO.class).in(Scopes.SINGLETON);
     bind(AddressDAO.class).to(DefaultAddressDAO.class).in(Scopes.SINGLETON);
+    bind(HashtagDAO.class).to(DefaultHashtagDAO.class).in(Scopes.SINGLETON);
 
     var adminEntities =
         Multibinder.newSetBinder(binder(), new TypeLiteral<Class<?>>() {}, NjallAdmin.class);
@@ -25,6 +26,8 @@ public final class StudiosDaoModule extends AbstractModule {
     adminEntities.addBinding().toInstance(LinkEntity.class);
     adminEntities.addBinding().toInstance(LocationEntity.class);
     adminEntities.addBinding().toInstance(AddressEntity.class);
+    adminEntities.addBinding().toInstance(HashtagEntity.class);
+    adminEntities.addBinding().toInstance(HashtagEntityMapping.class);
 
     var userEntities =
         Multibinder.newSetBinder(binder(), new TypeLiteral<Class<?>>() {}, NjallUsers.class);
@@ -32,5 +35,7 @@ public final class StudiosDaoModule extends AbstractModule {
     userEntities.addBinding().toInstance(LinkEntity.class);
     userEntities.addBinding().toInstance(LocationEntity.class);
     userEntities.addBinding().toInstance(AddressEntity.class);
+    userEntities.addBinding().toInstance(HashtagEntity.class);
+    userEntities.addBinding().toInstance(HashtagEntityMapping.class);
   }
 }

@@ -12,9 +12,11 @@ import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
 import com.larpconnect.njall.api.studios.locations.LocationsRoute;
+import com.larpconnect.njall.api.studios.tags.TagsRoute;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.dao.studios.AddressDAO;
+import com.larpconnect.njall.data.dao.studios.HashtagDAO;
 import com.larpconnect.njall.data.dao.studios.LinkDAO;
 import com.larpconnect.njall.data.dao.studios.LocationDAO;
 import com.larpconnect.njall.data.dao.studios.StudioDAO;
@@ -51,20 +53,24 @@ final class StudiosModuleTest {
     var linkDao = mock(LinkDAO.class);
     var locationDao = mock(LocationDAO.class);
     var addressDao = mock(AddressDAO.class);
+    var hashtagDao = mock(HashtagDAO.class);
     var studioLookupCache = mock(StudioLookupCache.class);
 
     var testModule =
-        createTestModule(studioDao, linkDao, locationDao, addressDao, studioLookupCache);
+        createTestModule(
+            studioDao, linkDao, locationDao, addressDao, hashtagDao, studioLookupCache);
     var injector = Guice.createInjector(new StudiosModule(), testModule);
 
     var studiosRoute = injector.getInstance(StudiosRoute.class);
     var linksRoute = injector.getInstance(LinksRoute.class);
     var locationsRoute = injector.getInstance(LocationsRoute.class);
+    var tagsRoute = injector.getInstance(TagsRoute.class);
     var studioActor = injector.getInstance(Key.get(new TypeLiteral<ActorRef<StudioCommand>>() {}));
 
     assertThat(studiosRoute).isInstanceOf(StudiosRoute.class);
     assertThat(linksRoute).isInstanceOf(LinksRoute.class);
     assertThat(locationsRoute).isInstanceOf(LocationsRoute.class);
+    assertThat(tagsRoute).isInstanceOf(TagsRoute.class);
     assertThat(studioActor).isInstanceOf(ActorRef.class);
 
     var routeProviders = injector.getInstance(Key.get(new TypeLiteral<Set<RouteProvider>>() {}));
@@ -76,6 +82,7 @@ final class StudiosModuleTest {
       LinkDAO linkDao,
       LocationDAO locationDao,
       AddressDAO addressDao,
+      HashtagDAO hashtagDao,
       StudioLookupCache studioLookupCache) {
     return new AbstractModule() {
       @Override
@@ -84,6 +91,7 @@ final class StudiosModuleTest {
         bind(LinkDAO.class).toInstance(linkDao);
         bind(LocationDAO.class).toInstance(locationDao);
         bind(AddressDAO.class).toInstance(addressDao);
+        bind(HashtagDAO.class).toInstance(hashtagDao);
         bind(StudioLookupCache.class).toInstance(studioLookupCache);
         bind(ObjectMapper.class).toInstance(new ObjectMapper());
         bind(Key.get(new TypeLiteral<ActorSystem<Void>>() {})).toInstance(system);

@@ -281,6 +281,190 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
+  /api/studios/{studio-id}/v1/tags:
+    get:
+      summary: List studio hashtags
+      description: Returns all active hashtags associated with the specified studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+      responses:
+        '200':
+          description: List of studio hashtags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      summary: Create or resolve a studio hashtag
+      description: Idempotently creates a new hashtag or returns an existing hashtag matching case-insensitively.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTagRequest'
+      responses:
+        '200':
+          description: Existing hashtag resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '201':
+          description: New hashtag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/tags:batchCreate:
+    post:
+      summary: Bulk provision studio hashtags (AIP-233)
+      description: Bulk provisions hashtags idempotently, creating missing tags and returning existing ones.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchCreateTagsRequest'
+      responses:
+        '200':
+          description: Hashtags provisioned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchCreateTagsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/tags/{id}:
+    get:
+      summary: Retrieve a studio hashtag
+      description: Fetches a single hashtag by public UUID or case-insensitive string tag name.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Hashtag UUID or case-insensitive tag name.
+      responses:
+        '200':
+          description: Hashtag retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update a studio hashtag (AIP-134)
+      description: Updates an existing studio hashtag resource conforming to Google AIP-134.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Hashtag UUID or case-insensitive tag name.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of fields to update (e.g. 'summary,tag').
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTagRequest'
+      responses:
+        '200':
+          description: Hashtag updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft delete a studio hashtag
+      description: Soft deletes an existing studio hashtag resource.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Public studio UUID or natural alias.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Hashtag UUID or case-insensitive tag name.
+      responses:
+        '204':
+          description: Hashtag deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
   /api/admin/v1/studio-roles:
     get:
       summary: List default studio roles
@@ -1246,6 +1430,90 @@ components:
         summary:
           type: string
           example: "Updated Homepage"
+
+    Tag:
+      type: object
+      required:
+        - id
+        - tag
+        - linkType
+        - url
+        - mediaType
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        tag:
+          type: string
+          maxLength: 32
+          example: "SolarPunk"
+        linkType:
+          type: string
+          example: "hashtag"
+        url:
+          type: string
+          example: "/api/studios/valiant/v1/tags/SolarPunk"
+        mediaType:
+          type: string
+          example: "application/json"
+        summary:
+          type: string
+          example: "Speculative eco-futuristic aesthetic"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-10-09T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-10-09T12:00:00Z"
+
+    CreateTagRequest:
+      type: object
+      required:
+        - tag
+      properties:
+        tag:
+          type: string
+          maxLength: 32
+          example: "SolarPunk"
+        summary:
+          type: string
+          example: "Speculative eco-futuristic aesthetic"
+
+    BatchCreateTagsRequest:
+      type: object
+      required:
+        - requests
+      properties:
+        requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateTagRequest'
+
+    BatchCreateTagsResponse:
+      type: object
+      required:
+        - tags
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+
+    UpdateTagRequest:
+      type: object
+      properties:
+        tag:
+          type: string
+          maxLength: 32
+          example: "SolarPunk"
+        summary:
+          type: string
+          example: "Updated aesthetic description"
 
     GeoJsonPoint:
       type: object
