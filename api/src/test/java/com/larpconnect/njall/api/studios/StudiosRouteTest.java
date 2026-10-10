@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
 import com.larpconnect.njall.api.studios.locations.LocationsRoute;
+import com.larpconnect.njall.api.studios.tags.TagsRoute;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
@@ -69,10 +70,12 @@ final class StudiosRouteTest {
       StudioLookupCache cache, ActorRef<StudioCommand> actor, Duration timeout) {
     var linksRoute = mock(LinksRoute.class);
     var locationsRoute = mock(LocationsRoute.class);
+    var tagsRoute = mock(TagsRoute.class);
     when(linksRoute.route()).thenReturn(Directives.reject());
     when(locationsRoute.route()).thenReturn(Directives.reject());
+    when(tagsRoute.route()).thenReturn(Directives.reject());
     return new StudiosRoute(
-        cache, actor, linksRoute, locationsRoute, system, objectMapper, timeout);
+        cache, actor, linksRoute, locationsRoute, tagsRoute, system, objectMapper, timeout);
   }
 
   private StudioLookup sampleLookup() {

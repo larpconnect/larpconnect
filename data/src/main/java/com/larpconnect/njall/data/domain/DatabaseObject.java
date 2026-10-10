@@ -12,7 +12,8 @@ public sealed interface DatabaseObject
         DefaultStudioRole,
         Link,
         Location,
-        Address {
+        Address,
+        Hashtag {
 
   /**
    * Returns the unique identifier of the persistent database object.

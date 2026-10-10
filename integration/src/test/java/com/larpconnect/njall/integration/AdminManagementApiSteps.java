@@ -132,7 +132,7 @@ public final class AdminManagementApiSteps {
   @Then("the JSON response contains field {string} with value {string}")
   public void theJsonResponseContainsFieldWithValue(String field, String expectedValue) {
     assertJsonBodyPresent();
-    assertThat(rootJson.path(field).asText()).isEqualTo(expectedValue);
+    assertThat(rootJson.path(field).asText()).isEqualTo(resolveVariables(expectedValue));
   }
 
   @Then("the response field {string} is remembered as {string}")
@@ -305,6 +305,14 @@ public final class AdminManagementApiSteps {
 
   @Then("the entity for remembered location {string} has deleted_on populated in database")
   public void theEntityForRememberedLocationHasDeletedOnPopulatedInDatabase(String key)
+      throws Exception {
+    theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
+  }
+
+  // Delegates to the link step because hashtags and links share the unified
+  // njall_users.entities base table under Common Table Inheritance (CTI).
+  @Then("the entity for remembered tag {string} has deleted_on populated in database")
+  public void theEntityForRememberedTagHasDeletedOnPopulatedInDatabase(String key)
       throws Exception {
     theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
   }

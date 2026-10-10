@@ -8,6 +8,7 @@ import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.common.StudioErrorResponse;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
 import com.larpconnect.njall.api.studios.locations.LocationsRoute;
+import com.larpconnect.njall.api.studios.tags.TagsRoute;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
@@ -33,6 +34,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
   private final ActorRef<StudioCommand> studioActor;
   private final LinksRoute linksRoute;
   private final LocationsRoute locationsRoute;
+  private final TagsRoute tagsRoute;
   private final ActorSystem<Void> system;
   private final ObjectMapper objectMapper;
   private final Duration askTimeout;
@@ -43,6 +45,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
       ActorRef<StudioCommand> studioActor,
       LinksRoute linksRoute,
       LocationsRoute locationsRoute,
+      TagsRoute tagsRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
     this(
@@ -50,6 +53,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
         studioActor,
         linksRoute,
         locationsRoute,
+        tagsRoute,
         system,
         objectMapper,
         Duration.ofSeconds(20));
@@ -60,6 +64,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
       ActorRef<StudioCommand> studioActor,
       LinksRoute linksRoute,
       LocationsRoute locationsRoute,
+      TagsRoute tagsRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper,
       Duration askTimeout) {
@@ -67,6 +72,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
     this.studioActor = studioActor;
     this.linksRoute = linksRoute;
     this.locationsRoute = locationsRoute;
+    this.tagsRoute = tagsRoute;
     this.system = system;
     this.objectMapper = objectMapper;
     this.askTimeout = askTimeout;
@@ -75,7 +81,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
   @Override
   public Route route() {
     // Concatenate non-overlapping child routes; specific path prefixes avoid route shadowing
-    return concat(studioRoute(), locationsRoute.route(), linksRoute.route());
+    return concat(studioRoute(), locationsRoute.route(), linksRoute.route(), tagsRoute.route());
   }
 
   private Route studioRoute() {
