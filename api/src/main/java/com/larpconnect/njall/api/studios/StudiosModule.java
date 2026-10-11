@@ -8,6 +8,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.addresses.AddressesModule;
 import com.larpconnect.njall.api.studios.events.EventsModule;
+import com.larpconnect.njall.api.studios.individuals.IndividualsModule;
 import com.larpconnect.njall.api.studios.links.LinksModule;
 import com.larpconnect.njall.api.studios.locations.LocationsModule;
 import com.larpconnect.njall.api.studios.tags.TagsModule;
@@ -26,7 +27,9 @@ public final class StudiosModule extends AbstractModule {
     install(new LocationsModule());
     install(new TagsModule());
     install(new EventsModule());
+    install(new IndividualsModule());
 
+    bind(StudioSubRoutes.class).in(Scopes.SINGLETON);
     bind(StudiosRoute.class).in(Scopes.SINGLETON);
     Multibinder.newSetBinder(binder(), RouteProvider.class).addBinding().to(StudiosRoute.class);
     bind(StudioActorFactory.class).to(DefaultStudioActorFactory.class);
