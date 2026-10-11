@@ -8,7 +8,6 @@ import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Event;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.Session;
@@ -66,11 +65,11 @@ final class DefaultEventDAO implements EventDAO {
                 .setParameter("tenantId", tenantId)
                 .getResultList();
         tx.commit();
-        var list = new ArrayList<Event>(rows.size());
+        var builder = ImmutableList.<Event>builderWithExpectedSize(rows.size());
         for (var row : rows) {
-          list.add(toEvent((EntityBaseEntity) row[0], (EventEntity) row[1]));
+          builder.add(toEvent((EntityBaseEntity) row[0], (EventEntity) row[1]));
         }
-        return ImmutableList.copyOf(list);
+        return builder.build();
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;

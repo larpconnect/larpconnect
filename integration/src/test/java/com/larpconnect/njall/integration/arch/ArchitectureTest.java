@@ -415,10 +415,11 @@ final class ArchitectureTest {
     }
     var enclosing = javaClass.getEnclosingClass();
     while (enclosing.isPresent()) {
-      if (enclosing.get().getModifiers().contains(JavaModifier.PRIVATE)) {
+      var current = enclosing.orElseThrow();
+      if (current.getModifiers().contains(JavaModifier.PRIVATE)) {
         return true;
       }
-      enclosing = enclosing.get().getEnclosingClass();
+      enclosing = current.getEnclosingClass();
     }
     return false;
   }

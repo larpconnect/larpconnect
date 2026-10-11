@@ -8,7 +8,6 @@ import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Hashtag;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -59,7 +58,7 @@ final class DefaultHashtagDAO implements HashtagDAO {
           tx.commit();
           return Optional.empty();
         }
-        var result = loadHashtag(session, tenantId, tagIdOpt.get());
+        var result = loadHashtag(session, tenantId, tagIdOpt.orElseThrow());
         tx.commit();
         return result;
       } catch (Exception e) {
@@ -86,12 +85,12 @@ final class DefaultHashtagDAO implements HashtagDAO {
                 .setParameter("tenantId", tenantId)
                 .getResultList();
         tx.commit();
-        var list = new ArrayList<Hashtag>(rows.size());
+        var builder = ImmutableList.<Hashtag>builderWithExpectedSize(rows.size());
         for (var row : rows) {
-          list.add(
+          builder.add(
               toHashtag((EntityBaseEntity) row[0], (LinkEntity) row[1], (HashtagEntity) row[2]));
         }
-        return ImmutableList.copyOf(list);
+        return builder.build();
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -121,14 +120,14 @@ final class DefaultHashtagDAO implements HashtagDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var list = new ArrayList<Hashtag>(items.size());
+        var builder = ImmutableList.<Hashtag>builderWithExpectedSize(items.size());
         for (var item : items) {
-          list.add(
+          builder.add(
               internalCreateOrResolve(
                   session, tenantId, item.tag(), item.canonicalUrl(), item.summary()));
         }
         tx.commit();
-        return ImmutableList.copyOf(list);
+        return builder.build();
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -203,7 +202,7 @@ final class DefaultHashtagDAO implements HashtagDAO {
       Session session, UUID tenantId, String tag, String canonicalUrl, Optional<String> summary) {
     var existingIdOpt = findTagIdByName(session, tenantId, tag);
     if (existingIdOpt.isPresent()) {
-      return reactivateOrReturn(session, tenantId, existingIdOpt.get(), tag, summary);
+      return reactivateOrReturn(session, tenantId, existingIdOpt.orElseThrow(), tag, summary);
     }
     return persistNewHashtag(session, tenantId, tag, canonicalUrl, summary);
   }

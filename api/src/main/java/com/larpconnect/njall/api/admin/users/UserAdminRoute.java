@@ -235,7 +235,8 @@ public final class UserAdminRoute extends AllDirectives {
     logger.error("User admin actor request failed", error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        new AdminErrorResponse(500, "Internal server error"),
+        new AdminErrorResponse(
+            StatusCodes.INTERNAL_SERVER_ERROR.intValue(), "Internal server error"),
         Jackson.marshaller(objectMapper));
   }
 
@@ -254,27 +255,27 @@ public final class UserAdminRoute extends AllDirectives {
       case UserAdminResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              new AdminErrorResponse(404, nf.message()),
+              new AdminErrorResponse(StatusCodes.NOT_FOUND.intValue(), nf.message()),
               Jackson.marshaller(objectMapper));
       case UserAdminResponse.Conflict c ->
           complete(
               StatusCodes.CONFLICT,
-              new AdminErrorResponse(409, c.message()),
+              new AdminErrorResponse(StatusCodes.CONFLICT.intValue(), c.message()),
               Jackson.marshaller(objectMapper));
       case UserAdminResponse.BadRequest br ->
           complete(
               StatusCodes.BAD_REQUEST,
-              new AdminErrorResponse(400, br.message()),
+              new AdminErrorResponse(StatusCodes.BAD_REQUEST.intValue(), br.message()),
               Jackson.marshaller(objectMapper));
       case UserAdminResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              new AdminErrorResponse(500, f.message()),
+              new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR.intValue(), f.message()),
               Jackson.marshaller(objectMapper));
       default ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              new AdminErrorResponse(500, "Unknown error"),
+              new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR.intValue(), "Unknown error"),
               Jackson.marshaller(objectMapper));
     };
   }
