@@ -7,11 +7,6 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.larpconnect.njall.api.studios.events.EventsRoute;
-import com.larpconnect.njall.api.studios.individuals.IndividualsRoute;
-import com.larpconnect.njall.api.studios.links.LinksRoute;
-import com.larpconnect.njall.api.studios.locations.LocationsRoute;
-import com.larpconnect.njall.api.studios.tags.TagsRoute;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
@@ -70,18 +65,7 @@ final class StudiosRouteTest {
 
   private StudiosRoute createRoute(
       StudioLookupCache cache, ActorRef<StudioCommand> actor, Duration timeout) {
-    var linksRoute = mock(LinksRoute.class);
-    var locationsRoute = mock(LocationsRoute.class);
-    var tagsRoute = mock(TagsRoute.class);
-    var eventsRoute = mock(EventsRoute.class);
-    var individualsRoute = mock(IndividualsRoute.class);
-    when(linksRoute.route()).thenReturn(Directives.reject());
-    when(locationsRoute.route()).thenReturn(Directives.reject());
-    when(tagsRoute.route()).thenReturn(Directives.reject());
-    when(eventsRoute.route()).thenReturn(Directives.reject());
-    when(individualsRoute.route()).thenReturn(Directives.reject());
-    var subRoutes =
-        new StudioSubRoutes(linksRoute, locationsRoute, tagsRoute, eventsRoute, individualsRoute);
+    var subRoutes = new StudioSubRoutes(Directives.reject());
     var route = new StudiosRoute(cache, actor, subRoutes, system, objectMapper);
     route.setAskTimeoutForTesting(timeout);
     return route;

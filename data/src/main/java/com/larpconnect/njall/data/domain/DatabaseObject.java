@@ -15,7 +15,9 @@ public sealed interface DatabaseObject
         Address,
         Hashtag,
         Event,
-        Individual {
+        Individual,
+        Collection,
+        CollectionItem {
 
   /**
    * Returns the unique identifier of the persistent database object.

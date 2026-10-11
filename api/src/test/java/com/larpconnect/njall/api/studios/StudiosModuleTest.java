@@ -10,6 +10,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.http.RouteProvider;
+import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.events.EventsRoute;
 import com.larpconnect.njall.api.studios.individuals.IndividualsRoute;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
@@ -23,6 +24,7 @@ import com.larpconnect.njall.data.dao.studios.HashtagDAO;
 import com.larpconnect.njall.data.dao.studios.LinkDAO;
 import com.larpconnect.njall.data.dao.studios.LocationDAO;
 import com.larpconnect.njall.data.dao.studios.StudioDAO;
+import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualDAO;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -60,17 +62,20 @@ final class StudiosModuleTest {
     var hashtagDao = mock(HashtagDAO.class);
     var eventDao = mock(EventDAO.class);
     var individualDao = mock(IndividualDAO.class);
+    var collectionDao = mock(CollectionDAO.class);
     var studioLookupCache = mock(StudioLookupCache.class);
 
     var testModule =
         createTestModule(
-            studioDao,
-            linkDao,
-            locationDao,
-            addressDao,
-            hashtagDao,
-            eventDao,
-            individualDao,
+            new Daos(
+                studioDao,
+                linkDao,
+                locationDao,
+                addressDao,
+                hashtagDao,
+                eventDao,
+                individualDao,
+                collectionDao),
             studioLookupCache);
     var injector = Guice.createInjector(new StudiosModule(), testModule);
 
@@ -80,6 +85,7 @@ final class StudiosModuleTest {
     var tagsRoute = injector.getInstance(TagsRoute.class);
     var eventsRoute = injector.getInstance(EventsRoute.class);
     var individualsRoute = injector.getInstance(IndividualsRoute.class);
+    var collectionsRoute = injector.getInstance(CollectionsRoute.class);
     var studioActor = injector.getInstance(Key.get(new TypeLiteral<ActorRef<StudioCommand>>() {}));
 
     assertThat(studiosRoute).isInstanceOf(StudiosRoute.class);
@@ -88,13 +94,14 @@ final class StudiosModuleTest {
     assertThat(tagsRoute).isInstanceOf(TagsRoute.class);
     assertThat(eventsRoute).isInstanceOf(EventsRoute.class);
     assertThat(individualsRoute).isInstanceOf(IndividualsRoute.class);
+    assertThat(collectionsRoute).isInstanceOf(CollectionsRoute.class);
     assertThat(studioActor).isInstanceOf(ActorRef.class);
 
     var routeProviders = injector.getInstance(Key.get(new TypeLiteral<Set<RouteProvider>>() {}));
     assertThat(routeProviders).contains(studiosRoute);
   }
 
-  private Module createTestModule(
+  private record Daos(
       StudioDAO studioDao,
       LinkDAO linkDao,
       LocationDAO locationDao,
@@ -102,17 +109,20 @@ final class StudiosModuleTest {
       HashtagDAO hashtagDao,
       EventDAO eventDao,
       IndividualDAO individualDao,
-      StudioLookupCache studioLookupCache) {
+      CollectionDAO collectionDao) {}
+
+  private Module createTestModule(Daos daos, StudioLookupCache studioLookupCache) {
     return new AbstractModule() {
       @Override
       protected void configure() {
-        bind(StudioDAO.class).toInstance(studioDao);
-        bind(LinkDAO.class).toInstance(linkDao);
-        bind(LocationDAO.class).toInstance(locationDao);
-        bind(AddressDAO.class).toInstance(addressDao);
-        bind(HashtagDAO.class).toInstance(hashtagDao);
-        bind(EventDAO.class).toInstance(eventDao);
-        bind(IndividualDAO.class).toInstance(individualDao);
+        bind(StudioDAO.class).toInstance(daos.studioDao());
+        bind(LinkDAO.class).toInstance(daos.linkDao());
+        bind(LocationDAO.class).toInstance(daos.locationDao());
+        bind(AddressDAO.class).toInstance(daos.addressDao());
+        bind(HashtagDAO.class).toInstance(daos.hashtagDao());
+        bind(EventDAO.class).toInstance(daos.eventDao());
+        bind(IndividualDAO.class).toInstance(daos.individualDao());
+        bind(CollectionDAO.class).toInstance(daos.collectionDao());
         bind(StudioLookupCache.class).toInstance(studioLookupCache);
         bind(ObjectMapper.class).toInstance(new ObjectMapper());
         bind(Key.get(new TypeLiteral<ActorSystem<Void>>() {})).toInstance(system);
