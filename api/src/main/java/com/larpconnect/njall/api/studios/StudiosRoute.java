@@ -6,10 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.common.StudioErrorResponse;
-import com.larpconnect.njall.api.studios.events.EventsRoute;
-import com.larpconnect.njall.api.studios.links.LinksRoute;
-import com.larpconnect.njall.api.studios.locations.LocationsRoute;
-import com.larpconnect.njall.api.studios.tags.TagsRoute;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Duration;
@@ -33,10 +29,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
 
   private final StudioLookupCache studioLookupCache;
   private final ActorRef<StudioCommand> studioActor;
-  private final LinksRoute linksRoute;
-  private final LocationsRoute locationsRoute;
-  private final TagsRoute tagsRoute;
-  private final EventsRoute eventsRoute;
+  private final StudioSubRoutes subRoutes;
   private final ActorSystem<Void> system;
   private final ObjectMapper objectMapper;
   private Duration askTimeout;
@@ -45,18 +38,12 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
   StudiosRoute(
       StudioLookupCache studioLookupCache,
       ActorRef<StudioCommand> studioActor,
-      LinksRoute linksRoute,
-      LocationsRoute locationsRoute,
-      TagsRoute tagsRoute,
-      EventsRoute eventsRoute,
+      StudioSubRoutes subRoutes,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
     this.studioLookupCache = studioLookupCache;
     this.studioActor = studioActor;
-    this.linksRoute = linksRoute;
-    this.locationsRoute = locationsRoute;
-    this.tagsRoute = tagsRoute;
-    this.eventsRoute = eventsRoute;
+    this.subRoutes = subRoutes;
     this.system = system;
     this.objectMapper = objectMapper;
     this.askTimeout = Duration.ofSeconds(20);
@@ -69,12 +56,7 @@ public final class StudiosRoute extends AllDirectives implements RouteProvider {
   @Override
   public Route route() {
     // Concatenate non-overlapping child routes; specific path prefixes avoid route shadowing
-    return concat(
-        studioRoute(),
-        locationsRoute.route(),
-        linksRoute.route(),
-        tagsRoute.route(),
-        eventsRoute.route());
+    return concat(studioRoute(), subRoutes.route());
   }
 
   private Route studioRoute() {

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.larpconnect.njall.api.studios.events.EventsRoute;
+import com.larpconnect.njall.api.studios.individuals.IndividualsRoute;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
 import com.larpconnect.njall.api.studios.locations.LocationsRoute;
 import com.larpconnect.njall.api.studios.tags.TagsRoute;
@@ -73,13 +74,15 @@ final class StudiosRouteTest {
     var locationsRoute = mock(LocationsRoute.class);
     var tagsRoute = mock(TagsRoute.class);
     var eventsRoute = mock(EventsRoute.class);
+    var individualsRoute = mock(IndividualsRoute.class);
     when(linksRoute.route()).thenReturn(Directives.reject());
     when(locationsRoute.route()).thenReturn(Directives.reject());
     when(tagsRoute.route()).thenReturn(Directives.reject());
     when(eventsRoute.route()).thenReturn(Directives.reject());
-    var route =
-        new StudiosRoute(
-            cache, actor, linksRoute, locationsRoute, tagsRoute, eventsRoute, system, objectMapper);
+    when(individualsRoute.route()).thenReturn(Directives.reject());
+    var subRoutes =
+        new StudioSubRoutes(linksRoute, locationsRoute, tagsRoute, eventsRoute, individualsRoute);
+    var route = new StudiosRoute(cache, actor, subRoutes, system, objectMapper);
     route.setAskTimeoutForTesting(timeout);
     return route;
   }
