@@ -152,7 +152,8 @@ public final class RoleAdminRoute extends AllDirectives {
     logger.error("Role admin actor request failed", error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error"),
+        new AdminErrorResponse(
+            StatusCodes.INTERNAL_SERVER_ERROR.intValue(), "Internal server error"),
         Jackson.marshaller(objectMapper));
   }
 
