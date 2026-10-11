@@ -1153,6 +1153,215 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
+  /api/studios/{studio-id}/v1/collections:
+    post:
+      summary: Create a studio collection
+      description: Persists a new ordered collection entity for the specified tenant studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCollectionRequest'
+      responses:
+        '201':
+          description: Collection created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderedCollection'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/collections/{id}:
+    get:
+      summary: Retrieve collection details
+      description: Returns details of an active collection under the specified tenant studio in compressed or expanded form.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Collection UUID.
+        - name: form
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - compressed
+              - expanded
+            default: compressed
+          description: Output format (compressed returns item IDs only, expanded embeds full entity details).
+      responses:
+        '200':
+          description: Collection retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderedCollection'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update collection fields
+      description: Applies partial updates to an active studio collection (Google AIP-134).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Collection UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of field names to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCollectionRequest'
+      responses:
+        '200':
+          description: Collection updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderedCollection'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft-delete collection
+      description: Soft-deletes a studio collection by setting its deleted_on timestamp.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Collection UUID.
+      responses:
+        '204':
+          description: Collection soft-deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/collections/{id}:addItem:
+    post:
+      summary: Add an item to collection
+      description: Inserts an entity reference into a collection with optional relative or index placement (AIP-136).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Collection UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItemRequest'
+      responses:
+        '204':
+          description: Item added successfully or already present
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/collections/{id}:removeItem:
+    post:
+      summary: Remove an item from collection
+      description: Removes an entity reference from a collection (AIP-136).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Collection UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveItemRequest'
+      responses:
+        '204':
+          description: Item removed successfully or was not present
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
   /api/studios/{studio-id}/v1/locations/{location-id}/addresses:
     get:
       summary: List location addresses
@@ -2110,4 +2319,109 @@ components:
         summary:
           type: string
           example: "Updated scholar bio"
+
+    OrderedCollection:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - ownerId
+        - totalItems
+        - orderedItems
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        type:
+          type: string
+          example: "OrderedCollection"
+        name:
+          type: string
+          example: "Featured Cast"
+        summary:
+          type: string
+          example: "Primary cast for season 1"
+        ownerId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        totalItems:
+          type: integer
+          example: 2
+        orderedItems:
+          type: array
+          items:
+            anyOf:
+              - type: string
+                format: uuid
+              - type: object
+          example:
+            - "018f2345-6789-7abc-def0-123456789001"
+            - "018f2345-6789-7abc-def0-123456789002"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-10-11T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-10-11T12:00:00Z"
+
+    CreateCollectionRequest:
+      type: object
+      required:
+        - ownerId
+        - name
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        name:
+          type: string
+          example: "Featured Cast"
+        summary:
+          type: string
+          example: "Primary cast for season 1"
+
+    UpdateCollectionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Featured Performers"
+        summary:
+          type: string
+          example: "Updated collection description"
+
+    AddItemRequest:
+      type: object
+      required:
+        - refersToId
+      properties:
+        refersToId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789001"
+        before:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789002"
+        index:
+          type: integer
+          example: 0
+
+    RemoveItemRequest:
+      type: object
+      required:
+        - refersToId
+      properties:
+        refersToId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789001"
 

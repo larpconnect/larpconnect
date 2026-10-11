@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.primitives.Ints;
 import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
@@ -184,39 +185,50 @@ public final class AdminManagementApiSteps {
     assertThat(rootJson.size()).isEqualTo(expectedLength);
   }
 
+  @Then("the JSON response array {string} has length {int}")
+  public void theJsonResponseArrayFieldHasLength(String arrayField, int expectedLength) {
+    assertJsonBodyPresent();
+    var arrayNode = rootJson.path(arrayField);
+    assertThat(arrayNode.isArray()).isTrue();
+    assertThat(arrayNode.size()).isEqualTo(expectedLength);
+  }
+
   @Then("the JSON response array {string} contains {string}")
   public void theJsonResponseArrayContains(String arrayField, String expectedValue) {
     assertJsonBodyPresent();
+    var resolvedExpected = resolveVariables(expectedValue);
     var arrayNode = rootJson.path(arrayField);
     assertThat(arrayNode.isArray()).isTrue();
     var found = false;
     for (var node : arrayNode) {
-      if (nodeMatchesValue(node, expectedValue)) {
+      if (nodeMatchesValue(node, resolvedExpected)) {
         found = true;
         break;
       }
     }
     assertThat(found)
         .withFailMessage(
-            "Array %s does not contain %s. Elements: %s", arrayField, expectedValue, arrayNode)
+            "Array %s does not contain %s. Elements: %s", arrayField, resolvedExpected, arrayNode)
         .isTrue();
   }
 
   @Then("the JSON response array {string} does not contain {string}")
   public void theJsonResponseArrayDoesNotContain(String arrayField, String expectedValue) {
     assertJsonBodyPresent();
+    var resolvedExpected = resolveVariables(expectedValue);
     var arrayNode = rootJson.path(arrayField);
     assertThat(arrayNode.isArray()).isTrue();
     var found = false;
     for (var node : arrayNode) {
-      if (nodeMatchesValue(node, expectedValue)) {
+      if (nodeMatchesValue(node, resolvedExpected)) {
         found = true;
         break;
       }
     }
     assertThat(found)
         .withFailMessage(
-            "Array %s unexpectedly contains %s. Elements: %s", arrayField, expectedValue, arrayNode)
+            "Array %s unexpectedly contains %s. Elements: %s",
+            arrayField, resolvedExpected, arrayNode)
         .isFalse();
   }
 
@@ -314,11 +326,14 @@ public final class AdminManagementApiSteps {
     assertThat(node.isNull() || node.isMissingNode()).isTrue();
   }
 
-  @Then("the entity for remembered link {string} has deleted_on populated in database")
-  public void theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(String key)
+  // Base entities share the unified njall_users.entities base table under CTI.
+  @Then(
+      "^(?:the entity for remembered (?:link|location|tag|event|individual|collection) \"([^\"]*)\""
+          + " has deleted_on populated in database)$")
+  public void theEntityForRememberedEntityHasDeletedOnPopulatedInDatabase(String key)
       throws Exception {
     assertThat(rememberedIds).containsKey(key);
-    var linkId = UUID.fromString(rememberedIds.get(key));
+    var entityId = UUID.fromString(rememberedIds.get(key));
     var sql = "SELECT deleted_on FROM njall_users.entities WHERE id = ?";
     try (var conn =
             DriverManager.getConnection(
@@ -326,42 +341,12 @@ public final class AdminManagementApiSteps {
                 "njall",
                 DatabaseMigrationSteps.getPasswordFor("njall"));
         var stmt = conn.prepareStatement(sql)) {
-      stmt.setObject(1, linkId);
+      stmt.setObject(1, entityId);
       try (var rs = stmt.executeQuery()) {
         assertThat(rs.next()).isTrue();
         assertThat(rs.getTimestamp("deleted_on")).isNotNull();
       }
     }
-  }
-
-  @Then("the entity for remembered location {string} has deleted_on populated in database")
-  public void theEntityForRememberedLocationHasDeletedOnPopulatedInDatabase(String key)
-      throws Exception {
-    theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
-  }
-
-  // Delegates to the link step because hashtags and links share the unified
-  // njall_users.entities base table under Common Table Inheritance (CTI).
-  @Then("the entity for remembered tag {string} has deleted_on populated in database")
-  public void theEntityForRememberedTagHasDeletedOnPopulatedInDatabase(String key)
-      throws Exception {
-    theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
-  }
-
-  // Delegates to the link step because events share the unified
-  // njall_users.entities base table under Common Table Inheritance (CTI).
-  @Then("the entity for remembered event {string} has deleted_on populated in database")
-  public void theEntityForRememberedEventHasDeletedOnPopulatedInDatabase(String key)
-      throws Exception {
-    theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
-  }
-
-  // Delegates to the link step because individuals share the unified
-  // njall_users.entities base table under Common Table Inheritance (CTI).
-  @Then("the entity for remembered individual {string} has deleted_on populated in database")
-  public void theEntityForRememberedIndividualHasDeletedOnPopulatedInDatabase(String key)
-      throws Exception {
-    theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
   }
 
   @Then("the JSON response path {string} has value {string}")
@@ -370,9 +355,14 @@ public final class AdminManagementApiSteps {
     var parts = Splitter.on('.').split(path);
     var current = rootJson;
     for (var part : parts) {
-      current = current.path(part);
+      var index = Ints.tryParse(part);
+      if (current.isArray() && index != null) {
+        current = current.path(index);
+      } else {
+        current = current.path(part);
+      }
     }
-    assertThat(current.asText()).isEqualTo(expectedValue);
+    assertThat(current.asText()).isEqualTo(resolveVariables(expectedValue));
   }
 
   @Then("the JSON response coordinate at index {int} is {double}")

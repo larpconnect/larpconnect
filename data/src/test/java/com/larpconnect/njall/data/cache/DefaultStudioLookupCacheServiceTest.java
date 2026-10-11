@@ -149,6 +149,33 @@ final class DefaultStudioLookupCacheServiceTest {
     assertThat(service.listActive()).isEmpty();
   }
 
+  @Test
+  @DisplayName("findByIdOrAlias handles various length-36 non-UUID string shapes")
+  void findByIdOrAlias_nonUuidFormats() throws Exception {
+    var dao = mock(StudioLookupDAO.class);
+    when(dao.list(DeletionFilter.INCLUDE_DELETED)).thenReturn(ImmutableList.of());
+    var service =
+        new DefaultStudioLookupCacheService(dao, Duration.ofMinutes(5), Ticker.systemTicker());
+    service.startUp();
+
+    assertThat(service.findByIdOrAlias("11111111x1111-1111-1111-111111111111")).isEmpty();
+    assertThat(service.findByIdOrAlias("11111111-1111x1111-1111-111111111111")).isEmpty();
+    assertThat(service.findByIdOrAlias("11111111-1111-1111x1111-111111111111")).isEmpty();
+    assertThat(service.findByIdOrAlias("11111111-1111-1111-1111x111111111111")).isEmpty();
+    assertThat(service.findByIdOrAlias("11111111-1111-1111-1111-11111111111z")).isEmpty();
+  }
+
+  @Test
+  @DisplayName("runOneIteration handles DAO exception gracefully without throwing")
+  void runOneIteration_daoThrows_handlesGracefully() {
+    var dao = mock(StudioLookupDAO.class);
+    when(dao.list(DeletionFilter.INCLUDE_DELETED)).thenThrow(new RuntimeException("DB error"));
+    var service =
+        new DefaultStudioLookupCacheService(dao, Duration.ofMinutes(5), Ticker.systemTicker());
+    service.runOneIteration();
+    assertThat(service.listActive()).isEmpty();
+  }
+
   private static StudioLookup createActiveStudio(UUID tenantId, UUID studioId, String alias) {
     var now = Instant.now();
     return new StudioLookup(tenantId, studioId, alias, now, now, Optional.empty());

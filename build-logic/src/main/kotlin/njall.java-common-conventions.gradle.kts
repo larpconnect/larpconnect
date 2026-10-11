@@ -146,6 +146,11 @@ testing {
     suites {
         val test = getByName<JvmTestSuite>("test") {
             useJUnitJupiter("6.1.0")
+            targets.all {
+                testTask.configure {
+                    jvmArgs("-XX:+EnableDynamicAgentLoading")
+                }
+            }
         }
     }
 }
