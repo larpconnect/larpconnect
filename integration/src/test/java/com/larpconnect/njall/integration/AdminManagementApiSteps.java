@@ -356,6 +356,14 @@ public final class AdminManagementApiSteps {
     theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
   }
 
+  // Delegates to the link step because individuals share the unified
+  // njall_users.entities base table under Common Table Inheritance (CTI).
+  @Then("the entity for remembered individual {string} has deleted_on populated in database")
+  public void theEntityForRememberedIndividualHasDeletedOnPopulatedInDatabase(String key)
+      throws Exception {
+    theEntityForRememberedLinkHasDeletedOnPopulatedInDatabase(key);
+  }
+
   @Then("the JSON response path {string} has value {string}")
   public void theJsonResponsePathHasValue(String path, String expectedValue) {
     assertJsonBodyPresent();
