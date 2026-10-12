@@ -17,6 +17,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.jspecify.annotations.Nullable;
 
 final class DefaultAddressDAO implements AddressDAO {
@@ -100,11 +101,7 @@ final class DefaultAddressDAO implements AddressDAO {
         }
         return Optional.of(toAddress((Object[]) rows.getFirst()));
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -123,17 +120,13 @@ final class DefaultAddressDAO implements AddressDAO {
                 .setParameter("locationId", locationId)
                 .getResultList();
         tx.commit();
-        var builder = ImmutableList.<Address>builder();
+        var builder = ImmutableList.<Address>builderWithExpectedSize(rows.size());
         for (var row : rows) {
           builder.add(toAddress((Object[]) row));
         }
         return builder.build();
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -165,11 +158,7 @@ final class DefaultAddressDAO implements AddressDAO {
         tx.commit();
         return true;
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -238,11 +227,7 @@ final class DefaultAddressDAO implements AddressDAO {
         tx.commit();
         return toAddress(entity, b.geom());
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -271,11 +256,7 @@ final class DefaultAddressDAO implements AddressDAO {
         tx.commit();
         return Optional.of(toAddress(entity, effectiveGeom));
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -353,6 +334,14 @@ final class DefaultAddressDAO implements AddressDAO {
       return null;
     }
     return parseGeoJson((String) rows.getFirst()).orElse(null);
+  }
+
+  private static void rollbackQuietly(Transaction tx, Exception e) {
+    try {
+      tx.rollback();
+    } catch (Exception rollbackException) {
+      e.addSuppressed(rollbackException);
+    }
   }
 
   private static Address toAddress(AddressEntity entity, @Nullable GeoJsonPoint geom) {

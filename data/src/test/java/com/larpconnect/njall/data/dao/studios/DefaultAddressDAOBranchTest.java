@@ -264,6 +264,33 @@ final class DefaultAddressDAOBranchTest {
   }
 
   @Test
+  @DisplayName("delete rollbacks on error and suppresses secondary rollback exception")
+  void delete_rollbackOnError_suppressesSecondaryRollbackException() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+
+    var entity =
+        AddressEntity.builder(tenantId, addressId, locationId)
+            .addressType("PHYSICAL")
+            .addressLine1("123 Pine St")
+            .locality("Seattle")
+            .administrativeArea("WA")
+            .postalCode("98101")
+            .countryCode("US")
+            .build();
+    when(session.find(eq(AddressEntity.class), any(EntityId.class))).thenReturn(entity);
+    doThrow(new RuntimeException("Remove error")).when(session).remove(any());
+    doThrow(new RuntimeException("Secondary rollback error")).when(tx).rollback();
+
+    assertThatThrownBy(() -> dao.delete(tenantId, locationId, addressId))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Remove error")
+        .satisfies(e -> assertThat(e.getSuppressed()).hasSize(1));
+    verify(tx).rollback();
+  }
+
+  @Test
   @DisplayName("patch returns empty when entity not found or wrong location")
   void patch_notFound_returnsEmpty() {
     var tx = mock(Transaction.class);
