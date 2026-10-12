@@ -10,6 +10,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.http.RouteProvider;
+import com.larpconnect.njall.api.studios.actors.AgentRoute;
 import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.events.EventsRoute;
 import com.larpconnect.njall.api.studios.individuals.IndividualsRoute;
@@ -24,6 +25,7 @@ import com.larpconnect.njall.data.dao.studios.HashtagDAO;
 import com.larpconnect.njall.data.dao.studios.LinkDAO;
 import com.larpconnect.njall.data.dao.studios.LocationDAO;
 import com.larpconnect.njall.data.dao.studios.StudioDAO;
+import com.larpconnect.njall.data.dao.studios.actors.AgentDAO;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualDAO;
 import java.util.Set;
@@ -63,6 +65,7 @@ final class StudiosModuleTest {
     var eventDao = mock(EventDAO.class);
     var individualDao = mock(IndividualDAO.class);
     var collectionDao = mock(CollectionDAO.class);
+    var agentDao = mock(AgentDAO.class);
     var studioLookupCache = mock(StudioLookupCache.class);
 
     var testModule =
@@ -75,7 +78,8 @@ final class StudiosModuleTest {
                 hashtagDao,
                 eventDao,
                 individualDao,
-                collectionDao),
+                collectionDao,
+                agentDao),
             studioLookupCache);
     var injector = Guice.createInjector(new StudiosModule(), testModule);
 
@@ -86,6 +90,7 @@ final class StudiosModuleTest {
     var eventsRoute = injector.getInstance(EventsRoute.class);
     var individualsRoute = injector.getInstance(IndividualsRoute.class);
     var collectionsRoute = injector.getInstance(CollectionsRoute.class);
+    var actorsRoute = injector.getInstance(AgentRoute.class);
     var studioActor = injector.getInstance(Key.get(new TypeLiteral<ActorRef<StudioCommand>>() {}));
 
     assertThat(studiosRoute).isInstanceOf(StudiosRoute.class);
@@ -95,6 +100,7 @@ final class StudiosModuleTest {
     assertThat(eventsRoute).isInstanceOf(EventsRoute.class);
     assertThat(individualsRoute).isInstanceOf(IndividualsRoute.class);
     assertThat(collectionsRoute).isInstanceOf(CollectionsRoute.class);
+    assertThat(actorsRoute).isInstanceOf(AgentRoute.class);
     assertThat(studioActor).isInstanceOf(ActorRef.class);
 
     var routeProviders = injector.getInstance(Key.get(new TypeLiteral<Set<RouteProvider>>() {}));
@@ -109,7 +115,8 @@ final class StudiosModuleTest {
       HashtagDAO hashtagDao,
       EventDAO eventDao,
       IndividualDAO individualDao,
-      CollectionDAO collectionDao) {}
+      CollectionDAO collectionDao,
+      AgentDAO agentDao) {}
 
   private Module createTestModule(Daos daos, StudioLookupCache studioLookupCache) {
     return new AbstractModule() {
@@ -123,6 +130,7 @@ final class StudiosModuleTest {
         bind(EventDAO.class).toInstance(daos.eventDao());
         bind(IndividualDAO.class).toInstance(daos.individualDao());
         bind(CollectionDAO.class).toInstance(daos.collectionDao());
+        bind(AgentDAO.class).toInstance(daos.agentDao());
         bind(StudioLookupCache.class).toInstance(studioLookupCache);
         bind(ObjectMapper.class).toInstance(new ObjectMapper());
         bind(Key.get(new TypeLiteral<ActorSystem<Void>>() {})).toInstance(system);

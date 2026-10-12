@@ -328,7 +328,8 @@ public final class AdminManagementApiSteps {
 
   // Base entities share the unified njall_users.entities base table under CTI.
   @Then(
-      "^(?:the entity for remembered (?:link|location|tag|event|individual|collection) \"([^\"]*)\""
+      "^(?:the entity for remembered"
+          + " (?:link|location|tag|event|individual|collection|actor) \"([^\"]*)\""
           + " has deleted_on populated in database)$")
   public void theEntityForRememberedEntityHasDeletedOnPopulatedInDatabase(String key)
       throws Exception {

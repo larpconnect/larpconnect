@@ -4,6 +4,8 @@
 | --- | --- | --- | --- |
 | Njall | The internal name of the larpconnect application | Referring to the application in internal documents or source code | In external documents that are designed for the general public -- People who may be interfacing with but not installing the software.  In those cases, use "LarpConnect." Avoid prefixing it: the project is "Njall" not "Project Njall" |
 | Actor | A pekko actor | Referring to the actor model implementation | |
+| Agent | The Java implementation components (DAOs, Pekko actors, services) representing user-facing Actor entities to avoid collision with Pekko Actors | Referring to domain actor classes in source code | Referring to general Pekko concurrency actors |
+
 | Tenant | A group that is hosted on this system and maintains their own external identity (usually via their own domain). May include stronger (e.g., a separate schema, separate actors) or weaker (e.g., a shared schema, shared actors, but still separate data) isolation guarantees. Tenanting is at the studio level and all studios are at least weak tenants | | |
 | Multitenant | An architecture pattern where a multiple accounts of a particular type share access to the same instance of the application, database, etc but their data is kept logically separated | | |
 | DTO | A data transfer object | Referring to a serialized data object that is being used in the system | |

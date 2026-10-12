@@ -6,6 +6,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.larpconnect.njall.api.http.RouteProvider;
+import com.larpconnect.njall.api.studios.actors.ActorsModule;
 import com.larpconnect.njall.api.studios.addresses.AddressesModule;
 import com.larpconnect.njall.api.studios.collections.CollectionsModule;
 import com.larpconnect.njall.api.studios.events.EventsModule;
@@ -30,6 +31,7 @@ public final class StudiosModule extends AbstractModule {
     install(new EventsModule());
     install(new IndividualsModule());
     install(new CollectionsModule());
+    install(new ActorsModule());
 
     bind(StudioSubRoutes.class).in(Scopes.SINGLETON);
     bind(StudiosRoute.class).in(Scopes.SINGLETON);

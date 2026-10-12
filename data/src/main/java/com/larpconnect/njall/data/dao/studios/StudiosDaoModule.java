@@ -6,6 +6,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.annotation.NjallUsers;
 import com.larpconnect.njall.data.dao.common.DaoCommonModule;
+import com.larpconnect.njall.data.dao.studios.actors.AgentsDaoModule;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionsDaoModule;
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualsDaoModule;
 
@@ -23,6 +24,7 @@ public final class StudiosDaoModule extends AbstractModule {
     bind(EventDAO.class).to(DefaultEventDAO.class).in(Scopes.SINGLETON);
     install(new IndividualsDaoModule());
     install(new CollectionsDaoModule());
+    install(new AgentsDaoModule());
 
     var adminEntities =
         Multibinder.newSetBinder(
