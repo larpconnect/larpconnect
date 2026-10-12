@@ -262,8 +262,9 @@ final class DefaultCollectionDAO implements CollectionDAO {
           return true;
         }
 
-        int removedOrdinal = item.get().getOrdinal();
-        session.remove(item.get());
+        var collectionItem = item.orElseThrow();
+        int removedOrdinal = collectionItem.getOrdinal();
+        session.remove(collectionItem);
         shiftOrdinalsDown(session, tenantId, collectionId, removedOrdinal);
         session.flush();
         tx.commit();
@@ -309,7 +310,7 @@ final class DefaultCollectionDAO implements CollectionDAO {
       Optional<UUID> before,
       Optional<Integer> index) {
     if (before.isPresent()) {
-      var beforeItem = findItemByRefersToId(session, tenantId, collectionId, before.get());
+      var beforeItem = findItemByRefersToId(session, tenantId, collectionId, before.orElseThrow());
       return beforeItem.map(CollectionItemEntity::getOrdinal).orElse(0);
     }
     return index.map(i -> Math.max(0, i)).orElse(0);

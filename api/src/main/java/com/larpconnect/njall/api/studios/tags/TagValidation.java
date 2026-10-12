@@ -113,7 +113,7 @@ final class TagValidation {
       return Optional.of("At least one field (tag or summary) must be specified for update");
     }
     if (request.tag().isPresent()) {
-      return validateTagName(request.tag().get());
+      return validateTagName(request.tag().orElseThrow());
     }
     return Optional.empty();
   }

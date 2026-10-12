@@ -26,7 +26,7 @@ final class HealthCheckActor extends AbstractBehavior<ApiCall<HealthCheckCommand
   // Safe unchecked cast: Java type erasure prevents ApiCall<HealthCheckCommand>.class literal;
   // Pekko ActorRef typing guarantees message payload type.
   @SuppressWarnings("unchecked")
-  public static Behavior<ApiCall<HealthCheckCommand>> create(HealthCheckRegistry registry) {
+  static Behavior<ApiCall<HealthCheckCommand>> create(HealthCheckRegistry registry) {
     Class<ApiCall<HealthCheckCommand>> messageClass =
         (Class<ApiCall<HealthCheckCommand>>) (Class<?>) ApiCall.class;
     return Behaviors.withMdc(

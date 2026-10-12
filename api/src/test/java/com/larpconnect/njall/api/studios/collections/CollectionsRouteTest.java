@@ -352,7 +352,7 @@ final class CollectionsRouteTest {
         system.systemActorOf(
             Behaviors.receiveMessage(
                 (CollectionCommand msg) -> {
-                  throw new RuntimeException("Simulated actor crash");
+                  throw new IllegalStateException("Simulated actor crash");
                 }),
             "failingActor" + UUID.randomUUID(),
             Props.empty());

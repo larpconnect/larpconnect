@@ -99,29 +99,28 @@ public final class StudioRoleAdminRoute extends AllDirectives {
                                         Jackson.unmarshaller(
                                             objectMapper, CreateStudioRoleRequest.class),
                                         this::handleCreateRole)))),
-                path(
-                    PathMatchers.segment(),
-                    idStr -> {
-                      var maybeUuid = AdminValidation.tryParseUuid(idStr);
-                      if (maybeUuid.isEmpty()) {
-                        return complete(
-                            StatusCodes.NOT_FOUND,
-                            new AdminErrorResponse(404, "Invalid role UUID: " + idStr),
-                            Jackson.marshaller(objectMapper));
-                      }
-                      var roleId = maybeUuid.orElseThrow();
-                      return concat(
-                          get(() -> handleGetRole(roleId)),
-                          patch(
-                              () ->
-                                  parameterOptional(
-                                      "update_mask",
-                                      mask ->
-                                          entity(
-                                              Jackson.unmarshaller(
-                                                  objectMapper, UpdateStudioRoleRequest.class),
-                                              req -> handleUpdateRole(roleId, mask, req)))));
-                    })));
+                path(PathMatchers.segment(), this::handleRoleSubtree)));
+  }
+
+  private Route handleRoleSubtree(String idStr) {
+    var maybeUuid = AdminValidation.tryParseUuid(idStr);
+    if (maybeUuid.isEmpty()) {
+      return complete(
+          StatusCodes.NOT_FOUND,
+          new AdminErrorResponse(StatusCodes.NOT_FOUND, "Invalid role UUID: " + idStr),
+          Jackson.marshaller(objectMapper));
+    }
+    var roleId = maybeUuid.orElseThrow();
+    return concat(
+        get(() -> handleGetRole(roleId)),
+        patch(
+            () ->
+                parameterOptional(
+                    "update_mask",
+                    mask ->
+                        entity(
+                            Jackson.unmarshaller(objectMapper, UpdateStudioRoleRequest.class),
+                            req -> handleUpdateRole(roleId, mask, req)))));
   }
 
   private Route handleCreateRole(CreateStudioRoleRequest request) {
@@ -192,7 +191,7 @@ public final class StudioRoleAdminRoute extends AllDirectives {
     logger.error("Studio role admin actor request failed", error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        new AdminErrorResponse(500, "Internal server error"),
+        new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error"),
         Jackson.marshaller(objectMapper));
   }
 
@@ -205,22 +204,22 @@ public final class StudioRoleAdminRoute extends AllDirectives {
       case StudioRoleAdminResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              new AdminErrorResponse(404, nf.message()),
+              new AdminErrorResponse(StatusCodes.NOT_FOUND, nf.message()),
               Jackson.marshaller(objectMapper));
       case StudioRoleAdminResponse.Conflict c ->
           complete(
               StatusCodes.CONFLICT,
-              new AdminErrorResponse(409, c.message()),
+              new AdminErrorResponse(StatusCodes.CONFLICT, c.message()),
               Jackson.marshaller(objectMapper));
       case StudioRoleAdminResponse.BadRequest br ->
           complete(
               StatusCodes.BAD_REQUEST,
-              new AdminErrorResponse(400, br.message()),
+              new AdminErrorResponse(StatusCodes.BAD_REQUEST, br.message()),
               Jackson.marshaller(objectMapper));
       case StudioRoleAdminResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              new AdminErrorResponse(500, f.message()),
+              new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, f.message()),
               Jackson.marshaller(objectMapper));
     };
   }

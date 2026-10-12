@@ -23,7 +23,7 @@ final class CollectionValidation {
     if (request.before().isPresent() && request.index().isPresent()) {
       return Optional.of("Cannot specify both 'before' and 'index' placement specifiers");
     }
-    if (request.index().isPresent() && request.index().get() < 0) {
+    if (request.index().filter(i -> i < 0).isPresent()) {
       return Optional.of("Index must be non-negative");
     }
     return Optional.empty();

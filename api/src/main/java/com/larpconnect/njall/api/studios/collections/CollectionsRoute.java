@@ -166,18 +166,20 @@ public final class CollectionsRoute extends AllDirectives implements RouteProvid
   private Route handleAddItem(UUID tenantId, UUID collectionId) {
     return entity(
         Jackson.unmarshaller(objectMapper, AddItemRequest.class),
-        req -> {
-          var validationError = CollectionValidation.validateAddItem(req);
-          if (validationError.isPresent()) {
-            return complete(
-                StatusCodes.BAD_REQUEST,
-                createErrorResponse(StatusCodes.BAD_REQUEST, validationError.orElseThrow()),
-                Jackson.marshaller(objectMapper));
-          }
-          return onComplete(
-              () -> askAddItem(tenantId, collectionId, req),
-              res -> mapCollectionResponse(res, StatusCodes.NO_CONTENT));
-        });
+        req -> processAddItem(tenantId, collectionId, req));
+  }
+
+  private Route processAddItem(UUID tenantId, UUID collectionId, AddItemRequest req) {
+    var validationError = CollectionValidation.validateAddItem(req);
+    if (validationError.isPresent()) {
+      return complete(
+          StatusCodes.BAD_REQUEST,
+          createErrorResponse(StatusCodes.BAD_REQUEST, validationError.orElseThrow()),
+          Jackson.marshaller(objectMapper));
+    }
+    return onComplete(
+        () -> askAddItem(tenantId, collectionId, req),
+        res -> mapCollectionResponse(res, StatusCodes.NO_CONTENT));
   }
 
   private Route handleRemoveItem(UUID tenantId, UUID collectionId) {
