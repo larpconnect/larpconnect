@@ -235,8 +235,7 @@ public final class UserAdminRoute extends AllDirectives {
     logger.error("User admin actor request failed", error);
     return complete(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        new AdminErrorResponse(
-            StatusCodes.INTERNAL_SERVER_ERROR.intValue(), "Internal server error"),
+        new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error"),
         Jackson.marshaller(objectMapper));
   }
 
@@ -255,27 +254,27 @@ public final class UserAdminRoute extends AllDirectives {
       case UserAdminResponse.NotFound nf ->
           complete(
               StatusCodes.NOT_FOUND,
-              new AdminErrorResponse(StatusCodes.NOT_FOUND.intValue(), nf.message()),
+              new AdminErrorResponse(StatusCodes.NOT_FOUND, nf.message()),
               Jackson.marshaller(objectMapper));
       case UserAdminResponse.Conflict c ->
           complete(
               StatusCodes.CONFLICT,
-              new AdminErrorResponse(StatusCodes.CONFLICT.intValue(), c.message()),
+              new AdminErrorResponse(StatusCodes.CONFLICT, c.message()),
               Jackson.marshaller(objectMapper));
       case UserAdminResponse.BadRequest br ->
           complete(
               StatusCodes.BAD_REQUEST,
-              new AdminErrorResponse(StatusCodes.BAD_REQUEST.intValue(), br.message()),
+              new AdminErrorResponse(StatusCodes.BAD_REQUEST, br.message()),
               Jackson.marshaller(objectMapper));
       case UserAdminResponse.Failure f ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR.intValue(), f.message()),
+              new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, f.message()),
               Jackson.marshaller(objectMapper));
       default ->
           complete(
               StatusCodes.INTERNAL_SERVER_ERROR,
-              new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR.intValue(), "Unknown error"),
+              new AdminErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Unknown error"),
               Jackson.marshaller(objectMapper));
     };
   }
