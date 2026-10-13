@@ -31,6 +31,13 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
       INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id)
       VALUES (:userId, :roleId) ON CONFLICT DO NOTHING
       """;
+  private static final String SQL_BULK_INSERT_ROLE_ASSIGNMENTS =
+      """
+      INSERT INTO njall_admin.admin_role_assignments (admin_user_id, role_id)
+      SELECT :userId, role_id
+      FROM unnest(CAST(:roleIds AS uuid[])) AS role_id
+      ON CONFLICT DO NOTHING
+      """;
   private static final String SQL_DELETE_ROLE_ASSIGNMENT =
       """
       DELETE FROM njall_admin.admin_role_assignments
@@ -90,11 +97,11 @@ final class DefaultAdminUserDAO implements AdminUserDAO {
                 .setParameter("status", status.name())
                 .getSingleResult();
 
-        for (var roleId : roleIds) {
+        if (!roleIds.isEmpty()) {
           session
-              .createNativeQuery(SQL_INSERT_ROLE_ASSIGNMENT, Void.class)
+              .createNativeQuery(SQL_BULK_INSERT_ROLE_ASSIGNMENTS, Void.class)
               .setParameter("userId", userId)
-              .setParameter("roleId", roleId)
+              .setParameter("roleIds", roleIds.toArray(new UUID[0]))
               .executeUpdate();
         }
         tx.commit();

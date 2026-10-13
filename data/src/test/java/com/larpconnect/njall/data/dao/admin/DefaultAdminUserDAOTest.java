@@ -116,6 +116,28 @@ final class DefaultAdminUserDAOTest {
 
     assertThat(result.id()).isEqualTo(userId);
     verify(tx).commit();
+    verify(nativeRoleQuery).setParameter("roleIds", new UUID[] {roleId});
+  }
+
+  @Test
+  @DisplayName("create inserts user without role assignments when roleIds is empty")
+  @SuppressWarnings("unchecked")
+  void create_emptyRoles_success() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    NativeQuery<UUID> nativeUserQuery = mock(NativeQuery.class);
+    when(session.createNativeQuery(anyString(), eq(UUID.class))).thenReturn(nativeUserQuery);
+    when(nativeUserQuery.setParameter(anyString(), any())).thenReturn(nativeUserQuery);
+    when(nativeUserQuery.getSingleResult()).thenReturn(userId);
+
+    var userEntity =
+        new AdminUserEntity(userId, "admin_test", AdminUserStatus.ACTIVE, now, now, Set.of());
+    when(session.find(AdminUserEntity.class, userId)).thenReturn(userEntity);
+
+    var result = dao.create("admin_test", AdminUserStatus.ACTIVE, List.of());
+
+    assertThat(result.id()).isEqualTo(userId);
+    verify(tx).commit();
   }
 
   @Test
