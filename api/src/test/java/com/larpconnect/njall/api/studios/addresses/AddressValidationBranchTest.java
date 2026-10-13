@@ -10,13 +10,18 @@ import org.junit.jupiter.api.Test;
 final class AddressValidationBranchTest {
 
   @Test
-  @DisplayName("validateCreate checks all field boundary rules")
-  void validateCreate_allBoundaries() {
+  @DisplayName("validateCreate checks address line and locality boundary rules")
+  void validateCreate_lineAndLocalityBoundaries() {
     var longLine1 =
         new CreateAddressRequest(
             AddressType.PHYSICAL, "a".repeat(256), "Seattle", "WA", "98101", "US");
     assertThat(AddressActor.validateCreate(longLine1))
         .contains("addressLine1 must not exceed 255 characters");
+
+    var exact255Line1 =
+        new CreateAddressRequest(
+            AddressType.PHYSICAL, "a".repeat(255), "Seattle", "WA", "98101", "US");
+    assertThat(AddressActor.validateCreate(exact255Line1)).isEmpty();
 
     var blankLocality =
         new CreateAddressRequest(AddressType.PHYSICAL, "123 Main", "  ", "WA", "98101", "US");
@@ -26,7 +31,11 @@ final class AddressValidationBranchTest {
         new CreateAddressRequest(AddressType.PHYSICAL, "123 Main", "Seattle", "   ", "98101", "US");
     assertThat(AddressActor.validateCreate(blankAdminArea))
         .contains("administrativeArea must not be blank");
+  }
 
+  @Test
+  @DisplayName("validateCreate checks postal code and country code rules")
+  void validateCreate_postalAndCountryRules() {
     var blankPostal =
         new CreateAddressRequest(AddressType.PHYSICAL, "123 Main", "Seattle", "WA", "  ", "US");
     assertThat(AddressActor.validateCreate(blankPostal)).contains("postalCode must not be blank");
@@ -36,6 +45,11 @@ final class AddressValidationBranchTest {
             AddressType.PHYSICAL, "123 Main", "Seattle", "WA", "1".repeat(21), "US");
     assertThat(AddressActor.validateCreate(longPostal))
         .contains("postalCode must not exceed 20 characters");
+
+    var exact20Postal =
+        new CreateAddressRequest(
+            AddressType.PHYSICAL, "123 Main", "Seattle", "WA", "1".repeat(20), "US");
+    assertThat(AddressActor.validateCreate(exact20Postal)).isEmpty();
 
     var invalidCountryShort =
         new CreateAddressRequest(AddressType.PHYSICAL, "123 Main", "Seattle", "WA", "98101", "U");
@@ -47,6 +61,11 @@ final class AddressValidationBranchTest {
     assertThat(AddressActor.validateCreate(invalidCountryLong))
         .contains("countryCode must be a 2-letter ISO 3166-1 alpha-2 code");
 
+    var whitespaceCountry =
+        new CreateAddressRequest(AddressType.PHYSICAL, "123 Main", "Seattle", "WA", "98101", "  ");
+    assertThat(AddressActor.validateCreate(whitespaceCountry))
+        .contains("countryCode must be a 2-letter ISO 3166-1 alpha-2 code");
+
     var valid =
         new CreateAddressRequest(AddressType.PHYSICAL, "123 Main", "Seattle", "WA", "98101", "US");
     assertThat(AddressActor.validateCreate(valid)).isEmpty();
@@ -55,6 +74,19 @@ final class AddressValidationBranchTest {
   @Test
   @DisplayName("validatePatch checks addressLine1 boundary rules")
   void validatePatch_addressLine1() {
+    var blankLine1 =
+        new UpdateAddressRequest(
+            Optional.empty(),
+            Optional.of("  "),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty());
+    assertThat(AddressActor.validatePatch(blankLine1)).contains("addressLine1 must not be blank");
+
     var longLine1 =
         new UpdateAddressRequest(
             Optional.empty(),
