@@ -9,6 +9,7 @@ import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.admin.AdminRoute;
 import com.larpconnect.njall.api.http.RootRoute;
 import com.larpconnect.njall.api.studios.StudiosRoute;
+import com.larpconnect.njall.api.studios.actors.AgentRoute;
 import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.events.EventsRoute;
 import com.larpconnect.njall.api.studios.individuals.IndividualsRoute;
@@ -29,6 +30,7 @@ import com.larpconnect.njall.data.dao.studios.LinkDAO;
 import com.larpconnect.njall.data.dao.studios.LocationDAO;
 import com.larpconnect.njall.data.dao.studios.StudioDAO;
 import com.larpconnect.njall.data.dao.studios.StudioLookupDAO;
+import com.larpconnect.njall.data.dao.studios.actors.AgentDAO;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualDAO;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
@@ -75,6 +77,7 @@ final class ApiModuleTest {
             bind(EventDAO.class).toInstance(mock(EventDAO.class));
             bind(IndividualDAO.class).toInstance(mock(IndividualDAO.class));
             bind(CollectionDAO.class).toInstance(mock(CollectionDAO.class));
+            bind(AgentDAO.class).toInstance(mock(AgentDAO.class));
             bind(StudioLookupCache.class).toInstance(mock(StudioLookupCache.class));
             bind(StudioRoleDAO.class).toInstance(mock(StudioRoleDAO.class));
             bind(AdminRoleDAO.class).toInstance(mock(AdminRoleDAO.class));
@@ -93,6 +96,7 @@ final class ApiModuleTest {
     var eventsRoute = injector.getInstance(EventsRoute.class);
     var individualsRoute = injector.getInstance(IndividualsRoute.class);
     var collectionsRoute = injector.getInstance(CollectionsRoute.class);
+    var actorsRoute = injector.getInstance(AgentRoute.class);
 
     assertThat(rootRoute).isInstanceOf(RootRoute.class);
     assertThat(adminRoute).isInstanceOf(AdminRoute.class);
@@ -103,5 +107,6 @@ final class ApiModuleTest {
     assertThat(eventsRoute).isInstanceOf(EventsRoute.class);
     assertThat(individualsRoute).isInstanceOf(IndividualsRoute.class);
     assertThat(collectionsRoute).isInstanceOf(CollectionsRoute.class);
+    assertThat(actorsRoute).isInstanceOf(AgentRoute.class);
   }
 }

@@ -120,9 +120,11 @@ final class DefaultAddressDAO implements AddressDAO {
                 .setParameter("locationId", locationId)
                 .getResultList();
         tx.commit();
-        return rows.stream()
-            .map(row -> toAddress((Object[]) row))
-            .collect(ImmutableList.toImmutableList());
+        var builder = ImmutableList.<Address>builderWithExpectedSize(rows.size());
+        for (var row : rows) {
+          builder.add(toAddress((Object[]) row));
+        }
+        return builder.build();
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -359,7 +361,8 @@ final class DefaultAddressDAO implements AddressDAO {
 
   private static String toGeoJsonString(GeoJsonPoint point) {
     return """
-        {"type":"Point","coordinates":[%s,%s]}"""
+    {"type":"Point","coordinates":[%s,%s]}\
+    """
         .formatted(point.longitude(), point.latitude());
   }
 

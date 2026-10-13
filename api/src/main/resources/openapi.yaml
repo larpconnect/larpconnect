@@ -1362,6 +1362,329 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
+  /api/studios/{studio-id}/v1/actors:
+    post:
+      summary: Create a studio actor
+      description: Persists a new actor entity and auto-provisions inbox and outbox collections for the specified tenant studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateActorRequest'
+      responses:
+        '201':
+          description: Actor created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Actor'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/actors/{id}:
+    get:
+      summary: Retrieve actor details
+      description: Returns details of an active actor under the specified tenant studio including federated protocol endpoints.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+      responses:
+        '200':
+          description: Actor retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Actor'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update actor fields
+      description: Applies partial updates to an active studio actor (Google AIP-134).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of field names to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateActorRequest'
+      responses:
+        '200':
+          description: Actor updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Actor'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft-delete actor
+      description: Soft-deletes a studio actor and cascades deletion to paired inbox and outbox collections.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+      responses:
+        '204':
+          description: Actor soft-deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/actors/{id}:addEndpoint:
+    post:
+      summary: Add or overwrite federated endpoint
+      description: Upserts a federated protocol endpoint on an active actor (AIP-136).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddEndpointRequest'
+      responses:
+        '204':
+          description: Endpoint upserted successfully
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/actors/{id}:removeEndpoint:
+    post:
+      summary: Remove federated endpoint
+      description: Removes a federated protocol endpoint from an active actor (AIP-136).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveEndpointRequest'
+      responses:
+        '204':
+          description: Endpoint removed successfully or was not present
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/actors/{id}/inbox:
+    get:
+      summary: Retrieve actor inbox collection
+      description: Returns the expanded OrderedCollection representing the actor's inbox.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+      responses:
+        '200':
+          description: Inbox collection retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderedCollection'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      summary: Post payload to actor inbox
+      description: Submits a JSON object payload to the actor's inbox.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Payload accepted into inbox
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/actors/{id}/outbox:
+    get:
+      summary: Retrieve actor outbox collection
+      description: Returns the expanded OrderedCollection representing the actor's outbox.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+      responses:
+        '200':
+          description: Outbox collection retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderedCollection'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      summary: Post payload to actor outbox
+      description: Submits a JSON object payload to the actor's outbox.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Actor UUID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Payload accepted into outbox
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
   /api/studios/{studio-id}/v1/locations/{location-id}/addresses:
     get:
       summary: List location addresses
@@ -2424,4 +2747,109 @@ components:
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789001"
+
+    Actor:
+      type: object
+      required:
+        - id
+        - type
+        - ownerId
+        - preferredUsername
+        - inbox
+        - outbox
+        - endpoints
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        type:
+          type: string
+          example: "Actor"
+        ownerId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        preferredUsername:
+          type: string
+          example: "valkyrie_lead"
+        summary:
+          type: string
+          example: "Lead singer of Valkyrie"
+        inbox:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789abc/inbox"
+        outbox:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789abc/outbox"
+        endpoints:
+          type: object
+          additionalProperties:
+            type: string
+            format: uri
+          example:
+            sharedInbox: "https://fed.example.com/inbox"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-10-12T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-10-12T12:00:00Z"
+
+    CreateActorRequest:
+      type: object
+      required:
+        - ownerId
+        - preferredUsername
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        preferredUsername:
+          type: string
+          example: "valkyrie_lead"
+        summary:
+          type: string
+          example: "Lead singer of Valkyrie"
+
+    UpdateActorRequest:
+      type: object
+      properties:
+        preferredUsername:
+          type: string
+          example: "valkyrie_commander"
+        summary:
+          type: string
+          example: "Updated bio text"
+
+    AddEndpointRequest:
+      type: object
+      required:
+        - name
+        - endpoint
+      properties:
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9]{1,31}$'
+          example: "sharedInbox"
+        endpoint:
+          type: string
+          format: uri
+          example: "https://fed.example.com/sharedInbox"
+
+    RemoveEndpointRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "sharedInbox"
 

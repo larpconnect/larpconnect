@@ -17,7 +17,8 @@ public sealed interface DatabaseObject
         Event,
         Individual,
         Collection,
-        CollectionItem {
+        CollectionItem,
+        Agent {
 
   /**
    * Returns the unique identifier of the persistent database object.
