@@ -120,11 +120,9 @@ final class DefaultAddressDAO implements AddressDAO {
                 .setParameter("locationId", locationId)
                 .getResultList();
         tx.commit();
-        var builder = ImmutableList.<Address>builderWithExpectedSize(rows.size());
-        for (var row : rows) {
-          builder.add(toAddress((Object[]) row));
-        }
-        return builder.build();
+        return rows.stream()
+            .map(row -> toAddress((Object[]) row))
+            .collect(ImmutableList.toImmutableList());
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
