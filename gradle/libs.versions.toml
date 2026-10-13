@@ -41,7 +41,7 @@ errorprone-plugin = "5.1.1"
 
 # Build 
 
-kotlin-build = "2.4.20"
+kotlin-build = "2.4.21"
 
 [libraries]
 guava-bom = { group = "com.google.guava", name = "guava-bom", version.ref = "guava"}
