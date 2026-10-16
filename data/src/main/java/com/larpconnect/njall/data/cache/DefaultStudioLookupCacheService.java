@@ -127,10 +127,7 @@ final class DefaultStudioLookupCacheService extends AbstractScheduledService
   }
 
   private static Optional<StudioLookup> filterActive(@Nullable StudioLookup entry) {
-    if (entry != null && entry.deletedAt().isEmpty()) {
-      return Optional.of(entry);
-    }
-    return Optional.empty();
+    return Optional.ofNullable(entry).filter(e -> e.deletedAt().isEmpty());
   }
 
   private static Optional<UUID> tryParseUuid(String value) {
