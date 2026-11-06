@@ -57,7 +57,7 @@ rules:
     - Use the c4-diagrams skill
   adr:
     - Use the architectural-decision-records skill
-  spec:
+  specs:
     - Use the gherkin-authoring skill
   tasks:
     - The implementation is not complete until `./gradlew check build` passes
