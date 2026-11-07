@@ -54,7 +54,6 @@ public final class ServersEndpointSteps {
 
   @When("an admin client sends a GET request to {string}")
   public void anAdminClientSendsAGetRequestTo(String path) throws Exception {
-    var client = HttpClient.newHttpClient();
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + path))
@@ -62,6 +61,7 @@ public final class ServersEndpointSteps {
             .GET()
             .build();
 
+    var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     response = client.send(request, HttpResponse.BodyHandlers.ofString());
     if (!Strings.isNullOrEmpty(response.body())) {
       rootJson = MAPPER.readTree(response.body());

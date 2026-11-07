@@ -32,6 +32,7 @@ public final class RootEndpointSteps {
   private HttpServerService serverService;
   private ActorSystem<Void> system;
   private int boundPort;
+
   private HttpResponse<String> response;
 
   @Given("the HTTP server is running on an ephemeral port")
@@ -64,7 +65,6 @@ public final class RootEndpointSteps {
 
   @When("the client sends a GET request to {string}")
   public void theClientSendsAGetRequestTo(String path) throws Exception {
-    var client = HttpClient.newHttpClient();
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + path))
@@ -72,6 +72,7 @@ public final class RootEndpointSteps {
             .GET()
             .build();
 
+    var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     response = client.send(request, HttpResponse.BodyHandlers.ofString());
   }
 

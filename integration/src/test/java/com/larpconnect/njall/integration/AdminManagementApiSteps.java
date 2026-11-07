@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.primitives.Ints;
+import com.google.common.util.concurrent.Service.State;
 import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
@@ -37,6 +38,7 @@ public final class AdminManagementApiSteps {
 
   private static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
+  private static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(2);
 
   private final Map<String, String> rememberedIds = new HashMap<>();
   private HttpServerService serverService;
@@ -53,16 +55,42 @@ public final class AdminManagementApiSteps {
   }
 
   @After("@AdminApi")
-  public void tearDown() throws Exception {
+  public void tearDown() {
+    stopServerService();
+    stopCacheService();
+    terminateActorSystem();
+  }
+
+  private void stopServerService() {
     if (serverService != null) {
-      serverService.stop().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      try {
+        serverService.stop().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      } catch (Exception ignored) {
+        // Proceed with remaining teardown
+      }
     }
-    if (cacheService != null && cacheService.isRunning()) {
-      cacheService.stopAsync().awaitTerminated(15, TimeUnit.SECONDS);
+  }
+
+  private void stopCacheService() {
+    if (cacheService != null
+        && cacheService.state() != State.TERMINATED
+        && cacheService.state() != State.FAILED) {
+      try {
+        cacheService.stopAsync().awaitTerminated(15, TimeUnit.SECONDS);
+      } catch (Exception ignored) {
+        // Proceed with remaining teardown
+      }
     }
+  }
+
+  private void terminateActorSystem() {
     if (system != null) {
-      system.terminate();
-      system.getWhenTerminated().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      try {
+        system.terminate();
+        system.getWhenTerminated().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      } catch (Exception ignored) {
+        // Proceed with remaining teardown
+      }
     }
   }
 
@@ -72,12 +100,12 @@ public final class AdminManagementApiSteps {
     var injector = Guice.createInjector(new ServerModule(config));
 
     cacheService = injector.getInstance(StudioLookupCacheService.class);
-    cacheService.startAsync().awaitRunning(30, TimeUnit.SECONDS);
+    cacheService.startAsync().awaitRunning(STARTUP_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
 
     serverService = injector.getInstance(HttpServerService.class);
     system = injector.getInstance(Key.get(new TypeLiteral<ActorSystem<Void>>() {}));
 
-    serverService.start().toCompletableFuture().get(30, TimeUnit.SECONDS);
+    serverService.start().toCompletableFuture().get(STARTUP_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
     boundPort = serverService.getBoundPort();
     assertThat(boundPort).isPositive();
   }
@@ -87,7 +115,6 @@ public final class AdminManagementApiSteps {
       throws Exception {
     var resolvedPath = resolveVariables(path);
     var resolvedBody = resolveVariables(docString);
-    var client = HttpClient.newHttpClient();
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + resolvedPath))
@@ -96,6 +123,7 @@ public final class AdminManagementApiSteps {
             .POST(HttpRequest.BodyPublishers.ofString(resolvedBody))
             .build();
 
+    var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     response = client.send(request, HttpResponse.BodyHandlers.ofString());
     parseResponseBody();
   }
@@ -103,7 +131,6 @@ public final class AdminManagementApiSteps {
   @When("an API admin sends a GET request to {string}")
   public void anApiAdminSendsAGetRequestTo(String path) throws Exception {
     var resolvedPath = resolveVariables(path);
-    var client = HttpClient.newHttpClient();
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + resolvedPath))
@@ -111,6 +138,7 @@ public final class AdminManagementApiSteps {
             .GET()
             .build();
 
+    var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     response = client.send(request, HttpResponse.BodyHandlers.ofString());
     parseResponseBody();
   }
@@ -282,7 +310,6 @@ public final class AdminManagementApiSteps {
       throws Exception {
     var resolvedPath = resolveVariables(path);
     var resolvedBody = resolveVariables(docString);
-    var client = HttpClient.newHttpClient();
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + resolvedPath))
@@ -291,6 +318,7 @@ public final class AdminManagementApiSteps {
             .method("PATCH", HttpRequest.BodyPublishers.ofString(resolvedBody))
             .build();
 
+    var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     response = client.send(request, HttpResponse.BodyHandlers.ofString());
     parseResponseBody();
   }
@@ -298,7 +326,6 @@ public final class AdminManagementApiSteps {
   @When("an API admin sends a DELETE request to {string}")
   public void anApiAdminSendsADeleteRequestTo(String path) throws Exception {
     var resolvedPath = resolveVariables(path);
-    var client = HttpClient.newHttpClient();
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + resolvedPath))
@@ -306,6 +333,7 @@ public final class AdminManagementApiSteps {
             .DELETE()
             .build();
 
+    var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     response = client.send(request, HttpResponse.BodyHandlers.ofString());
     parseResponseBody();
   }
@@ -430,13 +458,9 @@ public final class AdminManagementApiSteps {
 
   private static void truncateAdminTables() throws Exception {
     var sql =
-        "TRUNCATE TABLE njall_admin.admin_role_assignments, "
-            + "njall_admin.admin_users, "
-            + "njall_admin.admin_roles, "
-            + "njall_admin.studios_lookup, "
-            + "njall_users.studios, "
-            + "njall_users.entities, "
-            + "njall_users.default_studio_roles CASCADE";
+        "TRUNCATE TABLE njall_admin.admin_role_assignments, njall_admin.admin_users, "
+            + "njall_admin.admin_roles, njall_admin.studios_lookup, njall_users.studios, "
+            + "njall_users.entities, njall_users.default_studio_roles CASCADE";
     try (var conn =
             DriverManager.getConnection(
                 DatabaseMigrationSteps.getJdbcUrl(),

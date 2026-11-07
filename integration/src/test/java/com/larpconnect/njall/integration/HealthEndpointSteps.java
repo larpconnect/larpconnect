@@ -161,7 +161,6 @@ public final class HealthEndpointSteps {
   }
 
   private void sendRequest(String path) throws Exception {
-    var client = HttpClient.newHttpClient();
     var request =
         HttpRequest.newBuilder()
             .uri(URI.create("http://127.0.0.1:" + boundPort + path))
@@ -169,6 +168,7 @@ public final class HealthEndpointSteps {
             .GET()
             .build();
 
+    var client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
     response = client.send(request, HttpResponse.BodyHandlers.ofString());
   }
 
