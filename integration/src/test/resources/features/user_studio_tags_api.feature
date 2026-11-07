@@ -14,9 +14,18 @@ Feature: User Space Studio Hashtags REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_tags/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "tag_creator"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "tag_creator_id"
     When an API admin sends a POST request to "/api/studios/valiant_tags/v1/tags" with body:
       """
       {
+        "generator": "/api/studios/valiant_tags/v1/actors/{tag_creator_id}",
         "tag": "SolarPunk",
         "summary": "Speculative eco-futuristic aesthetic"
       }
@@ -28,6 +37,7 @@ Feature: User Space Studio Hashtags REST API
     And the JSON response contains field "url" with value "/api/studios/valiant_tags/v1/tags/SolarPunk"
     And the JSON response contains field "mediaType" with value "application/json"
     And the JSON response contains field "summary" with value "Speculative eco-futuristic aesthetic"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_tags/v1/actors/{tag_creator_id}"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
     And the JSON response does not contain field "tenantId"
@@ -43,9 +53,18 @@ Feature: User Space Studio Hashtags REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_idempotent/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "idempotent_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "idempotent_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_idempotent/v1/tags" with body:
       """
       {
+        "generator": "{idempotent_actor_id}",
         "tag": "SolarPunk",
         "summary": "First creation"
       }
@@ -55,6 +74,7 @@ Feature: User Space Studio Hashtags REST API
     When an API admin sends a POST request to "/api/studios/valiant_idempotent/v1/tags" with body:
       """
       {
+        "generator": "{idempotent_actor_id}",
         "tag": "#solarpunk",
         "summary": "Duplicate attempt with lowercase and hash"
       }
@@ -62,6 +82,7 @@ Feature: User Space Studio Hashtags REST API
     Then the HTTP response status code is 200
     And the JSON response contains field "id" with value "{first_tag_id}"
     And the JSON response contains field "tag" with value "SolarPunk"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_idempotent/v1/actors/{idempotent_actor_id}"
 
   Scenario: Successfully create hashtag for studio by public studio ID
     Given the admin HTTP server is running with database migrations applied
@@ -74,14 +95,24 @@ Feature: User Space Studio Hashtags REST API
       """
     Then the HTTP response status code is 201
     And the response field "studioId" is remembered as "uuid_studio_id"
+    When an API admin sends a POST request to "/api/studios/{uuid_studio_id}/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "cyber_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "cyber_actor_id"
     When an API admin sends a POST request to "/api/studios/{uuid_studio_id}/v1/tags" with body:
       """
       {
+        "generator": "{cyber_actor_id}",
         "tag": "CyberPunk"
       }
       """
     Then the HTTP response status code is 201
     And the JSON response contains field "tag" with value "CyberPunk"
+    And the JSON response contains field "generator" with value "/api/studios/{uuid_studio_id}/v1/actors/{cyber_actor_id}"
 
   Scenario: Bulk provision studio hashtags via batchCreate adhering to AIP-233
     Given the admin HTTP server is running with database migrations applied
@@ -93,9 +124,18 @@ Feature: User Space Studio Hashtags REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_batch/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "batch_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "batch_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_batch/v1/tags" with body:
       """
       {
+        "generator": "{batch_actor_id}",
         "tag": "ExistingTag"
       }
       """
@@ -105,10 +145,12 @@ Feature: User Space Studio Hashtags REST API
       {
         "requests": [
           {
+            "generator": "{batch_actor_id}",
             "tag": "NewBatchTag",
             "summary": "Bulk created"
           },
           {
+            "generator": "{batch_actor_id}",
             "tag": "existingtag"
           }
         ]
@@ -129,9 +171,18 @@ Feature: User Space Studio Hashtags REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_dual_get/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "dual_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "dual_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_dual_get/v1/tags" with body:
       """
       {
+        "generator": "{dual_actor_id}",
         "tag": "SolarPunk"
       }
       """
@@ -140,6 +191,7 @@ Feature: User Space Studio Hashtags REST API
     When an API admin sends a GET request to "/api/studios/valiant_dual_get/v1/tags/{dual_tag_id}"
     Then the HTTP response status code is 200
     And the JSON response contains field "tag" with value "SolarPunk"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_dual_get/v1/actors/{dual_actor_id}"
     When an API admin sends a GET request to "/api/studios/valiant_dual_get/v1/tags/solarpunk"
     Then the HTTP response status code is 200
     And the JSON response contains field "tag" with value "SolarPunk"
@@ -155,9 +207,18 @@ Feature: User Space Studio Hashtags REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_list_tags/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "list_tag_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "list_tag_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_list_tags/v1/tags" with body:
       """
       {
+        "generator": "{list_tag_actor_id}",
         "tag": "TagAlpha"
       }
       """
@@ -165,6 +226,7 @@ Feature: User Space Studio Hashtags REST API
     When an API admin sends a POST request to "/api/studios/valiant_list_tags/v1/tags" with body:
       """
       {
+        "generator": "{list_tag_actor_id}",
         "tag": "TagBeta"
       }
       """
@@ -184,9 +246,18 @@ Feature: User Space Studio Hashtags REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_patch_tags/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "patch_tag_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "patch_tag_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_patch_tags/v1/tags" with body:
       """
       {
+        "generator": "{patch_tag_actor_id}",
         "tag": "OriginalTag",
         "summary": "Original summary"
       }
@@ -213,9 +284,18 @@ Feature: User Space Studio Hashtags REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_del_tags/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "del_tag_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "del_tag_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_del_tags/v1/tags" with body:
       """
       {
+        "generator": "{del_tag_actor_id}",
         "tag": "TagToDelete"
       }
       """
@@ -245,9 +325,18 @@ Feature: User Space Studio Hashtags REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/studio_tenant_a/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "tenant_a_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "tenant_a_actor_id"
     When an API admin sends a POST request to "/api/studios/studio_tenant_a/v1/tags" with body:
       """
       {
+        "generator": "{tenant_a_actor_id}",
         "tag": "SecretTag"
       }
       """

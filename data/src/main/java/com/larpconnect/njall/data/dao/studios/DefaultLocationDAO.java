@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Location;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
 final class DefaultLocationDAO implements LocationDAO {
 
@@ -32,7 +34,7 @@ final class DefaultLocationDAO implements LocationDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, locationId);
+        var entityId = createEntityId(tenantId, locationId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         var location = session.find(LocationEntity.class, entityId);
         tx.commit();
@@ -41,40 +43,31 @@ final class DefaultLocationDAO implements LocationDAO {
         }
         return Optional.of(toLocation(entity, location));
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
   }
 
   @Override
-  public Location create(UUID tenantId, String name, Optional<String> summary) {
+  public Location create(UUID tenantId, UUID owner, String name, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
+        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
         var locationId = UUID.randomUUID();
         var now = Instant.now();
-        var entity =
-            new EntityBaseEntity(
-                tenantId, locationId, ENTITY_TYPE_LOCATION, summary.orElse(null), now, now, null);
+        var entity = createBaseEntity(tenantId, locationId, owner, summary, now);
         session.persist(entity);
 
-        var location = new LocationEntity(tenantId, locationId, name);
+        var location = createLocationEntity(tenantId, locationId, name);
         session.persist(location);
 
         tx.commit();
         return toLocation(entity, location);
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -87,7 +80,7 @@ final class DefaultLocationDAO implements LocationDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, locationId);
+        var entityId = createEntityId(tenantId, locationId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         var location = session.find(LocationEntity.class, entityId);
         if (entity == null || location == null || entity.getDeletedOn() != null) {
@@ -102,11 +95,7 @@ final class DefaultLocationDAO implements LocationDAO {
         tx.commit();
         return Optional.of(toLocation(entity, location));
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -118,7 +107,7 @@ final class DefaultLocationDAO implements LocationDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, locationId);
+        var entityId = createEntityId(tenantId, locationId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         if (entity == null || entity.getDeletedOn() != null) {
           tx.commit();
@@ -131,11 +120,7 @@ final class DefaultLocationDAO implements LocationDAO {
         tx.commit();
         return true;
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -154,9 +139,32 @@ final class DefaultLocationDAO implements LocationDAO {
         .getSingleResult();
   }
 
+  private static void rollbackQuietly(Transaction tx, Exception e) {
+    try {
+      tx.rollback();
+    } catch (Exception rollbackException) {
+      e.addSuppressed(rollbackException);
+    }
+  }
+
+  private static EntityId createEntityId(UUID tenantId, UUID id) {
+    return new EntityId(tenantId, id);
+  }
+
+  private static EntityBaseEntity createBaseEntity(
+      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
+    return new EntityBaseEntity(
+        tenantId, id, owner, ENTITY_TYPE_LOCATION, summary.orElse(null), now, now, null);
+  }
+
+  private static LocationEntity createLocationEntity(UUID tenantId, UUID id, String name) {
+    return new LocationEntity(tenantId, id, name);
+  }
+
   private static Location toLocation(EntityBaseEntity entity, LocationEntity location) {
     return new Location(
         entity.getId(),
+        entity.getOwner(),
         location.getName(),
         entity.getSummary(),
         entity.getCreatedOn(),

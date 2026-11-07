@@ -22,18 +22,14 @@ class AgentEntity {
   @Column(name = "id", nullable = false, updatable = false)
   private UUID id;
 
-  @Column(name = "owner_id", nullable = false, updatable = false)
-  private UUID ownerId;
-
   @Column(name = "preferred_username", nullable = false)
   private String preferredUsername;
 
   AgentEntity() {}
 
-  AgentEntity(UUID tenantId, UUID id, UUID ownerId, String preferredUsername) {
+  AgentEntity(UUID tenantId, UUID id, String preferredUsername) {
     this.tenantId = tenantId;
     this.id = id;
-    this.ownerId = ownerId;
     this.preferredUsername = preferredUsername;
   }
 
@@ -43,10 +39,6 @@ class AgentEntity {
 
   UUID getId() {
     return id;
-  }
-
-  UUID getOwnerId() {
-    return ownerId;
   }
 
   String getPreferredUsername() {

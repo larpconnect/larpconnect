@@ -31,6 +31,7 @@ final class DefaultLocationDAOTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID locationId = UUID.randomUUID();
+  private final UUID owner = UUID.randomUUID();
   private final Instant now = Instant.now();
 
   @BeforeEach
@@ -50,7 +51,8 @@ final class DefaultLocationDAOTest {
 
     var entityId = new EntityId(tenantId, locationId);
     var entity =
-        new EntityBaseEntity(tenantId, locationId, "Location", "Main campsite", now, now, null);
+        new EntityBaseEntity(
+            tenantId, locationId, owner, "Location", "Main campsite", now, now, null);
     var location = new LocationEntity(tenantId, locationId, "Camp Whispering Pines");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -60,6 +62,7 @@ final class DefaultLocationDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(locationId);
+    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
     assertThat(result.orElseThrow().name()).isEqualTo("Camp Whispering Pines");
     assertThat(result.orElseThrow().summary()).contains("Main campsite");
     verify(tx).commit();
@@ -74,7 +77,8 @@ final class DefaultLocationDAOTest {
 
     var entityId = new EntityId(tenantId, locationId);
     var entity =
-        new EntityBaseEntity(tenantId, locationId, "Location", "Main campsite", now, now, now);
+        new EntityBaseEntity(
+            tenantId, locationId, owner, "Location", "Main campsite", now, now, now);
     var location = new LocationEntity(tenantId, locationId, "Camp Whispering Pines");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -110,13 +114,64 @@ final class DefaultLocationDAOTest {
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
-    var created = dao.create(tenantId, "Pine Camp", Optional.of("New camp"));
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
+
+    var created = dao.create(tenantId, owner, "Pine Camp", Optional.of("New camp"));
 
     assertThat(created.name()).isEqualTo("Pine Camp");
+    assertThat(created.owner()).isEqualTo(owner);
     assertThat(created.summary()).contains("New camp");
     verify(session).persist(any(EntityBaseEntity.class));
     verify(session).persist(any(LocationEntity.class));
     verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("create throws when owner does not exist")
+  void create_ownerNotFound_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner))).thenReturn(null);
+
+    assertThatThrownBy(() -> dao.create(tenantId, owner, "Pine Camp", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is soft-deleted")
+  void create_ownerDeleted_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var deletedOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, now);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(deletedOwner);
+
+    assertThatThrownBy(() -> dao.create(tenantId, owner, "Pine Camp", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is not an Actor")
+  void create_ownerNotActor_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var nonActorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Individual", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(nonActorOwner);
+
+    assertThatThrownBy(() -> dao.create(tenantId, owner, "Pine Camp", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
   }
 
   @Test
@@ -128,7 +183,8 @@ final class DefaultLocationDAOTest {
 
     var entityId = new EntityId(tenantId, locationId);
     var entity =
-        new EntityBaseEntity(tenantId, locationId, "Location", "Old summary", now, now, null);
+        new EntityBaseEntity(
+            tenantId, locationId, owner, "Location", "Old summary", now, now, null);
     var location = new LocationEntity(tenantId, locationId, "Old Name");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -169,7 +225,8 @@ final class DefaultLocationDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, locationId);
-    var entity = new EntityBaseEntity(tenantId, locationId, "Location", "Summary", now, now, null);
+    var entity =
+        new EntityBaseEntity(tenantId, locationId, owner, "Location", "Summary", now, now, null);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
 
     var deleted = dao.softDelete(tenantId, locationId);
@@ -188,7 +245,8 @@ final class DefaultLocationDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, locationId);
-    var entity = new EntityBaseEntity(tenantId, locationId, "Location", "Summary", now, now, now);
+    var entity =
+        new EntityBaseEntity(tenantId, locationId, owner, "Location", "Summary", now, now, now);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
 
     var deleted = dao.softDelete(tenantId, locationId);
@@ -206,7 +264,8 @@ final class DefaultLocationDAOTest {
 
     var entityId = new EntityId(tenantId, locationId);
     var entity =
-        new EntityBaseEntity(tenantId, locationId, "Location", "Main campsite", now, now, null);
+        new EntityBaseEntity(
+            tenantId, locationId, owner, "Location", "Main campsite", now, now, null);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(LocationEntity.class, entityId)).thenReturn(null);
 
@@ -225,7 +284,8 @@ final class DefaultLocationDAOTest {
 
     var entityId = new EntityId(tenantId, locationId);
     var entity =
-        new EntityBaseEntity(tenantId, locationId, "Location", "Old summary", now, now, null);
+        new EntityBaseEntity(
+            tenantId, locationId, owner, "Location", "Old summary", now, now, null);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(LocationEntity.class, entityId)).thenReturn(null);
 
@@ -244,7 +304,7 @@ final class DefaultLocationDAOTest {
 
     var entityId = new EntityId(tenantId, locationId);
     var entity =
-        new EntityBaseEntity(tenantId, locationId, "Location", "Old summary", now, now, now);
+        new EntityBaseEntity(tenantId, locationId, owner, "Location", "Old summary", now, now, now);
     var location = new LocationEntity(tenantId, locationId, "Old Name");
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(LocationEntity.class, entityId)).thenReturn(location);
@@ -296,10 +356,14 @@ final class DefaultLocationDAOTest {
   void create_rollbackOnError() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
     when(session.createNativeQuery(contains("SELECT set_config"), eq(String.class)))
         .thenThrow(new RuntimeException("Persist failed"));
 
-    assertThatThrownBy(() -> dao.create(tenantId, "Camp", Optional.empty()))
+    assertThatThrownBy(() -> dao.create(tenantId, owner, "Camp", Optional.empty()))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Persist failed");
     verify(tx).rollback();

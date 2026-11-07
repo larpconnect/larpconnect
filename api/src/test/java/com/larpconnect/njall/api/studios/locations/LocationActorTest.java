@@ -20,7 +20,9 @@ import org.junit.jupiter.api.Test;
 
 final class LocationActorTest {
 
+  private static final String STUDIO_IDENTIFIER = "valiant";
   private final UUID tenantId = UUID.randomUUID();
+  private final UUID ownerId = UUID.randomUUID();
   private final UUID locationId = UUID.randomUUID();
   private final Instant now = Instant.now();
 
@@ -29,7 +31,8 @@ final class LocationActorTest {
   }
 
   private Location sampleLocation() {
-    return new Location(locationId, "Camp Whispering Pines", "Main campsite", now, now, null);
+    return new Location(
+        locationId, ownerId, "Camp Whispering Pines", "Main campsite", now, now, null);
   }
 
   @Test
@@ -38,20 +41,43 @@ final class LocationActorTest {
     var locationDao = mock(LocationDAO.class);
     var domain = sampleLocation();
     when(locationDao.create(
-            eq(tenantId), eq("Camp Whispering Pines"), eq(Optional.of("Main campsite"))))
+            eq(tenantId),
+            eq(ownerId),
+            eq("Camp Whispering Pines"),
+            eq(Optional.of("Main campsite"))))
         .thenReturn(domain);
 
     var testKit = BehaviorTestKit.create(createBehavior(locationDao));
     TestInbox<LocationActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateLocationRequest("Camp Whispering Pines", "Main campsite");
-    testKit.run(new LocationCommand.CreateLocation(tenantId, request, inbox.getRef()));
+    var request =
+        new CreateLocationRequest(
+            ownerId.toString(), "Camp Whispering Pines", Optional.of("Main campsite"));
+    testKit.run(
+        new LocationCommand.CreateLocation(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LocationActorResponse.Success.class);
     var success = (LocationActorResponse.Success) response;
     assertThat(success.location().id()).isEqualTo(locationId);
     assertThat(success.location().name()).isEqualTo("Camp Whispering Pines");
+    assertThat(success.location().generator())
+        .isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
+  }
+
+  @Test
+  @DisplayName("onCreateLocation returns BadRequest on invalid generator")
+  void onCreateLocation_invalidGenerator_returnsBadRequest() {
+    var locationDao = mock(LocationDAO.class);
+    var testKit = BehaviorTestKit.create(createBehavior(locationDao));
+    TestInbox<LocationActorResponse> inbox = TestInbox.create();
+
+    var request = new CreateLocationRequest("invalid-gen", "Camp Whispering Pines");
+    testKit.run(
+        new LocationCommand.CreateLocation(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(LocationActorResponse.BadRequest.class);
   }
 
   @Test
@@ -61,8 +87,9 @@ final class LocationActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(locationDao));
     TestInbox<LocationActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateLocationRequest("");
-    testKit.run(new LocationCommand.CreateLocation(tenantId, request, inbox.getRef()));
+    var request = new CreateLocationRequest(ownerId.toString(), "");
+    testKit.run(
+        new LocationCommand.CreateLocation(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LocationActorResponse.BadRequest.class);
@@ -77,12 +104,15 @@ final class LocationActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(locationDao));
     TestInbox<LocationActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new LocationCommand.GetLocation(tenantId, locationId, inbox.getRef()));
+    testKit.run(
+        new LocationCommand.GetLocation(tenantId, STUDIO_IDENTIFIER, locationId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LocationActorResponse.Success.class);
     var success = (LocationActorResponse.Success) response;
     assertThat(success.location().id()).isEqualTo(locationId);
+    assertThat(success.location().generator())
+        .isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
   }
 
   @Test
@@ -94,7 +124,8 @@ final class LocationActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(locationDao));
     TestInbox<LocationActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new LocationCommand.GetLocation(tenantId, locationId, inbox.getRef()));
+    testKit.run(
+        new LocationCommand.GetLocation(tenantId, STUDIO_IDENTIFIER, locationId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LocationActorResponse.NotFound.class);
@@ -104,7 +135,7 @@ final class LocationActorTest {
   @DisplayName("onPatchLocation returns Success on valid update")
   void onPatchLocation_valid_returnsSuccess() {
     var locationDao = mock(LocationDAO.class);
-    var updated = new Location(locationId, "Camp North", "Updated camp", now, now, null);
+    var updated = new Location(locationId, ownerId, "Camp North", "Updated camp", now, now, null);
     when(locationDao.patch(
             eq(tenantId), eq(locationId), eq(Optional.of("Camp North")), eq(Optional.empty())))
         .thenReturn(Optional.of(updated));
@@ -115,12 +146,14 @@ final class LocationActorTest {
     var request = new UpdateLocationRequest("Camp North", null);
     testKit.run(
         new LocationCommand.PatchLocation(
-            tenantId, locationId, request, Optional.of("name"), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, locationId, request, Optional.of("name"), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LocationActorResponse.Success.class);
     var success = (LocationActorResponse.Success) response;
     assertThat(success.location().name()).isEqualTo("Camp North");
+    assertThat(success.location().generator())
+        .isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
   }
 
   @Test

@@ -11,18 +11,16 @@ import org.jspecify.annotations.Nullable;
 @Immutable
 public record CreateCollectionRequest(
     @JsonProperty("ownerId") UUID ownerId,
+    @JsonProperty("generator") Optional<String> generator,
     @JsonProperty("name") String name,
     @JsonProperty("summary") Optional<String> summary) {
-
-  public CreateCollectionRequest(UUID ownerId, String name) {
-    this(ownerId, name, Optional.empty());
-  }
 
   @JsonCreator
   public CreateCollectionRequest(
       @JsonProperty("ownerId") UUID ownerId,
+      @JsonProperty("generator") @Nullable String generator,
       @JsonProperty("name") String name,
       @JsonProperty("summary") @Nullable String summary) {
-    this(ownerId, name, Optional.ofNullable(summary));
+    this(ownerId, Optional.ofNullable(generator), name, Optional.ofNullable(summary));
   }
 }

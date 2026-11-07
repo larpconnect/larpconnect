@@ -74,7 +74,7 @@ public final class IndividualsRoute extends AllDirectives implements RouteProvid
     return studioLookupCache
         .findByIdOrAlias(studioIdParam)
         .filter(this::isActive)
-        .map(this::buildTenantedRoutes)
+        .map(lookup -> buildTenantedRoutes(lookup, studioIdParam))
         .orElseGet(() -> completeNotFound("Studio not found: " + studioIdParam));
   }
 
@@ -82,49 +82,51 @@ public final class IndividualsRoute extends AllDirectives implements RouteProvid
     return !lookup.isDeleted();
   }
 
-  private Route buildTenantedRoutes(StudioLookup lookup) {
+  private Route buildTenantedRoutes(StudioLookup lookup, String studioIdParam) {
     return concat(
         pathEndOrSingleSlash(
             () ->
                 concat(
-                    post(() -> handlePostIndividual(lookup.tenantId())),
+                    post(() -> handlePostIndividual(lookup, studioIdParam)),
                     get(() -> completeNotFound("Listing individuals is not supported")))),
         pathPrefix(
             PathMatchers.segment(),
-            individualIdParam -> handleIndividualBranch(lookup.tenantId(), individualIdParam)));
+            individualIdParam ->
+                handleIndividualBranch(lookup.tenantId(), studioIdParam, individualIdParam)));
   }
 
-  private Route handlePostIndividual(UUID tenantId) {
+  private Route handlePostIndividual(StudioLookup lookup, String studioIdParam) {
     return entity(
         Jackson.unmarshaller(objectMapper, CreateIndividualRequest.class),
         request ->
             onComplete(
-                () -> askCreateIndividual(tenantId, request),
+                () -> askCreateIndividual(lookup, studioIdParam, request),
                 res -> mapIndividualResponse(res, StatusCodes.CREATED)));
   }
 
-  private Route handleIndividualBranch(UUID tenantId, String individualIdParam) {
+  private Route handleIndividualBranch(
+      UUID tenantId, String studioIdParam, String individualIdParam) {
     return IndividualValidation.tryParseUuid(individualIdParam)
-        .map(individualId -> buildIndividualSubroutes(tenantId, individualId))
+        .map(individualId -> buildIndividualSubroutes(tenantId, studioIdParam, individualId))
         .orElseGet(() -> completeNotFound("Individual not found: " + individualIdParam));
   }
 
-  private Route buildIndividualSubroutes(UUID tenantId, UUID individualId) {
+  private Route buildIndividualSubroutes(UUID tenantId, String studioIdParam, UUID individualId) {
     return pathEndOrSingleSlash(
         () ->
             concat(
-                get(() -> handleGetIndividual(tenantId, individualId)),
-                patch(() -> handlePatchIndividual(tenantId, individualId)),
+                get(() -> handleGetIndividual(tenantId, studioIdParam, individualId)),
+                patch(() -> handlePatchIndividual(tenantId, studioIdParam, individualId)),
                 delete(() -> handleDeleteIndividual(tenantId, individualId))));
   }
 
-  private Route handleGetIndividual(UUID tenantId, UUID individualId) {
+  private Route handleGetIndividual(UUID tenantId, String studioIdParam, UUID individualId) {
     return onComplete(
-        () -> askGetIndividual(tenantId, individualId),
+        () -> askGetIndividual(tenantId, studioIdParam, individualId),
         res -> mapIndividualResponse(res, StatusCodes.OK));
   }
 
-  private Route handlePatchIndividual(UUID tenantId, UUID individualId) {
+  private Route handlePatchIndividual(UUID tenantId, String studioIdParam, UUID individualId) {
     return parameterOptional(
         "update_mask",
         mask ->
@@ -132,7 +134,7 @@ public final class IndividualsRoute extends AllDirectives implements RouteProvid
                 Jackson.unmarshaller(objectMapper, UpdateIndividualRequest.class),
                 req ->
                     onComplete(
-                        () -> askPatchIndividual(tenantId, individualId, req, mask),
+                        () -> askPatchIndividual(tenantId, studioIdParam, individualId, req, mask),
                         res -> mapIndividualResponse(res, StatusCodes.OK))));
   }
 
@@ -143,25 +145,29 @@ public final class IndividualsRoute extends AllDirectives implements RouteProvid
   }
 
   private CompletionStage<IndividualActorResponse> askCreateIndividual(
-      UUID tenantId, CreateIndividualRequest request) {
+      StudioLookup lookup, String studioIdentifier, CreateIndividualRequest request) {
     return ask(
         individualActor,
-        replyTo -> new IndividualCommand.CreateIndividual(tenantId, request, replyTo),
+        replyTo ->
+            new IndividualCommand.CreateIndividual(
+                lookup.tenantId(), studioIdentifier, request, replyTo, Optional.of(lookup)),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<IndividualActorResponse> askGetIndividual(
-      UUID tenantId, UUID individualId) {
+      UUID tenantId, String studioIdentifier, UUID individualId) {
     return ask(
         individualActor,
-        replyTo -> new IndividualCommand.GetIndividual(tenantId, individualId, replyTo),
+        replyTo ->
+            new IndividualCommand.GetIndividual(tenantId, studioIdentifier, individualId, replyTo),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<IndividualActorResponse> askPatchIndividual(
       UUID tenantId,
+      String studioIdentifier,
       UUID individualId,
       UpdateIndividualRequest request,
       Optional<String> updateMask) {
@@ -169,7 +175,7 @@ public final class IndividualsRoute extends AllDirectives implements RouteProvid
         individualActor,
         replyTo ->
             new IndividualCommand.PatchIndividual(
-                tenantId, individualId, request, updateMask, replyTo),
+                tenantId, studioIdentifier, individualId, request, updateMask, replyTo),
         askTimeout,
         system.scheduler());
   }

@@ -91,7 +91,7 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
         pathEndOrSingleSlash(
             () ->
                 concat(
-                    post(() -> handlePostActor(lookup.tenantId(), studioIdParam)),
+                    post(() -> handlePostActor(lookup, studioIdParam)),
                     get(() -> completeNotFound("Listing actors is not supported")))),
         pathPrefix(
             PathMatchers.segment(),
@@ -130,22 +130,22 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
             "inbox",
             () ->
                 concat(
-                    get(() -> handleGetInbox(tenantId, actorId)),
-                    post(() -> handlePostInbox(tenantId, actorId)))),
+                    get(() -> handleGetInbox(tenantId, studioIdParam, actorId)),
+                    post(() -> handlePostInbox(tenantId, studioIdParam, actorId)))),
         path(
             "outbox",
             () ->
                 concat(
-                    get(() -> handleGetOutbox(tenantId, actorId)),
-                    post(() -> handlePostOutbox(tenantId, actorId)))));
+                    get(() -> handleGetOutbox(tenantId, studioIdParam, actorId)),
+                    post(() -> handlePostOutbox(tenantId, studioIdParam, actorId)))));
   }
 
-  private Route handlePostActor(UUID tenantId, String studioIdParam) {
+  private Route handlePostActor(StudioLookup lookup, String studioIdParam) {
     return entity(
         Jackson.unmarshaller(objectMapper, CreateActorRequest.class),
         request ->
             onComplete(
-                () -> askCreateActor(tenantId, studioIdParam, request),
+                () -> askCreateActor(lookup, studioIdParam, request),
                 res -> mapActorResponse(res, StatusCodes.CREATED)));
   }
 
@@ -191,39 +191,43 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
                 res -> mapActorResponse(res, StatusCodes.NO_CONTENT)));
   }
 
-  private Route handleGetInbox(UUID tenantId, UUID actorId) {
+  private Route handleGetInbox(UUID tenantId, String studioIdParam, UUID actorId) {
     return onComplete(
-        () -> askGetInbox(tenantId, actorId), res -> mapActorResponse(res, StatusCodes.OK));
+        () -> askGetInbox(tenantId, studioIdParam, actorId),
+        res -> mapActorResponse(res, StatusCodes.OK));
   }
 
-  private Route handlePostInbox(UUID tenantId, UUID actorId) {
+  private Route handlePostInbox(UUID tenantId, String studioIdParam, UUID actorId) {
     return entity(
         Jackson.unmarshaller(objectMapper, JsonNode.class),
         payload ->
             onComplete(
-                () -> askPostInbox(tenantId, actorId, payload),
+                () -> askPostInbox(tenantId, studioIdParam, actorId, payload),
                 res -> mapActorResponse(res, StatusCodes.CREATED)));
   }
 
-  private Route handleGetOutbox(UUID tenantId, UUID actorId) {
+  private Route handleGetOutbox(UUID tenantId, String studioIdParam, UUID actorId) {
     return onComplete(
-        () -> askGetOutbox(tenantId, actorId), res -> mapActorResponse(res, StatusCodes.OK));
+        () -> askGetOutbox(tenantId, studioIdParam, actorId),
+        res -> mapActorResponse(res, StatusCodes.OK));
   }
 
-  private Route handlePostOutbox(UUID tenantId, UUID actorId) {
+  private Route handlePostOutbox(UUID tenantId, String studioIdParam, UUID actorId) {
     return entity(
         Jackson.unmarshaller(objectMapper, JsonNode.class),
         payload ->
             onComplete(
-                () -> askPostOutbox(tenantId, actorId, payload),
+                () -> askPostOutbox(tenantId, studioIdParam, actorId, payload),
                 res -> mapActorResponse(res, StatusCodes.CREATED)));
   }
 
   private CompletionStage<AgentActorResponse> askCreateActor(
-      UUID tenantId, String studioIdentifier, CreateActorRequest request) {
+      StudioLookup lookup, String studioIdentifier, CreateActorRequest request) {
     return ask(
         agentActor,
-        replyTo -> new AgentCommand.CreateAgent(tenantId, studioIdentifier, request, replyTo),
+        replyTo ->
+            new AgentCommand.CreateAgent(
+                lookup.tenantId(), studioIdentifier, request, replyTo, Optional.of(lookup)),
         askTimeout,
         system.scheduler());
   }
@@ -292,12 +296,14 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
         system.scheduler());
   }
 
-  private CompletionStage<AgentActorResponse> askGetInbox(UUID tenantId, UUID actorId) {
+  private CompletionStage<AgentActorResponse> askGetInbox(
+      UUID tenantId, String studioIdentifier, UUID actorId) {
     return ask(
         agentActor,
         replyTo ->
             new AgentCommand.AccessCollection(
                 tenantId,
+                studioIdentifier,
                 actorId,
                 AgentCommand.CollectionTarget.INBOX,
                 AgentCommand.CollectionAction.GET,
@@ -307,12 +313,14 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
         system.scheduler());
   }
 
-  private CompletionStage<AgentActorResponse> askGetOutbox(UUID tenantId, UUID actorId) {
+  private CompletionStage<AgentActorResponse> askGetOutbox(
+      UUID tenantId, String studioIdentifier, UUID actorId) {
     return ask(
         agentActor,
         replyTo ->
             new AgentCommand.AccessCollection(
                 tenantId,
+                studioIdentifier,
                 actorId,
                 AgentCommand.CollectionTarget.OUTBOX,
                 AgentCommand.CollectionAction.GET,
@@ -323,12 +331,13 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
   }
 
   private CompletionStage<AgentActorResponse> askPostInbox(
-      UUID tenantId, UUID actorId, JsonNode payload) {
+      UUID tenantId, String studioIdentifier, UUID actorId, JsonNode payload) {
     return ask(
         agentActor,
         replyTo ->
             new AgentCommand.AccessCollection(
                 tenantId,
+                studioIdentifier,
                 actorId,
                 AgentCommand.CollectionTarget.INBOX,
                 AgentCommand.CollectionAction.POST,
@@ -339,12 +348,13 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
   }
 
   private CompletionStage<AgentActorResponse> askPostOutbox(
-      UUID tenantId, UUID actorId, JsonNode payload) {
+      UUID tenantId, String studioIdentifier, UUID actorId, JsonNode payload) {
     return ask(
         agentActor,
         replyTo ->
             new AgentCommand.AccessCollection(
                 tenantId,
+                studioIdentifier,
                 actorId,
                 AgentCommand.CollectionTarget.OUTBOX,
                 AgentCommand.CollectionAction.POST,

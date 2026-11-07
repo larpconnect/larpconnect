@@ -23,18 +23,24 @@ final class EventValidationAndDtoTest {
   @Test
   @DisplayName("EventValidation handles create and patch rules")
   void eventValidation_rules() {
-    var blankTitle = new CreateEventRequest("");
+    var gen = "019273c5-9271-7000-8000-000000000001";
+    var blankGen = new CreateEventRequest("", "Fest");
+    assertThat(EventValidation.validateCreate(blankGen))
+        .contains("Generator URI or actor identifier must not be blank");
+
+    var blankTitle = new CreateEventRequest(gen, "");
     assertThat(EventValidation.validateCreate(blankTitle))
         .contains("Event title must not be blank");
 
     var now = Instant.now();
     var invalidTimeCreate =
-        new CreateEventRequest("Fest", "Summary", null, now.plusSeconds(3600), now);
+        new CreateEventRequest(gen, "Fest", "Summary", null, now.plusSeconds(3600), now);
     assertThat(EventValidation.validateCreate(invalidTimeCreate))
         .contains("Event end time must not be earlier than start time");
 
     var validCreate =
-        new CreateEventRequest("Fest", "Summary", UUID.randomUUID(), now, now.plusSeconds(3600));
+        new CreateEventRequest(
+            gen, "Fest", "Summary", UUID.randomUUID(), now, now.plusSeconds(3600));
     assertThat(EventValidation.validateCreate(validCreate)).isEmpty();
 
     var blankPatch = new UpdateEventRequest("   ", null, null, null, null);
@@ -65,6 +71,7 @@ final class EventValidationAndDtoTest {
     var createJson =
         """
         {
+          "generator": "019273c5-9271-7000-8000-000000000001",
           "title": "Autumn Harvest Festival",
           "summary": "Annual Gathering",
           "startTime": "2026-10-25T18:00:00Z",
@@ -72,6 +79,7 @@ final class EventValidationAndDtoTest {
         }
         """;
     var createReq = objectMapper.readValue(createJson, CreateEventRequest.class);
+    assertThat(createReq.generator()).isEqualTo("019273c5-9271-7000-8000-000000000001");
     assertThat(createReq.title()).isEqualTo("Autumn Harvest Festival");
     assertThat(createReq.summary()).contains("Annual Gathering");
     assertThat(createReq.startTime()).isPresent();
@@ -82,6 +90,7 @@ final class EventValidationAndDtoTest {
     var response =
         new EventResponse(
             id,
+            "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
             "Autumn Harvest Festival",
             Optional.of("Summary"),
             Optional.empty(),
@@ -92,6 +101,8 @@ final class EventValidationAndDtoTest {
     var resJson = objectMapper.writeValueAsString(response);
     assertThat(resJson).contains(id.toString());
     assertThat(resJson).contains("Autumn Harvest Festival");
+    assertThat(resJson)
+        .contains("/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001");
     assertThat(resJson).doesNotContain("tenantId");
 
     var updateJson =

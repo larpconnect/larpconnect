@@ -2,11 +2,10 @@ package com.larpconnect.njall.api.studios.collections;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.larpconnect.njall.api.studios.common.CollectionResponseHelper;
+import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
-import com.larpconnect.njall.data.domain.Collection;
-import com.larpconnect.njall.data.domain.ExpandedEntity;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -21,8 +20,6 @@ import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing user-space tenanted collection operations. */
 final class CollectionActor extends AbstractBehavior<CollectionCommand> {
-
-  private static final String TYPE_ORDERED_COLLECTION = "OrderedCollection";
 
   private final Logger logger = LoggerFactory.getLogger(CollectionActor.class);
   private final CollectionDAO collectionDao;
@@ -50,7 +47,24 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
         cmd.replyTo().tell(CollectionActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
-      executeCreate(cmd.tenantId(), cmd.request(), cmd.replyTo());
+      UUID effectiveOwner;
+      if (cmd.request().generator().isPresent()
+          && !cmd.request().generator().orElseThrow().isBlank()) {
+        var parsed =
+            GeneratorUriSupport.parseGenerator(
+                cmd.request().generator().orElseThrow(), cmd.studioIdentifier(), cmd.lookup());
+        if (parsed.isEmpty()) {
+          cmd.replyTo()
+              .tell(
+                  CollectionActorResponse.badRequest("Invalid generator URI or actor identifier"));
+          return this;
+        }
+        effectiveOwner = parsed.orElseThrow();
+      } else {
+        effectiveOwner = cmd.request().ownerId();
+      }
+      executeCreate(
+          cmd.tenantId(), cmd.studioIdentifier(), effectiveOwner, cmd.request(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create collection", e);
     }
@@ -58,7 +72,11 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
   }
 
   private void executeCreate(
-      UUID tenantId, CreateCollectionRequest request, ActorRef<CollectionActorResponse> replyTo) {
+      UUID tenantId,
+      String studioIdentifier,
+      UUID effectiveOwner,
+      CreateCollectionRequest request,
+      ActorRef<CollectionActorResponse> replyTo) {
     if (collectionDao.existsByOwnerAndName(
         tenantId, request.ownerId(), request.name(), Optional.empty())) {
       replyTo.tell(
@@ -67,13 +85,17 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
       return;
     }
     var domain =
-        collectionDao.create(tenantId, request.ownerId(), request.name(), request.summary());
-    replyTo.tell(CollectionActorResponse.success(toCompressedResponse(domain)));
+        collectionDao.create(
+            tenantId, effectiveOwner, request.ownerId(), request.name(), request.summary());
+    replyTo.tell(
+        CollectionActorResponse.success(
+            CollectionResponseHelper.toCompressedResponse(studioIdentifier, domain)));
   }
 
   private Behavior<CollectionCommand> onGetCollection(CollectionCommand.GetCollection cmd) {
     try {
-      executeGet(cmd.tenantId(), cmd.collectionId(), cmd.form(), cmd.replyTo());
+      executeGet(
+          cmd.tenantId(), cmd.studioIdentifier(), cmd.collectionId(), cmd.form(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get collection", e);
     }
@@ -82,6 +104,7 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
 
   private void executeGet(
       UUID tenantId,
+      String studioIdentifier,
       UUID collectionId,
       Optional<String> form,
       ActorRef<CollectionActorResponse> replyTo) {
@@ -94,9 +117,14 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
     boolean isExpanded = form.filter("expanded"::equalsIgnoreCase).isPresent();
     if (isExpanded) {
       var expandedItems = collectionDao.findExpandedItems(tenantId, collectionId);
-      replyTo.tell(CollectionActorResponse.success(toExpandedResponse(collection, expandedItems)));
+      replyTo.tell(
+          CollectionActorResponse.success(
+              CollectionResponseHelper.toExpandedResponse(
+                  studioIdentifier, collection, expandedItems)));
     } else {
-      replyTo.tell(CollectionActorResponse.success(toCompressedResponse(collection)));
+      replyTo.tell(
+          CollectionActorResponse.success(
+              CollectionResponseHelper.toCompressedResponse(studioIdentifier, collection)));
     }
   }
 
@@ -108,7 +136,12 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
         return this;
       }
       executePatch(
-          cmd.tenantId(), cmd.collectionId(), cmd.request(), cmd.updateMask(), cmd.replyTo());
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          cmd.collectionId(),
+          cmd.request(),
+          cmd.updateMask(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "patch collection", e);
     }
@@ -117,6 +150,7 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
 
   private void executePatch(
       UUID tenantId,
+      String studioIdentifier,
       UUID collectionId,
       UpdateCollectionRequest request,
       Optional<String> updateMask,
@@ -124,11 +158,12 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
     var maskFields = parseUpdateMask(updateMask);
     var name = selectField(maskFields, "name", request.name());
     var summary = selectField(maskFields, "summary", request.summary());
-    persistPatch(tenantId, collectionId, name, summary, replyTo);
+    persistPatch(tenantId, studioIdentifier, collectionId, name, summary, replyTo);
   }
 
   private void persistPatch(
       UUID tenantId,
+      String studioIdentifier,
       UUID collectionId,
       Optional<String> name,
       Optional<String> summary,
@@ -154,7 +189,10 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
     collectionDao
         .patch(tenantId, collectionId, name, summary)
         .ifPresentOrElse(
-            updated -> replyTo.tell(CollectionActorResponse.success(toCompressedResponse(updated))),
+            updated ->
+                replyTo.tell(
+                    CollectionActorResponse.success(
+                        CollectionResponseHelper.toCompressedResponse(studioIdentifier, updated))),
             () ->
                 replyTo.tell(
                     CollectionActorResponse.notFound("Collection not found: " + collectionId)));
@@ -215,33 +253,6 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
     }
   }
 
-  private OrderedCollectionResponse toCompressedResponse(Collection collection) {
-    return new OrderedCollectionResponse(
-        collection.id(),
-        TYPE_ORDERED_COLLECTION,
-        collection.name(),
-        collection.summary(),
-        collection.ownerId(),
-        collection.totalItems(),
-        collection.itemIds(),
-        collection.createdOn(),
-        collection.updatedOn());
-  }
-
-  private OrderedCollectionResponse toExpandedResponse(
-      Collection collection, ImmutableList<ExpandedEntity> expandedItems) {
-    return new OrderedCollectionResponse(
-        collection.id(),
-        TYPE_ORDERED_COLLECTION,
-        collection.name(),
-        collection.summary(),
-        collection.ownerId(),
-        expandedItems.size(),
-        expandedItems,
-        collection.createdOn(),
-        collection.updatedOn());
-  }
-
   private Optional<Set<String>> parseUpdateMask(Optional<String> updateMask) {
     return updateMask.map(
         mask -> ImmutableSet.copyOf(Splitter.on(',').trimResults().omitEmptyStrings().split(mask)));
@@ -257,6 +268,10 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
   private void handleError(
       ActorRef<CollectionActorResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in CollectionActor", operation, error);
+    if (error instanceof IllegalArgumentException) {
+      replyTo.tell(CollectionActorResponse.badRequest(error.getMessage()));
+      return;
+    }
     if (isConstraintViolation(error)) {
       replyTo.tell(
           CollectionActorResponse.badRequest("Request data violates database constraints"));

@@ -10,6 +10,7 @@ import java.util.UUID;
 @Immutable
 public record LinkResponse(
     @JsonProperty("id") UUID id,
+    @JsonProperty("generator") String generator,
     @JsonProperty("linkType") String linkType,
     @JsonProperty("url") String url,
     @JsonProperty("mediaType") String mediaType,

@@ -3,6 +3,7 @@ package com.larpconnect.njall.api.studios.locations;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.LocationDAO;
 import com.larpconnect.njall.data.domain.Location;
 import java.util.Optional;
@@ -44,7 +45,20 @@ final class LocationActor extends AbstractBehavior<LocationCommand> {
         cmd.replyTo().tell(LocationActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
-      executeCreate(cmd.tenantId(), cmd.request(), cmd.replyTo());
+      var parsed =
+          GeneratorUriSupport.parseGenerator(
+              cmd.request().generator(), cmd.studioIdentifier(), cmd.lookup());
+      if (parsed.isEmpty()) {
+        cmd.replyTo()
+            .tell(LocationActorResponse.badRequest("Invalid generator URI or actor identifier"));
+        return this;
+      }
+      executeCreate(
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          parsed.orElseThrow(),
+          cmd.request(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create location", e);
     }
@@ -52,25 +66,35 @@ final class LocationActor extends AbstractBehavior<LocationCommand> {
   }
 
   private void executeCreate(
-      UUID tenantId, CreateLocationRequest request, ActorRef<LocationActorResponse> replyTo) {
-    var domain = locationDao.create(tenantId, request.name(), request.summary());
-    replyTo.tell(LocationActorResponse.success(toLocationResponse(domain)));
+      UUID tenantId,
+      String studioIdentifier,
+      UUID owner,
+      CreateLocationRequest request,
+      ActorRef<LocationActorResponse> replyTo) {
+    var domain = locationDao.create(tenantId, owner, request.name(), request.summary());
+    replyTo.tell(LocationActorResponse.success(toLocationResponse(studioIdentifier, domain)));
   }
 
   private Behavior<LocationCommand> onGetLocation(LocationCommand.GetLocation cmd) {
     try {
-      executeGet(cmd.tenantId(), cmd.locationId(), cmd.replyTo());
+      executeGet(cmd.tenantId(), cmd.studioIdentifier(), cmd.locationId(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get location", e);
     }
     return this;
   }
 
-  private void executeGet(UUID tenantId, UUID locationId, ActorRef<LocationActorResponse> replyTo) {
+  private void executeGet(
+      UUID tenantId,
+      String studioIdentifier,
+      UUID locationId,
+      ActorRef<LocationActorResponse> replyTo) {
     locationDao
         .findById(tenantId, locationId)
         .ifPresentOrElse(
-            loc -> replyTo.tell(LocationActorResponse.success(toLocationResponse(loc))),
+            loc ->
+                replyTo.tell(
+                    LocationActorResponse.success(toLocationResponse(studioIdentifier, loc))),
             () ->
                 replyTo.tell(LocationActorResponse.notFound("Location not found: " + locationId)));
   }
@@ -83,7 +107,12 @@ final class LocationActor extends AbstractBehavior<LocationCommand> {
         return this;
       }
       executePatch(
-          cmd.tenantId(), cmd.locationId(), cmd.request(), cmd.updateMask(), cmd.replyTo());
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          cmd.locationId(),
+          cmd.request(),
+          cmd.updateMask(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "patch location", e);
     }
@@ -92,6 +121,7 @@ final class LocationActor extends AbstractBehavior<LocationCommand> {
 
   private void executePatch(
       UUID tenantId,
+      String studioIdentifier,
       UUID locationId,
       UpdateLocationRequest request,
       Optional<String> updateMask,
@@ -103,14 +133,17 @@ final class LocationActor extends AbstractBehavior<LocationCommand> {
     locationDao
         .patch(tenantId, locationId, name, summary)
         .ifPresentOrElse(
-            updated -> replyTo.tell(LocationActorResponse.success(toLocationResponse(updated))),
+            updated ->
+                replyTo.tell(
+                    LocationActorResponse.success(toLocationResponse(studioIdentifier, updated))),
             () ->
                 replyTo.tell(LocationActorResponse.notFound("Location not found: " + locationId)));
   }
 
-  private LocationResponse toLocationResponse(Location location) {
+  private LocationResponse toLocationResponse(String studioIdentifier, Location location) {
     return new LocationResponse(
         location.id(),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, location.owner()),
         location.name(),
         location.summary(),
         location.createdOn(),
@@ -152,6 +185,10 @@ final class LocationActor extends AbstractBehavior<LocationCommand> {
   private void handleError(
       ActorRef<LocationActorResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in LocationActor", operation, error);
+    if (error instanceof IllegalArgumentException) {
+      replyTo.tell(LocationActorResponse.badRequest(error.getMessage()));
+      return;
+    }
     var message = error.getMessage();
     var reason = !Strings.isNullOrEmpty(message) ? message : "Error executing " + operation;
     replyTo.tell(LocationActorResponse.failure(reason));

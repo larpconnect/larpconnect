@@ -9,15 +9,19 @@ import org.jspecify.annotations.Nullable;
 /** Request payload for creating a new studio individual. */
 @Immutable
 public record CreateIndividualRequest(
-    @JsonProperty("name") String name, @JsonProperty("summary") Optional<String> summary) {
+    @JsonProperty("generator") String generator,
+    @JsonProperty("name") String name,
+    @JsonProperty("summary") Optional<String> summary) {
 
-  public CreateIndividualRequest(String name) {
-    this(name, Optional.empty());
+  public CreateIndividualRequest(String generator, String name) {
+    this(generator, name, Optional.empty());
   }
 
   @JsonCreator
   public CreateIndividualRequest(
-      @JsonProperty("name") String name, @JsonProperty("summary") @Nullable String summary) {
-    this(name, Optional.ofNullable(summary));
+      @JsonProperty("generator") String generator,
+      @JsonProperty("name") String name,
+      @JsonProperty("summary") @Nullable String summary) {
+    this(generator, name, Optional.ofNullable(summary));
   }
 }

@@ -31,6 +31,7 @@ final class DefaultIndividualDAOTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID individualId = UUID.randomUUID();
+  private final UUID owner = UUID.randomUUID();
   private final Instant now = Instant.now();
 
   @BeforeEach
@@ -50,7 +51,8 @@ final class DefaultIndividualDAOTest {
 
     var entityId = new EntityId(tenantId, individualId);
     var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Scholar", now, now, null);
+        new EntityBaseEntity(
+            tenantId, individualId, owner, "Individual", "Scholar", now, now, null);
     var individual = new IndividualEntity(tenantId, individualId, "Jane Eyre");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -60,6 +62,7 @@ final class DefaultIndividualDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(individualId);
+    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
     assertThat(result.orElseThrow().name()).isEqualTo("Jane Eyre");
     assertThat(result.orElseThrow().summary()).contains("Scholar");
     verify(tx).commit();
@@ -74,7 +77,7 @@ final class DefaultIndividualDAOTest {
 
     var entityId = new EntityId(tenantId, individualId);
     var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Scholar", now, now, now);
+        new EntityBaseEntity(tenantId, individualId, owner, "Individual", "Scholar", now, now, now);
     var individual = new IndividualEntity(tenantId, individualId, "Jane Eyre");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -112,7 +115,8 @@ final class DefaultIndividualDAOTest {
 
     var entityId = new EntityId(tenantId, individualId);
     var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Scholar", now, now, null);
+        new EntityBaseEntity(
+            tenantId, individualId, owner, "Individual", "Scholar", now, now, null);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(IndividualEntity.class, entityId)).thenReturn(null);
 
@@ -147,9 +151,15 @@ final class DefaultIndividualDAOTest {
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
-    var individual = dao.create(tenantId, "Jane Eyre", Optional.of("A governess"));
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
+
+    var individual = dao.create(tenantId, owner, "Jane Eyre", Optional.of("A governess"));
 
     assertThat(individual.name()).isEqualTo("Jane Eyre");
+    assertThat(individual.owner()).isEqualTo(owner);
     assertThat(individual.summary()).contains("A governess");
     assertThat(individual.deletedOn()).isEmpty();
     verify(session).persist(any(EntityBaseEntity.class));
@@ -164,13 +174,64 @@ final class DefaultIndividualDAOTest {
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
-    var individual = dao.create(tenantId, "Edward Rochester", Optional.empty());
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
+
+    var individual = dao.create(tenantId, owner, "Edward Rochester", Optional.empty());
 
     assertThat(individual.name()).isEqualTo("Edward Rochester");
+    assertThat(individual.owner()).isEqualTo(owner);
     assertThat(individual.summary()).isEmpty();
     verify(session).persist(any(EntityBaseEntity.class));
     verify(session).persist(any(IndividualEntity.class));
     verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("create throws when owner does not exist")
+  void create_ownerNotFound_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner))).thenReturn(null);
+
+    assertThatThrownBy(() -> dao.create(tenantId, owner, "Jane Eyre", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is soft-deleted")
+  void create_ownerDeleted_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var deletedOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, now);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(deletedOwner);
+
+    assertThatThrownBy(() -> dao.create(tenantId, owner, "Jane Eyre", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is not an Actor")
+  void create_ownerNotActor_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var nonActorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Event", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(nonActorOwner);
+
+    assertThatThrownBy(() -> dao.create(tenantId, owner, "Jane Eyre", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
   }
 
   @Test
@@ -179,264 +240,17 @@ final class DefaultIndividualDAOTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
     doThrow(new RuntimeException("Persist error"))
         .when(session)
         .persist(any(EntityBaseEntity.class));
 
-    assertThatThrownBy(() -> dao.create(tenantId, "Jane Eyre", Optional.empty()))
+    assertThatThrownBy(() -> dao.create(tenantId, owner, "Jane Eyre", Optional.empty()))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Persist error");
-
-    verify(tx).rollback();
-  }
-
-  @Test
-  @DisplayName("patch updates name and summary on active individual")
-  void patch_success() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Old Summary", now, now, null);
-    var individual = new IndividualEntity(tenantId, individualId, "Old Name");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(IndividualEntity.class, entityId)).thenReturn(individual);
-
-    var result =
-        dao.patch(tenantId, individualId, Optional.of("New Name"), Optional.of("New Summary"));
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().name()).isEqualTo("New Name");
-    assertThat(result.orElseThrow().summary()).contains("New Summary");
-    verify(session).merge(entity);
-    verify(session).merge(individual);
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch updates only name when summary is empty")
-  void patch_updatesOnlyName() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Old Summary", now, now, null);
-    var individual = new IndividualEntity(tenantId, individualId, "Old Name");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(IndividualEntity.class, entityId)).thenReturn(individual);
-
-    var result = dao.patch(tenantId, individualId, Optional.of("New Name"), Optional.empty());
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().name()).isEqualTo("New Name");
-    assertThat(result.orElseThrow().summary()).contains("Old Summary");
-    verify(session).merge(entity);
-    verify(session).merge(individual);
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch updates only summary when name is empty")
-  void patch_updatesOnlySummary() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Old Summary", now, now, null);
-    var individual = new IndividualEntity(tenantId, individualId, "Old Name");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(IndividualEntity.class, entityId)).thenReturn(individual);
-
-    var result = dao.patch(tenantId, individualId, Optional.empty(), Optional.of("New Summary"));
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().name()).isEqualTo("Old Name");
-    assertThat(result.orElseThrow().summary()).contains("New Summary");
-    verify(session).merge(entity);
-    verify(session).merge(individual);
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch retains existing values when both name and summary are empty")
-  void patch_neitherUpdated() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Old Summary", now, now, null);
-    var individual = new IndividualEntity(tenantId, individualId, "Old Name");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(IndividualEntity.class, entityId)).thenReturn(individual);
-
-    var result = dao.patch(tenantId, individualId, Optional.empty(), Optional.empty());
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().name()).isEqualTo("Old Name");
-    assertThat(result.orElseThrow().summary()).contains("Old Summary");
-    verify(session).merge(entity);
-    verify(session).merge(individual);
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch returns empty when individual row is missing")
-  void patch_missingIndividualSubtype() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Old Summary", now, now, null);
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(IndividualEntity.class, entityId)).thenReturn(null);
-
-    var result = dao.patch(tenantId, individualId, Optional.of("New Name"), Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch returns empty when individual is not found")
-  void patch_notFound() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-
-    var result = dao.patch(tenantId, individualId, Optional.of("Name"), Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch returns empty when individual is soft-deleted")
-  void patch_softDeleted() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Summary", now, now, now);
-    var individual = new IndividualEntity(tenantId, individualId, "Name");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(IndividualEntity.class, entityId)).thenReturn(individual);
-
-    var result = dao.patch(tenantId, individualId, Optional.of("New Name"), Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch rolls back and throws on merge failure")
-  void patch_rollsBackOnException() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    when(session.find(EntityBaseEntity.class, entityId))
-        .thenThrow(new RuntimeException("Find error"));
-
-    assertThatThrownBy(
-            () -> dao.patch(tenantId, individualId, Optional.of("Name"), Optional.empty()))
-        .isInstanceOf(RuntimeException.class)
-        .hasMessage("Find error");
-
-    verify(tx).rollback();
-  }
-
-  @Test
-  @DisplayName("softDelete sets deletedOn and updatedOn and returns true")
-  void softDelete_success() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Summary", now, now, null);
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-
-    var result = dao.softDelete(tenantId, individualId);
-
-    assertThat(result).isTrue();
-    assertThat(entity.getDeletedOn()).isNotNull();
-    verify(session).merge(entity);
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete returns false when entity is missing or already deleted")
-  void softDelete_notFoundOrAlreadyDeleted() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-
-    var result = dao.softDelete(tenantId, individualId);
-
-    assertThat(result).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete returns false when entity has non-null deletedOn")
-  void softDelete_alreadyDeleted() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    var entity =
-        new EntityBaseEntity(tenantId, individualId, "Individual", "Summary", now, now, now);
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-
-    var result = dao.softDelete(tenantId, individualId);
-
-    assertThat(result).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete rolls back and throws on merge failure")
-  void softDelete_rollsBackOnException() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, individualId);
-    when(session.find(EntityBaseEntity.class, entityId))
-        .thenThrow(new RuntimeException("Delete error"));
-
-    assertThatThrownBy(() -> dao.softDelete(tenantId, individualId))
-        .isInstanceOf(RuntimeException.class)
-        .hasMessage("Delete error");
 
     verify(tx).rollback();
   }

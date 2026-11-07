@@ -41,18 +41,20 @@ public interface HashtagDAO extends DAO<Hashtag> {
    * Idempotently creates or resolves an active hashtag for the specified studio tenant.
    *
    * @param tenantId The internal tenant UUID.
+   * @param owner The generating actor entity UUID.
    * @param tag The case-preserved tag name.
    * @param canonicalUrl The canonical URL path for the tag.
    * @param summary Optional human-readable description.
    * @return The created, resolved, or reactivated Hashtag domain record.
    */
-  Hashtag create(UUID tenantId, String tag, String canonicalUrl, Optional<String> summary);
+  Hashtag create(
+      UUID tenantId, UUID owner, String tag, String canonicalUrl, Optional<String> summary);
 
   /**
    * Idempotently provisions multiple hashtags in bulk for the specified studio tenant.
    *
    * @param tenantId The internal tenant UUID.
-   * @param items The list of hashtag items (tag, canonicalUrl, summary).
+   * @param items The list of hashtag items (owner, tag, canonicalUrl, summary).
    * @return An ImmutableList containing all resolved and created Hashtag records.
    */
   ImmutableList<Hashtag> batchCreate(UUID tenantId, List<TagCreationItem> items);
@@ -80,11 +82,17 @@ public interface HashtagDAO extends DAO<Hashtag> {
 
   /** Input carrier item for batch creation operations. */
   @Immutable
-  record TagCreationItem(String tag, String canonicalUrl, Optional<String> summary) {}
+  record TagCreationItem(UUID owner, String tag, String canonicalUrl, Optional<String> summary) {}
 
   @Override
   default Optional<Hashtag> findById(UUID id) {
     throw new UnsupportedOperationException(
         "Direct hashtag lookup requires tenant context; use findById(tenantId, hashtagId)");
+  }
+
+  @Override
+  default ImmutableList<Hashtag> list() {
+    throw new UnsupportedOperationException(
+        "Multi-tenant hashtag listing is not permitted in user space; use listAll(tenantId)");
   }
 }

@@ -5,6 +5,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.EventDAO;
 import com.larpconnect.njall.data.domain.Event;
 import java.util.Optional;
@@ -48,7 +49,20 @@ final class EventActor extends AbstractBehavior<EventCommand> {
         cmd.replyTo().tell(EventActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
-      executeCreate(cmd.tenantId(), cmd.request(), cmd.replyTo());
+      var parsed =
+          GeneratorUriSupport.parseGenerator(
+              cmd.request().generator(), cmd.studioIdentifier(), cmd.lookup());
+      if (parsed.isEmpty()) {
+        cmd.replyTo()
+            .tell(EventActorResponse.badRequest("Invalid generator URI or actor identifier"));
+        return this;
+      }
+      executeCreate(
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          parsed.orElseThrow(),
+          cmd.request(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create event", e);
     }
@@ -56,47 +70,57 @@ final class EventActor extends AbstractBehavior<EventCommand> {
   }
 
   private void executeCreate(
-      UUID tenantId, CreateEventRequest request, ActorRef<EventActorResponse> replyTo) {
+      UUID tenantId,
+      String studioIdentifier,
+      UUID owner,
+      CreateEventRequest request,
+      ActorRef<EventActorResponse> replyTo) {
     var domain =
         eventDao.create(
             tenantId,
+            owner,
             request.title(),
             request.summary(),
             request.locationId(),
             request.startTime(),
             request.endTime());
-    replyTo.tell(EventActorResponse.success(toEventResponse(domain)));
+    replyTo.tell(EventActorResponse.success(toEventResponse(studioIdentifier, domain)));
   }
 
   private Behavior<EventCommand> onGetEvent(EventCommand.GetEvent cmd) {
     try {
-      executeGet(cmd.tenantId(), cmd.eventId(), cmd.replyTo());
+      executeGet(cmd.tenantId(), cmd.studioIdentifier(), cmd.eventId(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get event", e);
     }
     return this;
   }
 
-  private void executeGet(UUID tenantId, UUID eventId, ActorRef<EventActorResponse> replyTo) {
+  private void executeGet(
+      UUID tenantId, String studioIdentifier, UUID eventId, ActorRef<EventActorResponse> replyTo) {
     eventDao
         .findById(tenantId, eventId)
         .ifPresentOrElse(
-            event -> replyTo.tell(EventActorResponse.success(toEventResponse(event))),
+            event ->
+                replyTo.tell(EventActorResponse.success(toEventResponse(studioIdentifier, event))),
             () -> replyTo.tell(EventActorResponse.notFound("Event not found: " + eventId)));
   }
 
   private Behavior<EventCommand> onListEvents(EventCommand.ListEvents cmd) {
     try {
-      executeList(cmd.tenantId(), cmd.replyTo());
+      executeList(cmd.tenantId(), cmd.studioIdentifier(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "list events", e);
     }
     return this;
   }
 
-  private void executeList(UUID tenantId, ActorRef<EventActorResponse> replyTo) {
+  private void executeList(
+      UUID tenantId, String studioIdentifier, ActorRef<EventActorResponse> replyTo) {
     var events =
-        eventDao.listAll(tenantId).stream().map(this::toEventResponse).collect(toImmutableList());
+        eventDao.listAll(tenantId).stream()
+            .map(e -> toEventResponse(studioIdentifier, e))
+            .collect(toImmutableList());
     replyTo.tell(EventActorResponse.items(events));
   }
 
@@ -107,7 +131,13 @@ final class EventActor extends AbstractBehavior<EventCommand> {
         cmd.replyTo().tell(EventActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
-      executePatch(cmd.tenantId(), cmd.eventId(), cmd.request(), cmd.updateMask(), cmd.replyTo());
+      executePatch(
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          cmd.eventId(),
+          cmd.request(),
+          cmd.updateMask(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "patch event", e);
     }
@@ -116,6 +146,7 @@ final class EventActor extends AbstractBehavior<EventCommand> {
 
   private void executePatch(
       UUID tenantId,
+      String studioIdentifier,
       UUID eventId,
       UpdateEventRequest request,
       Optional<String> updateMask,
@@ -130,7 +161,9 @@ final class EventActor extends AbstractBehavior<EventCommand> {
     eventDao
         .patch(tenantId, eventId, title, summary, locationId, startTime, endTime)
         .ifPresentOrElse(
-            updated -> replyTo.tell(EventActorResponse.success(toEventResponse(updated))),
+            updated ->
+                replyTo.tell(
+                    EventActorResponse.success(toEventResponse(studioIdentifier, updated))),
             () -> replyTo.tell(EventActorResponse.notFound("Event not found: " + eventId)));
   }
 
@@ -152,9 +185,10 @@ final class EventActor extends AbstractBehavior<EventCommand> {
     }
   }
 
-  private EventResponse toEventResponse(Event event) {
+  private EventResponse toEventResponse(String studioIdentifier, Event event) {
     return new EventResponse(
         event.id(),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, event.owner()),
         event.title(),
         event.summary(),
         event.locationId(),
@@ -185,6 +219,10 @@ final class EventActor extends AbstractBehavior<EventCommand> {
   private void handleError(
       ActorRef<EventActorResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in EventActor", operation, error);
+    if (error instanceof IllegalArgumentException) {
+      replyTo.tell(EventActorResponse.badRequest(error.getMessage()));
+      return;
+    }
     if (isConstraintViolation(error)) {
       replyTo.tell(EventActorResponse.badRequest("Request data violates database constraints"));
       return;

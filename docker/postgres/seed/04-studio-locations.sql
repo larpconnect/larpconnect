@@ -4,9 +4,9 @@
 SET search_path = njall_users, public;
 
 -- CTI Root Entities for Locations
-INSERT INTO njall_users.entities (id, tenant_id, entity_type, summary) VALUES
-    ('018d0000-0000-7000-8000-000000000201', '018d0000-0000-7000-8000-000000000001', 'Location', 'Outdoor campsite venue for Valkyrie Example Larp weekend games'),
-    ('018d0000-0000-7000-8000-000000000202', '018d0000-0000-7000-8000-000000000002', 'Location', 'Historical manor grounds for Ironwood Fake Larp events')
+INSERT INTO njall_users.entities (id, tenant_id, owner, entity_type, summary) VALUES
+    ('018d0000-0000-7000-8000-000000000201', '018d0000-0000-7000-8000-000000000001', '018d0000-0000-7000-8000-000000000010', 'Location', 'Outdoor campsite venue for Valkyrie Example Larp weekend games'),
+    ('018d0000-0000-7000-8000-000000000202', '018d0000-0000-7000-8000-000000000002', '018d0000-0000-7000-8000-000000000020', 'Location', 'Historical manor grounds for Ironwood Fake Larp events')
 ON CONFLICT (id) DO NOTHING;
 
 -- Locations Subtype Records

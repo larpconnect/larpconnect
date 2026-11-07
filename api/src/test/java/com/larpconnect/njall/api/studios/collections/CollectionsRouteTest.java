@@ -85,6 +85,7 @@ final class CollectionsRouteTest {
         "OrderedCollection",
         "Featured Cast",
         Optional.of("Primary cast"),
+        "/api/studios/valiant/v1/actors/" + ownerId,
         ownerId,
         0,
         ImmutableList.of(),

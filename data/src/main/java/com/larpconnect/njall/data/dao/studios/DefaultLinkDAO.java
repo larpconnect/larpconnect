@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Link;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
 final class DefaultLinkDAO implements LinkDAO {
 
@@ -32,7 +34,7 @@ final class DefaultLinkDAO implements LinkDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, linkId);
+        var entityId = createEntityId(tenantId, linkId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         var link = session.find(LinkEntity.class, entityId);
         tx.commit();
@@ -41,11 +43,7 @@ final class DefaultLinkDAO implements LinkDAO {
         }
         return Optional.of(toLink(entity, link));
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -53,29 +51,29 @@ final class DefaultLinkDAO implements LinkDAO {
 
   @Override
   public Link create(
-      UUID tenantId, String linkType, String url, String mediaType, Optional<String> summary) {
+      UUID tenantId,
+      UUID owner,
+      String linkType,
+      String url,
+      String mediaType,
+      Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
+        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
         var linkId = UUID.randomUUID();
         var now = Instant.now();
-        var entity =
-            new EntityBaseEntity(
-                tenantId, linkId, ENTITY_TYPE_LINK, summary.orElse(null), now, now, null);
+        var entity = createBaseEntity(tenantId, linkId, owner, summary, now);
         session.persist(entity);
 
-        var link = new LinkEntity(tenantId, linkId, linkType, url, mediaType);
+        var link = createLinkEntity(tenantId, linkId, linkType, url, mediaType);
         session.persist(link);
 
         tx.commit();
         return toLink(entity, link);
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -93,7 +91,7 @@ final class DefaultLinkDAO implements LinkDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, linkId);
+        var entityId = createEntityId(tenantId, linkId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         var link = session.find(LinkEntity.class, entityId);
         if (entity == null || link == null || entity.getDeletedOn() != null) {
@@ -110,11 +108,7 @@ final class DefaultLinkDAO implements LinkDAO {
         tx.commit();
         return Optional.of(toLink(entity, link));
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -126,7 +120,7 @@ final class DefaultLinkDAO implements LinkDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, linkId);
+        var entityId = createEntityId(tenantId, linkId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         if (entity == null || entity.getDeletedOn() != null) {
           tx.commit();
@@ -139,11 +133,7 @@ final class DefaultLinkDAO implements LinkDAO {
         tx.commit();
         return true;
       } catch (Exception e) {
-        try {
-          tx.rollback();
-        } catch (Exception rollbackException) {
-          e.addSuppressed(rollbackException);
-        }
+        rollbackQuietly(tx, e);
         throw e;
       }
     }
@@ -162,9 +152,33 @@ final class DefaultLinkDAO implements LinkDAO {
         .getSingleResult();
   }
 
+  private static void rollbackQuietly(Transaction tx, Exception e) {
+    try {
+      tx.rollback();
+    } catch (Exception rollbackException) {
+      e.addSuppressed(rollbackException);
+    }
+  }
+
+  private static EntityId createEntityId(UUID tenantId, UUID id) {
+    return new EntityId(tenantId, id);
+  }
+
+  private static EntityBaseEntity createBaseEntity(
+      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
+    return new EntityBaseEntity(
+        tenantId, id, owner, ENTITY_TYPE_LINK, summary.orElse(null), now, now, null);
+  }
+
+  private static LinkEntity createLinkEntity(
+      UUID tenantId, UUID id, String linkType, String url, String mediaType) {
+    return new LinkEntity(tenantId, id, linkType, url, mediaType);
+  }
+
   private static Link toLink(EntityBaseEntity entity, LinkEntity link) {
     return new Link(
         entity.getId(),
+        entity.getOwner(),
         link.getLinkType(),
         link.getUrl(),
         link.getMediaType(),

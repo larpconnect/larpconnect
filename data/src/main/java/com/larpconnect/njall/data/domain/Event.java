@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
  * Immutable domain representation of a tenanted event entity.
  *
  * @param id The unique event UUID identifier.
+ * @param owner The generating actor entity UUID.
  * @param locationId Optional UUID of the associated physical location.
  * @param title The required human-readable title of the event.
  * @param summary Optional description summary from the base entity.
@@ -22,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 @Immutable
 public record Event(
     UUID id,
+    UUID owner,
     Optional<UUID> locationId,
     String title,
     Optional<String> summary,
@@ -34,6 +36,7 @@ public record Event(
 
   public Event(
       UUID id,
+      UUID owner,
       @Nullable UUID locationId,
       String title,
       @Nullable String summary,
@@ -44,6 +47,7 @@ public record Event(
       @Nullable Instant deletedOn) {
     this(
         id,
+        owner,
         Optional.ofNullable(locationId),
         title,
         Optional.ofNullable(summary),

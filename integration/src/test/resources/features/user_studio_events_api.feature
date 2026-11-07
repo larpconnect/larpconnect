@@ -14,9 +14,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_all_fields/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "event_lead"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "lead_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_all_fields/v1/locations" with body:
       """
       {
+        "generator": "{lead_actor_id}",
         "name": "Castle Grounds"
       }
       """
@@ -25,6 +34,7 @@ Feature: User Space Studio Events REST API
     When an API admin sends a POST request to "/api/studios/valiant_all_fields/v1/events" with body:
       """
       {
+        "generator": "/api/studios/valiant_all_fields/v1/actors/{lead_actor_id}",
         "title": "Autumn Harvest Festival",
         "summary": "Annual festival and gathering",
         "locationId": "{castle_loc_id}",
@@ -37,6 +47,7 @@ Feature: User Space Studio Events REST API
     And the JSON response contains field "title" with value "Autumn Harvest Festival"
     And the JSON response contains field "summary" with value "Annual festival and gathering"
     And the JSON response contains field "locationId" with value "{castle_loc_id}"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_all_fields/v1/actors/{lead_actor_id}"
     And the JSON response contains field "startTime" with value "2026-10-25T18:00:00Z"
     And the JSON response contains field "endTime" with value "2026-10-27T12:00:00Z"
     And the JSON response contains non-null field "createdOn"
@@ -54,14 +65,24 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_min/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "min_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "min_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_min/v1/events" with body:
       """
       {
+        "generator": "{min_actor_id}",
         "title": "Town Hall Gathering"
       }
       """
     Then the HTTP response status code is 201
     And the JSON response contains field "title" with value "Town Hall Gathering"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_min/v1/actors/{min_actor_id}"
     And the JSON response field "summary" is null
     And the JSON response field "locationId" is null
     And the JSON response field "startTime" is null
@@ -79,9 +100,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_blank/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "blank_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "blank_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_blank/v1/events" with body:
       """
       {
+        "generator": "{blank_actor_id}",
         "title": "   "
       }
       """
@@ -98,9 +128,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_broken_time/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "time_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "time_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_broken_time/v1/events" with body:
       """
       {
+        "generator": "{time_actor_id}",
         "title": "Broken Timeline Event",
         "startTime": "2026-10-27T12:00:00Z",
         "endTime": "2026-10-25T18:00:00Z"
@@ -119,9 +158,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_nonexistent_loc/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "loc_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "loc_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_nonexistent_loc/v1/events" with body:
       """
       {
+        "generator": "{loc_actor_id}",
         "title": "Unanchored Event",
         "locationId": "01925b6a-93be-7000-8000-000000000999"
       }
@@ -134,6 +182,7 @@ Feature: User Space Studio Events REST API
     When an API admin sends a POST request to "/api/studios/unknown/v1/events" with body:
       """
       {
+        "generator": "018f2345-6789-7abc-def0-000000000000",
         "title": "Ghost Event"
       }
       """
@@ -149,9 +198,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_list_events/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "list_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "list_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_list_events/v1/events" with body:
       """
       {
+        "generator": "{list_actor_id}",
         "title": "Event Alpha",
         "startTime": "2026-11-01T10:00:00Z"
       }
@@ -160,6 +218,7 @@ Feature: User Space Studio Events REST API
     When an API admin sends a POST request to "/api/studios/valiant_list_events/v1/events" with body:
       """
       {
+        "generator": "{list_actor_id}",
         "title": "Event Beta",
         "startTime": "2026-11-05T10:00:00Z"
       }
@@ -182,9 +241,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_del_list/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "del_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "del_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_del_list/v1/events" with body:
       """
       {
+        "generator": "{del_actor_id}",
         "title": "Active Event"
       }
       """
@@ -192,6 +260,7 @@ Feature: User Space Studio Events REST API
     When an API admin sends a POST request to "/api/studios/valiant_del_list/v1/events" with body:
       """
       {
+        "generator": "{del_actor_id}",
         "title": "To Be Deleted Event"
       }
       """
@@ -229,9 +298,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_get_event/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "get_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "get_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_get_event/v1/events" with body:
       """
       {
+        "generator": "{get_actor_id}",
         "title": "Summer Gala",
         "summary": "Grand evening ballroom gathering"
       }
@@ -242,6 +320,7 @@ Feature: User Space Studio Events REST API
     Then the HTTP response status code is 200
     And the JSON response contains field "title" with value "Summer Gala"
     And the JSON response contains field "summary" with value "Grand evening ballroom gathering"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_get_event/v1/actors/{get_actor_id}"
     And the JSON response does not contain field "tenantId"
 
   Scenario: Retrieving soft-deleted event returns 404
@@ -254,9 +333,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_get_del/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "del_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "del_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_get_del/v1/events" with body:
       """
       {
+        "generator": "{del_actor_id}",
         "title": "Ephemeral Event"
       }
       """
@@ -285,9 +373,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/studio_ct_alpha/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "ct_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "ct_actor_id"
     When an API admin sends a POST request to "/api/studios/studio_ct_alpha/v1/events" with body:
       """
       {
+        "generator": "{ct_actor_id}",
         "title": "Alpha Secret Event"
       }
       """
@@ -306,9 +403,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_patch_event/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "patch_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "patch_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_patch_event/v1/events" with body:
       """
       {
+        "generator": "{patch_actor_id}",
         "title": "Original Event Title",
         "startTime": "2026-10-25T18:00:00Z",
         "endTime": "2026-10-27T12:00:00Z"
@@ -339,9 +445,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_bad_patch/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "bad_patch_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "bad_patch_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_bad_patch/v1/events" with body:
       """
       {
+        "generator": "{bad_patch_actor_id}",
         "title": "Good Event",
         "startTime": "2026-10-25T18:00:00Z",
         "endTime": "2026-10-27T12:00:00Z"
@@ -369,9 +484,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_del_patch/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "del_patch_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "del_patch_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_del_patch/v1/events" with body:
       """
       {
+        "generator": "{del_patch_actor_id}",
         "title": "Pre-deleted Event"
       }
       """
@@ -397,9 +521,18 @@ Feature: User Space Studio Events REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_soft_del/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "soft_del_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "soft_del_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_soft_del/v1/events" with body:
       """
       {
+        "generator": "{soft_del_actor_id}",
         "title": "Event To Soft Delete"
       }
       """

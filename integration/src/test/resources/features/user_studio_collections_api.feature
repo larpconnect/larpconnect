@@ -4,7 +4,7 @@ Feature: User Space Studio Collections REST API
   I want to manage collections and collection items for a studio via user space endpoints
   So that I can curate ordered entities within the tenant boundary under Row-Level Security
 
-  Scenario: Successfully create collection with all fields
+  Scenario: Successfully create collection with generator inferred from actor ownerId
     Given the admin HTTP server is running with database migrations applied
     When an API admin sends a POST request to "/api/admin/v1/studios" with body:
       """
@@ -14,18 +14,18 @@ Feature: User Space Studio Collections REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_col_all/v1/individuals" with body:
+    When an API admin sends a POST request to "/api/studios/valiant_col_all/v1/actors" with body:
       """
       {
-        "name": "Jane Eyre"
+        "preferredUsername": "director_actor"
       }
       """
     Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_ind_id"
+    And the response field "id" is remembered as "owner_act_id"
     When an API admin sends a POST request to "/api/studios/valiant_col_all/v1/collections" with body:
       """
       {
-        "ownerId": "{owner_ind_id}",
+        "ownerId": "{owner_act_id}",
         "name": "Featured Cast",
         "summary": "Primary cast members for season 1"
       }
@@ -34,13 +34,61 @@ Feature: User Space Studio Collections REST API
     And the HTTP response content-type contains "application/json"
     And the JSON response contains field "name" with value "Featured Cast"
     And the JSON response contains field "summary" with value "Primary cast members for season 1"
-    And the JSON response contains field "ownerId" with value "{owner_ind_id}"
+    And the JSON response contains field "ownerId" with value "{owner_act_id}"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_col_all/v1/actors/{owner_act_id}"
     And the JSON response contains field "type" with value "OrderedCollection"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
     And the JSON response does not contain field "tenantId"
     And the JSON response array "orderedItems" has length 0
     And the response field "id" is remembered as "created_collection_id"
+
+  Scenario: Successfully create collection with explicit generator forms
+    Given the admin HTTP server is running with database migrations applied
+    When an API admin sends a POST request to "/api/admin/v1/studios" with body:
+      """
+      {
+        "alias": "valiant_col_explicit_gen",
+        "name": "Valiant Explicit Generator Studio"
+      }
+      """
+    Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_col_explicit_gen/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "producer_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "producer_act_id"
+    When an API admin sends a POST request to "/api/studios/valiant_col_explicit_gen/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "editor_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "editor_act_id"
+    When an API admin sends a POST request to "/api/studios/valiant_col_explicit_gen/v1/collections" with body:
+      """
+      {
+        "ownerId": "{producer_act_id}",
+        "generator": "{editor_act_id}",
+        "name": "Edited Cuts"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the JSON response contains field "generator" with value "/api/studios/valiant_col_explicit_gen/v1/actors/{editor_act_id}"
+    When an API admin sends a POST request to "/api/studios/valiant_col_explicit_gen/v1/collections" with body:
+      """
+      {
+        "ownerId": "{producer_act_id}",
+        "generator": "/api/studios/valiant_col_explicit_gen/v1/actors/{editor_act_id}",
+        "name": "Final Cuts"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the JSON response contains field "generator" with value "/api/studios/valiant_col_explicit_gen/v1/actors/{editor_act_id}"
 
   Scenario: Successfully create collection with minimal fields
     Given the admin HTTP server is running with database migrations applied
@@ -52,10 +100,10 @@ Feature: User Space Studio Collections REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_col_min/v1/individuals" with body:
+    When an API admin sends a POST request to "/api/studios/valiant_col_min/v1/actors" with body:
       """
       {
-        "name": "Edward Rochester"
+        "preferredUsername": "curator_actor"
       }
       """
     Then the HTTP response status code is 201
@@ -69,6 +117,7 @@ Feature: User Space Studio Collections REST API
       """
     Then the HTTP response status code is 201
     And the JSON response contains field "name" with value "Crew Members"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_col_min/v1/actors/{owner_min_id}"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
 
@@ -82,10 +131,10 @@ Feature: User Space Studio Collections REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_col_dup/v1/individuals" with body:
+    When an API admin sends a POST request to "/api/studios/valiant_col_dup/v1/actors" with body:
       """
       {
-        "name": "St. John Rivers"
+        "preferredUsername": "parish_actor"
       }
       """
     Then the HTTP response status code is 201
@@ -118,10 +167,10 @@ Feature: User Space Studio Collections REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_col_blank/v1/individuals" with body:
+    When an API admin sends a POST request to "/api/studios/valiant_col_blank/v1/actors" with body:
       """
       {
-        "name": "Adele Varens"
+        "preferredUsername": "blank_actor"
       }
       """
     Then the HTTP response status code is 201
@@ -180,10 +229,10 @@ Feature: User Space Studio Collections REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_col_crud/v1/individuals" with body:
+    When an API admin sends a POST request to "/api/studios/valiant_col_crud/v1/actors" with body:
       """
       {
-        "name": "Mrs. Fairfax"
+        "preferredUsername": "house_actor"
       }
       """
     Then the HTTP response status code is 201
@@ -202,6 +251,7 @@ Feature: User Space Studio Collections REST API
     Then the HTTP response status code is 200
     And the JSON response contains field "name" with value "House Staff"
     And the JSON response contains field "summary" with value "Original summary"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_col_crud/v1/actors/{owner_crud_id}"
     When an API admin sends a PATCH request to "/api/studios/valiant_col_crud/v1/collections/{crud_collection_id}" with body:
       """
       {
@@ -228,10 +278,10 @@ Feature: User Space Studio Collections REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_col_items/v1/individuals" with body:
+    When an API admin sends a POST request to "/api/studios/valiant_col_items/v1/actors" with body:
       """
       {
-        "name": "Owner Entity"
+        "preferredUsername": "item_creator_actor"
       }
       """
     Then the HTTP response status code is 201
@@ -239,6 +289,7 @@ Feature: User Space Studio Collections REST API
     When an API admin sends a POST request to "/api/studios/valiant_col_items/v1/individuals" with body:
       """
       {
+        "generator": "{items_owner_id}",
         "name": "Item Alpha"
       }
       """
@@ -247,6 +298,7 @@ Feature: User Space Studio Collections REST API
     When an API admin sends a POST request to "/api/studios/valiant_col_items/v1/individuals" with body:
       """
       {
+        "generator": "{items_owner_id}",
         "name": "Item Beta"
       }
       """
@@ -255,6 +307,7 @@ Feature: User Space Studio Collections REST API
     When an API admin sends a POST request to "/api/studios/valiant_col_items/v1/individuals" with body:
       """
       {
+        "generator": "{items_owner_id}",
         "name": "Item Gamma"
       }
       """
@@ -306,8 +359,11 @@ Feature: User Space Studio Collections REST API
     Then the HTTP response status code is 200
     And the JSON response array "orderedItems" has length 3
     And the JSON response path "orderedItems.0.name" has value "Item Beta"
+    And the JSON response path "orderedItems.0.generator" has value "/api/studios/valiant_col_items/v1/actors/{items_owner_id}"
     And the JSON response path "orderedItems.1.name" has value "Item Gamma"
+    And the JSON response path "orderedItems.1.generator" has value "/api/studios/valiant_col_items/v1/actors/{items_owner_id}"
     And the JSON response path "orderedItems.2.name" has value "Item Alpha"
+    And the JSON response path "orderedItems.2.generator" has value "/api/studios/valiant_col_items/v1/actors/{items_owner_id}"
     When an API admin sends a POST request to "/api/studios/valiant_col_items/v1/collections/{ordered_col_id}:removeItem" with body:
       """
       {

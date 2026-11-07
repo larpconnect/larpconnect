@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Collection;
@@ -24,8 +25,10 @@ final class DefaultCollectionDAO implements CollectionDAO {
 
   private static final String EXPANDED_ITEMS_QUERY =
       """
-      SELECT e.id, e.entity_type, e.summary,
-             COALESCE(i.name, ev.title, loc.name, l.url) AS display_name
+      SELECT e.id, e.owner, e.entity_type, e.summary,
+             COALESCE(
+                 i.name, ev.title, loc.name, l.url, a.preferred_username, c.name
+             ) AS display_name
       FROM njall_users.collection_items ci
       JOIN njall_users.entities e
         ON ci.refers_to_tenant_id = e.tenant_id AND ci.refers_to_id = e.id
@@ -37,6 +40,10 @@ final class DefaultCollectionDAO implements CollectionDAO {
         ON e.tenant_id = loc.tenant_id AND e.id = loc.id
       LEFT JOIN njall_users.links l
         ON e.tenant_id = l.tenant_id AND e.id = l.id
+      LEFT JOIN njall_users.actors a
+        ON e.tenant_id = a.tenant_id AND e.id = a.id
+      LEFT JOIN njall_users.collections c
+        ON e.tenant_id = c.tenant_id AND e.id = c.id
       WHERE ci.tenant_id = :tenantId
         AND ci.collection_id = :collectionId
         AND e.deleted_on IS NULL
@@ -126,14 +133,16 @@ final class DefaultCollectionDAO implements CollectionDAO {
   }
 
   @Override
-  public Collection create(UUID tenantId, UUID ownerId, String name, Optional<String> summary) {
+  public Collection create(
+      UUID tenantId, UUID owner, UUID ownerId, String name, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
+        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
         var collectionId = UUID.randomUUID();
         var now = Instant.now();
-        var baseEntity = createBaseEntity(tenantId, collectionId, summary, now);
+        var baseEntity = createBaseEntity(tenantId, collectionId, owner, summary, now);
         session.persist(baseEntity);
 
         var collectionEntity = createCollectionEntity(tenantId, collectionId, ownerId, name);
@@ -193,7 +202,9 @@ final class DefaultCollectionDAO implements CollectionDAO {
           return false;
         }
 
-        entity.setDeletedOn(Instant.now());
+        var now = Instant.now();
+        entity.setDeletedOn(now);
+        entity.setUpdatedOn(now);
         session.merge(entity);
         tx.commit();
         return true;
@@ -380,7 +391,11 @@ final class DefaultCollectionDAO implements CollectionDAO {
         .map(
             row ->
                 new ExpandedEntity(
-                    (UUID) row[0], (String) row[1], (String) row[3], (String) row[2]))
+                    (UUID) row[0],
+                    (UUID) row[1],
+                    (String) row[2],
+                    (String) row[4],
+                    (String) row[3]))
         .collect(ImmutableList.toImmutableList());
   }
 
@@ -404,9 +419,16 @@ final class DefaultCollectionDAO implements CollectionDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID collectionId, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID collectionId, UUID owner, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
-        tenantId, collectionId, ENTITY_TYPE_COLLECTION, summary.orElse(null), now, now, null);
+        tenantId,
+        collectionId,
+        owner,
+        ENTITY_TYPE_COLLECTION,
+        summary.orElse(null),
+        now,
+        now,
+        null);
   }
 
   private static CollectionEntity createCollectionEntity(
@@ -430,6 +452,7 @@ final class DefaultCollectionDAO implements CollectionDAO {
       EntityBaseEntity entity, CollectionEntity collection, ImmutableList<UUID> itemIds) {
     return new Collection(
         collection.getId(),
+        entity.getOwner(),
         collection.getOwnerId(),
         collection.getName(),
         entity.getSummary(),

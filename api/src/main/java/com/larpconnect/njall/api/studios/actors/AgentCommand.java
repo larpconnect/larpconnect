@@ -2,6 +2,7 @@ package com.larpconnect.njall.api.studios.actors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.errorprone.annotations.Immutable;
+import com.larpconnect.njall.data.domain.StudioLookup;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -29,8 +30,17 @@ public sealed interface AgentCommand {
       UUID tenantId,
       String studioIdentifier,
       CreateActorRequest request,
-      ActorRef<AgentActorResponse> replyTo)
-      implements AgentCommand {}
+      ActorRef<AgentActorResponse> replyTo,
+      Optional<StudioLookup> lookup)
+      implements AgentCommand {
+    public CreateAgent(
+        UUID tenantId,
+        String studioIdentifier,
+        CreateActorRequest request,
+        ActorRef<AgentActorResponse> replyTo) {
+      this(tenantId, studioIdentifier, request, replyTo, Optional.empty());
+    }
+  }
 
   @Immutable
   record GetAgent(
@@ -64,6 +74,7 @@ public sealed interface AgentCommand {
   @Immutable
   record AccessCollection(
       UUID tenantId,
+      String studioIdentifier,
       UUID actorId,
       CollectionTarget target,
       CollectionAction action,

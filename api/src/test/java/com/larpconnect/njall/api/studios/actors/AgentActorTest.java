@@ -14,6 +14,7 @@ import com.larpconnect.njall.data.dao.studios.actors.AgentDAO;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
 import com.larpconnect.njall.data.domain.Agent;
 import com.larpconnect.njall.data.domain.Collection;
+import com.larpconnect.njall.data.domain.StudioLookup;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,6 +57,7 @@ final class AgentActorTest {
     return new Collection(
         id,
         actorId,
+        actorId,
         name,
         Optional.of(name + " collection"),
         0,
@@ -75,13 +77,18 @@ final class AgentActorTest {
     when(agentDao.existsByPreferredUsername(tenantId, "valkyrie_lead", Optional.empty()))
         .thenReturn(false);
     when(agentDao.create(
-            eq(tenantId), eq(ownerId), eq("valkyrie_lead"), eq(Optional.of("Lead singer"))))
+            eq(tenantId),
+            eq(Optional.of(ownerId)),
+            eq("valkyrie_lead"),
+            eq(Optional.of("Lead singer"))))
         .thenReturn(domain);
 
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateActorRequest(ownerId, "valkyrie_lead", Optional.of("Lead singer"));
+    var request =
+        new CreateActorRequest(
+            Optional.of(ownerId.toString()), "valkyrie_lead", Optional.of("Lead singer"));
     testKit.run(new AgentCommand.CreateAgent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
@@ -95,6 +102,76 @@ final class AgentActorTest {
   }
 
   @Test
+  @DisplayName("onCreateAgent resolves generator URI with studio UUID via StudioLookup")
+  void onCreateAgent_canonicalUriWithStudioUuid_resolvesViaLookup() {
+    var agentDao = mock(AgentDAO.class);
+    var collectionDao = mock(CollectionDAO.class);
+    var domain = sampleAgent();
+    var publicStudioId = UUID.randomUUID();
+    var lookup =
+        new StudioLookup(tenantId, publicStudioId, STUDIO_IDENTIFIER, now, now, Optional.empty());
+
+    when(agentDao.existsByPreferredUsername(tenantId, "valkyrie_lead", Optional.empty()))
+        .thenReturn(false);
+    when(agentDao.create(
+            eq(tenantId),
+            eq(Optional.of(ownerId)),
+            eq("valkyrie_lead"),
+            eq(Optional.of("Lead singer"))))
+        .thenReturn(domain);
+
+    var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
+    TestInbox<AgentActorResponse> inbox = TestInbox.create();
+
+    var request =
+        new CreateActorRequest(
+            Optional.of("/api/studios/" + publicStudioId + "/v1/actors/" + ownerId),
+            "valkyrie_lead",
+            Optional.of("Lead singer"));
+    testKit.run(
+        new AgentCommand.CreateAgent(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef(), Optional.of(lookup)));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(AgentActorResponse.Success.class);
+  }
+
+  @Test
+  @DisplayName("onCreateAgent resolves generator URI with studio alias via StudioLookup")
+  void onCreateAgent_canonicalUriWithStudioAlias_resolvesViaLookup() {
+    var agentDao = mock(AgentDAO.class);
+    var collectionDao = mock(CollectionDAO.class);
+    var domain = sampleAgent();
+    var publicStudioId = UUID.randomUUID();
+    var lookup =
+        new StudioLookup(tenantId, publicStudioId, STUDIO_IDENTIFIER, now, now, Optional.empty());
+
+    when(agentDao.existsByPreferredUsername(tenantId, "valkyrie_lead", Optional.empty()))
+        .thenReturn(false);
+    when(agentDao.create(
+            eq(tenantId),
+            eq(Optional.of(ownerId)),
+            eq("valkyrie_lead"),
+            eq(Optional.of("Lead singer"))))
+        .thenReturn(domain);
+
+    var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
+    TestInbox<AgentActorResponse> inbox = TestInbox.create();
+
+    var request =
+        new CreateActorRequest(
+            Optional.of("/api/studios/" + STUDIO_IDENTIFIER + "/v1/actors/" + ownerId),
+            "valkyrie_lead",
+            Optional.of("Lead singer"));
+    testKit.run(
+        new AgentCommand.CreateAgent(
+            tenantId, publicStudioId.toString(), request, inbox.getRef(), Optional.of(lookup)));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(AgentActorResponse.Success.class);
+  }
+
+  @Test
   @DisplayName("onCreateAgent returns BadRequest on blank username")
   void onCreateAgent_blankUsername_returnsBadRequest() {
     var agentDao = mock(AgentDAO.class);
@@ -102,7 +179,7 @@ final class AgentActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateActorRequest(ownerId, "   ", Optional.empty());
+    var request = new CreateActorRequest(Optional.of(ownerId.toString()), "   ", Optional.empty());
     testKit.run(new AgentCommand.CreateAgent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
@@ -121,7 +198,8 @@ final class AgentActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateActorRequest(ownerId, "valkyrie_lead", Optional.empty());
+    var request =
+        new CreateActorRequest(Optional.of(ownerId.toString()), "valkyrie_lead", Optional.empty());
     testKit.run(new AgentCommand.CreateAgent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
@@ -142,7 +220,8 @@ final class AgentActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateActorRequest(ownerId, "valkyrie_lead", Optional.empty());
+    var request =
+        new CreateActorRequest(Optional.of(ownerId.toString()), "valkyrie_lead", Optional.empty());
     testKit.run(new AgentCommand.CreateAgent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
@@ -323,6 +402,7 @@ final class AgentActorTest {
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
+            STUDIO_IDENTIFIER,
             actorId,
             AgentCommand.CollectionTarget.INBOX,
             AgentCommand.CollectionAction.GET,
@@ -337,6 +417,7 @@ final class AgentActorTest {
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
+            STUDIO_IDENTIFIER,
             actorId,
             AgentCommand.CollectionTarget.OUTBOX,
             AgentCommand.CollectionAction.GET,
@@ -364,6 +445,7 @@ final class AgentActorTest {
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
+            STUDIO_IDENTIFIER,
             actorId,
             AgentCommand.CollectionTarget.INBOX,
             AgentCommand.CollectionAction.POST,
@@ -374,6 +456,7 @@ final class AgentActorTest {
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
+            STUDIO_IDENTIFIER,
             actorId,
             AgentCommand.CollectionTarget.OUTBOX,
             AgentCommand.CollectionAction.POST,
@@ -386,6 +469,7 @@ final class AgentActorTest {
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
+            STUDIO_IDENTIFIER,
             missingId,
             AgentCommand.CollectionTarget.INBOX,
             AgentCommand.CollectionAction.POST,

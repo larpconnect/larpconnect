@@ -20,8 +20,11 @@ import org.junit.jupiter.api.Test;
 
 final class LinkActorTest {
 
+  private static final String STUDIO_IDENTIFIER = "valiant";
+
   private final UUID tenantId = UUID.randomUUID();
   private final UUID linkId = UUID.randomUUID();
+  private final UUID ownerId = UUID.randomUUID();
   private final Instant now = Instant.now();
 
   private Behavior<LinkCommand> createBehavior(LinkDAO linkDao) {
@@ -31,6 +34,7 @@ final class LinkActorTest {
   private Link sampleLink() {
     return new Link(
         linkId,
+        ownerId,
         "website",
         "https://valiant.example.com",
         "text/html",
@@ -47,6 +51,7 @@ final class LinkActorTest {
     var domain = sampleLink();
     when(linkDao.create(
             eq(tenantId),
+            eq(ownerId),
             eq("website"),
             eq("https://valiant.example.com"),
             eq("text/html"),
@@ -58,14 +63,19 @@ final class LinkActorTest {
 
     var request =
         new CreateLinkRequest(
-            "website", "https://valiant.example.com", "text/html", "Official Studio");
-    testKit.run(new LinkCommand.CreateLink(tenantId, request, inbox.getRef()));
+            "/api/studios/valiant/v1/actors/" + ownerId,
+            "website",
+            "https://valiant.example.com",
+            "text/html",
+            "Official Studio");
+    testKit.run(new LinkCommand.CreateLink(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Success.class);
     var success = (LinkActorResponse.Success) response;
     assertThat(success.link().id()).isEqualTo(linkId);
     assertThat(success.link().linkType()).isEqualTo("website");
+    assertThat(success.link().generator()).isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
   }
 
   @Test
@@ -75,8 +85,9 @@ final class LinkActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(linkDao));
     TestInbox<LinkActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateLinkRequest("website", "invalid-uri", "text/html", "summary");
-    testKit.run(new LinkCommand.CreateLink(tenantId, request, inbox.getRef()));
+    var request =
+        new CreateLinkRequest(ownerId.toString(), "website", "invalid-uri", "text/html", "summary");
+    testKit.run(new LinkCommand.CreateLink(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.BadRequest.class);
@@ -86,14 +97,14 @@ final class LinkActorTest {
   @DisplayName("onCreateLink returns Failure when DAO throws exception")
   void onCreateLink_exception_returnsFailure() {
     var linkDao = mock(LinkDAO.class);
-    when(linkDao.create(any(), any(), any(), any(), any()))
+    when(linkDao.create(any(), any(), any(), any(), any(), any()))
         .thenThrow(new RuntimeException("Database error"));
 
     var testKit = BehaviorTestKit.create(createBehavior(linkDao));
     TestInbox<LinkActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateLinkRequest("website", "https://example.com");
-    testKit.run(new LinkCommand.CreateLink(tenantId, request, inbox.getRef()));
+    var request = new CreateLinkRequest(ownerId.toString(), "website", "https://example.com");
+    testKit.run(new LinkCommand.CreateLink(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Failure.class);
@@ -109,7 +120,7 @@ final class LinkActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(linkDao));
     TestInbox<LinkActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new LinkCommand.GetLink(tenantId, linkId, inbox.getRef()));
+    testKit.run(new LinkCommand.GetLink(tenantId, STUDIO_IDENTIFIER, linkId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Success.class);
@@ -125,7 +136,7 @@ final class LinkActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(linkDao));
     TestInbox<LinkActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new LinkCommand.GetLink(tenantId, linkId, inbox.getRef()));
+    testKit.run(new LinkCommand.GetLink(tenantId, STUDIO_IDENTIFIER, linkId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.NotFound.class);
@@ -140,7 +151,7 @@ final class LinkActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(linkDao));
     TestInbox<LinkActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new LinkCommand.GetLink(tenantId, linkId, inbox.getRef()));
+    testKit.run(new LinkCommand.GetLink(tenantId, STUDIO_IDENTIFIER, linkId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Failure.class);
@@ -153,6 +164,7 @@ final class LinkActorTest {
     var updated =
         new Link(
             linkId,
+            ownerId,
             "website",
             "https://updated.example.com",
             "text/html",
@@ -177,7 +189,12 @@ final class LinkActorTest {
             "ignoredType", "https://updated.example.com", "ignoredMedia", "Updated");
     testKit.run(
         new LinkCommand.PatchLink(
-            tenantId, linkId, request, Optional.of("url,summary"), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            linkId,
+            request,
+            Optional.of("url,summary"),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Success.class);
@@ -192,6 +209,7 @@ final class LinkActorTest {
     var updated =
         new Link(
             linkId,
+            ownerId,
             "discord",
             "https://discord.gg/valiant",
             "text/html",
@@ -213,7 +231,8 @@ final class LinkActorTest {
 
     var request = new UpdateLinkRequest("discord", "https://discord.gg/valiant", null, null);
     testKit.run(
-        new LinkCommand.PatchLink(tenantId, linkId, request, Optional.empty(), inbox.getRef()));
+        new LinkCommand.PatchLink(
+            tenantId, STUDIO_IDENTIFIER, linkId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Success.class);
@@ -228,7 +247,8 @@ final class LinkActorTest {
 
     var request = new UpdateLinkRequest(null, "invalid-url", null, null);
     testKit.run(
-        new LinkCommand.PatchLink(tenantId, linkId, request, Optional.of("url"), inbox.getRef()));
+        new LinkCommand.PatchLink(
+            tenantId, STUDIO_IDENTIFIER, linkId, request, Optional.of("url"), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.BadRequest.class);
@@ -245,7 +265,8 @@ final class LinkActorTest {
 
     var request = new UpdateLinkRequest("website", "https://example.com", null, null);
     testKit.run(
-        new LinkCommand.PatchLink(tenantId, linkId, request, Optional.empty(), inbox.getRef()));
+        new LinkCommand.PatchLink(
+            tenantId, STUDIO_IDENTIFIER, linkId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.NotFound.class);
@@ -263,7 +284,8 @@ final class LinkActorTest {
 
     var request = new UpdateLinkRequest("website", "https://example.com", null, null);
     testKit.run(
-        new LinkCommand.PatchLink(tenantId, linkId, request, Optional.empty(), inbox.getRef()));
+        new LinkCommand.PatchLink(
+            tenantId, STUDIO_IDENTIFIER, linkId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Failure.class);
@@ -319,15 +341,25 @@ final class LinkActorTest {
   void onCreateLink_blankMediaType_defaults() {
     var linkDao = mock(LinkDAO.class);
     when(linkDao.create(
-            eq(tenantId), eq("website"), eq("https://example.com"), eq("text/html"), any()))
+            eq(tenantId),
+            eq(ownerId),
+            eq("website"),
+            eq("https://example.com"),
+            eq("text/html"),
+            any()))
         .thenReturn(sampleLink());
 
     var testKit = BehaviorTestKit.create(createBehavior(linkDao));
     TestInbox<LinkActorResponse> inbox = TestInbox.create();
 
     var request =
-        new CreateLinkRequest("website", "https://example.com", Optional.empty(), Optional.empty());
-    testKit.run(new LinkCommand.CreateLink(tenantId, request, inbox.getRef()));
+        new CreateLinkRequest(
+            ownerId.toString(),
+            "website",
+            "https://example.com",
+            Optional.empty(),
+            Optional.empty());
+    testKit.run(new LinkCommand.CreateLink(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Success.class);
@@ -342,7 +374,7 @@ final class LinkActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(linkDao));
     TestInbox<LinkActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new LinkCommand.GetLink(tenantId, linkId, inbox.getRef()));
+    testKit.run(new LinkCommand.GetLink(tenantId, STUDIO_IDENTIFIER, linkId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(LinkActorResponse.Failure.class);

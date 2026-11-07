@@ -14,15 +14,17 @@ final class EntityBaseEntityTest {
   void entityBaseEntity_accessors() {
     var tenantId = UUID.randomUUID();
     var id = UUID.randomUUID();
+    var owner = UUID.randomUUID();
     var now = Instant.now();
 
-    var entity = new EntityBaseEntity(tenantId, id, "Link", null, now, now, null);
+    var entity = new EntityBaseEntity(tenantId, id, owner, "Link", null, now, now, null);
     entity.setSummary("Summary");
     entity.setUpdatedOn(now);
     entity.setDeletedOn(null);
 
     assertThat(entity.getTenantId()).isEqualTo(tenantId);
     assertThat(entity.getId()).isEqualTo(id);
+    assertThat(entity.getOwner()).isEqualTo(owner);
     assertThat(entity.getEntityType()).isEqualTo("Link");
     assertThat(entity.getSummary()).isEqualTo("Summary");
     assertThat(entity.getCreatedOn()).isEqualTo(now);

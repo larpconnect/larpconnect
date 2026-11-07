@@ -71,10 +71,12 @@ final class LocationAndAddressDomainTest {
   @DisplayName("Location domain record constructor and accessors operate correctly")
   void location_accessors() {
     var id = UUID.randomUUID();
+    var owner = UUID.randomUUID();
     var now = Instant.now();
-    var location = new Location(id, "Pineville Camp", "Outdoor venue", now, now, null);
+    var location = new Location(id, owner, "Pineville Camp", "Outdoor venue", now, now, null);
 
     assertThat(location.id()).isEqualTo(id);
+    assertThat(location.owner()).isEqualTo(owner);
     assertThat(location.name()).isEqualTo("Pineville Camp");
     assertThat(location.summary()).contains("Outdoor venue");
     assertThat(location.createdOn()).isEqualTo(now);
@@ -83,7 +85,8 @@ final class LocationAndAddressDomainTest {
     assertThat(location.isDeleted()).isFalse();
 
     var deletedLocation =
-        new Location(id, "Pineville Camp", Optional.empty(), now, now, Optional.of(now));
+        new Location(id, owner, "Pineville Camp", Optional.empty(), now, now, Optional.of(now));
+    assertThat(deletedLocation.owner()).isEqualTo(owner);
     assertThat(deletedLocation.isDeleted()).isTrue();
   }
 

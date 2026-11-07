@@ -53,6 +53,9 @@ final class LinkValidation {
    * @return Error message if invalid, or empty if valid.
    */
   static Optional<String> validateCreate(CreateLinkRequest request) {
+    if (Strings.isNullOrEmpty(request.generator()) || request.generator().isBlank()) {
+      return Optional.of("Generator URI or actor identifier must not be blank");
+    }
     if (request.linkType().isBlank()) {
       return Optional.of("linkType must not be blank");
     }

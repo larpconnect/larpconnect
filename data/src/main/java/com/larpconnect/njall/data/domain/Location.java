@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
  * Immutable domain representation of a tenanted physical venue location entity.
  *
  * @param id The unique location UUID identifier.
+ * @param owner The generating actor entity UUID.
  * @param name The human-readable name of the location.
  * @param summary Optional description from the base entity.
  * @param createdOn Creation timestamp.
@@ -19,6 +20,7 @@ import org.jspecify.annotations.Nullable;
 @Immutable
 public record Location(
     UUID id,
+    UUID owner,
     String name,
     Optional<String> summary,
     Instant createdOn,
@@ -28,6 +30,7 @@ public record Location(
 
   public Location(
       UUID id,
+      UUID owner,
       String name,
       @Nullable String summary,
       Instant createdOn,
@@ -35,6 +38,7 @@ public record Location(
       @Nullable Instant deletedOn) {
     this(
         id,
+        owner,
         name,
         Optional.ofNullable(summary),
         createdOn,

@@ -32,6 +32,7 @@ final class DefaultCollectionDAOTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID collectionId = UUID.randomUUID();
+  private final UUID owner = UUID.randomUUID();
   private final UUID ownerId = UUID.randomUUID();
   private final Instant now = Instant.now();
 
@@ -53,7 +54,7 @@ final class DefaultCollectionDAOTest {
     var entityId = new EntityId(tenantId, collectionId);
     var entity =
         new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Summary", now, now, null);
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
     var collection = new CollectionEntity(tenantId, collectionId, ownerId, "Cast");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -72,6 +73,7 @@ final class DefaultCollectionDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(collectionId);
+    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
     assertThat(result.orElseThrow().ownerId()).isEqualTo(ownerId);
     assertThat(result.orElseThrow().name()).isEqualTo("Cast");
     assertThat(result.orElseThrow().totalItems()).isEqualTo(1);
@@ -88,7 +90,8 @@ final class DefaultCollectionDAOTest {
 
     var entityId = new EntityId(tenantId, collectionId);
     var entity =
-        new EntityBaseEntity(tenantId, collectionId, "OrderedCollection", "Summary", now, now, now);
+        new EntityBaseEntity(
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, now);
     var collection = new CollectionEntity(tenantId, collectionId, ownerId, "Cast");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -117,6 +120,24 @@ final class DefaultCollectionDAOTest {
   }
 
   @Test
+  @DisplayName("findById returns empty when collection entity is null")
+  void findById_collectionEntityNull() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+
+    var entityId = new EntityId(tenantId, collectionId);
+    var entity =
+        new EntityBaseEntity(
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
+    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
+    when(session.find(CollectionEntity.class, entityId)).thenReturn(null);
+
+    assertThat(dao.findById(tenantId, collectionId)).isEmpty();
+    verify(tx).commit();
+  }
+
+  @Test
   @DisplayName("findExpandedItems returns ordered list of ExpandedEntity")
   void findExpandedItems_success() {
     var tx = mock(Transaction.class);
@@ -132,13 +153,14 @@ final class DefaultCollectionDAOTest {
     when(nativeQuery.setParameter("collectionId", collectionId)).thenReturn(nativeQuery);
 
     var refId = UUID.randomUUID();
-    Object[] row = new Object[] {refId, "Individual", "Lead bard", "Alice"};
+    Object[] row = new Object[] {refId, owner, "Individual", "Lead bard", "Alice"};
     when(nativeQuery.getResultList()).thenReturn(List.<Object[]>of(row));
 
     var items = dao.findExpandedItems(tenantId, collectionId);
 
     assertThat(items).hasSize(1);
     assertThat(items.get(0).id()).isEqualTo(refId);
+    assertThat(items.get(0).owner()).isEqualTo(owner);
     assertThat(items.get(0).type()).isEqualTo("Individual");
     assertThat(items.get(0).name()).contains("Alice");
     assertThat(items.get(0).summary()).contains("Lead bard");
@@ -197,9 +219,15 @@ final class DefaultCollectionDAOTest {
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
-    var collection = dao.create(tenantId, ownerId, "Cast", Optional.of("Summary"));
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
+
+    var collection = dao.create(tenantId, owner, ownerId, "Cast", Optional.of("Summary"));
 
     assertThat(collection.name()).isEqualTo("Cast");
+    assertThat(collection.owner()).isEqualTo(owner);
     assertThat(collection.ownerId()).isEqualTo(ownerId);
     assertThat(collection.summary()).contains("Summary");
     assertThat(collection.totalItems()).isEqualTo(0);
@@ -210,189 +238,48 @@ final class DefaultCollectionDAOTest {
   }
 
   @Test
-  @DisplayName("patch updates name and summary and returns updated collection")
-  void patch_success() {
+  @DisplayName("create throws when owner does not exist")
+  void create_ownerNotFound_throws() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner))).thenReturn(null);
 
-    var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Old summary", now, now, null);
-    var collection = new CollectionEntity(tenantId, collectionId, ownerId, "Old Name");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(CollectionEntity.class, entityId)).thenReturn(collection);
-
-    mockEmptyItemQuery();
-
-    var result =
-        dao.patch(tenantId, collectionId, Optional.of("New Name"), Optional.of("New summary"));
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().name()).isEqualTo("New Name");
-    assertThat(result.orElseThrow().summary()).contains("New summary");
-    verify(session).merge(entity);
-    verify(session).merge(collection);
-    verify(tx).commit();
+    assertThatThrownBy(() -> dao.create(tenantId, owner, ownerId, "Cast", Optional.of("Summary")))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
   }
 
   @Test
-  @DisplayName("patch returns empty if entity does not exist")
-  void patch_notFound() {
+  @DisplayName("create throws when owner is soft deleted")
+  void create_ownerDeleted_throws() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    var deletedOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, now);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(deletedOwner);
 
-    var entityId = new EntityId(tenantId, collectionId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-
-    var result = dao.patch(tenantId, collectionId, Optional.of("New Name"), Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
+    assertThatThrownBy(() -> dao.create(tenantId, owner, ownerId, "Cast", Optional.of("Summary")))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
   }
 
   @Test
-  @DisplayName("patch updates only summary when name is empty")
-  void patch_onlySummary() {
+  @DisplayName("create throws when owner is not an Actor")
+  void create_ownerNotActor_throws() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    var nonActorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Event", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(nonActorOwner);
 
-    var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Old summary", now, now, null);
-    var collection = new CollectionEntity(tenantId, collectionId, ownerId, "Old Name");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(CollectionEntity.class, entityId)).thenReturn(collection);
-    mockEmptyItemQuery();
-
-    var result = dao.patch(tenantId, collectionId, Optional.empty(), Optional.of("Updated"));
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().summary()).contains("Updated");
-    assertThat(result.orElseThrow().name()).isEqualTo("Old Name");
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch updates only name when summary is empty")
-  void patch_onlyName() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Old summary", now, now, null);
-    var collection = new CollectionEntity(tenantId, collectionId, ownerId, "Old Name");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(CollectionEntity.class, entityId)).thenReturn(collection);
-    mockEmptyItemQuery();
-
-    var result = dao.patch(tenantId, collectionId, Optional.of("Only Name"), Optional.empty());
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().name()).isEqualTo("Only Name");
-    assertThat(result.orElseThrow().summary()).contains("Old summary");
-    verify(tx).commit();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void mockEmptyItemQuery() {
-    Query<UUID> itemQuery = mock(Query.class);
-    when(session.createQuery(contains("SELECT ci.refersToId"), eq(UUID.class)))
-        .thenReturn(itemQuery);
-    when(itemQuery.setParameter("tenantId", tenantId)).thenReturn(itemQuery);
-    when(itemQuery.setParameter("collectionId", collectionId)).thenReturn(itemQuery);
-    when(itemQuery.getResultList()).thenReturn(List.of());
-  }
-
-  @Test
-  @DisplayName("softDelete marks deletedOn and returns true")
-  void softDelete_success() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Summary", now, now, null);
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-
-    var result = dao.softDelete(tenantId, collectionId);
-
-    assertThat(result).isTrue();
-    assertThat(entity.getDeletedOn()).isNotNull();
-    verify(session).merge(entity);
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete returns false if collection already deleted")
-  void softDelete_alreadyDeleted() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(tenantId, collectionId, "OrderedCollection", "Summary", now, now, now);
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-
-    var result = dao.softDelete(tenantId, collectionId);
-
-    assertThat(result).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch returns empty if collection entity is missing")
-  void patch_collectionNull() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Summary", now, now, null);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(CollectionEntity.class, entityId)).thenReturn(null);
-
-    var result = dao.patch(tenantId, collectionId, Optional.of("New Name"), Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch returns empty if entity is soft deleted")
-  void patch_deletedEntity() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(tenantId, collectionId, "OrderedCollection", "Summary", now, now, now);
-    var collection = new CollectionEntity(tenantId, collectionId, ownerId, "Name");
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(CollectionEntity.class, entityId)).thenReturn(collection);
-
-    var result = dao.patch(tenantId, collectionId, Optional.of("New Name"), Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
+    assertThatThrownBy(() -> dao.create(tenantId, owner, ownerId, "Cast", Optional.of("Summary")))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
   }
 
   @Test
@@ -403,34 +290,7 @@ final class DefaultCollectionDAOTest {
     when(session.createNativeQuery(contains("set_config"), eq(String.class)))
         .thenThrow(new RuntimeException("DB error"));
 
-    assertThatThrownBy(() -> dao.create(tenantId, ownerId, "Cast", Optional.empty()))
-        .isInstanceOf(RuntimeException.class);
-    verify(tx).rollback();
-  }
-
-  @Test
-  @DisplayName("patch rolls back and rethrows on exception")
-  void patch_exceptionTriggersRollback() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    when(session.createNativeQuery(contains("set_config"), eq(String.class)))
-        .thenThrow(new RuntimeException("DB error"));
-
-    assertThatThrownBy(
-            () -> dao.patch(tenantId, collectionId, Optional.of("Name"), Optional.empty()))
-        .isInstanceOf(RuntimeException.class);
-    verify(tx).rollback();
-  }
-
-  @Test
-  @DisplayName("softDelete rolls back and rethrows on exception")
-  void softDelete_exceptionTriggersRollback() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    when(session.createNativeQuery(contains("set_config"), eq(String.class)))
-        .thenThrow(new RuntimeException("DB error"));
-
-    assertThatThrownBy(() -> dao.softDelete(tenantId, collectionId))
+    assertThatThrownBy(() -> dao.create(tenantId, owner, ownerId, "Cast", Optional.empty()))
         .isInstanceOf(RuntimeException.class);
     verify(tx).rollback();
   }

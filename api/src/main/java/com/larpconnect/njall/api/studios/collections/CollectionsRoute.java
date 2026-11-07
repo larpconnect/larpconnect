@@ -77,7 +77,7 @@ public final class CollectionsRoute extends AllDirectives implements RouteProvid
     return studioLookupCache
         .findByIdOrAlias(studioIdParam)
         .filter(this::isActive)
-        .map(this::buildTenantedRoutes)
+        .map(lookup -> buildTenantedRoutes(lookup, studioIdParam))
         .orElseGet(() -> completeNotFound("Studio not found: " + studioIdParam));
   }
 
@@ -85,19 +85,20 @@ public final class CollectionsRoute extends AllDirectives implements RouteProvid
     return !lookup.isDeleted();
   }
 
-  private Route buildTenantedRoutes(StudioLookup lookup) {
+  private Route buildTenantedRoutes(StudioLookup lookup, String studioIdParam) {
     return concat(
         pathEndOrSingleSlash(
             () ->
                 concat(
-                    post(() -> handlePostCollection(lookup.tenantId())),
+                    post(() -> handlePostCollection(lookup, studioIdParam)),
                     get(() -> completeNotFound("Listing collections is not supported")))),
         pathPrefix(
             PathMatchers.segment(),
-            collectionIdParam -> handleCollectionBranch(lookup.tenantId(), collectionIdParam)));
+            collectionIdParam ->
+                handleCollectionBranch(lookup.tenantId(), studioIdParam, collectionIdParam)));
   }
 
-  private Route handleCollectionBranch(UUID tenantId, String segment) {
+  private Route handleCollectionBranch(UUID tenantId, String studioIdParam, String segment) {
     if (segment.endsWith(ADD_ITEM_SUFFIX)) {
       var idStr = segment.substring(0, segment.length() - ADD_ITEM_SUFFIX.length());
       return CollectionValidation.tryParseUuid(idStr)
@@ -111,41 +112,41 @@ public final class CollectionsRoute extends AllDirectives implements RouteProvid
           .orElseGet(() -> completeNotFound("Collection not found: " + segment));
     }
     return CollectionValidation.tryParseUuid(segment)
-        .map(collectionId -> buildCollectionSubroutes(tenantId, collectionId))
+        .map(collectionId -> buildCollectionSubroutes(tenantId, studioIdParam, collectionId))
         .orElseGet(() -> completeNotFound("Collection not found: " + segment));
   }
 
-  private Route buildCollectionSubroutes(UUID tenantId, UUID collectionId) {
+  private Route buildCollectionSubroutes(UUID tenantId, String studioIdParam, UUID collectionId) {
     return concat(
         pathEndOrSingleSlash(
             () ->
                 concat(
-                    get(() -> handleGetCollection(tenantId, collectionId)),
-                    patch(() -> handlePatchCollection(tenantId, collectionId)),
+                    get(() -> handleGetCollection(tenantId, studioIdParam, collectionId)),
+                    patch(() -> handlePatchCollection(tenantId, studioIdParam, collectionId)),
                     delete(() -> handleDeleteCollection(tenantId, collectionId)))),
         path(":addItem", () -> post(() -> handleAddItem(tenantId, collectionId))),
         path(":removeItem", () -> post(() -> handleRemoveItem(tenantId, collectionId))));
   }
 
-  private Route handlePostCollection(UUID tenantId) {
+  private Route handlePostCollection(StudioLookup lookup, String studioIdParam) {
     return entity(
         Jackson.unmarshaller(objectMapper, CreateCollectionRequest.class),
         request ->
             onComplete(
-                () -> askCreateCollection(tenantId, request),
+                () -> askCreateCollection(lookup, studioIdParam, request),
                 res -> mapCollectionResponse(res, StatusCodes.CREATED)));
   }
 
-  private Route handleGetCollection(UUID tenantId, UUID collectionId) {
+  private Route handleGetCollection(UUID tenantId, String studioIdParam, UUID collectionId) {
     return parameterOptional(
         "form",
         form ->
             onComplete(
-                () -> askGetCollection(tenantId, collectionId, form),
+                () -> askGetCollection(tenantId, studioIdParam, collectionId, form),
                 res -> mapCollectionResponse(res, StatusCodes.OK)));
   }
 
-  private Route handlePatchCollection(UUID tenantId, UUID collectionId) {
+  private Route handlePatchCollection(UUID tenantId, String studioIdParam, UUID collectionId) {
     return parameterOptional(
         "update_mask",
         mask ->
@@ -153,7 +154,7 @@ public final class CollectionsRoute extends AllDirectives implements RouteProvid
                 Jackson.unmarshaller(objectMapper, UpdateCollectionRequest.class),
                 req ->
                     onComplete(
-                        () -> askPatchCollection(tenantId, collectionId, req, mask),
+                        () -> askPatchCollection(tenantId, studioIdParam, collectionId, req, mask),
                         res -> mapCollectionResponse(res, StatusCodes.OK))));
   }
 
@@ -192,25 +193,30 @@ public final class CollectionsRoute extends AllDirectives implements RouteProvid
   }
 
   private CompletionStage<CollectionActorResponse> askCreateCollection(
-      UUID tenantId, CreateCollectionRequest request) {
+      StudioLookup lookup, String studioIdentifier, CreateCollectionRequest request) {
     return ask(
         collectionActor,
-        replyTo -> new CollectionCommand.CreateCollection(tenantId, request, replyTo),
+        replyTo ->
+            new CollectionCommand.CreateCollection(
+                lookup.tenantId(), studioIdentifier, request, replyTo, Optional.of(lookup)),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<CollectionActorResponse> askGetCollection(
-      UUID tenantId, UUID collectionId, Optional<String> form) {
+      UUID tenantId, String studioIdentifier, UUID collectionId, Optional<String> form) {
     return ask(
         collectionActor,
-        replyTo -> new CollectionCommand.GetCollection(tenantId, collectionId, form, replyTo),
+        replyTo ->
+            new CollectionCommand.GetCollection(
+                tenantId, studioIdentifier, collectionId, form, replyTo),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<CollectionActorResponse> askPatchCollection(
       UUID tenantId,
+      String studioIdentifier,
       UUID collectionId,
       UpdateCollectionRequest request,
       Optional<String> updateMask) {
@@ -218,7 +224,7 @@ public final class CollectionsRoute extends AllDirectives implements RouteProvid
         collectionActor,
         replyTo ->
             new CollectionCommand.PatchCollection(
-                tenantId, collectionId, request, updateMask, replyTo),
+                tenantId, studioIdentifier, collectionId, request, updateMask, replyTo),
         askTimeout,
         system.scheduler());
   }

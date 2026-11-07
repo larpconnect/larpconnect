@@ -21,8 +21,11 @@ import org.junit.jupiter.api.Test;
 
 final class EventActorTest {
 
+  private static final String STUDIO_IDENTIFIER = "valiant";
+
   private final UUID tenantId = UUID.randomUUID();
   private final UUID eventId = UUID.randomUUID();
+  private final UUID ownerId = UUID.randomUUID();
   private final UUID locationId = UUID.randomUUID();
   private final Instant now = Instant.now();
 
@@ -33,6 +36,7 @@ final class EventActorTest {
   private Event sampleEvent() {
     return new Event(
         eventId,
+        ownerId,
         locationId,
         "Autumn Harvest Festival",
         "Community gathering",
@@ -50,6 +54,7 @@ final class EventActorTest {
     var domain = sampleEvent();
     when(eventDao.create(
             eq(tenantId),
+            eq(ownerId),
             eq("Autumn Harvest Festival"),
             eq(Optional.of("Community gathering")),
             eq(Optional.of(locationId)),
@@ -62,18 +67,20 @@ final class EventActorTest {
 
     var request =
         new CreateEventRequest(
+            "/api/studios/valiant/v1/actors/" + ownerId,
             "Autumn Harvest Festival",
             "Community gathering",
             locationId,
             now,
             now.plusSeconds(3600));
-    testKit.run(new EventCommand.CreateEvent(tenantId, request, inbox.getRef()));
+    testKit.run(new EventCommand.CreateEvent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Success.class);
     var success = (EventActorResponse.Success) response;
     assertThat(success.event().id()).isEqualTo(eventId);
     assertThat(success.event().title()).isEqualTo("Autumn Harvest Festival");
+    assertThat(success.event().generator()).isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
   }
 
   @Test
@@ -83,8 +90,23 @@ final class EventActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(eventDao));
     TestInbox<EventActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateEventRequest("");
-    testKit.run(new EventCommand.CreateEvent(tenantId, request, inbox.getRef()));
+    var request = new CreateEventRequest(ownerId.toString(), "");
+    testKit.run(new EventCommand.CreateEvent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(EventActorResponse.Failure.class);
+    assertThat(((EventActorResponse.Failure) response).status()).isEqualTo(400);
+  }
+
+  @Test
+  @DisplayName("onCreateEvent returns BadRequest on invalid generator")
+  void onCreateEvent_invalidGenerator_returnsBadRequest() {
+    var eventDao = mock(EventDAO.class);
+    var testKit = BehaviorTestKit.create(createBehavior(eventDao));
+    TestInbox<EventActorResponse> inbox = TestInbox.create();
+
+    var request = new CreateEventRequest("invalid-generator", "Autumn Festival");
+    testKit.run(new EventCommand.CreateEvent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Failure.class);
@@ -95,14 +117,14 @@ final class EventActorTest {
   @DisplayName("onCreateEvent maps constraint violations to BadRequest")
   void onCreateEvent_constraintViolation_returnsBadRequest() {
     var eventDao = mock(EventDAO.class);
-    when(eventDao.create(any(), any(), any(), any(), any(), any()))
+    when(eventDao.create(any(), any(), any(), any(), any(), any(), any()))
         .thenThrow(new RuntimeException("violates foreign key constraint fk_events_locations"));
 
     var testKit = BehaviorTestKit.create(createBehavior(eventDao));
     TestInbox<EventActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateEventRequest("Autumn Festival");
-    testKit.run(new EventCommand.CreateEvent(tenantId, request, inbox.getRef()));
+    var request = new CreateEventRequest(ownerId.toString(), "Autumn Festival");
+    testKit.run(new EventCommand.CreateEvent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Failure.class);
@@ -113,14 +135,14 @@ final class EventActorTest {
   @DisplayName("onCreateEvent maps other errors to Failure")
   void onCreateEvent_genericError_returnsFailure() {
     var eventDao = mock(EventDAO.class);
-    when(eventDao.create(any(), any(), any(), any(), any(), any()))
+    when(eventDao.create(any(), any(), any(), any(), any(), any(), any()))
         .thenThrow(new RuntimeException("Database timeout"));
 
     var testKit = BehaviorTestKit.create(createBehavior(eventDao));
     TestInbox<EventActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateEventRequest("Autumn Festival");
-    testKit.run(new EventCommand.CreateEvent(tenantId, request, inbox.getRef()));
+    var request = new CreateEventRequest(ownerId.toString(), "Autumn Festival");
+    testKit.run(new EventCommand.CreateEvent(tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Failure.class);
@@ -135,7 +157,7 @@ final class EventActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(eventDao));
     TestInbox<EventActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new EventCommand.GetEvent(tenantId, eventId, inbox.getRef()));
+    testKit.run(new EventCommand.GetEvent(tenantId, STUDIO_IDENTIFIER, eventId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Success.class);
@@ -152,7 +174,7 @@ final class EventActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(eventDao));
     TestInbox<EventActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new EventCommand.GetEvent(tenantId, eventId, inbox.getRef()));
+    testKit.run(new EventCommand.GetEvent(tenantId, STUDIO_IDENTIFIER, eventId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Failure.class);
@@ -168,7 +190,7 @@ final class EventActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(eventDao));
     TestInbox<EventActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new EventCommand.ListEvents(tenantId, inbox.getRef()));
+    testKit.run(new EventCommand.ListEvents(tenantId, STUDIO_IDENTIFIER, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Items.class);
@@ -198,7 +220,7 @@ final class EventActorTest {
     var request = new UpdateEventRequest("Updated Title", null, null, null, null);
     testKit.run(
         new EventCommand.PatchEvent(
-            tenantId, eventId, request, Optional.of("title"), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, eventId, request, Optional.of("title"), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Success.class);
@@ -214,7 +236,7 @@ final class EventActorTest {
     var request = new UpdateEventRequest("   ", null, null, null, null);
     testKit.run(
         new EventCommand.PatchEvent(
-            tenantId, eventId, request, Optional.of("title"), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, eventId, request, Optional.of("title"), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Failure.class);
@@ -233,7 +255,8 @@ final class EventActorTest {
 
     var request = new UpdateEventRequest("New Title", null, null, null, null);
     testKit.run(
-        new EventCommand.PatchEvent(tenantId, eventId, request, Optional.empty(), inbox.getRef()));
+        new EventCommand.PatchEvent(
+            tenantId, STUDIO_IDENTIFIER, eventId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(EventActorResponse.Failure.class);

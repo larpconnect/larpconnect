@@ -104,21 +104,26 @@ public final class TagsRoute extends AllDirectives implements RouteProvider {
         pathEndOrSingleSlash(
             () ->
                 concat(
-                    get(() -> handleListTags(lookup)), post(() -> handlePostTag(lookup, prefix)))),
-        path(PathMatchers.segment(), tagIdParam -> handleTagItem(lookup, tagIdParam)));
+                    get(() -> handleListTags(lookup, studioIdParam)),
+                    post(() -> handlePostTag(lookup, studioIdParam, prefix)))),
+        path(
+            PathMatchers.segment(),
+            tagIdParam -> handleTagItem(lookup, studioIdParam, tagIdParam)));
   }
 
-  private Route handleListTags(StudioLookup lookup) {
+  private Route handleListTags(StudioLookup lookup, String studioIdParam) {
     return onComplete(
-        () -> askListTags(lookup.tenantId()), res -> mapResponse(res, StatusCodes.OK));
+        () -> askListTags(lookup.tenantId(), studioIdParam),
+        res -> mapResponse(res, StatusCodes.OK));
   }
 
-  private Route handlePostTag(StudioLookup lookup, String prefix) {
+  private Route handlePostTag(StudioLookup lookup, String studioIdParam, String prefix) {
     return entity(
         Jackson.unmarshaller(objectMapper, CreateTagRequest.class),
         request ->
             onComplete(
-                () -> askCreateTag(lookup.tenantId(), prefix, request), this::mapCreateResponse));
+                () -> askCreateTag(lookup, studioIdParam, prefix, request),
+                this::mapCreateResponse));
   }
 
   private Route handleBatchCreate(String studioIdParam) {
@@ -135,7 +140,7 @@ public final class TagsRoute extends AllDirectives implements RouteProvider {
         Jackson.unmarshaller(objectMapper, BatchCreateTagsRequest.class),
         request ->
             onComplete(
-                () -> askBatchCreate(lookup.tenantId(), prefix, request),
+                () -> askBatchCreate(lookup, studioIdParam, prefix, request),
                 this::mapBatchCreateResponse));
   }
 
@@ -160,12 +165,12 @@ public final class TagsRoute extends AllDirectives implements RouteProvider {
     };
   }
 
-  private Route handleTagItem(StudioLookup lookup, String tagIdParam) {
+  private Route handleTagItem(StudioLookup lookup, String studioIdParam, String tagIdParam) {
     return concat(
         get(
             () ->
                 onComplete(
-                    () -> askGetTag(lookup.tenantId(), tagIdParam),
+                    () -> askGetTag(lookup.tenantId(), studioIdParam, tagIdParam),
                     res -> mapResponse(res, StatusCodes.OK))),
         patch(
             () ->
@@ -176,7 +181,13 @@ public final class TagsRoute extends AllDirectives implements RouteProvider {
                             Jackson.unmarshaller(objectMapper, UpdateTagRequest.class),
                             req ->
                                 onComplete(
-                                    () -> askPatchTag(lookup.tenantId(), tagIdParam, req, mask),
+                                    () ->
+                                        askPatchTag(
+                                            lookup.tenantId(),
+                                            studioIdParam,
+                                            tagIdParam,
+                                            req,
+                                            mask),
                                     res -> mapResponse(res, StatusCodes.OK))))),
         delete(
             () ->
@@ -186,45 +197,68 @@ public final class TagsRoute extends AllDirectives implements RouteProvider {
   }
 
   private CompletionStage<TagActorResponse> askCreateTag(
-      UUID tenantId, String prefix, CreateTagRequest request) {
+      StudioLookup lookup, String studioIdentifier, String prefix, CreateTagRequest request) {
     return ask(
         tagActor,
         replyTo ->
-            new TagCommand.CreateTags(tenantId, prefix, ImmutableList.of(request), false, replyTo),
+            new TagCommand.CreateTags(
+                lookup.tenantId(),
+                studioIdentifier,
+                prefix,
+                ImmutableList.of(request),
+                false,
+                replyTo,
+                Optional.of(lookup)),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<TagActorResponse> askBatchCreate(
-      UUID tenantId, String prefix, BatchCreateTagsRequest request) {
+      StudioLookup lookup, String studioIdentifier, String prefix, BatchCreateTagsRequest request) {
     return ask(
         tagActor,
-        replyTo -> new TagCommand.CreateTags(tenantId, prefix, request.requests(), true, replyTo),
+        replyTo ->
+            new TagCommand.CreateTags(
+                lookup.tenantId(),
+                studioIdentifier,
+                prefix,
+                request.requests(),
+                true,
+                replyTo,
+                Optional.of(lookup)),
         askTimeout,
         system.scheduler());
   }
 
-  private CompletionStage<TagActorResponse> askGetTag(UUID tenantId, String tagIdParam) {
+  private CompletionStage<TagActorResponse> askGetTag(
+      UUID tenantId, String studioIdentifier, String tagIdParam) {
     return ask(
         tagActor,
-        replyTo -> new TagCommand.QueryTag(tenantId, Optional.of(tagIdParam), replyTo),
+        replyTo ->
+            new TagCommand.QueryTag(tenantId, studioIdentifier, Optional.of(tagIdParam), replyTo),
         askTimeout,
         system.scheduler());
   }
 
-  private CompletionStage<TagActorResponse> askListTags(UUID tenantId) {
+  private CompletionStage<TagActorResponse> askListTags(UUID tenantId, String studioIdentifier) {
     return ask(
         tagActor,
-        replyTo -> new TagCommand.QueryTag(tenantId, Optional.empty(), replyTo),
+        replyTo -> new TagCommand.QueryTag(tenantId, studioIdentifier, Optional.empty(), replyTo),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<TagActorResponse> askPatchTag(
-      UUID tenantId, String tagIdParam, UpdateTagRequest request, Optional<String> updateMask) {
+      UUID tenantId,
+      String studioIdentifier,
+      String tagIdParam,
+      UpdateTagRequest request,
+      Optional<String> updateMask) {
     return ask(
         tagActor,
-        replyTo -> new TagCommand.PatchTag(tenantId, tagIdParam, request, updateMask, replyTo),
+        replyTo ->
+            new TagCommand.PatchTag(
+                tenantId, studioIdentifier, tagIdParam, request, updateMask, replyTo),
         askTimeout,
         system.scheduler());
   }
@@ -241,11 +275,21 @@ public final class TagsRoute extends AllDirectives implements RouteProvider {
     if (responseTry.isFailure()) {
       return handleActorFailure(responseTry.failed().get());
     }
-    if (responseTry.get() instanceof TagActorResponse.Success s) {
-      var status = s.created() ? StatusCodes.CREATED : StatusCodes.OK;
-      return complete(status, s.tag(), Jackson.marshaller(objectMapper));
-    }
-    return mapResponse(responseTry, StatusCodes.OK);
+    return switch (responseTry.get()) {
+      case TagActorResponse.Success s ->
+          complete(
+              s.created() ? StatusCodes.CREATED : StatusCodes.OK,
+              s.tag(),
+              Jackson.marshaller(objectMapper));
+      case TagActorResponse.Items items ->
+          complete(StatusCodes.OK, items.tags(), Jackson.marshaller(objectMapper));
+      case TagActorResponse.Deleted _ -> complete(StatusCodes.NO_CONTENT);
+      case TagActorResponse.Failure err ->
+          complete(
+              StatusCodes.get(err.status()),
+              createErrorResponse(StatusCodes.get(err.status()), err.message()),
+              Jackson.marshaller(objectMapper));
+    };
   }
 
   private Route mapResponse(Try<TagActorResponse> responseTry, StatusCode successStatus) {

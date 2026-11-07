@@ -31,6 +31,7 @@ final class DefaultLinkDAOTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID linkId = UUID.randomUUID();
+  private final UUID owner = UUID.randomUUID();
   private final Instant now = Instant.now();
 
   @BeforeEach
@@ -50,7 +51,7 @@ final class DefaultLinkDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "Homepage", now, now, null);
+    var entity = new EntityBaseEntity(tenantId, linkId, owner, "Link", "Homepage", now, now, null);
     var link = new LinkEntity(tenantId, linkId, "website", "https://example.com", "text/html");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -60,6 +61,7 @@ final class DefaultLinkDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(linkId);
+    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
     assertThat(result.orElseThrow().linkType()).isEqualTo("website");
     assertThat(result.orElseThrow().url()).isEqualTo("https://example.com");
     assertThat(result.orElseThrow().mediaType()).isEqualTo("text/html");
@@ -77,7 +79,7 @@ final class DefaultLinkDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "Homepage", now, now, now);
+    var entity = new EntityBaseEntity(tenantId, linkId, owner, "Link", "Homepage", now, now, now);
     var link = new LinkEntity(tenantId, linkId, "website", "https://example.com", "text/html");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -115,7 +117,7 @@ final class DefaultLinkDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "Homepage", now, now, null);
+    var entity = new EntityBaseEntity(tenantId, linkId, owner, "Link", "Homepage", now, now, null);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(LinkEntity.class, entityId)).thenReturn(null);
 
@@ -147,10 +149,21 @@ final class DefaultLinkDAOTest {
 
     mockTenantConfigQuery();
 
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
+
     var result =
         dao.create(
-            tenantId, "discord", "https://discord.gg/test", "text/html", Optional.of("My Discord"));
+            tenantId,
+            owner,
+            "discord",
+            "https://discord.gg/test",
+            "text/html",
+            Optional.of("My Discord"));
 
+    assertThat(result.owner()).isEqualTo(owner);
     assertThat(result.linkType()).isEqualTo("discord");
     assertThat(result.url()).isEqualTo("https://discord.gg/test");
     assertThat(result.mediaType()).isEqualTo("text/html");
@@ -161,11 +174,85 @@ final class DefaultLinkDAOTest {
   }
 
   @Test
+  @DisplayName("create throws when owner does not exist")
+  void create_ownerNotFound_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner))).thenReturn(null);
+
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "discord",
+                    "https://discord.gg/test",
+                    "text/html",
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is soft-deleted")
+  void create_ownerDeleted_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var deletedOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, now);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(deletedOwner);
+
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "discord",
+                    "https://discord.gg/test",
+                    "text/html",
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is not an Actor")
+  void create_ownerNotActor_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var nonActorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Event", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(nonActorOwner);
+
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "discord",
+                    "https://discord.gg/test",
+                    "text/html",
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
   @DisplayName("create rollbacks on exception")
   void create_error_rollbacks() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
 
     doThrow(new RuntimeException("Persist error"))
         .when(session)
@@ -174,7 +261,12 @@ final class DefaultLinkDAOTest {
     assertThatThrownBy(
             () ->
                 dao.create(
-                    tenantId, "discord", "https://discord.gg/test", "text/html", Optional.empty()))
+                    tenantId,
+                    owner,
+                    "discord",
+                    "https://discord.gg/test",
+                    "text/html",
+                    Optional.empty()))
         .isInstanceOf(RuntimeException.class);
     verify(tx).rollback();
   }
@@ -187,7 +279,8 @@ final class DefaultLinkDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "Old Summary", now, now, null);
+    var entity =
+        new EntityBaseEntity(tenantId, linkId, owner, "Link", "Old Summary", now, now, null);
     var link = new LinkEntity(tenantId, linkId, "website", "https://old.example.com", "text/html");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -243,7 +336,8 @@ final class DefaultLinkDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "Old Summary", now, now, null);
+    var entity =
+        new EntityBaseEntity(tenantId, linkId, owner, "Link", "Old Summary", now, now, null);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(LinkEntity.class, entityId)).thenReturn(null);
 
@@ -268,7 +362,8 @@ final class DefaultLinkDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "Old Summary", now, now, now);
+    var entity =
+        new EntityBaseEntity(tenantId, linkId, owner, "Link", "Old Summary", now, now, now);
     var link = new LinkEntity(tenantId, linkId, "website", "https://old.example.com", "text/html");
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(LinkEntity.class, entityId)).thenReturn(link);
@@ -315,7 +410,7 @@ final class DefaultLinkDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "Summary", now, now, null);
+    var entity = new EntityBaseEntity(tenantId, linkId, owner, "Link", "Summary", now, now, null);
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
 
@@ -351,7 +446,7 @@ final class DefaultLinkDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, linkId);
-    var entity = new EntityBaseEntity(tenantId, linkId, "Link", "Summary", now, now, now);
+    var entity = new EntityBaseEntity(tenantId, linkId, owner, "Link", "Summary", now, now, now);
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
 

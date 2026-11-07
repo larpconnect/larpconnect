@@ -12,6 +12,9 @@ final class AgentValidation {
   private AgentValidation() {}
 
   static Optional<String> validateCreate(CreateActorRequest request) {
+    if (request.generator().isPresent() && request.generator().get().isBlank()) {
+      return Optional.of("Generator URI or actor identifier must not be blank");
+    }
     if (Strings.isNullOrEmpty(request.preferredUsername())
         || request.preferredUsername().isBlank()) {
       return Optional.of("Preferred username must not be blank");

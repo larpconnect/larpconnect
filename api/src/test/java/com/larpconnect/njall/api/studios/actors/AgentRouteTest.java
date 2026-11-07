@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 final class AgentRouteTest {
 
   private static final String CREATE_ACTOR_BODY =
-      "{\"ownerId\":\"018f2345-6789-7abc-def0-123456789def\","
+      "{\"generator\":\"018f2345-6789-7abc-def0-123456789def\","
           + "\"preferredUsername\":\"valkyrie_lead\",\"summary\":\"Lead singer\"}";
   private static final String PATCH_ACTOR_BODY = "{\"preferredUsername\":\"valkyrie_commander\"}";
   private static final String ADD_ENDPOINT_BODY =
@@ -86,7 +86,7 @@ final class AgentRouteTest {
     return new ActorResponse(
         actorId,
         "Actor",
-        ownerId,
+        "/api/studios/valiant/v1/actors/" + ownerId,
         "valkyrie_lead",
         Optional.of("Lead singer"),
         "/api/studios/valiant/v1/actors/" + actorId + "/inbox",
@@ -102,6 +102,7 @@ final class AgentRouteTest {
         "OrderedCollection",
         name,
         Optional.empty(),
+        "/api/studios/valiant/v1/actors/" + actorId,
         actorId,
         0,
         ImmutableList.of(),

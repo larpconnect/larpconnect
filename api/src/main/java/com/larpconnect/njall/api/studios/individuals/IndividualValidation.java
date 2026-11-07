@@ -9,6 +9,9 @@ final class IndividualValidation {
   private IndividualValidation() {}
 
   static Optional<String> validateCreate(CreateIndividualRequest request) {
+    if (Strings.isNullOrEmpty(request.generator()) || request.generator().isBlank()) {
+      return Optional.of("Generator URI or actor identifier must not be blank");
+    }
     if (Strings.isNullOrEmpty(request.name()) || request.name().isBlank()) {
       return Optional.of("Individual name must not be blank");
     }

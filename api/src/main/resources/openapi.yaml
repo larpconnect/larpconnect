@@ -2170,6 +2170,7 @@ components:
       type: object
       required:
         - id
+        - generator
         - linkType
         - url
         - mediaType
@@ -2180,6 +2181,10 @@ components:
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789abc"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         linkType:
           type: string
           example: "website"
@@ -2205,9 +2210,14 @@ components:
     CreateLinkRequest:
       type: object
       required:
+        - generator
         - linkType
         - url
       properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Link.
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         linkType:
           type: string
           example: "website"
@@ -2244,6 +2254,7 @@ components:
       type: object
       required:
         - id
+        - generator
         - tag
         - linkType
         - url
@@ -2255,6 +2266,10 @@ components:
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789abc"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         tag:
           type: string
           maxLength: 32
@@ -2283,8 +2298,13 @@ components:
     CreateTagRequest:
       type: object
       required:
+        - generator
         - tag
       properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Tag.
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         tag:
           type: string
           maxLength: 32
@@ -2351,6 +2371,7 @@ components:
       type: object
       required:
         - id
+        - generator
         - name
         - createdOn
         - updatedOn
@@ -2359,6 +2380,10 @@ components:
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789abc"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         name:
           type: string
           example: "Camp Whispering Pines"
@@ -2377,8 +2402,13 @@ components:
     CreateLocationRequest:
       type: object
       required:
+        - generator
         - name
       properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Location.
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         name:
           type: string
           example: "Camp Whispering Pines"
@@ -2513,6 +2543,7 @@ components:
       type: object
       required:
         - id
+        - generator
         - title
         - createdOn
         - updatedOn
@@ -2521,6 +2552,10 @@ components:
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789abc"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         title:
           type: string
           example: "Autumn Harvest Festival"
@@ -2551,8 +2586,13 @@ components:
     CreateEventRequest:
       type: object
       required:
+        - generator
         - title
       properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Event.
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         title:
           type: string
           example: "Autumn Harvest Festival"
@@ -2598,6 +2638,7 @@ components:
       type: object
       required:
         - id
+        - generator
         - name
         - createdOn
         - updatedOn
@@ -2606,6 +2647,10 @@ components:
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789abc"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         name:
           type: string
           example: "Jane Eyre"
@@ -2624,8 +2669,13 @@ components:
     CreateIndividualRequest:
       type: object
       required:
+        - generator
         - name
       properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Individual.
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         name:
           type: string
           example: "Jane Eyre"
@@ -2649,6 +2699,7 @@ components:
         - id
         - type
         - name
+        - generator
         - ownerId
         - totalItems
         - orderedItems
@@ -2668,6 +2719,10 @@ components:
         summary:
           type: string
           example: "Primary cast for season 1"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         ownerId:
           type: string
           format: uuid
@@ -2700,6 +2755,10 @@ components:
         - ownerId
         - name
       properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Collection. Inferred from ownerId when omitted.
+          example: "018f2345-6789-7abc-def0-123456789def"
         ownerId:
           type: string
           format: uuid
@@ -2753,7 +2812,7 @@ components:
       required:
         - id
         - type
-        - ownerId
+        - generator
         - preferredUsername
         - inbox
         - outbox
@@ -2768,10 +2827,10 @@ components:
         type:
           type: string
           example: "Actor"
-        ownerId:
+        generator:
           type: string
-          format: uuid
-          example: "018f2345-6789-7abc-def0-123456789def"
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
         preferredUsername:
           type: string
           example: "valkyrie_lead"
@@ -2805,10 +2864,12 @@ components:
     CreateActorRequest:
       type: object
       required:
-        - ownerId
         - preferredUsername
       properties:
-        ownerId:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Actor. Defaults to self-ownership when omitted.
+          example: "018f2345-6789-7abc-def0-123456789def"
           type: string
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789def"

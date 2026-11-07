@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 
 final class CollectionActorErrorHandlingTest {
 
+  private static final String STUDIO_IDENTIFIER = "valiant";
+
   private final UUID tenantId = UUID.randomUUID();
   private final UUID collectionId = UUID.randomUUID();
   private final UUID ownerId = UUID.randomUUID();
@@ -34,6 +36,7 @@ final class CollectionActorErrorHandlingTest {
   private Collection sampleCollection() {
     return new Collection(
         collectionId,
+        ownerId,
         ownerId,
         "Featured Cast",
         Optional.of("Primary cast"),
@@ -77,7 +80,7 @@ final class CollectionActorErrorHandlingTest {
 
     testKit.run(
         new CollectionCommand.GetCollection(
-            tenantId, collectionId, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, collectionId, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -94,7 +97,7 @@ final class CollectionActorErrorHandlingTest {
     var request = new UpdateCollectionRequest("   ", null);
     testKit.run(
         new CollectionCommand.PatchCollection(
-            tenantId, collectionId, request, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, collectionId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -113,7 +116,7 @@ final class CollectionActorErrorHandlingTest {
     var request = new UpdateCollectionRequest("New Name", null);
     testKit.run(
         new CollectionCommand.PatchCollection(
-            tenantId, collectionId, request, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, collectionId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -135,7 +138,7 @@ final class CollectionActorErrorHandlingTest {
     var request = new UpdateCollectionRequest("New Name", null);
     testKit.run(
         new CollectionCommand.PatchCollection(
-            tenantId, collectionId, request, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, collectionId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
