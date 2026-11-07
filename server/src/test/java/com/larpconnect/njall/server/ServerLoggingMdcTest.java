@@ -12,6 +12,8 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.instrumentation.logback.mdc.v1_0.OpenTelemetryAppender;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +41,10 @@ final class ServerLoggingMdcTest {
 
     rootLogger.addAppender(otelAppender);
 
-    var tracerProvider = SdkTracerProvider.builder().build();
+    var tracerProvider =
+        SdkTracerProvider.builder()
+            .addSpanProcessor(SimpleSpanProcessor.create(SpanExporter.noop()))
+            .build();
     OpenTelemetry openTelemetry =
         OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build();
     tracer = openTelemetry.getTracer("com.larpconnect.njall.server.test");

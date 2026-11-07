@@ -9,6 +9,8 @@ import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 
 /** Guice module providing OpenTelemetry SDK and Tracer singletons for Project Njall. */
 public final class TelemetryModule extends AbstractModule {
@@ -33,7 +35,10 @@ public final class TelemetryModule extends AbstractModule {
   }
 
   private OpenTelemetry buildOpenTelemetrySdk() {
-    var tracerProvider = SdkTracerProvider.builder().build();
+    var tracerProvider =
+        SdkTracerProvider.builder()
+            .addSpanProcessor(SimpleSpanProcessor.create(SpanExporter.noop()))
+            .build();
     var propagators = ContextPropagators.create(W3CTraceContextPropagator.getInstance());
     return OpenTelemetrySdk.builder()
         .setTracerProvider(tracerProvider)

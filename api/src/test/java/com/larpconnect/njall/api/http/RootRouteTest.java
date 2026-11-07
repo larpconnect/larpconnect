@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +29,10 @@ final class RootRouteTest {
   @BeforeAll
   static void setUp() {
     system = ActorSystem.create(Behaviors.empty(), "root-route-test");
-    var tracerProvider = SdkTracerProvider.builder().build();
+    var tracerProvider =
+        SdkTracerProvider.builder()
+            .addSpanProcessor(SimpleSpanProcessor.create(SpanExporter.noop()))
+            .build();
     OpenTelemetry otel = OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build();
     var tracer = otel.getTracer("test");
     tracingDirective = new DefaultTracingDirective(tracer);

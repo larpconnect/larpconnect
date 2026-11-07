@@ -6,6 +6,8 @@ import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -44,7 +46,10 @@ final class TracingDirectiveTest {
 
   @BeforeEach
   void setUp() {
-    var tracerProvider = SdkTracerProvider.builder().build();
+    var tracerProvider =
+        SdkTracerProvider.builder()
+            .addSpanProcessor(SimpleSpanProcessor.create(SpanExporter.noop()))
+            .build();
     OpenTelemetry otel = OpenTelemetrySdk.builder().setTracerProvider(tracerProvider).build();
     Tracer tracer = otel.getTracer("com.larpconnect.njall.api.test");
     tracingDirective = new DefaultTracingDirective(tracer);

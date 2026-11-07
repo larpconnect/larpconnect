@@ -7,7 +7,7 @@ description: Guidance for performing read-only, human-like peer code reviews on 
 
 ## Domain Context
 
-This skill guides agents in conducting high-value, read-only peer code reviews on Java changes in **Project Njall**.
+This skill guides agents in conducting high-value, read-only peer code reviews on Java changes in **Njall**.
 Its purpose is to review code the way an experienced human staff engineer would: focusing on architectural intent,
 behavioral isolation, Java 25 modernization, Pekko Typed concurrency safety, and meaningful tests—rather than
 mechanically re-checking formatting or counting lines that static linters already handle.
