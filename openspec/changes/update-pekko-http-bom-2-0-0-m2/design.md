@@ -34,6 +34,13 @@ Audit all `org.apache.pekko.http.*` usages in `:api`, `:server`, `:test`, and `:
 - **Rationale**: Upstream Pekko HTTP `2.0.0-M2` removed several long-deprecated APIs (`HttpApp`, `Coder.encode`, `ConnectionContext.defaultPort`, `ParserSettings.apply/create(Config)`, 1-arg `UnsupportedRequestContentTypeRejection.apply`, and the deprecated `javadsl` `route` directive). Codebase inspection confirms **Njall** uses none of these removed APIs; routes use `AllDirectives` / `Directives`, marshalling uses `Jackson`, and **Server** binding uses `Http.get(system).newServerAt(...).bind(...)`.
 - **Alternatives Considered**: Proactively refactoring route or testkit classes to use `JUnitJupiterRouteTest`. Rejected as unnecessary churn; existing route tests use `route().seal().function(system)` directly against an `ActorSystem` and remain fully supported in `2.0.0-M2`.
 
+### Decision 3: Explicit HTTP/1.1 Client Configuration for Cleartext Integration Tests
+
+Configure JDK `HttpClient` instances in integration test step definitions to explicitly use `HttpClient.Version.HTTP_1_1` via local builders (`HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()`).
+
+- **Rationale**: Pekko HTTP `2.0.0-M2` adheres to RFC 9113, which deprecated and removed cleartext HTTP/2 upgrade negotiation (`Upgrade: h2c`). Default JDK `HttpClient` instances (`HttpClient.newHttpClient()`) attempt `h2c` upgrade headers over cleartext `http://` URLs, leading to connection drops and `java.io.EOFException` inside `Http2Connection`. Forcing `HttpClient.Version.HTTP_1_1` locally across integration test step methods matches cleartext REST semantics, avoids `h2c` upgrade mismatches, preserves IOSP-lite local instantiation, and ensures deterministic test suite execution.
+- **Alternatives Considered**: Enabling cleartext HTTP/2 prior knowledge on the test clients. Rejected because the REST API contracts operate over standard HTTP/1.1 cleartext transport.
+
 ### Architecture & Dependency Topology (C4 Component-Level View)
 
 ```text
