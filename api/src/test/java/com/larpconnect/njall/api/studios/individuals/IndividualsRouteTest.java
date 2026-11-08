@@ -32,7 +32,8 @@ import org.junit.jupiter.api.Test;
 final class IndividualsRouteTest {
 
   private static final String CREATE_INDIVIDUAL_BODY =
-      "{\"name\":\"Jane Eyre\",\"summary\":\"Visiting scholar\"}";
+      "{\"generator\":\"019273c5-9271-7000-8000-000000000001\","
+          + "\"name\":\"Jane Eyre\",\"summary\":\"Visiting scholar\"}";
   private static final String PATCH_INDIVIDUAL_BODY = "{\"name\":\"Jane Rochester\"}";
 
   private static ActorSystem<Void> system;
@@ -75,7 +76,12 @@ final class IndividualsRouteTest {
 
   private IndividualResponse sampleIndividualResponse() {
     return new IndividualResponse(
-        individualId, "Jane Eyre", Optional.of("Visiting scholar"), now, now);
+        individualId,
+        "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
+        "Jane Eyre",
+        Optional.of("Visiting scholar"),
+        now,
+        now);
   }
 
   private ActorRef<IndividualCommand> createIndividualActor(IndividualActorResponse response) {

@@ -4,7 +4,7 @@ Feature: User Space Studio Actors REST API
   I want to manage actors, federated endpoints, and collections for a studio via user space endpoints
   So that I can establish domain identities and communicate within the tenant boundary under Row-Level Security
 
-  Scenario: Successfully create actor with all fields
+  Scenario: Successfully create actor with all fields and generator forms
     Given the admin HTTP server is running with database migrations applied
     When an API admin sends a POST request to "/api/admin/v1/studios" with body:
       """
@@ -14,18 +14,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_all/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_ind_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_all/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_ind_id}",
         "preferredUsername": "valkyrie_lead",
         "summary": "Lead singer of Valkyrie"
       }
@@ -35,15 +26,34 @@ Feature: User Space Studio Actors REST API
     And the JSON response contains field "type" with value "Actor"
     And the JSON response contains field "preferredUsername" with value "valkyrie_lead"
     And the JSON response contains field "summary" with value "Lead singer of Valkyrie"
-    And the JSON response contains field "ownerId" with value "{owner_ind_id}"
     And the JSON response contains non-null field "inbox"
     And the JSON response contains non-null field "outbox"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
     And the JSON response does not contain field "tenantId"
+    And the JSON response does not contain field "ownerId"
     And the response field "id" is remembered as "created_actor_id"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_act_all/v1/actors/{created_actor_id}"
+    When an API admin sends a POST request to "/api/studios/valiant_act_all/v1/actors" with body:
+      """
+      {
+        "generator": "{created_actor_id}",
+        "preferredUsername": "valkyrie_synth"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the JSON response contains field "generator" with value "/api/studios/valiant_act_all/v1/actors/{created_actor_id}"
+    When an API admin sends a POST request to "/api/studios/valiant_act_all/v1/actors" with body:
+      """
+      {
+        "generator": "/api/studios/valiant_act_all/v1/actors/{created_actor_id}",
+        "preferredUsername": "valkyrie_bass"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the JSON response contains field "generator" with value "/api/studios/valiant_act_all/v1/actors/{created_actor_id}"
 
-  Scenario: Successfully create actor with minimal fields
+  Scenario: Successfully create actor with minimal fields defaulting to self-ownership
     Given the admin HTTP server is running with database migrations applied
     When an API admin sends a POST request to "/api/admin/v1/studios" with body:
       """
@@ -53,23 +63,16 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_min/v1/individuals" with body:
-      """
-      {
-        "name": "Edward Rochester"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_min_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_min/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_min_id}",
         "preferredUsername": "rochester_lord"
       }
       """
     Then the HTTP response status code is 201
+    And the response field "id" is remembered as "min_actor_id"
     And the JSON response contains field "preferredUsername" with value "rochester_lord"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_act_min/v1/actors/{min_actor_id}"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
 
@@ -83,18 +86,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_dup/v1/individuals" with body:
-      """
-      {
-        "name": "St. John Rivers"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_dup_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_dup/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_dup_id}",
         "preferredUsername": "valkyrie_lead"
       }
       """
@@ -102,14 +96,13 @@ Feature: User Space Studio Actors REST API
     When an API admin sends a POST request to "/api/studios/valiant_act_dup/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_dup_id}",
         "preferredUsername": "VALKYRIE_LEAD"
       }
       """
     Then the HTTP response status code is 409
     And the JSON response error has code 409 and non-empty message
 
-  Scenario: Creating actor with missing owner entity is rejected with 400
+  Scenario: Creating actor with missing generator entity is rejected with 400
     Given the admin HTTP server is running with database migrations applied
     When an API admin sends a POST request to "/api/admin/v1/studios" with body:
       """
@@ -122,8 +115,75 @@ Feature: User Space Studio Actors REST API
     When an API admin sends a POST request to "/api/studios/valiant_act_no_owner/v1/actors" with body:
       """
       {
-        "ownerId": "018f2345-6789-7abc-def0-000000000000",
+        "generator": "018f2345-6789-7abc-def0-000000000000",
         "preferredUsername": "orphan_actor"
+      }
+      """
+    Then the HTTP response status code is 400
+    And the JSON response error has code 400 and non-empty message
+
+  Scenario: Creating actor with non-actor generator entity is rejected with 400
+    Given the admin HTTP server is running with database migrations applied
+    When an API admin sends a POST request to "/api/admin/v1/studios" with body:
+      """
+      {
+        "alias": "valiant_act_non_actor_gen",
+        "name": "Valiant Non-Actor Generator Studio"
+      }
+      """
+    Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_act_non_actor_gen/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "valid_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "valid_actor_id"
+    When an API admin sends a POST request to "/api/studios/valiant_act_non_actor_gen/v1/individuals" with body:
+      """
+      {
+        "generator": "{valid_actor_id}",
+        "name": "Jane Eyre"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "ind_gen_id"
+    When an API admin sends a POST request to "/api/studios/valiant_act_non_actor_gen/v1/actors" with body:
+      """
+      {
+        "generator": "{ind_gen_id}",
+        "preferredUsername": "rejected_actor"
+      }
+      """
+    Then the HTTP response status code is 400
+    And the JSON response error has code 400 and non-empty message
+
+  Scenario: Creating actor with soft-deleted generator entity is rejected with 400
+    Given the admin HTTP server is running with database migrations applied
+    When an API admin sends a POST request to "/api/admin/v1/studios" with body:
+      """
+      {
+        "alias": "valiant_act_deleted_gen",
+        "name": "Valiant Deleted Generator Studio"
+      }
+      """
+    Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_act_deleted_gen/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "temp_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "temp_actor_id"
+    When an API admin sends a DELETE request to "/api/studios/valiant_act_deleted_gen/v1/actors/{temp_actor_id}"
+    Then the HTTP response status code is 204
+    When an API admin sends a POST request to "/api/studios/valiant_act_deleted_gen/v1/actors" with body:
+      """
+      {
+        "generator": "{temp_actor_id}",
+        "preferredUsername": "new_actor_deleted_gen"
       }
       """
     Then the HTTP response status code is 400
@@ -139,18 +199,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_blank/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_blank_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_blank/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_blank_id}",
         "preferredUsername": "   "
       }
       """
@@ -180,18 +231,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_get/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_get_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_get/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_get_id}",
         "preferredUsername": "valkyrie_lead",
         "summary": "Lead singer"
       }
@@ -203,6 +245,7 @@ Feature: User Space Studio Actors REST API
     And the JSON response contains field "id" with value "{retrieved_actor_id}"
     And the JSON response contains field "preferredUsername" with value "valkyrie_lead"
     And the JSON response contains field "summary" with value "Lead singer"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_act_get/v1/actors/{retrieved_actor_id}"
     And the JSON response contains non-null field "inbox"
     And the JSON response contains non-null field "outbox"
 
@@ -216,18 +259,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_patch/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_patch_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_patch/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_patch_id}",
         "preferredUsername": "valkyrie_lead",
         "summary": "Original summary"
       }
@@ -255,18 +289,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_patch_conflict/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_pc_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_patch_conflict/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_pc_id}",
         "preferredUsername": "actor_one"
       }
       """
@@ -274,7 +299,6 @@ Feature: User Space Studio Actors REST API
     When an API admin sends a POST request to "/api/studios/valiant_act_patch_conflict/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_pc_id}",
         "preferredUsername": "actor_two"
       }
       """
@@ -299,18 +323,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_ep/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_ep_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_ep/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_ep_id}",
         "preferredUsername": "valkyrie_lead"
       }
       """
@@ -359,18 +374,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_bad_ep/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_bep_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_bad_ep/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_bep_id}",
         "preferredUsername": "valkyrie_lead"
       }
       """
@@ -396,18 +402,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_box/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_box_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_box/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_box_id}",
         "preferredUsername": "valkyrie_lead"
       }
       """
@@ -450,18 +447,9 @@ Feature: User Space Studio Actors REST API
       }
       """
     Then the HTTP response status code is 201
-    When an API admin sends a POST request to "/api/studios/valiant_act_del/v1/individuals" with body:
-      """
-      {
-        "name": "Jane Eyre"
-      }
-      """
-    Then the HTTP response status code is 201
-    And the response field "id" is remembered as "owner_del_id"
     When an API admin sends a POST request to "/api/studios/valiant_act_del/v1/actors" with body:
       """
       {
-        "ownerId": "{owner_del_id}",
         "preferredUsername": "valkyrie_lead"
       }
       """

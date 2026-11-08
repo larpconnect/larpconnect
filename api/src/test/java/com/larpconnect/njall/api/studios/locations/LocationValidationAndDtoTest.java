@@ -23,15 +23,22 @@ final class LocationValidationAndDtoTest {
   @Test
   @DisplayName("LocationValidation handles create and patch rules")
   void locationValidation_rules() {
-    var blankName = new CreateLocationRequest("");
+    var blankGen = new CreateLocationRequest("", "Camp Whispering Pines");
+    assertThat(LocationValidation.validateCreate(blankGen))
+        .contains("Generator URI or actor identifier must not be blank");
+
+    var blankName = new CreateLocationRequest("019273c5-9271-7000-8000-000000000001", "");
     assertThat(LocationValidation.validateCreate(blankName))
         .contains("Location name must not be blank");
 
-    var longName = new CreateLocationRequest("a".repeat(256));
+    var longName =
+        new CreateLocationRequest("019273c5-9271-7000-8000-000000000001", "a".repeat(256));
     assertThat(LocationValidation.validateCreate(longName))
         .contains("Location name must not exceed 255 characters");
 
-    var validCreate = new CreateLocationRequest("Camp Whispering Pines", "Main camp");
+    var validCreate =
+        new CreateLocationRequest(
+            "019273c5-9271-7000-8000-000000000001", "Camp Whispering Pines", "Main camp");
     assertThat(LocationValidation.validateCreate(validCreate)).isEmpty();
 
     var blankPatch = new UpdateLocationRequest("   ", null);
@@ -62,20 +69,30 @@ final class LocationValidationAndDtoTest {
     var createJson =
         """
         {
+          "generator": "019273c5-9271-7000-8000-000000000001",
           "name": "Camp Whispering Pines",
           "summary": "Main campsite"
         }
         """;
     var createReq = objectMapper.readValue(createJson, CreateLocationRequest.class);
+    assertThat(createReq.generator()).isEqualTo("019273c5-9271-7000-8000-000000000001");
     assertThat(createReq.name()).isEqualTo("Camp Whispering Pines");
     assertThat(createReq.summary()).contains("Main campsite");
 
     var id = UUID.randomUUID();
     var now = Instant.now();
     var response =
-        new LocationResponse(id, "Camp Whispering Pines", Optional.of("Summary"), now, now);
+        new LocationResponse(
+            id,
+            "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
+            "Camp Whispering Pines",
+            Optional.of("Summary"),
+            now,
+            now);
     var resJson = objectMapper.writeValueAsString(response);
     assertThat(resJson).contains(id.toString());
+    assertThat(resJson)
+        .contains("/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001");
     assertThat(resJson).contains("Camp Whispering Pines");
     assertThat(resJson).doesNotContain("tenantId");
   }

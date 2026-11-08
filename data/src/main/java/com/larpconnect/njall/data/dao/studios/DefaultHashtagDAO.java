@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Hashtag;
@@ -53,12 +54,12 @@ final class DefaultHashtagDAO implements HashtagDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var tagIdOpt = findTagIdByName(session, tenantId, tag);
-        if (tagIdOpt.isEmpty()) {
+        var idOpt = findTagIdByName(session, tenantId, tag);
+        if (idOpt.isEmpty()) {
           tx.commit();
           return Optional.empty();
         }
-        var result = loadHashtag(session, tenantId, tagIdOpt.orElseThrow());
+        var result = loadHashtag(session, tenantId, idOpt.orElseThrow());
         tx.commit();
         return result;
       } catch (Exception e) {
@@ -99,12 +100,14 @@ final class DefaultHashtagDAO implements HashtagDAO {
   }
 
   @Override
-  public Hashtag create(UUID tenantId, String tag, String canonicalUrl, Optional<String> summary) {
+  public Hashtag create(
+      UUID tenantId, UUID owner, String tag, String canonicalUrl, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var hashtag = internalCreateOrResolve(session, tenantId, tag, canonicalUrl, summary);
+        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
+        var hashtag = internalCreateOrResolve(session, tenantId, owner, tag, canonicalUrl, summary);
         tx.commit();
         return hashtag;
       } catch (Exception e) {
@@ -120,11 +123,19 @@ final class DefaultHashtagDAO implements HashtagDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
+        for (var item : items) {
+          ActorOwnerValidator.validateActorOwner(session, tenantId, item.owner());
+        }
         var builder = ImmutableList.<Hashtag>builderWithExpectedSize(items.size());
         for (var item : items) {
           builder.add(
               internalCreateOrResolve(
-                  session, tenantId, item.tag(), item.canonicalUrl(), item.summary()));
+                  session,
+                  tenantId,
+                  item.owner(),
+                  item.tag(),
+                  item.canonicalUrl(),
+                  item.summary()));
         }
         tx.commit();
         return builder.build();
@@ -142,24 +153,21 @@ final class DefaultHashtagDAO implements HashtagDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, hashtagId);
+        var entityId = createEntityId(tenantId, hashtagId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         var link = session.find(LinkEntity.class, entityId);
-        var hashtagEntity = session.find(HashtagEntity.class, entityId);
-        if (entity == null
-            || link == null
-            || hashtagEntity == null
-            || entity.getDeletedOn() != null) {
+        var hashtag = session.find(HashtagEntity.class, entityId);
+        if (entity == null || link == null || hashtag == null || entity.getDeletedOn() != null) {
           tx.commit();
           return Optional.empty();
         }
-        tag.ifPresent(hashtagEntity::setTag);
         summary.ifPresent(entity::setSummary);
+        tag.ifPresent(hashtag::setTag);
         entity.setUpdatedOn(Instant.now());
         session.merge(entity);
-        session.merge(hashtagEntity);
+        session.merge(hashtag);
         tx.commit();
-        return Optional.of(toHashtag(entity, link, hashtagEntity));
+        return Optional.of(toHashtag(entity, link, hashtag));
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -173,7 +181,7 @@ final class DefaultHashtagDAO implements HashtagDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, hashtagId);
+        var entityId = createEntityId(tenantId, hashtagId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         if (entity == null || entity.getDeletedOn() != null) {
           tx.commit();
@@ -192,24 +200,23 @@ final class DefaultHashtagDAO implements HashtagDAO {
     }
   }
 
-  @Override
-  public ImmutableList<Hashtag> list() {
-    throw new UnsupportedOperationException(
-        "Direct un-tenanted hashtag listing is not permitted in user space");
-  }
-
   private Hashtag internalCreateOrResolve(
-      Session session, UUID tenantId, String tag, String canonicalUrl, Optional<String> summary) {
+      Session session,
+      UUID tenantId,
+      UUID owner,
+      String tag,
+      String canonicalUrl,
+      Optional<String> summary) {
     var existingIdOpt = findTagIdByName(session, tenantId, tag);
     if (existingIdOpt.isPresent()) {
       return reactivateOrReturn(session, tenantId, existingIdOpt.orElseThrow(), tag, summary);
     }
-    return persistNewHashtag(session, tenantId, tag, canonicalUrl, summary);
+    return persistNewHashtag(session, tenantId, owner, tag, canonicalUrl, summary);
   }
 
   private Hashtag reactivateOrReturn(
       Session session, UUID tenantId, UUID hashtagId, String tag, Optional<String> summary) {
-    var entityId = new EntityId(tenantId, hashtagId);
+    var entityId = createEntityId(tenantId, hashtagId);
     var entity = session.find(EntityBaseEntity.class, entityId);
     var link = session.find(LinkEntity.class, entityId);
     var hashtagEntity = session.find(HashtagEntity.class, entityId);
@@ -225,31 +232,26 @@ final class DefaultHashtagDAO implements HashtagDAO {
   }
 
   private Hashtag persistNewHashtag(
-      Session session, UUID tenantId, String tag, String canonicalUrl, Optional<String> summary) {
+      Session session,
+      UUID tenantId,
+      UUID owner,
+      String tag,
+      String canonicalUrl,
+      Optional<String> summary) {
     var hashtagId = UUID.randomUUID();
     var now = Instant.now();
-    var entity =
-        new EntityBaseEntity(
-            tenantId, hashtagId, ENTITY_TYPE_HASHTAG, summary.orElse(null), now, now, null);
+    var entity = createBaseEntity(tenantId, hashtagId, owner, summary, now);
     session.persist(entity);
 
-    var link =
-        new LinkEntity(tenantId, hashtagId, LINK_TYPE_HASHTAG, canonicalUrl, DEFAULT_MEDIA_TYPE);
+    var link = createLinkEntity(tenantId, hashtagId, canonicalUrl);
     session.persist(link);
 
-    var hashtagEntity = new HashtagEntity(tenantId, hashtagId, tag);
+    var hashtagEntity = createHashtagEntity(tenantId, hashtagId, tag);
     session.persist(hashtagEntity);
 
     return toHashtag(entity, link, hashtagEntity);
   }
 
-  /**
-   * Resolves the primary identifier for a tag name under the specified tenant.
-   *
-   * <p>Uses {@code stream().findFirst()} on the result list rather than {@code
-   * uniqueResultOptional()} to safely select the identifier without throwing {@code
-   * NonUniqueResultException} in the presence of duplicate matches.
-   */
   private Optional<UUID> findTagIdByName(Session session, UUID tenantId, String tag) {
     var lowerTag = tag.toLowerCase(Locale.ROOT);
     var query =
@@ -263,7 +265,7 @@ final class DefaultHashtagDAO implements HashtagDAO {
   }
 
   private Optional<Hashtag> loadHashtag(Session session, UUID tenantId, UUID hashtagId) {
-    var entityId = new EntityId(tenantId, hashtagId);
+    var entityId = createEntityId(tenantId, hashtagId);
     var entity = session.find(EntityBaseEntity.class, entityId);
     var link = session.find(LinkEntity.class, entityId);
     var hashtag = session.find(HashtagEntity.class, entityId);
@@ -288,10 +290,29 @@ final class DefaultHashtagDAO implements HashtagDAO {
     }
   }
 
+  private static EntityId createEntityId(UUID tenantId, UUID id) {
+    return new EntityId(tenantId, id);
+  }
+
+  private static EntityBaseEntity createBaseEntity(
+      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
+    return new EntityBaseEntity(
+        tenantId, id, owner, ENTITY_TYPE_HASHTAG, summary.orElse(null), now, now, null);
+  }
+
+  private static LinkEntity createLinkEntity(UUID tenantId, UUID id, String canonicalUrl) {
+    return new LinkEntity(tenantId, id, LINK_TYPE_HASHTAG, canonicalUrl, DEFAULT_MEDIA_TYPE);
+  }
+
+  private static HashtagEntity createHashtagEntity(UUID tenantId, UUID id, String tag) {
+    return new HashtagEntity(tenantId, id, tag);
+  }
+
   private static Hashtag toHashtag(
       EntityBaseEntity entity, LinkEntity link, HashtagEntity hashtag) {
     return new Hashtag(
         entity.getId(),
+        entity.getOwner(),
         hashtag.getTag(),
         link.getLinkType(),
         link.getUrl(),

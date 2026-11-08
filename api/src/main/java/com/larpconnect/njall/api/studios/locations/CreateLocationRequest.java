@@ -9,15 +9,19 @@ import org.jspecify.annotations.Nullable;
 /** Request payload for creating a new studio location. */
 @Immutable
 public record CreateLocationRequest(
-    @JsonProperty("name") String name, @JsonProperty("summary") Optional<String> summary) {
+    @JsonProperty("generator") String generator,
+    @JsonProperty("name") String name,
+    @JsonProperty("summary") Optional<String> summary) {
 
-  public CreateLocationRequest(String name) {
-    this(name, Optional.empty());
+  public CreateLocationRequest(String generator, String name) {
+    this(generator, name, Optional.empty());
   }
 
   @JsonCreator
   public CreateLocationRequest(
-      @JsonProperty("name") String name, @JsonProperty("summary") @Nullable String summary) {
-    this(name, Optional.ofNullable(summary));
+      @JsonProperty("generator") String generator,
+      @JsonProperty("name") String name,
+      @JsonProperty("summary") @Nullable String summary) {
+    this(generator, name, Optional.ofNullable(summary));
   }
 }

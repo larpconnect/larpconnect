@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
+import com.larpconnect.njall.api.studios.common.ExpandedItemResponse;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
 import com.larpconnect.njall.data.domain.Collection;
 import com.larpconnect.njall.data.domain.ExpandedEntity;
@@ -24,6 +25,8 @@ import org.junit.jupiter.api.Test;
 
 final class CollectionActorTest {
 
+  private static final String STUDIO_IDENTIFIER = "valiant";
+
   private final UUID tenantId = UUID.randomUUID();
   private final UUID collectionId = UUID.randomUUID();
   private final UUID ownerId = UUID.randomUUID();
@@ -37,6 +40,7 @@ final class CollectionActorTest {
   private Collection sampleCollection() {
     return new Collection(
         collectionId,
+        ownerId,
         ownerId,
         "Featured Cast",
         Optional.of("Primary cast"),
@@ -53,21 +57,89 @@ final class CollectionActorTest {
     var collectionDao = mock(CollectionDAO.class);
     when(collectionDao.existsByOwnerAndName(tenantId, ownerId, "Featured Cast", Optional.empty()))
         .thenReturn(false);
-    when(collectionDao.create(tenantId, ownerId, "Featured Cast", Optional.of("Primary cast")))
+    when(collectionDao.create(
+            tenantId, ownerId, ownerId, "Featured Cast", Optional.of("Primary cast")))
         .thenReturn(sampleCollection());
 
     var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
     TestInbox<CollectionActorResponse> inbox = TestInbox.create();
 
     var request =
-        new CreateCollectionRequest(ownerId, "Featured Cast", Optional.of("Primary cast"));
-    testKit.run(new CollectionCommand.CreateCollection(tenantId, request, inbox.getRef()));
+        new CreateCollectionRequest(
+            ownerId, Optional.empty(), "Featured Cast", Optional.of("Primary cast"));
+    testKit.run(
+        new CollectionCommand.CreateCollection(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Success.class);
     var success = (CollectionActorResponse.Success) response;
     assertThat(success.collection().id()).isEqualTo(collectionId);
     assertThat(success.collection().name()).isEqualTo("Featured Cast");
+    assertThat(success.collection().generator())
+        .isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
+  }
+
+  @Test
+  @DisplayName("onCreateCollection with explicit generator returns Success")
+  void onCreateCollection_explicitGenerator_returnsSuccess() {
+    var collectionDao = mock(CollectionDAO.class);
+    var genActorId = UUID.randomUUID();
+    when(collectionDao.existsByOwnerAndName(tenantId, ownerId, "Featured Cast", Optional.empty()))
+        .thenReturn(false);
+    var created =
+        new Collection(
+            collectionId,
+            genActorId,
+            ownerId,
+            "Featured Cast",
+            Optional.of("Primary cast"),
+            1,
+            ImmutableList.of(itemId),
+            now,
+            now,
+            Optional.empty());
+    when(collectionDao.create(
+            tenantId, genActorId, ownerId, "Featured Cast", Optional.of("Primary cast")))
+        .thenReturn(created);
+
+    var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
+    TestInbox<CollectionActorResponse> inbox = TestInbox.create();
+
+    var request =
+        new CreateCollectionRequest(
+            ownerId,
+            Optional.of("/api/studios/valiant/v1/actors/" + genActorId),
+            "Featured Cast",
+            Optional.of("Primary cast"));
+    testKit.run(
+        new CollectionCommand.CreateCollection(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(CollectionActorResponse.Success.class);
+    var success = (CollectionActorResponse.Success) response;
+    assertThat(success.collection().generator())
+        .isEqualTo("/api/studios/valiant/v1/actors/" + genActorId);
+  }
+
+  @Test
+  @DisplayName("onCreateCollection returns BadRequest on invalid generator")
+  void onCreateCollection_invalidGenerator_returnsBadRequest() {
+    var collectionDao = mock(CollectionDAO.class);
+    var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
+    TestInbox<CollectionActorResponse> inbox = TestInbox.create();
+
+    var request =
+        new CreateCollectionRequest(
+            ownerId, Optional.of("not-a-valid-uri"), "Featured Cast", Optional.empty());
+    testKit.run(
+        new CollectionCommand.CreateCollection(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
+    assertThat(((CollectionActorResponse.Failure) response).status()).isEqualTo(400);
   }
 
   @Test
@@ -80,8 +152,11 @@ final class CollectionActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
     TestInbox<CollectionActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateCollectionRequest(ownerId, "Featured Cast");
-    testKit.run(new CollectionCommand.CreateCollection(tenantId, request, inbox.getRef()));
+    var request =
+        new CreateCollectionRequest(ownerId, Optional.empty(), "Featured Cast", Optional.empty());
+    testKit.run(
+        new CollectionCommand.CreateCollection(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -95,8 +170,10 @@ final class CollectionActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
     TestInbox<CollectionActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateCollectionRequest(ownerId, "   ");
-    testKit.run(new CollectionCommand.CreateCollection(tenantId, request, inbox.getRef()));
+    var request = new CreateCollectionRequest(ownerId, Optional.empty(), "   ", Optional.empty());
+    testKit.run(
+        new CollectionCommand.CreateCollection(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -108,7 +185,7 @@ final class CollectionActorTest {
   void onCreateCollection_constraintViolation_returnsBadRequest() {
     var collectionDao = mock(CollectionDAO.class);
     when(collectionDao.existsByOwnerAndName(any(), any(), any(), any())).thenReturn(false);
-    when(collectionDao.create(any(), any(), any(), any()))
+    when(collectionDao.create(any(), any(), any(), any(), any()))
         .thenThrow(
             new ConstraintViolationException(
                 "FK violation", new SQLException("FK"), "fk_collections_owner"));
@@ -116,8 +193,11 @@ final class CollectionActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
     TestInbox<CollectionActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateCollectionRequest(ownerId, "Featured Cast");
-    testKit.run(new CollectionCommand.CreateCollection(tenantId, request, inbox.getRef()));
+    var request =
+        new CreateCollectionRequest(ownerId, Optional.empty(), "Featured Cast", Optional.empty());
+    testKit.run(
+        new CollectionCommand.CreateCollection(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -136,7 +216,7 @@ final class CollectionActorTest {
 
     testKit.run(
         new CollectionCommand.GetCollection(
-            tenantId, collectionId, Optional.of("compressed"), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, collectionId, Optional.of("compressed"), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Success.class);
@@ -150,7 +230,7 @@ final class CollectionActorTest {
     var collectionDao = mock(CollectionDAO.class);
     when(collectionDao.findById(tenantId, collectionId))
         .thenReturn(Optional.of(sampleCollection()));
-    var expandedEntity = new ExpandedEntity(itemId, "Individual", "Alice", "Lead");
+    var expandedEntity = new ExpandedEntity(itemId, ownerId, "Individual", "Alice", "Lead");
     when(collectionDao.findExpandedItems(tenantId, collectionId))
         .thenReturn(ImmutableList.of(expandedEntity));
 
@@ -159,12 +239,15 @@ final class CollectionActorTest {
 
     testKit.run(
         new CollectionCommand.GetCollection(
-            tenantId, collectionId, Optional.of("expanded"), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, collectionId, Optional.of("expanded"), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Success.class);
     var success = (CollectionActorResponse.Success) response;
-    assertThat(success.collection().orderedItems()).containsExactly(expandedEntity);
+    assertThat(success.collection().orderedItems()).hasSize(1);
+    var item = (ExpandedItemResponse) success.collection().orderedItems().get(0);
+    assertThat(item.id()).isEqualTo(itemId);
+    assertThat(item.generator()).isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
   }
 
   @Test
@@ -178,7 +261,7 @@ final class CollectionActorTest {
 
     testKit.run(
         new CollectionCommand.GetCollection(
-            tenantId, collectionId, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, collectionId, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -196,6 +279,7 @@ final class CollectionActorTest {
     var updated =
         new Collection(
             collectionId,
+            ownerId,
             ownerId,
             "New Name",
             Optional.of("New summary"),
@@ -217,7 +301,12 @@ final class CollectionActorTest {
     var request = new UpdateCollectionRequest("New Name", "New summary");
     testKit.run(
         new CollectionCommand.PatchCollection(
-            tenantId, collectionId, request, Optional.of("name,summary"), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            collectionId,
+            request,
+            Optional.of("name,summary"),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Success.class);
@@ -240,7 +329,7 @@ final class CollectionActorTest {
     var request = new UpdateCollectionRequest("New Name", null);
     testKit.run(
         new CollectionCommand.PatchCollection(
-            tenantId, collectionId, request, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, collectionId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);

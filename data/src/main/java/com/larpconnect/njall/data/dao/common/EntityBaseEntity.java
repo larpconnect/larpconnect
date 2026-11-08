@@ -23,6 +23,9 @@ public class EntityBaseEntity {
   @Column(name = "id", nullable = false, updatable = false)
   private UUID id;
 
+  @Column(name = "owner", nullable = false, updatable = false)
+  private UUID owner;
+
   @Column(name = "entity_type", nullable = false, updatable = false)
   private String entityType;
 
@@ -43,6 +46,7 @@ public class EntityBaseEntity {
   public EntityBaseEntity(
       UUID tenantId,
       UUID id,
+      UUID owner,
       String entityType,
       @Nullable String summary,
       Instant createdOn,
@@ -50,6 +54,7 @@ public class EntityBaseEntity {
       @Nullable Instant deletedOn) {
     this.tenantId = tenantId;
     this.id = id;
+    this.owner = owner;
     this.entityType = entityType;
     this.summary = summary;
     this.createdOn = createdOn;
@@ -63,6 +68,10 @@ public class EntityBaseEntity {
 
   public UUID getId() {
     return id;
+  }
+
+  public UUID getOwner() {
+    return owner;
   }
 
   public String getEntityType() {

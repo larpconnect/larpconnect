@@ -33,6 +33,7 @@ final class DefaultEventDAOTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID eventId = UUID.randomUUID();
+  private final UUID owner = UUID.randomUUID();
   private final UUID locationId = UUID.randomUUID();
   private final Instant now = Instant.now();
 
@@ -53,7 +54,7 @@ final class DefaultEventDAOTest {
 
     var entityId = new EntityId(tenantId, eventId);
     var entity =
-        new EntityBaseEntity(tenantId, eventId, "Event", "Festival summary", now, now, null);
+        new EntityBaseEntity(tenantId, eventId, owner, "Event", "Festival summary", now, now, null);
     var event = new EventEntity(tenantId, eventId, locationId, "Autumn Fest", now, now);
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -63,6 +64,7 @@ final class DefaultEventDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(eventId);
+    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
     assertThat(result.orElseThrow().title()).isEqualTo("Autumn Fest");
     assertThat(result.orElseThrow().locationId()).contains(locationId);
     assertThat(result.orElseThrow().summary()).contains("Festival summary");
@@ -77,7 +79,7 @@ final class DefaultEventDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, eventId);
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Summary", now, now, now);
+    var entity = new EntityBaseEntity(tenantId, eventId, owner, "Event", "Summary", now, now, now);
     var event = new EventEntity(tenantId, eventId, locationId, "Autumn Fest", now, now);
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
@@ -114,7 +116,7 @@ final class DefaultEventDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, eventId);
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Summary", now, now, null);
+    var entity = new EntityBaseEntity(tenantId, eventId, owner, "Event", "Summary", now, now, null);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(EventEntity.class, entityId)).thenReturn(null);
 
@@ -137,7 +139,7 @@ final class DefaultEventDAOTest {
         .thenReturn(query);
     when(query.setParameter(eq("tenantId"), eq(tenantId))).thenReturn(query);
 
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Summary", now, now, null);
+    var entity = new EntityBaseEntity(tenantId, eventId, owner, "Event", "Summary", now, now, null);
     var event = new EventEntity(tenantId, eventId, locationId, "Autumn Fest", now, now);
     when(query.getResultList()).thenReturn(List.<Object[]>of(new Object[] {entity, event}));
 
@@ -145,6 +147,7 @@ final class DefaultEventDAOTest {
 
     assertThat(results).hasSize(1);
     assertThat(results.get(0).title()).isEqualTo("Autumn Fest");
+    assertThat(results.get(0).owner()).isEqualTo(owner);
     verify(tx).commit();
   }
 
@@ -155,9 +158,15 @@ final class DefaultEventDAOTest {
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
+
     var created =
         dao.create(
             tenantId,
+            owner,
             "Spring Gathering",
             Optional.of("New gathering"),
             Optional.of(locationId),
@@ -165,6 +174,7 @@ final class DefaultEventDAOTest {
             Optional.of(now.plusSeconds(3600)));
 
     assertThat(created.title()).isEqualTo("Spring Gathering");
+    assertThat(created.owner()).isEqualTo(owner);
     assertThat(created.summary()).contains("New gathering");
     assertThat(created.locationId()).contains(locationId);
     verify(session).persist(any(EntityBaseEntity.class));
@@ -179,9 +189,15 @@ final class DefaultEventDAOTest {
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
+
     var created =
         dao.create(
             tenantId,
+            owner,
             "Minimal Gathering",
             Optional.empty(),
             Optional.empty(),
@@ -189,6 +205,7 @@ final class DefaultEventDAOTest {
             Optional.empty());
 
     assertThat(created.title()).isEqualTo("Minimal Gathering");
+    assertThat(created.owner()).isEqualTo(owner);
     assertThat(created.summary()).isEmpty();
     assertThat(created.locationId()).isEmpty();
     verify(session).persist(any(EntityBaseEntity.class));
@@ -197,200 +214,75 @@ final class DefaultEventDAOTest {
   }
 
   @Test
-  @DisplayName("patch updates mutable fields and returns updated Event")
-  void patch_success() {
+  @DisplayName("create throws when owner does not exist")
+  void create_ownerNotFound_throws() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner))).thenReturn(null);
 
-    var entityId = new EntityId(tenantId, eventId);
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Old summary", now, now, null);
-    var event = new EventEntity(tenantId, eventId, locationId, "Old Title", now, now);
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(EventEntity.class, entityId)).thenReturn(event);
-
-    var updated =
-        dao.patch(
-            tenantId,
-            eventId,
-            Optional.of("New Title"),
-            Optional.of("New summary"),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty());
-
-    assertThat(updated).isPresent();
-    assertThat(updated.orElseThrow().title()).isEqualTo("New Title");
-    assertThat(updated.orElseThrow().summary()).contains("New summary");
-    verify(session).merge(entity);
-    verify(session).merge(event);
-    verify(tx).commit();
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "Spring Gathering",
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
   }
 
   @Test
-  @DisplayName("patch updates locationId, startTime, endTime when present")
-  void patch_allFieldsPresent() {
+  @DisplayName("create throws when owner is soft deleted")
+  void create_ownerDeleted_throws() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    var deletedOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, now);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(deletedOwner);
 
-    var entityId = new EntityId(tenantId, eventId);
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Old summary", now, now, null);
-    var event = new EventEntity(tenantId, eventId, null, "Old Title", null, null);
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(EventEntity.class, entityId)).thenReturn(event);
-
-    var newLocationId = UUID.randomUUID();
-    var newStart = now.plusSeconds(60);
-    var newEnd = now.plusSeconds(3600);
-
-    var updated =
-        dao.patch(
-            tenantId,
-            eventId,
-            Optional.empty(),
-            Optional.empty(),
-            Optional.of(newLocationId),
-            Optional.of(newStart),
-            Optional.of(newEnd));
-
-    assertThat(updated).isPresent();
-    assertThat(event.getLocationId()).isEqualTo(newLocationId);
-    assertThat(event.getStartTime()).isEqualTo(newStart);
-    assertThat(event.getEndTime()).isEqualTo(newEnd);
-    verify(tx).commit();
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "Spring Gathering",
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
   }
 
   @Test
-  @DisplayName("patch returns empty when event is missing or soft-deleted")
-  void patch_missingOrDeleted() {
+  @DisplayName("create throws when owner is not an Actor")
+  void create_ownerNotActor_throws() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    var nonActorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Location", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(nonActorOwner);
 
-    var entityId = new EntityId(tenantId, eventId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-
-    var result =
-        dao.patch(
-            tenantId,
-            eventId,
-            Optional.of("Title"),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch returns empty when event is soft-deleted")
-  void patch_whenDeleted_returnsEmpty() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, eventId);
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Summary", now, now, now);
-    var event = new EventEntity(tenantId, eventId, locationId, "Title", now, now);
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(EventEntity.class, entityId)).thenReturn(event);
-
-    var result =
-        dao.patch(
-            tenantId,
-            eventId,
-            Optional.of("New Title"),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch returns empty when event entity is missing")
-  void patch_eventEntityMissing() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, eventId);
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Summary", now, now, null);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(EventEntity.class, entityId)).thenReturn(null);
-
-    var result =
-        dao.patch(
-            tenantId,
-            eventId,
-            Optional.of("Title"),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty(),
-            Optional.empty());
-
-    assertThat(result).isEmpty();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete marks deleted_on on active event")
-  void softDelete_success() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, eventId);
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Summary", now, now, null);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-
-    var deleted = dao.softDelete(tenantId, eventId);
-
-    assertThat(deleted).isTrue();
-    assertThat(entity.getDeletedOn()).isNotNull();
-    verify(session).merge(entity);
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete returns false when entity does not exist")
-  void softDelete_entityNotFound_returnsFalse() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, eventId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-
-    var deleted = dao.softDelete(tenantId, eventId);
-
-    assertThat(deleted).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete returns false when event is already soft-deleted")
-  void softDelete_missingOrAlreadyDeleted() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, eventId);
-    var entity = new EntityBaseEntity(tenantId, eventId, "Event", "Summary", now, now, now);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-
-    var deleted = dao.softDelete(tenantId, eventId);
-
-    assertThat(deleted).isFalse();
-    verify(tx).commit();
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "Spring Gathering",
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty(),
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
   }
 
   @Test

@@ -4,7 +4,7 @@ Feature: User Space Studio Individuals REST API
   I want to manage individuals for a studio via user space endpoints
   So that I can register people within the tenant boundary under Row-Level Security
 
-  Scenario: Successfully create individual with all fields
+  Scenario: Successfully create individual with all fields and canonical generator URI
     Given the admin HTTP server is running with database migrations applied
     When an API admin sends a POST request to "/api/admin/v1/studios" with body:
       """
@@ -14,9 +14,18 @@ Feature: User Space Studio Individuals REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_ind_all/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "studio_lead"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "creator_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_ind_all/v1/individuals" with body:
       """
       {
+        "generator": "/api/studios/valiant_ind_all/v1/actors/{creator_actor_id}",
         "name": "Jane Eyre",
         "summary": "Visiting scholar and resident"
       }
@@ -25,12 +34,13 @@ Feature: User Space Studio Individuals REST API
     And the HTTP response content-type contains "application/json"
     And the JSON response contains field "name" with value "Jane Eyre"
     And the JSON response contains field "summary" with value "Visiting scholar and resident"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_ind_all/v1/actors/{creator_actor_id}"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
     And the JSON response does not contain field "tenantId"
     And the response field "id" is remembered as "created_individual_id"
 
-  Scenario: Successfully create individual with minimal fields
+  Scenario: Successfully create individual with minimal fields using bare UUID generator
     Given the admin HTTP server is running with database migrations applied
     When an API admin sends a POST request to "/api/admin/v1/studios" with body:
       """
@@ -40,14 +50,24 @@ Feature: User Space Studio Individuals REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_ind_min/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "studio_curator"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "curator_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_ind_min/v1/individuals" with body:
       """
       {
+        "generator": "{curator_actor_id}",
         "name": "Edward Rochester"
       }
       """
     Then the HTTP response status code is 201
     And the JSON response contains field "name" with value "Edward Rochester"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_ind_min/v1/actors/{curator_actor_id}"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
 
@@ -61,9 +81,18 @@ Feature: User Space Studio Individuals REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_ind_blank/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "admin_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "blank_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_ind_blank/v1/individuals" with body:
       """
       {
+        "generator": "{blank_actor_id}",
         "name": "   "
       }
       """
@@ -75,6 +104,7 @@ Feature: User Space Studio Individuals REST API
     When an API admin sends a POST request to "/api/studios/nonexistent_ind_studio/v1/individuals" with body:
       """
       {
+        "generator": "018f2345-6789-7abc-def0-000000000000",
         "name": "Ghost Individual"
       }
       """
@@ -90,9 +120,18 @@ Feature: User Space Studio Individuals REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_ind_get/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "rector_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "get_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_ind_get/v1/individuals" with body:
       """
       {
+        "generator": "{get_actor_id}",
         "name": "St. John Rivers",
         "summary": "Parish rector"
       }
@@ -104,6 +143,7 @@ Feature: User Space Studio Individuals REST API
     And the HTTP response content-type contains "application/json"
     And the JSON response contains field "name" with value "St. John Rivers"
     And the JSON response contains field "summary" with value "Parish rector"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_ind_get/v1/actors/{get_actor_id}"
 
   Scenario: Requesting nonexistent studio or invalid individual ID returns 404
     Given the admin HTTP server is running with database migrations applied
@@ -130,9 +170,18 @@ Feature: User Space Studio Individuals REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_ind_patch/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "patch_lead"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "patch_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_ind_patch/v1/individuals" with body:
       """
       {
+        "generator": "{patch_actor_id}",
         "name": "Initial Name",
         "summary": "Initial Summary"
       }
@@ -149,6 +198,7 @@ Feature: User Space Studio Individuals REST API
     Then the HTTP response status code is 200
     And the JSON response contains field "name" with value "Patched Name"
     And the JSON response contains field "summary" with value "Initial Summary"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_ind_patch/v1/actors/{patch_actor_id}"
 
   Scenario: Patching individual with blank name is rejected with 400
     Given the admin HTTP server is running with database migrations applied
@@ -160,9 +210,18 @@ Feature: User Space Studio Individuals REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_ind_bad_patch/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "bad_patch_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "bad_patch_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_ind_bad_patch/v1/individuals" with body:
       """
       {
+        "generator": "{bad_patch_actor_id}",
         "name": "Valid Individual"
       }
       """
@@ -187,9 +246,18 @@ Feature: User Space Studio Individuals REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_ind_del/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "del_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "del_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_ind_del/v1/individuals" with body:
       """
       {
+        "generator": "{del_actor_id}",
         "name": "To Be Deleted"
       }
       """
@@ -241,9 +309,18 @@ Feature: User Space Studio Individuals REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/studio_ind_alpha/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "alpha_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "alpha_actor_id"
     When an API admin sends a POST request to "/api/studios/studio_ind_alpha/v1/individuals" with body:
       """
       {
+        "generator": "{alpha_actor_id}",
         "name": "Alpha Individual"
       }
       """

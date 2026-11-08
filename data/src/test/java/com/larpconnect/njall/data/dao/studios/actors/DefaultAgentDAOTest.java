@@ -51,8 +51,9 @@ final class DefaultAgentDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, actorId);
-    var baseEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Bio text", now, now, null);
-    var agentEntity = new AgentEntity(tenantId, actorId, ownerId, "valkyrie");
+    var baseEntity =
+        new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Bio text", now, now, null);
+    var agentEntity = new AgentEntity(tenantId, actorId, "valkyrie");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(baseEntity);
     when(session.find(AgentEntity.class, entityId)).thenReturn(agentEntity);
@@ -68,7 +69,7 @@ final class DefaultAgentDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(actorId);
-    assertThat(result.orElseThrow().ownerId()).isEqualTo(ownerId);
+    assertThat(result.orElseThrow().owner()).isEqualTo(ownerId);
     assertThat(result.orElseThrow().preferredUsername()).isEqualTo("valkyrie");
     assertThat(result.orElseThrow().endpoints())
         .containsEntry("sharedInbox", "https://example.com/inbox");
@@ -85,8 +86,9 @@ final class DefaultAgentDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, actorId);
-    var baseEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Bio text", now, now, now);
-    var agentEntity = new AgentEntity(tenantId, actorId, ownerId, "valkyrie");
+    var baseEntity =
+        new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Bio text", now, now, now);
+    var agentEntity = new AgentEntity(tenantId, actorId, "valkyrie");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(baseEntity);
     when(session.find(AgentEntity.class, entityId)).thenReturn(agentEntity);
@@ -131,19 +133,42 @@ final class DefaultAgentDAOTest {
   }
 
   @Test
-  @DisplayName("create successfully persists base entity, agent entity, and paired collections")
-  void create_success() {
+  @DisplayName("create persists base entity, agent, and collections with explicit owner")
+  void create_withExplicitOwner_success() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
 
-    mockCheckOwnerQuery(List.of(1));
+    var ownerEntity =
+        new EntityBaseEntity(tenantId, ownerId, ownerId, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, ownerId)))
+        .thenReturn(ownerEntity);
     mockCheckUsernameQuery(List.of());
     mockProvisionQueries();
 
-    var agent = dao.create(tenantId, ownerId, "valkyrie", Optional.of("Summary"));
+    var agent = dao.create(tenantId, Optional.of(ownerId), "valkyrie", Optional.of("Summary"));
 
-    assertThat(agent.ownerId()).isEqualTo(ownerId);
+    assertThat(agent.owner()).isEqualTo(ownerId);
+    assertThat(agent.preferredUsername()).isEqualTo("valkyrie");
+    assertThat(agent.summary()).contains("Summary");
+    verify(session).persist(any(EntityBaseEntity.class));
+    verify(session).persist(any(AgentEntity.class));
+    verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("create successfully persists self-owned actor when owner is empty")
+  void create_selfOwned_success() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+
+    mockCheckUsernameQuery(List.of());
+    mockProvisionQueries();
+
+    var agent = dao.create(tenantId, Optional.empty(), "valkyrie", Optional.of("Summary"));
+
+    assertThat(agent.owner()).isEqualTo(agent.id());
     assertThat(agent.preferredUsername()).isEqualTo("valkyrie");
     assertThat(agent.summary()).contains("Summary");
     verify(session).persist(any(EntityBaseEntity.class));
@@ -157,9 +182,44 @@ final class DefaultAgentDAOTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
-    mockCheckOwnerQuery(List.of());
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, ownerId))).thenReturn(null);
 
-    assertThatThrownBy(() -> dao.create(tenantId, ownerId, "valkyrie", Optional.empty()))
+    assertThatThrownBy(
+            () -> dao.create(tenantId, Optional.of(ownerId), "valkyrie", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is soft-deleted")
+  void create_ownerDeleted_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var deletedOwner =
+        new EntityBaseEntity(tenantId, ownerId, ownerId, "Actor", "Bio", now, now, now);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, ownerId)))
+        .thenReturn(deletedOwner);
+
+    assertThatThrownBy(
+            () -> dao.create(tenantId, Optional.of(ownerId), "valkyrie", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is not an Actor")
+  void create_ownerNotActor_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var nonActorOwner =
+        new EntityBaseEntity(tenantId, ownerId, ownerId, "Event", "Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, ownerId)))
+        .thenReturn(nonActorOwner);
+
+    assertThatThrownBy(
+            () -> dao.create(tenantId, Optional.of(ownerId), "valkyrie", Optional.empty()))
         .isInstanceOf(IllegalArgumentException.class);
     verify(tx).rollback();
   }
@@ -170,11 +230,14 @@ final class DefaultAgentDAOTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
-    mockCheckOwnerQuery(List.of(1));
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, ownerId)))
+        .thenReturn(
+            new EntityBaseEntity(tenantId, ownerId, ownerId, "Actor", "Bio", now, now, null));
     mockCheckUsernameQuery(List.of(1));
 
-    assertThatThrownBy(() -> dao.create(tenantId, ownerId, "valkyrie", Optional.empty()))
-        .isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(
+            () -> dao.create(tenantId, Optional.of(ownerId), "valkyrie", Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
     verify(tx).rollback();
   }
 
@@ -186,8 +249,9 @@ final class DefaultAgentDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, actorId);
-    var baseEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Old Bio", now, now, null);
-    var agentEntity = new AgentEntity(tenantId, actorId, ownerId, "old_name");
+    var baseEntity =
+        new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Old Bio", now, now, null);
+    var agentEntity = new AgentEntity(tenantId, actorId, "old_name");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(baseEntity);
     when(session.find(AgentEntity.class, entityId)).thenReturn(agentEntity);
@@ -217,8 +281,9 @@ final class DefaultAgentDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, actorId);
-    var baseEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Old Bio", now, now, null);
-    var agentEntity = new AgentEntity(tenantId, actorId, ownerId, "old_name");
+    var baseEntity =
+        new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Old Bio", now, now, null);
+    var agentEntity = new AgentEntity(tenantId, actorId, "old_name");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(baseEntity);
     when(session.find(AgentEntity.class, entityId)).thenReturn(agentEntity);
@@ -232,7 +297,7 @@ final class DefaultAgentDAOTest {
 
     assertThatThrownBy(
             () -> dao.update(tenantId, actorId, Optional.of("new_name"), Optional.empty()))
-        .isInstanceOf(IllegalStateException.class);
+        .isInstanceOf(IllegalArgumentException.class);
     verify(tx).rollback();
   }
 
@@ -244,7 +309,8 @@ final class DefaultAgentDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, actorId);
-    var baseEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Bio", now, now, null);
+    var baseEntity =
+        new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Bio", now, now, null);
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(baseEntity);
 
@@ -268,8 +334,9 @@ final class DefaultAgentDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, actorId);
-    var deletedEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Bio", now, now, now);
-    var agentEntity = new AgentEntity(tenantId, actorId, ownerId, "old");
+    var deletedEntity =
+        new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Bio", now, now, now);
+    var agentEntity = new AgentEntity(tenantId, actorId, "old");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(deletedEntity);
     when(session.find(AgentEntity.class, entityId)).thenReturn(agentEntity);
@@ -278,7 +345,8 @@ final class DefaultAgentDAOTest {
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
     assertThat(dao.update(tenantId, actorId, Optional.empty(), Optional.empty())).isEmpty();
 
-    var activeEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Bio", now, now, null);
+    var activeEntity =
+        new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Bio", now, now, null);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(activeEntity);
     when(session.find(AgentEntity.class, entityId)).thenReturn(null);
     assertThat(dao.update(tenantId, actorId, Optional.empty(), Optional.empty())).isEmpty();
@@ -292,8 +360,9 @@ final class DefaultAgentDAOTest {
     mockTenantConfigQuery();
 
     var entityId = new EntityId(tenantId, actorId);
-    var baseEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Old Bio", now, now, null);
-    var agentEntity = new AgentEntity(tenantId, actorId, ownerId, "old_name");
+    var baseEntity =
+        new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Old Bio", now, now, null);
+    var agentEntity = new AgentEntity(tenantId, actorId, "old_name");
 
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(baseEntity);
     when(session.find(AgentEntity.class, entityId)).thenReturn(agentEntity);
@@ -317,58 +386,9 @@ final class DefaultAgentDAOTest {
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
     assertThat(dao.delete(tenantId, actorId)).isFalse();
 
-    var deleted = new EntityBaseEntity(tenantId, actorId, "Actor", "Bio", now, now, now);
+    var deleted = new EntityBaseEntity(tenantId, actorId, ownerId, "Actor", "Bio", now, now, now);
     when(session.find(EntityBaseEntity.class, entityId)).thenReturn(deleted);
     assertThat(dao.delete(tenantId, actorId)).isFalse();
-  }
-
-  @Test
-  @DisplayName("addEndpoint and removeEndpoint perform upsert and deletion")
-  void endpointMutations_success() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, actorId);
-    var baseEntity = new EntityBaseEntity(tenantId, actorId, "Actor", "Bio", now, now, null);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(baseEntity);
-
-    var endpointId = new AgentEndpointId(tenantId, actorId, "sharedInbox");
-    var existingEndpoint =
-        new AgentEndpointEntity(tenantId, actorId, "sharedInbox", "https://old.com");
-    when(session.find(AgentEndpointEntity.class, endpointId)).thenReturn(existingEndpoint);
-
-    assertThat(dao.addEndpoint(tenantId, actorId, "sharedInbox", "https://new.com")).isTrue();
-    assertThat(existingEndpoint.getEndpoint()).isEqualTo("https://new.com");
-
-    when(session.find(AgentEndpointEntity.class, endpointId)).thenReturn(null);
-    assertThat(dao.addEndpoint(tenantId, actorId, "sharedInbox", "https://new.com")).isTrue();
-    verify(session).persist(any(AgentEndpointEntity.class));
-
-    when(session.find(AgentEndpointEntity.class, endpointId)).thenReturn(existingEndpoint);
-    assertThat(dao.removeEndpoint(tenantId, actorId, "sharedInbox")).isTrue();
-    verify(session).remove(existingEndpoint);
-
-    when(session.find(AgentEndpointEntity.class, endpointId)).thenReturn(null);
-    assertThat(dao.removeEndpoint(tenantId, actorId, "sharedInbox")).isTrue();
-  }
-
-  @Test
-  @DisplayName("endpoint mutations return false when actor not found or deleted")
-  void endpointMutations_notFoundOrDeleted() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var entityId = new EntityId(tenantId, actorId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-    assertThat(dao.addEndpoint(tenantId, actorId, "inbox", "https://ep.com")).isFalse();
-    assertThat(dao.removeEndpoint(tenantId, actorId, "inbox")).isFalse();
-
-    var deleted = new EntityBaseEntity(tenantId, actorId, "Actor", "Bio", now, now, now);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(deleted);
-    assertThat(dao.addEndpoint(tenantId, actorId, "inbox", "https://ep.com")).isFalse();
-    assertThat(dao.removeEndpoint(tenantId, actorId, "inbox")).isFalse();
   }
 
   @Test
@@ -384,37 +404,12 @@ final class DefaultAgentDAOTest {
     verify(tx).rollback();
   }
 
-  @Test
-  @DisplayName("findInboxId and findOutboxId return collection UUIDs")
-  void findInboxAndOutboxId_success() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var inboxUuid = UUID.randomUUID();
-    var outboxUuid = UUID.randomUUID();
-    mockCollectionIdQueries(List.of(inboxUuid), List.of(outboxUuid));
-
-    assertThat(dao.findInboxId(tenantId, actorId)).contains(inboxUuid);
-    assertThat(dao.findOutboxId(tenantId, actorId)).contains(outboxUuid);
-  }
-
   private void mockTenantConfigQuery() {
     @SuppressWarnings("unchecked")
     NativeQuery<String> query = mock(NativeQuery.class);
     when(session.createNativeQuery(contains("set_config"), eq(String.class))).thenReturn(query);
     when(query.setParameter(eq("tenantId"), any())).thenReturn(query);
     when(query.getSingleResult()).thenReturn("tenant-set");
-  }
-
-  private void mockCheckOwnerQuery(List<Object> result) {
-    @SuppressWarnings("unchecked")
-    NativeQuery<Object> query = mock(NativeQuery.class);
-    when(session.createNativeQuery(
-            contains("WHERE tenant_id = :tenantId AND id = :ownerId"), eq(Object.class)))
-        .thenReturn(query);
-    when(query.setParameter(any(String.class), any())).thenReturn(query);
-    when(query.getResultList()).thenReturn(result);
   }
 
   private void mockCheckUsernameQuery(List<Object> result) {

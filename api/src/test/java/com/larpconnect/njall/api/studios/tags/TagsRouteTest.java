@@ -34,9 +34,22 @@ import org.junit.jupiter.api.Test;
 final class TagsRouteTest {
 
   private static final String CREATE_BODY =
-      "{\"tag\":\"SolarPunk\",\"summary\":\"Eco-futuristic\"}";
+      """
+      {
+        "generator": "019273c5-9271-7000-8000-000000000001",
+        "tag": "SolarPunk",
+        "summary": "Eco-futuristic"
+      }
+      """;
   private static final String BATCH_CREATE_BODY =
-      "{\"requests\":[{\"tag\":\"SolarPunk\"},{\"tag\":\"CyberPunk\"}]}";
+      """
+      {
+        "requests": [
+          {"generator": "019273c5-9271-7000-8000-000000000001", "tag": "SolarPunk"},
+          {"generator": "019273c5-9271-7000-8000-000000000001", "tag": "CyberPunk"}
+        ]
+      }
+      """;
   private static final String PATCH_BODY = "{\"tag\":\"GreenPunk\"}";
 
   private static ActorSystem<Void> system;
@@ -76,6 +89,7 @@ final class TagsRouteTest {
   private TagResponse sampleTagResponse() {
     return new TagResponse(
         tagId,
+        "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
         "SolarPunk",
         "hashtag",
         "/api/studios/valiant/v1/tags/SolarPunk",

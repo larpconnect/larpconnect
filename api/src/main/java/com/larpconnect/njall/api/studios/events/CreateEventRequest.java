@@ -11,24 +11,27 @@ import org.jspecify.annotations.Nullable;
 /** Request payload for creating a new studio event. */
 @Immutable
 public record CreateEventRequest(
+    @JsonProperty("generator") String generator,
     @JsonProperty("title") String title,
     @JsonProperty("summary") Optional<String> summary,
     @JsonProperty("locationId") Optional<UUID> locationId,
     @JsonProperty("startTime") Optional<Instant> startTime,
     @JsonProperty("endTime") Optional<Instant> endTime) {
 
-  public CreateEventRequest(String title) {
-    this(title, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+  public CreateEventRequest(String generator, String title) {
+    this(generator, title, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
   }
 
   @JsonCreator
   public CreateEventRequest(
+      @JsonProperty("generator") String generator,
       @JsonProperty("title") String title,
       @JsonProperty("summary") @Nullable String summary,
       @JsonProperty("locationId") @Nullable UUID locationId,
       @JsonProperty("startTime") @Nullable Instant startTime,
       @JsonProperty("endTime") @Nullable Instant endTime) {
     this(
+        generator,
         title,
         Optional.ofNullable(summary),
         Optional.ofNullable(locationId),

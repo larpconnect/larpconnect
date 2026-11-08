@@ -3,6 +3,7 @@ package com.larpconnect.njall.data.dao.studios.individuals;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Individual;
@@ -48,14 +49,15 @@ final class DefaultIndividualDAO implements IndividualDAO {
   }
 
   @Override
-  public Individual create(UUID tenantId, String name, Optional<String> summary) {
+  public Individual create(UUID tenantId, UUID owner, String name, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
+        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
         var individualId = UUID.randomUUID();
         var now = Instant.now();
-        var baseEntity = createBaseEntity(tenantId, individualId, summary, now);
+        var baseEntity = createBaseEntity(tenantId, individualId, owner, summary, now);
         session.persist(baseEntity);
 
         var individualEntity = createIndividualEntity(tenantId, individualId, name);
@@ -114,7 +116,9 @@ final class DefaultIndividualDAO implements IndividualDAO {
           return false;
         }
 
-        entity.setDeletedOn(Instant.now());
+        var now = Instant.now();
+        entity.setDeletedOn(now);
+        entity.setUpdatedOn(now);
         session.merge(entity);
         tx.commit();
         return true;
@@ -145,9 +149,16 @@ final class DefaultIndividualDAO implements IndividualDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID individualId, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID individualId, UUID owner, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
-        tenantId, individualId, ENTITY_TYPE_INDIVIDUAL, summary.orElse(null), now, now, null);
+        tenantId,
+        individualId,
+        owner,
+        ENTITY_TYPE_INDIVIDUAL,
+        summary.orElse(null),
+        now,
+        now,
+        null);
   }
 
   private static IndividualEntity createIndividualEntity(
@@ -158,6 +169,7 @@ final class DefaultIndividualDAO implements IndividualDAO {
   private Individual mapToDomain(EntityBaseEntity entity, IndividualEntity individual) {
     return new Individual(
         individual.getId(),
+        entity.getOwner(),
         individual.getName(),
         entity.getSummary(),
         entity.getCreatedOn(),

@@ -51,10 +51,18 @@ final class TagValidationTest {
   }
 
   @Test
-  @DisplayName("validateCreate validates tag property")
+  @DisplayName("validateCreate validates generator and tag property")
   void validateCreate_scenarios() {
-    assertThat(TagValidation.validateCreate(new CreateTagRequest("validTag"))).isEmpty();
-    assertThat(TagValidation.validateCreate(new CreateTagRequest(""))).isPresent();
+    assertThat(
+            TagValidation.validateCreate(
+                new CreateTagRequest("019273c5-9271-7000-8000-000000000001", "validTag")))
+        .isEmpty();
+    assertThat(TagValidation.validateCreate(new CreateTagRequest("", "validTag")))
+        .contains("Generator URI or actor identifier must not be blank");
+    assertThat(
+            TagValidation.validateCreate(
+                new CreateTagRequest("019273c5-9271-7000-8000-000000000001", "")))
+        .isPresent();
   }
 
   @Test
@@ -66,19 +74,23 @@ final class TagValidationTest {
 
     var items = ImmutableList.<CreateTagRequest>builder();
     for (int i = 0; i < 51; i++) {
-      items.add(new CreateTagRequest("tag" + i));
+      items.add(new CreateTagRequest("019273c5-9271-7000-8000-000000000001", "tag" + i));
     }
     assertThat(TagValidation.validateBatchCreate(new BatchCreateTagsRequest(items.build())))
         .contains("requests array must not exceed 50 items");
 
     var invalidItemBatch =
         new BatchCreateTagsRequest(
-            ImmutableList.of(new CreateTagRequest("valid"), new CreateTagRequest("")));
+            ImmutableList.of(
+                new CreateTagRequest("019273c5-9271-7000-8000-000000000001", "valid"),
+                new CreateTagRequest("019273c5-9271-7000-8000-000000000001", "")));
     assertThat(TagValidation.validateBatchCreate(invalidItemBatch)).isPresent();
 
     var validBatch =
         new BatchCreateTagsRequest(
-            ImmutableList.of(new CreateTagRequest("alpha"), new CreateTagRequest("beta")));
+            ImmutableList.of(
+                new CreateTagRequest("019273c5-9271-7000-8000-000000000001", "alpha"),
+                new CreateTagRequest("019273c5-9271-7000-8000-000000000001", "beta")));
     assertThat(TagValidation.validateBatchCreate(validBatch)).isEmpty();
   }
 
@@ -115,6 +127,7 @@ final class TagValidationTest {
     var tag =
         new TagResponse(
             UUID.randomUUID(),
+            "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
             "SolarPunk",
             "hashtag",
             "/url",

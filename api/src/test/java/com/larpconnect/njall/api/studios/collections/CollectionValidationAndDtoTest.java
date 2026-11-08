@@ -7,7 +7,7 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.domain.ExpandedEntity;
+import com.larpconnect.njall.api.studios.common.ExpandedItemResponse;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,12 +26,19 @@ final class CollectionValidationAndDtoTest {
   @DisplayName("CollectionValidation handles create and patch rules")
   void collectionValidation_rules() {
     var ownerId = UUID.randomUUID();
-    var blankNameCreate = new CreateCollectionRequest(ownerId, "   ");
+    var blankNameCreate =
+        new CreateCollectionRequest(ownerId, Optional.empty(), "   ", Optional.empty());
     assertThat(CollectionValidation.validateCreate(blankNameCreate))
         .contains("Collection name must not be blank");
 
+    var blankGenCreate =
+        new CreateCollectionRequest(ownerId, Optional.of("   "), "Featured Cast", Optional.empty());
+    assertThat(CollectionValidation.validateCreate(blankGenCreate))
+        .contains("Generator URI or actor identifier must not be blank");
+
     var validCreate =
-        new CreateCollectionRequest(ownerId, "Featured Cast", Optional.of("Cast summary"));
+        new CreateCollectionRequest(
+            ownerId, Optional.empty(), "Featured Cast", Optional.of("Cast summary"));
     assertThat(CollectionValidation.validateCreate(validCreate)).isEmpty();
 
     var blankPatch = new UpdateCollectionRequest("   ", null);
@@ -114,6 +121,7 @@ final class CollectionValidationAndDtoTest {
             "OrderedCollection",
             "Featured Cast",
             Optional.of("Primary cast"),
+            "/api/studios/valiant/v1/actors/" + ownerId,
             ownerId,
             1,
             ImmutableList.of(itemId),
@@ -122,24 +130,33 @@ final class CollectionValidationAndDtoTest {
     var compressedJson = objectMapper.writeValueAsString(compressedResponse);
     assertThat(compressedJson).contains(id.toString());
     assertThat(compressedJson).contains("Featured Cast");
+    assertThat(compressedJson).contains("/api/studios/valiant/v1/actors/" + ownerId);
     assertThat(compressedJson).contains(itemId.toString());
     assertThat(compressedJson).doesNotContain("tenantId");
 
-    var expandedEntity = new ExpandedEntity(itemId, "Individual", "Alice", "Lead actress");
+    var expandedItem =
+        new ExpandedItemResponse(
+            itemId,
+            "Individual",
+            "/api/studios/valiant/v1/actors/" + ownerId,
+            Optional.of("Alice"),
+            Optional.of("Lead actress"));
     var expandedResponse =
         new OrderedCollectionResponse(
             id,
             "OrderedCollection",
             "Featured Cast",
             Optional.of("Primary cast"),
+            "/api/studios/valiant/v1/actors/" + ownerId,
             ownerId,
             1,
-            ImmutableList.of(expandedEntity),
+            ImmutableList.of(expandedItem),
             now,
             now);
     var expandedJson = objectMapper.writeValueAsString(expandedResponse);
     assertThat(expandedJson).contains("Alice");
     assertThat(expandedJson).contains("Individual");
+    assertThat(expandedJson).contains("/api/studios/valiant/v1/actors/" + ownerId);
   }
 
   @Test

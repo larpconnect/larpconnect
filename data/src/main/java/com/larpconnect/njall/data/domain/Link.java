@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
  * Immutable domain representation of a tenanted external studio link entity.
  *
  * @param id The unique link UUID identifier.
+ * @param owner The generating actor entity UUID.
  * @param linkType The semantic type of the link (e.g. website, discord).
  * @param url The target destination URL.
  * @param mediaType The IANA media type of the target link.
@@ -21,6 +22,7 @@ import org.jspecify.annotations.Nullable;
 @Immutable
 public record Link(
     UUID id,
+    UUID owner,
     String linkType,
     String url,
     String mediaType,
@@ -32,6 +34,7 @@ public record Link(
 
   public Link(
       UUID id,
+      UUID owner,
       String linkType,
       String url,
       String mediaType,
@@ -41,6 +44,7 @@ public record Link(
       @Nullable Instant deletedOn) {
     this(
         id,
+        owner,
         linkType,
         url,
         mediaType,

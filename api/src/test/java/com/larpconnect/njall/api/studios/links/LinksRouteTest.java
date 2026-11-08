@@ -32,7 +32,8 @@ import org.junit.jupiter.api.Test;
 final class LinksRouteTest {
 
   private static final String CREATE_BODY =
-      "{\"linkType\":\"website\",\"url\":\"https://valiant.example.com\"}";
+      "{\"generator\":\"019273c5-9271-7000-8000-000000000001\","
+          + "\"linkType\":\"website\",\"url\":\"https://valiant.example.com\"}";
   private static final String PATCH_BODY = "{\"url\":\"https://updated.example.com\"}";
 
   private static ActorSystem<Void> system;
@@ -76,6 +77,7 @@ final class LinksRouteTest {
   private LinkResponse sampleLinkResponse() {
     return new LinkResponse(
         linkId,
+        "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
         "website",
         "https://valiant.example.com",
         "text/html",

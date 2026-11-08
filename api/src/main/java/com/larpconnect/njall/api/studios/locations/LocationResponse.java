@@ -10,6 +10,7 @@ import java.util.UUID;
 @Immutable
 public record LocationResponse(
     @JsonProperty("id") UUID id,
+    @JsonProperty("generator") String generator,
     @JsonProperty("name") String name,
     @JsonProperty("summary") Optional<String> summary,
     @JsonProperty("createdOn") Instant createdOn,

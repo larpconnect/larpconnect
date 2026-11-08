@@ -31,6 +31,7 @@ final class DefaultCollectionDAOItemsTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID collectionId = UUID.randomUUID();
+  private final UUID owner = UUID.randomUUID();
   private final Instant now = Instant.now();
 
   @BeforeEach
@@ -174,7 +175,8 @@ final class DefaultCollectionDAOItemsTest {
     mockTenantConfigQuery();
 
     var deletedBase =
-        new EntityBaseEntity(tenantId, collectionId, "OrderedCollection", "Summary", now, now, now);
+        new EntityBaseEntity(
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, now);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(deletedBase);
 
@@ -195,8 +197,9 @@ final class DefaultCollectionDAOItemsTest {
     var refId = UUID.randomUUID();
     var entityBase =
         new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Summary", now, now, null);
-    var deletedRef = new EntityBaseEntity(tenantId, refId, "Individual", "Scholar", now, now, now);
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
+    var deletedRef =
+        new EntityBaseEntity(tenantId, refId, owner, "Individual", "Scholar", now, now, now);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(entityBase);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, refId)))
@@ -218,7 +221,7 @@ final class DefaultCollectionDAOItemsTest {
     var refId = UUID.randomUUID();
     var entityBase =
         new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Summary", now, now, null);
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(entityBase);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, refId))).thenReturn(null);
@@ -253,7 +256,8 @@ final class DefaultCollectionDAOItemsTest {
     mockTenantConfigQuery();
 
     var deletedBase =
-        new EntityBaseEntity(tenantId, collectionId, "OrderedCollection", "Summary", now, now, now);
+        new EntityBaseEntity(
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, now);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(deletedBase);
 
@@ -273,7 +277,7 @@ final class DefaultCollectionDAOItemsTest {
     var refId = UUID.randomUUID();
     var entityBase =
         new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Summary", now, now, null);
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(entityBase);
 
@@ -308,7 +312,7 @@ final class DefaultCollectionDAOItemsTest {
     var refId = UUID.randomUUID();
     var entityBase =
         new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Summary", now, now, null);
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(entityBase);
 
@@ -352,8 +356,9 @@ final class DefaultCollectionDAOItemsTest {
   private void mockEntityBases(UUID refId) {
     var entityBase =
         new EntityBaseEntity(
-            tenantId, collectionId, "OrderedCollection", "Summary", now, now, null);
-    var refBase = new EntityBaseEntity(tenantId, refId, "Individual", "Scholar", now, now, null);
+            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
+    var refBase =
+        new EntityBaseEntity(tenantId, refId, owner, "Individual", "Scholar", now, now, null);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(entityBase);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, refId))).thenReturn(refBase);

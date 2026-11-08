@@ -4,8 +4,10 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.HashtagDAO;
 import com.larpconnect.njall.data.domain.Hashtag;
+import com.larpconnect.njall.data.domain.StudioLookup;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -47,7 +49,13 @@ final class TagActor extends AbstractBehavior<TagCommand> {
           cmd.replyTo().tell(TagActorResponse.badRequest(validationError.orElseThrow()));
           return this;
         }
-        executeBatchCreate(cmd.tenantId(), cmd.canonicalPrefix(), cmd.requests(), cmd.replyTo());
+        executeBatchCreate(
+            cmd.tenantId(),
+            cmd.studioIdentifier(),
+            cmd.canonicalPrefix(),
+            cmd.requests(),
+            cmd.replyTo(),
+            cmd.lookup());
       } else {
         var request = cmd.requests().getFirst();
         var validationError = TagValidation.validateCreate(request);
@@ -55,7 +63,13 @@ final class TagActor extends AbstractBehavior<TagCommand> {
           cmd.replyTo().tell(TagActorResponse.badRequest(validationError.orElseThrow()));
           return this;
         }
-        executeCreate(cmd.tenantId(), cmd.canonicalPrefix(), request, cmd.replyTo());
+        executeCreate(
+            cmd.tenantId(),
+            cmd.studioIdentifier(),
+            cmd.canonicalPrefix(),
+            request,
+            cmd.replyTo(),
+            cmd.lookup());
       }
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create tag", e);
@@ -65,46 +79,68 @@ final class TagActor extends AbstractBehavior<TagCommand> {
 
   private void executeCreate(
       UUID tenantId,
+      String studioIdentifier,
       String canonicalPrefix,
       CreateTagRequest request,
-      ActorRef<TagActorResponse> replyTo) {
+      ActorRef<TagActorResponse> replyTo,
+      Optional<StudioLookup> lookup) {
+    var parsedOwner =
+        GeneratorUriSupport.parseGenerator(request.generator(), studioIdentifier, lookup);
+    if (parsedOwner.isEmpty()) {
+      replyTo.tell(TagActorResponse.badRequest("Invalid generator URI or actor identifier"));
+      return;
+    }
     var sanitizedTag = TagValidation.sanitizeTag(request.tag());
     var existingOpt = hashtagDao.findByTag(tenantId, sanitizedTag);
     if (existingOpt.isPresent()) {
-      replyTo.tell(TagActorResponse.success(toTagResponse(existingOpt.orElseThrow()), false));
+      replyTo.tell(
+          TagActorResponse.success(
+              toTagResponse(studioIdentifier, existingOpt.orElseThrow()), false));
       return;
     }
     var canonicalUrl = canonicalPrefix + "/" + sanitizedTag;
-    var created = hashtagDao.create(tenantId, sanitizedTag, canonicalUrl, request.summary());
-    replyTo.tell(TagActorResponse.success(toTagResponse(created), true));
+    var created =
+        hashtagDao.create(
+            tenantId, parsedOwner.orElseThrow(), sanitizedTag, canonicalUrl, request.summary());
+    replyTo.tell(TagActorResponse.success(toTagResponse(studioIdentifier, created), true));
   }
 
   private void executeBatchCreate(
       UUID tenantId,
+      String studioIdentifier,
       String canonicalPrefix,
       ImmutableList<CreateTagRequest> requests,
-      ActorRef<TagActorResponse> replyTo) {
-    var items =
-        requests.stream()
-            .map(
-                req -> {
-                  var sanitized = TagValidation.sanitizeTag(req.tag());
-                  var canonicalUrl = canonicalPrefix + "/" + sanitized;
-                  return new HashtagDAO.TagCreationItem(sanitized, canonicalUrl, req.summary());
-                })
-            .toList();
-    var created = hashtagDao.batchCreate(tenantId, items);
+      ActorRef<TagActorResponse> replyTo,
+      Optional<StudioLookup> lookup) {
+    var itemsBuilder = ImmutableList.<HashtagDAO.TagCreationItem>builder();
+    for (var req : requests) {
+      var parsedOwner =
+          GeneratorUriSupport.parseGenerator(req.generator(), studioIdentifier, lookup);
+      if (parsedOwner.isEmpty()) {
+        replyTo.tell(TagActorResponse.badRequest("Invalid generator URI or actor identifier"));
+        return;
+      }
+      var sanitized = TagValidation.sanitizeTag(req.tag());
+      var canonicalUrl = canonicalPrefix + "/" + sanitized;
+      itemsBuilder.add(
+          new HashtagDAO.TagCreationItem(
+              parsedOwner.orElseThrow(), sanitized, canonicalUrl, req.summary()));
+    }
+    var created = hashtagDao.batchCreate(tenantId, itemsBuilder.build());
     var responses =
-        created.stream().map(this::toTagResponse).collect(ImmutableList.toImmutableList());
+        created.stream()
+            .map(tag -> toTagResponse(studioIdentifier, tag))
+            .collect(ImmutableList.toImmutableList());
     replyTo.tell(TagActorResponse.items(responses));
   }
 
   private Behavior<TagCommand> onQueryTag(TagCommand.QueryTag cmd) {
     try {
       if (cmd.idOrName().isPresent()) {
-        executeGet(cmd.tenantId(), cmd.idOrName().orElseThrow(), cmd.replyTo());
+        executeGet(
+            cmd.tenantId(), cmd.studioIdentifier(), cmd.idOrName().orElseThrow(), cmd.replyTo());
       } else {
-        executeList(cmd.tenantId(), cmd.replyTo());
+        executeList(cmd.tenantId(), cmd.studioIdentifier(), cmd.replyTo());
       }
     } catch (Exception e) {
       handleError(cmd.replyTo(), "query tag", e);
@@ -112,20 +148,25 @@ final class TagActor extends AbstractBehavior<TagCommand> {
     return this;
   }
 
-  private void executeGet(UUID tenantId, String idOrName, ActorRef<TagActorResponse> replyTo) {
+  private void executeGet(
+      UUID tenantId, String studioIdentifier, String idOrName, ActorRef<TagActorResponse> replyTo) {
     var uuidOpt = TagValidation.tryParseUuid(idOrName);
     var tagOpt =
         uuidOpt.isPresent()
             ? hashtagDao.findById(tenantId, uuidOpt.orElseThrow())
             : hashtagDao.findByTag(tenantId, TagValidation.sanitizeTag(idOrName));
     tagOpt.ifPresentOrElse(
-        tag -> replyToSuccess(replyTo, tag),
+        tag -> replyToSuccess(replyTo, studioIdentifier, tag),
         () -> replyToNotFound(replyTo, "Hashtag not found: " + idOrName));
   }
 
-  private void executeList(UUID tenantId, ActorRef<TagActorResponse> replyTo) {
+  private void executeList(
+      UUID tenantId, String studioIdentifier, ActorRef<TagActorResponse> replyTo) {
     var tags = hashtagDao.listAll(tenantId);
-    var responses = tags.stream().map(this::toTagResponse).collect(ImmutableList.toImmutableList());
+    var responses =
+        tags.stream()
+            .map(tag -> toTagResponse(studioIdentifier, tag))
+            .collect(ImmutableList.toImmutableList());
     replyTo.tell(TagActorResponse.items(responses));
   }
 
@@ -143,6 +184,7 @@ final class TagActor extends AbstractBehavior<TagCommand> {
       }
       executePatch(
           cmd.tenantId(),
+          cmd.studioIdentifier(),
           targetIdOpt.orElseThrow(),
           cmd.request(),
           cmd.updateMask(),
@@ -155,6 +197,7 @@ final class TagActor extends AbstractBehavior<TagCommand> {
 
   private void executePatch(
       UUID tenantId,
+      String studioIdentifier,
       UUID tagId,
       UpdateTagRequest request,
       Optional<String> updateMask,
@@ -166,7 +209,9 @@ final class TagActor extends AbstractBehavior<TagCommand> {
     hashtagDao
         .patch(tenantId, tagId, tag, summary)
         .ifPresentOrElse(
-            updated -> replyTo.tell(TagActorResponse.success(toTagResponse(updated), false)),
+            updated ->
+                replyTo.tell(
+                    TagActorResponse.success(toTagResponse(studioIdentifier, updated), false)),
             () -> replyTo.tell(TagActorResponse.notFound("Hashtag not found: " + tagId)));
   }
 
@@ -201,17 +246,19 @@ final class TagActor extends AbstractBehavior<TagCommand> {
     return hashtagDao.findByTag(tenantId, TagValidation.sanitizeTag(idOrName)).map(Hashtag::id);
   }
 
-  private void replyToSuccess(ActorRef<TagActorResponse> replyTo, Hashtag tag) {
-    replyTo.tell(TagActorResponse.success(toTagResponse(tag), false));
+  private void replyToSuccess(
+      ActorRef<TagActorResponse> replyTo, String studioIdentifier, Hashtag tag) {
+    replyTo.tell(TagActorResponse.success(toTagResponse(studioIdentifier, tag), false));
   }
 
   private void replyToNotFound(ActorRef<TagActorResponse> replyTo, String message) {
     replyTo.tell(TagActorResponse.notFound(message));
   }
 
-  private TagResponse toTagResponse(Hashtag tag) {
+  private TagResponse toTagResponse(String studioIdentifier, Hashtag tag) {
     return new TagResponse(
         tag.id(),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, tag.owner()),
         tag.tag(),
         tag.linkType(),
         tag.url(),
@@ -235,6 +282,10 @@ final class TagActor extends AbstractBehavior<TagCommand> {
 
   private void handleError(ActorRef<TagActorResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in TagActor", operation, error);
+    if (error instanceof IllegalArgumentException) {
+      replyTo.tell(TagActorResponse.badRequest(error.getMessage()));
+      return;
+    }
     var message = error.getMessage();
     var reason = !Strings.isNullOrEmpty(message) ? message : "Error executing " + operation;
     replyTo.tell(TagActorResponse.failure(reason));

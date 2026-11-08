@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Event;
@@ -33,7 +34,7 @@ final class DefaultEventDAO implements EventDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, eventId);
+        var entityId = createEntityId(tenantId, eventId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         var event = session.find(EventEntity.class, entityId);
         tx.commit();
@@ -80,6 +81,7 @@ final class DefaultEventDAO implements EventDAO {
   @Override
   public Event create(
       UUID tenantId,
+      UUID owner,
       String title,
       Optional<String> summary,
       Optional<UUID> locationId,
@@ -89,21 +91,13 @@ final class DefaultEventDAO implements EventDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
+        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
         var eventId = UUID.randomUUID();
         var now = Instant.now();
-        var entity =
-            new EntityBaseEntity(
-                tenantId, eventId, ENTITY_TYPE_EVENT, summary.orElse(null), now, now, null);
+        var entity = createBaseEntity(tenantId, eventId, owner, summary, now);
         session.persist(entity);
 
-        var event =
-            new EventEntity(
-                tenantId,
-                eventId,
-                locationId.orElse(null),
-                title,
-                startTime.orElse(null),
-                endTime.orElse(null));
+        var event = createEventEntity(tenantId, eventId, locationId, title, startTime, endTime);
         session.persist(event);
 
         tx.commit();
@@ -128,7 +122,7 @@ final class DefaultEventDAO implements EventDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, eventId);
+        var entityId = createEntityId(tenantId, eventId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         var event = session.find(EventEntity.class, entityId);
         if (entity == null || event == null || entity.getDeletedOn() != null) {
@@ -158,7 +152,7 @@ final class DefaultEventDAO implements EventDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = new EntityId(tenantId, eventId);
+        var entityId = createEntityId(tenantId, eventId);
         var entity = session.find(EntityBaseEntity.class, entityId);
         if (entity == null || entity.getDeletedOn() != null) {
           tx.commit();
@@ -192,9 +186,31 @@ final class DefaultEventDAO implements EventDAO {
     }
   }
 
+  private static EntityId createEntityId(UUID tenantId, UUID id) {
+    return new EntityId(tenantId, id);
+  }
+
+  private static EntityBaseEntity createBaseEntity(
+      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
+    return new EntityBaseEntity(
+        tenantId, id, owner, ENTITY_TYPE_EVENT, summary.orElse(null), now, now, null);
+  }
+
+  private static EventEntity createEventEntity(
+      UUID tenantId,
+      UUID id,
+      Optional<UUID> locationId,
+      String title,
+      Optional<Instant> startTime,
+      Optional<Instant> endTime) {
+    return new EventEntity(
+        tenantId, id, locationId.orElse(null), title, startTime.orElse(null), endTime.orElse(null));
+  }
+
   private static Event toEvent(EntityBaseEntity entity, EventEntity event) {
     return new Event(
         entity.getId(),
+        entity.getOwner(),
         event.getLocationId(),
         event.getTitle(),
         entity.getSummary(),

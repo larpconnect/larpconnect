@@ -74,7 +74,7 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
     return studioLookupCache
         .findByIdOrAlias(studioIdParam)
         .filter(this::isActive)
-        .map(this::buildTenantedRoutes)
+        .map(lookup -> buildTenantedRoutes(lookup, studioIdParam))
         .orElseGet(() -> completeNotFound("Studio not found: " + studioIdParam));
   }
 
@@ -82,52 +82,54 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
     return !lookup.isDeleted();
   }
 
-  private Route buildTenantedRoutes(StudioLookup lookup) {
+  private Route buildTenantedRoutes(StudioLookup lookup, String studioIdParam) {
     return concat(
         pathEndOrSingleSlash(
             () ->
                 concat(
-                    get(() -> handleListEvents(lookup.tenantId())),
-                    post(() -> handlePostEvent(lookup.tenantId())))),
+                    get(() -> handleListEvents(lookup.tenantId(), studioIdParam)),
+                    post(() -> handlePostEvent(lookup, studioIdParam)))),
         pathPrefix(
             PathMatchers.segment(),
-            eventIdParam -> handleEventBranch(lookup.tenantId(), eventIdParam)));
+            eventIdParam -> handleEventBranch(lookup.tenantId(), studioIdParam, eventIdParam)));
   }
 
-  private Route handlePostEvent(UUID tenantId) {
+  private Route handlePostEvent(StudioLookup lookup, String studioIdParam) {
     return entity(
         Jackson.unmarshaller(objectMapper, CreateEventRequest.class),
         request ->
             onComplete(
-                () -> askCreateEvent(tenantId, request),
+                () -> askCreateEvent(lookup, studioIdParam, request),
                 res -> mapEventResponse(res, StatusCodes.CREATED)));
   }
 
-  private Route handleListEvents(UUID tenantId) {
-    return onComplete(() -> askListEvents(tenantId), res -> mapEventResponse(res, StatusCodes.OK));
+  private Route handleListEvents(UUID tenantId, String studioIdParam) {
+    return onComplete(
+        () -> askListEvents(tenantId, studioIdParam), res -> mapEventResponse(res, StatusCodes.OK));
   }
 
-  private Route handleEventBranch(UUID tenantId, String eventIdParam) {
+  private Route handleEventBranch(UUID tenantId, String studioIdParam, String eventIdParam) {
     return EventValidation.tryParseUuid(eventIdParam)
-        .map(eventId -> buildEventSubroutes(tenantId, eventId))
+        .map(eventId -> buildEventSubroutes(tenantId, studioIdParam, eventId))
         .orElseGet(() -> completeNotFound("Event not found: " + eventIdParam));
   }
 
-  private Route buildEventSubroutes(UUID tenantId, UUID eventId) {
+  private Route buildEventSubroutes(UUID tenantId, String studioIdParam, UUID eventId) {
     return pathEndOrSingleSlash(
         () ->
             concat(
-                get(() -> handleGetEvent(tenantId, eventId)),
-                patch(() -> handlePatchEvent(tenantId, eventId)),
+                get(() -> handleGetEvent(tenantId, studioIdParam, eventId)),
+                patch(() -> handlePatchEvent(tenantId, studioIdParam, eventId)),
                 delete(() -> handleDeleteEvent(tenantId, eventId))));
   }
 
-  private Route handleGetEvent(UUID tenantId, UUID eventId) {
+  private Route handleGetEvent(UUID tenantId, String studioIdParam, UUID eventId) {
     return onComplete(
-        () -> askGetEvent(tenantId, eventId), res -> mapEventResponse(res, StatusCodes.OK));
+        () -> askGetEvent(tenantId, studioIdParam, eventId),
+        res -> mapEventResponse(res, StatusCodes.OK));
   }
 
-  private Route handlePatchEvent(UUID tenantId, UUID eventId) {
+  private Route handlePatchEvent(UUID tenantId, String studioIdParam, UUID eventId) {
     return parameterOptional(
         "update_mask",
         mask ->
@@ -135,7 +137,7 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
                 Jackson.unmarshaller(objectMapper, UpdateEventRequest.class),
                 req ->
                     onComplete(
-                        () -> askPatchEvent(tenantId, eventId, req, mask),
+                        () -> askPatchEvent(tenantId, studioIdParam, eventId, req, mask),
                         res -> mapEventResponse(res, StatusCodes.OK))));
   }
 
@@ -146,35 +148,45 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
   }
 
   private CompletionStage<EventActorResponse> askCreateEvent(
-      UUID tenantId, CreateEventRequest request) {
+      StudioLookup lookup, String studioIdentifier, CreateEventRequest request) {
     return ask(
         eventActor,
-        replyTo -> new EventCommand.CreateEvent(tenantId, request, replyTo),
+        replyTo ->
+            new EventCommand.CreateEvent(
+                lookup.tenantId(), studioIdentifier, request, replyTo, Optional.of(lookup)),
         askTimeout,
         system.scheduler());
   }
 
-  private CompletionStage<EventActorResponse> askListEvents(UUID tenantId) {
+  private CompletionStage<EventActorResponse> askListEvents(
+      UUID tenantId, String studioIdentifier) {
     return ask(
         eventActor,
-        replyTo -> new EventCommand.ListEvents(tenantId, replyTo),
+        replyTo -> new EventCommand.ListEvents(tenantId, studioIdentifier, replyTo),
         askTimeout,
         system.scheduler());
   }
 
-  private CompletionStage<EventActorResponse> askGetEvent(UUID tenantId, UUID eventId) {
+  private CompletionStage<EventActorResponse> askGetEvent(
+      UUID tenantId, String studioIdentifier, UUID eventId) {
     return ask(
         eventActor,
-        replyTo -> new EventCommand.GetEvent(tenantId, eventId, replyTo),
+        replyTo -> new EventCommand.GetEvent(tenantId, studioIdentifier, eventId, replyTo),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<EventActorResponse> askPatchEvent(
-      UUID tenantId, UUID eventId, UpdateEventRequest request, Optional<String> updateMask) {
+      UUID tenantId,
+      String studioIdentifier,
+      UUID eventId,
+      UpdateEventRequest request,
+      Optional<String> updateMask) {
     return ask(
         eventActor,
-        replyTo -> new EventCommand.PatchEvent(tenantId, eventId, request, updateMask, replyTo),
+        replyTo ->
+            new EventCommand.PatchEvent(
+                tenantId, studioIdentifier, eventId, request, updateMask, replyTo),
         askTimeout,
         system.scheduler());
   }

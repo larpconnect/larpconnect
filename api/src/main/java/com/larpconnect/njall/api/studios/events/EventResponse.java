@@ -10,6 +10,7 @@ import java.util.UUID;
 @Immutable
 public record EventResponse(
     @JsonProperty("id") UUID id,
+    @JsonProperty("generator") String generator,
     @JsonProperty("title") String title,
     @JsonProperty("summary") Optional<String> summary,
     @JsonProperty("locationId") Optional<UUID> locationId,

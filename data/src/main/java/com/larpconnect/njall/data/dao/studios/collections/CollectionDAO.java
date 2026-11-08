@@ -42,12 +42,13 @@ public interface CollectionDAO {
    * Creates a new collection under the specified studio tenant.
    *
    * @param tenantId Studio tenant UUID.
-   * @param ownerId Owner entity UUID.
+   * @param owner Generating actor entity UUID.
+   * @param ownerId Semantic owner entity UUID.
    * @param name Collection name.
    * @param summary Optional description summary.
    * @return Created collection.
    */
-  Collection create(UUID tenantId, UUID ownerId, String name, Optional<String> summary);
+  Collection create(UUID tenantId, UUID owner, UUID ownerId, String name, Optional<String> summary);
 
   /**
    * Applies partial updates to a collection.
@@ -71,14 +72,15 @@ public interface CollectionDAO {
   boolean softDelete(UUID tenantId, UUID collectionId);
 
   /**
-   * Adds an entity reference to a collection.
+   * Adds an entity reference to a collection, optionally before another item or at an index.
    *
    * @param tenantId Studio tenant UUID.
    * @param collectionId Collection UUID.
    * @param refersToId Referenced entity UUID.
-   * @param before Optional target entity UUID to insert before.
-   * @param index Optional zero-based integer index to insert at.
-   * @return True if added or already present, false if collection/entity not found.
+   * @param before Optional entity UUID before which to insert.
+   * @param index Optional zero-based index for insertion.
+   * @return True if successfully added or already present (idempotent), false if collection not
+   *     found.
    */
   boolean addItem(
       UUID tenantId,
@@ -92,8 +94,8 @@ public interface CollectionDAO {
    *
    * @param tenantId Studio tenant UUID.
    * @param collectionId Collection UUID.
-   * @param refersToId Referenced entity UUID.
-   * @return True if collection exists and item removed or absent, false if collection not found.
+   * @param refersToId Referenced entity UUID to remove.
+   * @return True if successfully removed or idempotent, false if collection not found.
    */
   boolean removeItem(UUID tenantId, UUID collectionId, UUID refersToId);
 }

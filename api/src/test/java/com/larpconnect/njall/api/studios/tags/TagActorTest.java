@@ -21,7 +21,9 @@ import org.junit.jupiter.api.Test;
 
 final class TagActorTest {
 
+  private static final String STUDIO_IDENTIFIER = "valiant";
   private final UUID tenantId = UUID.randomUUID();
+  private final UUID ownerId = UUID.randomUUID();
   private final UUID tagId = UUID.randomUUID();
   private final Instant now = Instant.now();
 
@@ -32,6 +34,7 @@ final class TagActorTest {
   private Hashtag sampleTag() {
     return new Hashtag(
         tagId,
+        ownerId,
         "SolarPunk",
         "hashtag",
         "/api/studios/valiant/v1/tags/SolarPunk",
@@ -50,6 +53,7 @@ final class TagActorTest {
     when(hashtagDao.findByTag(tenantId, "SolarPunk")).thenReturn(Optional.empty());
     when(hashtagDao.create(
             eq(tenantId),
+            eq(ownerId),
             eq("SolarPunk"),
             eq("/api/studios/valiant/v1/tags/SolarPunk"),
             eq(Optional.of("Eco-futuristic"))))
@@ -58,10 +62,12 @@ final class TagActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(hashtagDao));
     TestInbox<TagActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateTagRequest("#SolarPunk", Optional.of("Eco-futuristic"));
+    var request =
+        new CreateTagRequest(ownerId.toString(), "#SolarPunk", Optional.of("Eco-futuristic"));
     testKit.run(
         new TagCommand.CreateTags(
             tenantId,
+            STUDIO_IDENTIFIER,
             "/api/studios/valiant/v1/tags",
             ImmutableList.of(request),
             false,
@@ -73,6 +79,7 @@ final class TagActorTest {
     assertThat(success.created()).isTrue();
     assertThat(success.tag().id()).isEqualTo(tagId);
     assertThat(success.tag().tag()).isEqualTo("SolarPunk");
+    assertThat(success.tag().generator()).isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
   }
 
   @Test
@@ -85,10 +92,11 @@ final class TagActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(hashtagDao));
     TestInbox<TagActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateTagRequest("SolarPunk", Optional.of("Different"));
+    var request = new CreateTagRequest(ownerId.toString(), "SolarPunk", Optional.of("Different"));
     testKit.run(
         new TagCommand.CreateTags(
             tenantId,
+            STUDIO_IDENTIFIER,
             "/api/studios/valiant/v1/tags",
             ImmutableList.of(request),
             false,
@@ -102,16 +110,39 @@ final class TagActorTest {
   }
 
   @Test
+  @DisplayName("onCreateTags returns Error with 400 on invalid generator")
+  void onCreateTags_invalidGenerator_returnsError400() {
+    var hashtagDao = mock(HashtagDAO.class);
+    var testKit = BehaviorTestKit.create(createBehavior(hashtagDao));
+    TestInbox<TagActorResponse> inbox = TestInbox.create();
+
+    var request = new CreateTagRequest("invalid-gen", "SolarPunk", Optional.empty());
+    testKit.run(
+        new TagCommand.CreateTags(
+            tenantId,
+            STUDIO_IDENTIFIER,
+            "/api/studios/valiant/v1/tags",
+            ImmutableList.of(request),
+            false,
+            inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(TagActorResponse.Failure.class);
+    assertThat(((TagActorResponse.Failure) response).status()).isEqualTo(400);
+  }
+
+  @Test
   @DisplayName("onCreateTags returns Error with 400 on invalid tag")
   void onCreateTags_invalid_returnsError400() {
     var hashtagDao = mock(HashtagDAO.class);
     var testKit = BehaviorTestKit.create(createBehavior(hashtagDao));
     TestInbox<TagActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateTagRequest("", Optional.empty());
+    var request = new CreateTagRequest(ownerId.toString(), "", Optional.empty());
     testKit.run(
         new TagCommand.CreateTags(
             tenantId,
+            STUDIO_IDENTIFIER,
             "/api/studios/valiant/v1/tags",
             ImmutableList.of(request),
             false,
@@ -131,10 +162,11 @@ final class TagActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(hashtagDao));
     TestInbox<TagActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateTagRequest("SolarPunk", Optional.empty());
+    var request = new CreateTagRequest(ownerId.toString(), "SolarPunk", Optional.empty());
     testKit.run(
         new TagCommand.CreateTags(
             tenantId,
+            STUDIO_IDENTIFIER,
             "/api/studios/valiant/v1/tags",
             ImmutableList.of(request),
             false,
@@ -155,10 +187,16 @@ final class TagActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(hashtagDao));
     TestInbox<TagActorResponse> inbox = TestInbox.create();
 
-    var batch = ImmutableList.of(new CreateTagRequest("SolarPunk", Optional.empty()));
+    var batch =
+        ImmutableList.of(new CreateTagRequest(ownerId.toString(), "SolarPunk", Optional.empty()));
     testKit.run(
         new TagCommand.CreateTags(
-            tenantId, "/api/studios/valiant/v1/tags", batch, true, inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            "/api/studios/valiant/v1/tags",
+            batch,
+            true,
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Items.class);
@@ -175,7 +213,12 @@ final class TagActorTest {
 
     testKit.run(
         new TagCommand.CreateTags(
-            tenantId, "/api/studios/valiant/v1/tags", ImmutableList.of(), true, inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            "/api/studios/valiant/v1/tags",
+            ImmutableList.of(),
+            true,
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Failure.class);
@@ -194,18 +237,24 @@ final class TagActorTest {
     TestInbox<TagActorResponse> inbox = TestInbox.create();
 
     // Get by UUID
-    testKit.run(new TagCommand.QueryTag(tenantId, Optional.of(tagId.toString()), inbox.getRef()));
+    testKit.run(
+        new TagCommand.QueryTag(
+            tenantId, STUDIO_IDENTIFIER, Optional.of(tagId.toString()), inbox.getRef()));
     var response1 = inbox.receiveMessage();
     assertThat(response1).isInstanceOf(TagActorResponse.Success.class);
 
     // Get by name
-    testKit.run(new TagCommand.QueryTag(tenantId, Optional.of("#solarpunk"), inbox.getRef()));
+    testKit.run(
+        new TagCommand.QueryTag(
+            tenantId, STUDIO_IDENTIFIER, Optional.of("#solarpunk"), inbox.getRef()));
     var response2 = inbox.receiveMessage();
     assertThat(response2).isInstanceOf(TagActorResponse.Success.class);
 
     // Get non-existent
     when(hashtagDao.findByTag(tenantId, "unknown")).thenReturn(Optional.empty());
-    testKit.run(new TagCommand.QueryTag(tenantId, Optional.of("unknown"), inbox.getRef()));
+    testKit.run(
+        new TagCommand.QueryTag(
+            tenantId, STUDIO_IDENTIFIER, Optional.of("unknown"), inbox.getRef()));
     var response3 = inbox.receiveMessage();
     assertThat(response3).isInstanceOf(TagActorResponse.Failure.class);
     assertThat(((TagActorResponse.Failure) response3).status()).isEqualTo(404);
@@ -220,7 +269,9 @@ final class TagActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(hashtagDao));
     TestInbox<TagActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new TagCommand.QueryTag(tenantId, Optional.of(tagId.toString()), inbox.getRef()));
+    testKit.run(
+        new TagCommand.QueryTag(
+            tenantId, STUDIO_IDENTIFIER, Optional.of(tagId.toString()), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Failure.class);
@@ -239,7 +290,8 @@ final class TagActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(hashtagDao));
     TestInbox<TagActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new TagCommand.QueryTag(tenantId, Optional.empty(), inbox.getRef()));
+    testKit.run(
+        new TagCommand.QueryTag(tenantId, STUDIO_IDENTIFIER, Optional.empty(), inbox.getRef()));
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Items.class);
     var items = (TagActorResponse.Items) response;
@@ -262,7 +314,12 @@ final class TagActorTest {
     var request = new UpdateTagRequest(Optional.of("CyberPunk"), Optional.of("Ignored summary"));
     testKit.run(
         new TagCommand.PatchTag(
-            tenantId, tagId.toString(), request, Optional.of("tag"), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            tagId.toString(),
+            request,
+            Optional.of("tag"),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Success.class);
@@ -284,7 +341,12 @@ final class TagActorTest {
     var request = new UpdateTagRequest(Optional.of("CyberPunk"), Optional.of("New Summary"));
     testKit.run(
         new TagCommand.PatchTag(
-            tenantId, tagId.toString(), request, Optional.empty(), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            tagId.toString(),
+            request,
+            Optional.empty(),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Success.class);
@@ -300,7 +362,12 @@ final class TagActorTest {
     var request = new UpdateTagRequest(Optional.empty(), Optional.empty());
     testKit.run(
         new TagCommand.PatchTag(
-            tenantId, tagId.toString(), request, Optional.empty(), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            tagId.toString(),
+            request,
+            Optional.empty(),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Failure.class);
@@ -318,7 +385,8 @@ final class TagActorTest {
 
     var request = new UpdateTagRequest(Optional.of("CyberPunk"), Optional.empty());
     testKit.run(
-        new TagCommand.PatchTag(tenantId, "unknown", request, Optional.empty(), inbox.getRef()));
+        new TagCommand.PatchTag(
+            tenantId, STUDIO_IDENTIFIER, "unknown", request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Failure.class);
@@ -338,7 +406,12 @@ final class TagActorTest {
     var request = new UpdateTagRequest(Optional.of("CyberPunk"), Optional.empty());
     testKit.run(
         new TagCommand.PatchTag(
-            tenantId, tagId.toString(), request, Optional.empty(), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            tagId.toString(),
+            request,
+            Optional.empty(),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(TagActorResponse.Failure.class);

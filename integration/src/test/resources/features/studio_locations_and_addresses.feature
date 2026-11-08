@@ -14,9 +14,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_loc/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "loc_lead"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "loc_lead_id"
     When an API admin sends a POST request to "/api/studios/valiant_loc/v1/locations" with body:
       """
       {
+        "generator": "/api/studios/valiant_loc/v1/actors/{loc_lead_id}",
         "name": "Main Campsite",
         "summary": "Primary outdoor campgrounds"
       }
@@ -25,6 +34,7 @@ Feature: User Space Studio Locations and Addresses REST API
     And the HTTP response content-type contains "application/json"
     And the JSON response contains field "name" with value "Main Campsite"
     And the JSON response contains field "summary" with value "Primary outdoor campgrounds"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_loc/v1/actors/{loc_lead_id}"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
     And the JSON response does not contain field "tenantId"
@@ -33,6 +43,7 @@ Feature: User Space Studio Locations and Addresses REST API
     Then the HTTP response status code is 200
     And the JSON response contains field "name" with value "Main Campsite"
     And the JSON response contains field "summary" with value "Primary outdoor campgrounds"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_loc/v1/actors/{loc_lead_id}"
     And the JSON response does not contain field "tenantId"
 
   Scenario: Successfully update location name and summary adhering to AIP-134
@@ -45,9 +56,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_loc_patch/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "patch_lead"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "patch_lead_id"
     When an API admin sends a POST request to "/api/studios/valiant_loc_patch/v1/locations" with body:
       """
       {
+        "generator": "{patch_lead_id}",
         "name": "Old Grounds",
         "summary": "Old summary"
       }
@@ -75,9 +95,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_loc_del/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "del_lead"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "del_lead_id"
     When an API admin sends a POST request to "/api/studios/valiant_loc_del/v1/locations" with body:
       """
       {
+        "generator": "{del_lead_id}",
         "name": "Grounds to Delete"
       }
       """
@@ -99,9 +128,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_addr/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "addr_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "addr_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_addr/v1/locations" with body:
       """
       {
+        "generator": "{addr_actor_id}",
         "name": "Evergreen Lodge"
       }
       """
@@ -154,9 +192,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_addr_patch/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "patch_addr_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "patch_addr_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_addr_patch/v1/locations" with body:
       """
       {
+        "generator": "{patch_addr_actor_id}",
         "name": "Alpine Retreat"
       }
       """
@@ -196,9 +243,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_addr_del/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "del_addr_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "del_addr_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_addr_del/v1/locations" with body:
       """
       {
+        "generator": "{del_addr_actor_id}",
         "name": "Cedar Hall"
       }
       """
@@ -232,9 +288,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_multi_addr/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "multi_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "multi_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_multi_addr/v1/locations" with body:
       """
       {
+        "generator": "{multi_actor_id}",
         "name": "Headquarters Compound"
       }
       """
@@ -293,9 +358,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/loc_studio_alpha/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "alpha_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "alpha_actor_id"
     When an API admin sends a POST request to "/api/studios/loc_studio_alpha/v1/locations" with body:
       """
       {
+        "generator": "{alpha_actor_id}",
         "name": "Alpha Private Sanctuary"
       }
       """
@@ -329,9 +403,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_cascade_del/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "sunset_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "sunset_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_cascade_del/v1/locations" with body:
       """
       {
+        "generator": "{sunset_actor_id}",
         "name": "Compound to Sunset"
       }
       """
@@ -365,9 +448,18 @@ Feature: User Space Studio Locations and Addresses REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_loc_validation/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "val_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "val_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_loc_validation/v1/locations" with body:
       """
       {
+        "generator": "{val_actor_id}",
         "name": ""
       }
       """
@@ -375,6 +467,7 @@ Feature: User Space Studio Locations and Addresses REST API
     When an API admin sends a POST request to "/api/studios/valiant_loc_validation/v1/locations" with body:
       """
       {
+        "generator": "{val_actor_id}",
         "name": "Valid Location"
       }
       """

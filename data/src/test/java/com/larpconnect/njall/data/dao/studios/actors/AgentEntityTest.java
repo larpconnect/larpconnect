@@ -13,17 +13,15 @@ final class AgentEntityTest {
   void agentEntity_accessors() {
     var tenantId = UUID.randomUUID();
     var id = UUID.randomUUID();
-    var ownerId = UUID.randomUUID();
 
     var defaultEntity = new AgentEntity();
     assertThat(defaultEntity.getId()).isNull();
 
-    var entity = new AgentEntity(tenantId, id, ownerId, "valkyrie");
+    var entity = new AgentEntity(tenantId, id, "valkyrie");
     entity.setPreferredUsername("valkyrie_lead");
 
     assertThat(entity.getTenantId()).isEqualTo(tenantId);
     assertThat(entity.getId()).isEqualTo(id);
-    assertThat(entity.getOwnerId()).isEqualTo(ownerId);
     assertThat(entity.getPreferredUsername()).isEqualTo("valkyrie_lead");
   }
 }

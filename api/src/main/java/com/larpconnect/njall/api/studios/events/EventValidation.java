@@ -9,6 +9,9 @@ final class EventValidation {
   private EventValidation() {}
 
   static Optional<String> validateCreate(CreateEventRequest request) {
+    if (Strings.isNullOrEmpty(request.generator()) || request.generator().isBlank()) {
+      return Optional.of("Generator URI or actor identifier must not be blank");
+    }
     if (Strings.isNullOrEmpty(request.title()) || request.title().isBlank()) {
       return Optional.of("Event title must not be blank");
     }

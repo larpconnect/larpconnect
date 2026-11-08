@@ -143,6 +143,7 @@ final class AgentActorBranchTest {
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
+            STUDIO_IDENTIFIER,
             actorId,
             AgentCommand.CollectionTarget.INBOX,
             AgentCommand.CollectionAction.GET,
@@ -155,6 +156,7 @@ final class AgentActorBranchTest {
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
+            STUDIO_IDENTIFIER,
             actorId,
             AgentCommand.CollectionTarget.INBOX,
             AgentCommand.CollectionAction.GET,
@@ -167,6 +169,7 @@ final class AgentActorBranchTest {
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
+            STUDIO_IDENTIFIER,
             actorId,
             AgentCommand.CollectionTarget.INBOX,
             AgentCommand.CollectionAction.GET,
@@ -186,7 +189,8 @@ final class AgentActorBranchTest {
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
 
-    var req = new CreateActorRequest(ownerId, "valkyrie_lead", Optional.empty());
+    var req =
+        new CreateActorRequest(Optional.of(ownerId.toString()), "valkyrie_lead", Optional.empty());
     testKit.run(new AgentCommand.CreateAgent(tenantId, STUDIO_IDENTIFIER, req, inbox.getRef()));
     assertThat(((AgentActorResponse.Failure) inbox.receiveMessage()).status()).isEqualTo(409);
 
@@ -197,5 +201,36 @@ final class AgentActorBranchTest {
     when(agentDao.delete(any(), any())).thenThrow(new RuntimeException("DB offline"));
     testKit.run(new AgentCommand.DeleteAgent(tenantId, actorId, inbox.getRef()));
     assertThat(((AgentActorResponse.Failure) inbox.receiveMessage()).status()).isEqualTo(500);
+  }
+
+  @Test
+  @DisplayName("AgentActor handleError falls back to default reason on null message")
+  void unexpectedExceptions_nullMessage() {
+    var agentDao = mock(AgentDAO.class);
+    var collectionDao = mock(CollectionDAO.class);
+    when(agentDao.findById(any(), any())).thenThrow(new RuntimeException((String) null));
+
+    var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
+    TestInbox<AgentActorResponse> inbox = TestInbox.create();
+
+    testKit.run(new AgentCommand.GetAgent(tenantId, STUDIO_IDENTIFIER, actorId, inbox.getRef()));
+    var nullMsgFailure = (AgentActorResponse.Failure) inbox.receiveMessage();
+    assertThat(nullMsgFailure.status()).isEqualTo(500);
+    assertThat(nullMsgFailure.message()).isEqualTo("Error executing get actor");
+  }
+
+  @Test
+  @DisplayName("AgentActor returns 400 on invalid generator URI")
+  void createAgent_invalidGenerator_returnsBadRequest() {
+    var agentDao = mock(AgentDAO.class);
+    var collectionDao = mock(CollectionDAO.class);
+    var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
+    TestInbox<AgentActorResponse> inbox = TestInbox.create();
+
+    var invalidGenReq =
+        new CreateActorRequest(Optional.of("invalid-gen"), "valkyrie_lead", Optional.empty());
+    testKit.run(
+        new AgentCommand.CreateAgent(tenantId, STUDIO_IDENTIFIER, invalidGenReq, inbox.getRef()));
+    assertThat(((AgentActorResponse.Failure) inbox.receiveMessage()).status()).isEqualTo(400);
   }
 }

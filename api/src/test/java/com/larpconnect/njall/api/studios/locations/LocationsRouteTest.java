@@ -35,7 +35,8 @@ import org.junit.jupiter.api.Test;
 
 final class LocationsRouteTest {
 
-  private static final String CREATE_LOCATION_BODY = "{\"name\":\"Camp Whispering Pines\"}";
+  private static final String CREATE_LOCATION_BODY =
+      "{\"generator\":\"019273c5-9271-7000-8000-000000000001\",\"name\":\"Camp Whispering Pines\"}";
   private static final String PATCH_LOCATION_BODY = "{\"name\":\"Camp Whispering Pines - North\"}";
   private static final String CREATE_ADDRESS_BODY =
       """
@@ -87,7 +88,12 @@ final class LocationsRouteTest {
 
   private LocationResponse sampleLocationResponse() {
     return new LocationResponse(
-        locationId, "Camp Whispering Pines", Optional.of("Main campsite"), now, now);
+        locationId,
+        "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
+        "Camp Whispering Pines",
+        Optional.of("Main campsite"),
+        now,
+        now);
   }
 
   private AddressResponse sampleAddressResponse() {

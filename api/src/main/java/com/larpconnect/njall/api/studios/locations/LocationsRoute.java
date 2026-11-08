@@ -85,7 +85,7 @@ public final class LocationsRoute extends AllDirectives implements RouteProvider
     return studioLookupCache
         .findByIdOrAlias(studioIdParam)
         .filter(this::isActive)
-        .map(this::buildTenantedRoutes)
+        .map(lookup -> buildTenantedRoutes(lookup, studioIdParam))
         .orElseGet(() -> completeNotFound("Studio not found: " + studioIdParam));
   }
 
@@ -93,49 +93,50 @@ public final class LocationsRoute extends AllDirectives implements RouteProvider
     return !lookup.isDeleted();
   }
 
-  private Route buildTenantedRoutes(StudioLookup lookup) {
+  private Route buildTenantedRoutes(StudioLookup lookup, String studioIdParam) {
     return concat(
-        pathEndOrSingleSlash(() -> post(() -> handlePostLocation(lookup))),
+        pathEndOrSingleSlash(() -> post(() -> handlePostLocation(lookup, studioIdParam))),
         pathPrefix(
             PathMatchers.segment(),
-            locationIdParam -> handleLocationBranch(lookup, locationIdParam)));
+            locationIdParam -> handleLocationBranch(lookup, studioIdParam, locationIdParam)));
   }
 
-  private Route handlePostLocation(StudioLookup lookup) {
+  private Route handlePostLocation(StudioLookup lookup, String studioIdParam) {
     return entity(
         Jackson.unmarshaller(objectMapper, CreateLocationRequest.class),
         request ->
             onComplete(
-                () -> askCreateLocation(lookup.tenantId(), request),
+                () -> askCreateLocation(lookup, studioIdParam, request),
                 res -> mapLocationResponse(res, StatusCodes.CREATED)));
   }
 
-  private Route handleLocationBranch(StudioLookup lookup, String locationIdParam) {
+  private Route handleLocationBranch(
+      StudioLookup lookup, String studioIdParam, String locationIdParam) {
     return LocationValidation.tryParseUuid(locationIdParam)
-        .map(locationId -> buildLocationSubroutes(lookup.tenantId(), locationId))
+        .map(locationId -> buildLocationSubroutes(lookup.tenantId(), studioIdParam, locationId))
         .orElseGet(() -> completeNotFound("Location not found: " + locationIdParam));
   }
 
-  private Route buildLocationSubroutes(UUID tenantId, UUID locationId) {
+  private Route buildLocationSubroutes(UUID tenantId, String studioIdParam, UUID locationId) {
     return concat(
         pathEndOrSingleSlash(
             () ->
                 concat(
-                    get(() -> handleGetLocation(tenantId, locationId)),
-                    patch(() -> handlePatchLocation(tenantId, locationId)),
+                    get(() -> handleGetLocation(tenantId, studioIdParam, locationId)),
+                    patch(() -> handlePatchLocation(tenantId, studioIdParam, locationId)),
                     delete(() -> handleDeleteLocation(tenantId, locationId)))),
         pathPrefix(
             PathMatchers.separateOnSlashes("addresses"),
             () -> addressesRoute.addressesSubroutes(tenantId, locationId)));
   }
 
-  private Route handleGetLocation(UUID tenantId, UUID locationId) {
+  private Route handleGetLocation(UUID tenantId, String studioIdParam, UUID locationId) {
     return onComplete(
-        () -> askGetLocation(tenantId, locationId),
+        () -> askGetLocation(tenantId, studioIdParam, locationId),
         res -> mapLocationResponse(res, StatusCodes.OK));
   }
 
-  private Route handlePatchLocation(UUID tenantId, UUID locationId) {
+  private Route handlePatchLocation(UUID tenantId, String studioIdParam, UUID locationId) {
     return parameterOptional(
         "update_mask",
         mask ->
@@ -143,7 +144,7 @@ public final class LocationsRoute extends AllDirectives implements RouteProvider
                 Jackson.unmarshaller(objectMapper, UpdateLocationRequest.class),
                 req ->
                     onComplete(
-                        () -> askPatchLocation(tenantId, locationId, req, mask),
+                        () -> askPatchLocation(tenantId, studioIdParam, locationId, req, mask),
                         res -> mapLocationResponse(res, StatusCodes.OK))));
   }
 
@@ -154,28 +155,36 @@ public final class LocationsRoute extends AllDirectives implements RouteProvider
   }
 
   private CompletionStage<LocationActorResponse> askCreateLocation(
-      UUID tenantId, CreateLocationRequest request) {
+      StudioLookup lookup, String studioIdentifier, CreateLocationRequest request) {
     return ask(
         locationActor,
-        replyTo -> new LocationCommand.CreateLocation(tenantId, request, replyTo),
+        replyTo ->
+            new LocationCommand.CreateLocation(
+                lookup.tenantId(), studioIdentifier, request, replyTo, Optional.of(lookup)),
         askTimeout,
         system.scheduler());
   }
 
-  private CompletionStage<LocationActorResponse> askGetLocation(UUID tenantId, UUID locationId) {
+  private CompletionStage<LocationActorResponse> askGetLocation(
+      UUID tenantId, String studioIdentifier, UUID locationId) {
     return ask(
         locationActor,
-        replyTo -> new LocationCommand.GetLocation(tenantId, locationId, replyTo),
+        replyTo -> new LocationCommand.GetLocation(tenantId, studioIdentifier, locationId, replyTo),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<LocationActorResponse> askPatchLocation(
-      UUID tenantId, UUID locationId, UpdateLocationRequest request, Optional<String> updateMask) {
+      UUID tenantId,
+      String studioIdentifier,
+      UUID locationId,
+      UpdateLocationRequest request,
+      Optional<String> updateMask) {
     return ask(
         locationActor,
         replyTo ->
-            new LocationCommand.PatchLocation(tenantId, locationId, request, updateMask, replyTo),
+            new LocationCommand.PatchLocation(
+                tenantId, studioIdentifier, locationId, request, updateMask, replyTo),
         askTimeout,
         system.scheduler());
   }

@@ -13,7 +13,7 @@ import java.util.UUID;
 public record ActorResponse(
     @JsonProperty("id") UUID id,
     @JsonProperty("type") String type,
-    @JsonProperty("ownerId") UUID ownerId,
+    @JsonProperty("generator") String generator,
     @JsonProperty("preferredUsername") String preferredUsername,
     @JsonProperty("summary") Optional<String> summary,
     @JsonProperty("inbox") String inbox,
@@ -29,7 +29,7 @@ public record ActorResponse(
   public ActorResponse(
       UUID id,
       String type,
-      UUID ownerId,
+      String generator,
       String preferredUsername,
       Optional<String> summary,
       String inbox,
@@ -40,7 +40,7 @@ public record ActorResponse(
     this(
         id,
         type,
-        ownerId,
+        generator,
         preferredUsername,
         summary,
         inbox,

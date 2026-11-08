@@ -1,5 +1,6 @@
 package com.larpconnect.njall.api.studios.tags;
 
+import com.google.common.base.Strings;
 import java.text.Normalizer;
 import java.util.Optional;
 import java.util.UUID;
@@ -77,6 +78,9 @@ final class TagValidation {
    * @return Error message if invalid, or empty if valid.
    */
   static Optional<String> validateCreate(CreateTagRequest request) {
+    if (Strings.isNullOrEmpty(request.generator()) || request.generator().isBlank()) {
+      return Optional.of("Generator URI or actor identifier must not be blank");
+    }
     return validateTagName(request.tag());
   }
 

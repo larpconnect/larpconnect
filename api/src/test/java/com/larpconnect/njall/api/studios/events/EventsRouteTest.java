@@ -32,7 +32,8 @@ import org.junit.jupiter.api.Test;
 final class EventsRouteTest {
 
   private static final String CREATE_EVENT_BODY =
-      "{\"title\":\"Autumn Harvest Festival\",\"summary\":\"Gathering\"}";
+      "{\"generator\":\"019273c5-9271-7000-8000-000000000001\","
+          + "\"title\":\"Autumn Harvest Festival\",\"summary\":\"Gathering\"}";
   private static final String PATCH_EVENT_BODY =
       "{\"title\":\"Autumn Harvest Festival - Rescheduled\"}";
 
@@ -74,6 +75,7 @@ final class EventsRouteTest {
   private EventResponse sampleEventResponse() {
     return new EventResponse(
         eventId,
+        "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
         "Autumn Harvest Festival",
         Optional.of("Gathering"),
         Optional.of(locationId),

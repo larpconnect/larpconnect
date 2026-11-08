@@ -74,7 +74,7 @@ public final class LinksRoute extends AllDirectives implements RouteProvider {
     return studioLookupCache
         .findByIdOrAlias(studioIdParam)
         .filter(this::isActive)
-        .map(this::buildTenantedRoutes)
+        .map(lookup -> buildTenantedRoutes(lookup, studioIdParam))
         .orElseGet(() -> completeNotFound("Studio not found: " + studioIdParam));
   }
 
@@ -82,33 +82,36 @@ public final class LinksRoute extends AllDirectives implements RouteProvider {
     return !lookup.isDeleted();
   }
 
-  private Route buildTenantedRoutes(StudioLookup lookup) {
+  private Route buildTenantedRoutes(StudioLookup lookup, String studioIdParam) {
     return concat(
-        pathEndOrSingleSlash(() -> post(() -> handlePost(lookup))),
-        path(PathMatchers.segment(), linkIdParam -> handleLinkItem(lookup, linkIdParam)));
+        pathEndOrSingleSlash(() -> post(() -> handlePost(lookup, studioIdParam))),
+        path(
+            PathMatchers.segment(),
+            linkIdParam -> handleLinkItem(lookup, studioIdParam, linkIdParam)));
   }
 
-  private Route handlePost(StudioLookup lookup) {
+  private Route handlePost(StudioLookup lookup, String studioIdParam) {
     return entity(
         Jackson.unmarshaller(objectMapper, CreateLinkRequest.class),
         request ->
             onComplete(
-                () -> askCreateLink(lookup.tenantId(), request),
+                () -> askCreateLink(lookup, studioIdParam, request),
                 res -> mapResponse(res, StatusCodes.CREATED)));
   }
 
-  private Route handleLinkItem(StudioLookup lookup, String linkIdParam) {
+  private Route handleLinkItem(StudioLookup lookup, String studioIdParam, String linkIdParam) {
     return LinkValidation.tryParseUuid(linkIdParam)
-        .map(linkId -> buildItemRoutes(lookup.tenantId(), linkId))
+        .map(linkId -> buildItemRoutes(lookup.tenantId(), studioIdParam, linkId))
         .orElseGet(() -> completeNotFound("Link not found: " + linkIdParam));
   }
 
-  private Route buildItemRoutes(UUID tenantId, UUID linkId) {
+  private Route buildItemRoutes(UUID tenantId, String studioIdParam, UUID linkId) {
     return concat(
         get(
             () ->
                 onComplete(
-                    () -> askGetLink(tenantId, linkId), res -> mapResponse(res, StatusCodes.OK))),
+                    () -> askGetLink(tenantId, studioIdParam, linkId),
+                    res -> mapResponse(res, StatusCodes.OK))),
         patch(
             () ->
                 parameterOptional(
@@ -118,7 +121,7 @@ public final class LinksRoute extends AllDirectives implements RouteProvider {
                             Jackson.unmarshaller(objectMapper, UpdateLinkRequest.class),
                             req ->
                                 onComplete(
-                                    () -> askPatchLink(tenantId, linkId, req, mask),
+                                    () -> askPatchLink(tenantId, studioIdParam, linkId, req, mask),
                                     res -> mapResponse(res, StatusCodes.OK))))),
         delete(
             () ->
@@ -128,27 +131,36 @@ public final class LinksRoute extends AllDirectives implements RouteProvider {
   }
 
   private CompletionStage<LinkActorResponse> askCreateLink(
-      UUID tenantId, CreateLinkRequest request) {
+      StudioLookup lookup, String studioIdentifier, CreateLinkRequest request) {
     return ask(
         linkActor,
-        replyTo -> new LinkCommand.CreateLink(tenantId, request, replyTo),
+        replyTo ->
+            new LinkCommand.CreateLink(
+                lookup.tenantId(), studioIdentifier, request, replyTo, Optional.of(lookup)),
         askTimeout,
         system.scheduler());
   }
 
-  private CompletionStage<LinkActorResponse> askGetLink(UUID tenantId, UUID linkId) {
+  private CompletionStage<LinkActorResponse> askGetLink(
+      UUID tenantId, String studioIdentifier, UUID linkId) {
     return ask(
         linkActor,
-        replyTo -> new LinkCommand.GetLink(tenantId, linkId, replyTo),
+        replyTo -> new LinkCommand.GetLink(tenantId, studioIdentifier, linkId, replyTo),
         askTimeout,
         system.scheduler());
   }
 
   private CompletionStage<LinkActorResponse> askPatchLink(
-      UUID tenantId, UUID linkId, UpdateLinkRequest request, Optional<String> updateMask) {
+      UUID tenantId,
+      String studioIdentifier,
+      UUID linkId,
+      UpdateLinkRequest request,
+      Optional<String> updateMask) {
     return ask(
         linkActor,
-        replyTo -> new LinkCommand.PatchLink(tenantId, linkId, request, updateMask, replyTo),
+        replyTo ->
+            new LinkCommand.PatchLink(
+                tenantId, studioIdentifier, linkId, request, updateMask, replyTo),
         askTimeout,
         system.scheduler());
   }

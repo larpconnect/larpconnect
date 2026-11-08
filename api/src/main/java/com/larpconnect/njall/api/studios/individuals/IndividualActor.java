@@ -3,6 +3,7 @@ package com.larpconnect.njall.api.studios.individuals;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualDAO;
 import com.larpconnect.njall.data.domain.Individual;
 import java.util.Optional;
@@ -44,7 +45,20 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
         cmd.replyTo().tell(IndividualActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
-      executeCreate(cmd.tenantId(), cmd.request(), cmd.replyTo());
+      var parsed =
+          GeneratorUriSupport.parseGenerator(
+              cmd.request().generator(), cmd.studioIdentifier(), cmd.lookup());
+      if (parsed.isEmpty()) {
+        cmd.replyTo()
+            .tell(IndividualActorResponse.badRequest("Invalid generator URI or actor identifier"));
+        return this;
+      }
+      executeCreate(
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          parsed.orElseThrow(),
+          cmd.request(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create individual", e);
     }
@@ -52,14 +66,18 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
   }
 
   private void executeCreate(
-      UUID tenantId, CreateIndividualRequest request, ActorRef<IndividualActorResponse> replyTo) {
-    var domain = individualDao.create(tenantId, request.name(), request.summary());
-    replyTo.tell(IndividualActorResponse.success(toIndividualResponse(domain)));
+      UUID tenantId,
+      String studioIdentifier,
+      UUID owner,
+      CreateIndividualRequest request,
+      ActorRef<IndividualActorResponse> replyTo) {
+    var domain = individualDao.create(tenantId, owner, request.name(), request.summary());
+    replyTo.tell(IndividualActorResponse.success(toIndividualResponse(studioIdentifier, domain)));
   }
 
   private Behavior<IndividualCommand> onGetIndividual(IndividualCommand.GetIndividual cmd) {
     try {
-      executeGet(cmd.tenantId(), cmd.individualId(), cmd.replyTo());
+      executeGet(cmd.tenantId(), cmd.studioIdentifier(), cmd.individualId(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get individual", e);
     }
@@ -67,12 +85,17 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
   }
 
   private void executeGet(
-      UUID tenantId, UUID individualId, ActorRef<IndividualActorResponse> replyTo) {
+      UUID tenantId,
+      String studioIdentifier,
+      UUID individualId,
+      ActorRef<IndividualActorResponse> replyTo) {
     individualDao
         .findById(tenantId, individualId)
         .ifPresentOrElse(
             individual ->
-                replyTo.tell(IndividualActorResponse.success(toIndividualResponse(individual))),
+                replyTo.tell(
+                    IndividualActorResponse.success(
+                        toIndividualResponse(studioIdentifier, individual))),
             () ->
                 replyTo.tell(
                     IndividualActorResponse.notFound("Individual not found: " + individualId)));
@@ -86,7 +109,12 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
         return this;
       }
       executePatch(
-          cmd.tenantId(), cmd.individualId(), cmd.request(), cmd.updateMask(), cmd.replyTo());
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          cmd.individualId(),
+          cmd.request(),
+          cmd.updateMask(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "patch individual", e);
     }
@@ -95,6 +123,7 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
 
   private void executePatch(
       UUID tenantId,
+      String studioIdentifier,
       UUID individualId,
       UpdateIndividualRequest request,
       Optional<String> updateMask,
@@ -106,7 +135,10 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
     individualDao
         .patch(tenantId, individualId, name, summary)
         .ifPresentOrElse(
-            updated -> replyTo.tell(IndividualActorResponse.success(toIndividualResponse(updated))),
+            updated ->
+                replyTo.tell(
+                    IndividualActorResponse.success(
+                        toIndividualResponse(studioIdentifier, updated))),
             () ->
                 replyTo.tell(
                     IndividualActorResponse.notFound("Individual not found: " + individualId)));
@@ -131,9 +163,10 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
     }
   }
 
-  private IndividualResponse toIndividualResponse(Individual individual) {
+  private IndividualResponse toIndividualResponse(String studioIdentifier, Individual individual) {
     return new IndividualResponse(
         individual.id(),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, individual.owner()),
         individual.name(),
         individual.summary(),
         individual.createdOn(),
@@ -155,6 +188,10 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
   private void handleError(
       ActorRef<IndividualActorResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in IndividualActor", operation, error);
+    if (error instanceof IllegalArgumentException) {
+      replyTo.tell(IndividualActorResponse.badRequest(error.getMessage()));
+      return;
+    }
     var message = error.getMessage();
     var reason = !Strings.isNullOrEmpty(message) ? message : "Error executing " + operation;
     replyTo.tell(IndividualActorResponse.failure(reason));

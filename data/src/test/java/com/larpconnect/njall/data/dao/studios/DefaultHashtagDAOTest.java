@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +33,7 @@ final class DefaultHashtagDAOTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID hashtagId = UUID.randomUUID();
+  private final UUID owner = UUID.randomUUID();
   private final Instant now = Instant.now();
 
   @BeforeEach
@@ -194,15 +194,21 @@ final class DefaultHashtagDAOTest {
   @DisplayName("create persists new Hashtag when not present")
   void create_persistsNew() {
     mockFindTagQuery(List.of());
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
 
     var result =
         dao.create(
             tenantId,
+            owner,
             "SolarPunk",
             "/api/studios/valiant/v1/tags/SolarPunk",
             Optional.of("Aesthetic"));
 
     assertThat(result.tag()).isEqualTo("SolarPunk");
+    assertThat(result.owner()).isEqualTo(owner);
     verify(session).persist(any(EntityBaseEntity.class));
     verify(session).persist(any(LinkEntity.class));
     verify(session).persist(any(HashtagEntity.class));
@@ -213,12 +219,17 @@ final class DefaultHashtagDAOTest {
   @DisplayName("create reactivates soft-deleted hashtag if already exists")
   void create_reactivatesSoftDeleted() {
     mockFindTagQuery(List.of(hashtagId));
-    var entity = new EntityBaseEntity(tenantId, hashtagId, "Hashtag", "Old", now, now, now);
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
+    var entity = new EntityBaseEntity(tenantId, hashtagId, owner, "Hashtag", "Old", now, now, now);
     mockFindEntities(entity, defaultLink(), defaultHashtag());
 
     var result =
         dao.create(
             tenantId,
+            owner,
             "SolarPunk",
             "/api/studios/valiant/v1/tags/SolarPunk",
             Optional.of("Reactivated"));
@@ -234,12 +245,20 @@ final class DefaultHashtagDAOTest {
   @DisplayName("create returns existing active tag without modifying deletedOn")
   void create_existingActiveTag_returnsWithoutModification() {
     mockFindTagQuery(List.of(hashtagId));
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
     var entity = defaultEntity();
     mockFindEntities(entity, defaultLink(), defaultHashtag());
 
     var result =
         dao.create(
-            tenantId, "SolarPunk", "/api/studios/valiant/v1/tags/SolarPunk", Optional.empty());
+            tenantId,
+            owner,
+            "SolarPunk",
+            "/api/studios/valiant/v1/tags/SolarPunk",
+            Optional.empty());
 
     assertThat(result.tag()).isEqualTo("SolarPunk");
     assertThat(entity.getDeletedOn()).isNull();
@@ -247,8 +266,69 @@ final class DefaultHashtagDAOTest {
   }
 
   @Test
+  @DisplayName("create throws when owner does not exist")
+  void create_ownerNotFound_throws() {
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner))).thenReturn(null);
+
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "SolarPunk",
+                    "/api/studios/valiant/v1/tags/SolarPunk",
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is soft-deleted")
+  void create_ownerDeleted_throws() {
+    var deletedOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, now);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(deletedOwner);
+
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "SolarPunk",
+                    "/api/studios/valiant/v1/tags/SolarPunk",
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when owner is not an Actor")
+  void create_ownerNotActor_throws() {
+    var nonActorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Event", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(nonActorOwner);
+
+    assertThatThrownBy(
+            () ->
+                dao.create(
+                    tenantId,
+                    owner,
+                    "SolarPunk",
+                    "/api/studios/valiant/v1/tags/SolarPunk",
+                    Optional.empty()))
+        .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
   @DisplayName("create rolls back transaction on exception")
   void create_exception_rollsBack() {
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
     when(session.createQuery(contains("SELECT h.id FROM HashtagEntity h"), eq(UUID.class)))
         .thenThrow(new RuntimeException("Database error"));
 
@@ -256,6 +336,7 @@ final class DefaultHashtagDAOTest {
             () ->
                 dao.create(
                     tenantId,
+                    owner,
                     "SolarPunk",
                     "/api/studios/valiant/v1/tags/SolarPunk",
                     Optional.empty()))
@@ -267,176 +348,43 @@ final class DefaultHashtagDAOTest {
   @DisplayName("batchCreate creates multiple hashtags")
   void batchCreate_success() {
     mockFindTagQuery(List.of());
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
 
     var result =
         dao.batchCreate(
             tenantId,
             List.of(
                 new HashtagDAO.TagCreationItem(
-                    "SolarPunk", "/api/studios/valiant/v1/tags/SolarPunk", Optional.empty())));
+                    owner,
+                    "SolarPunk",
+                    "/api/studios/valiant/v1/tags/SolarPunk",
+                    Optional.empty())));
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().tag()).isEqualTo("SolarPunk");
+    assertThat(result.getFirst().owner()).isEqualTo(owner);
     verify(tx).commit();
   }
 
   @Test
   @DisplayName("batchCreate rolls back transaction on exception")
   void batchCreate_exception_rollsBack() {
+    var actorOwner =
+        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
+        .thenReturn(actorOwner);
     when(session.createQuery(contains("SELECT h.id FROM HashtagEntity h"), eq(UUID.class)))
         .thenThrow(new RuntimeException("Database error"));
 
     var items =
         List.of(
             new HashtagDAO.TagCreationItem(
-                "SolarPunk", "/api/studios/valiant/v1/tags/SolarPunk", Optional.empty()));
+                owner, "SolarPunk", "/api/studios/valiant/v1/tags/SolarPunk", Optional.empty()));
     assertThatThrownBy(() -> dao.batchCreate(tenantId, items)).isInstanceOf(RuntimeException.class);
     verify(tx).rollback();
-  }
-
-  @Test
-  @DisplayName("softDelete sets deleted_on and returns true")
-  void softDelete_success() {
-    var entityId = new EntityId(tenantId, hashtagId);
-    var entity = defaultEntity();
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-
-    var result = dao.softDelete(tenantId, hashtagId);
-
-    assertThat(result).isTrue();
-    assertThat(entity.getDeletedOn()).isNotNull();
-    verify(session).merge(entity);
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete returns false when entity not found")
-  void softDelete_notFound_returnsFalse() {
-    var entityId = new EntityId(tenantId, hashtagId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-
-    var result = dao.softDelete(tenantId, hashtagId);
-
-    assertThat(result).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete returns false when entity already deleted")
-  void softDelete_alreadyDeleted_returnsFalse() {
-    var entityId = new EntityId(tenantId, hashtagId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(deletedEntity());
-
-    var result = dao.softDelete(tenantId, hashtagId);
-
-    assertThat(result).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("softDelete rolls back transaction on exception")
-  void softDelete_exception_rollsBack() {
-    var entityId = new EntityId(tenantId, hashtagId);
-    when(session.find(EntityBaseEntity.class, entityId))
-        .thenThrow(new RuntimeException("Database error"));
-
-    assertThatThrownBy(() -> dao.softDelete(tenantId, hashtagId))
-        .isInstanceOf(RuntimeException.class);
-    verify(tx).rollback();
-  }
-
-  @Test
-  @DisplayName("patch updates tag and summary successfully")
-  void patch_success() {
-    mockFindEntities(defaultEntity(), defaultLink(), defaultHashtag());
-
-    var result =
-        dao.patch(tenantId, hashtagId, Optional.of("CyberPunk"), Optional.of("New Description"));
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().tag()).isEqualTo("CyberPunk");
-    assertThat(result.orElseThrow().summary()).contains("New Description");
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch updates only tag when summary is empty")
-  void patch_onlyTag_success() {
-    var hashtag = defaultHashtag();
-    mockFindEntities(defaultEntity(), defaultLink(), hashtag);
-
-    var result = dao.patch(tenantId, hashtagId, Optional.of("CyberPunk"), Optional.empty());
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().tag()).isEqualTo("CyberPunk");
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch updates only summary when tag is empty")
-  void patch_onlySummary_success() {
-    var entity = defaultEntity();
-    mockFindEntities(entity, defaultLink(), defaultHashtag());
-
-    var result = dao.patch(tenantId, hashtagId, Optional.empty(), Optional.of("New Description"));
-
-    assertThat(result).isPresent();
-    assertThat(result.orElseThrow().summary()).contains("New Description");
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("patch returns empty when entity not found or deleted")
-  void patch_notFoundOrDeleted_returnsEmpty() {
-    var entityId = new EntityId(tenantId, hashtagId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-
-    assertThat(dao.patch(tenantId, hashtagId, Optional.of("CyberPunk"), Optional.empty()))
-        .isEmpty();
-
-    mockFindEntities(deletedEntity(), defaultLink(), defaultHashtag());
-
-    assertThat(dao.patch(tenantId, hashtagId, Optional.empty(), Optional.empty())).isEmpty();
-  }
-
-  @Test
-  @DisplayName("patch returns empty when link or hashtagEntity is null")
-  void patch_nullLinkOrHashtagEntity_returnsEmpty() {
-    var entityId = new EntityId(tenantId, hashtagId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(defaultEntity());
-    when(session.find(LinkEntity.class, entityId)).thenReturn(null);
-
-    assertThat(dao.patch(tenantId, hashtagId, Optional.empty(), Optional.empty())).isEmpty();
-
-    when(session.find(LinkEntity.class, entityId)).thenReturn(defaultLink());
-    when(session.find(HashtagEntity.class, entityId)).thenReturn(null);
-
-    assertThat(dao.patch(tenantId, hashtagId, Optional.empty(), Optional.empty())).isEmpty();
-  }
-
-  @Test
-  @DisplayName("patch rollback transaction on exception")
-  void patch_exception_rollsBack() {
-    var entityId = new EntityId(tenantId, hashtagId);
-    when(session.find(EntityBaseEntity.class, entityId))
-        .thenThrow(new RuntimeException("Database error"));
-
-    assertThatThrownBy(() -> dao.patch(tenantId, hashtagId, Optional.of("Tag"), Optional.empty()))
-        .isInstanceOf(RuntimeException.class);
-    verify(tx).rollback();
-  }
-
-  @Test
-  @DisplayName("rollbackQuietly suppresses secondary rollback exception")
-  void patch_rollbackQuietly_suppressesRollbackException() {
-    var entityId = new EntityId(tenantId, hashtagId);
-    when(session.find(EntityBaseEntity.class, entityId))
-        .thenThrow(new RuntimeException("Primary DB error"));
-    doThrow(new RuntimeException("Secondary rollback error")).when(tx).rollback();
-
-    assertThatThrownBy(() -> dao.patch(tenantId, hashtagId, Optional.of("Tag"), Optional.empty()))
-        .isInstanceOf(RuntimeException.class)
-        .satisfies(e -> assertThat(e.getSuppressed()).hasSize(1));
   }
 
   @Test
@@ -446,11 +394,11 @@ final class DefaultHashtagDAOTest {
   }
 
   private EntityBaseEntity defaultEntity() {
-    return new EntityBaseEntity(tenantId, hashtagId, "Hashtag", "Aesthetic", now, now, null);
+    return new EntityBaseEntity(tenantId, hashtagId, owner, "Hashtag", "Aesthetic", now, now, null);
   }
 
   private EntityBaseEntity deletedEntity() {
-    return new EntityBaseEntity(tenantId, hashtagId, "Hashtag", "Aesthetic", now, now, now);
+    return new EntityBaseEntity(tenantId, hashtagId, owner, "Hashtag", "Aesthetic", now, now, now);
   }
 
   private LinkEntity defaultLink() {

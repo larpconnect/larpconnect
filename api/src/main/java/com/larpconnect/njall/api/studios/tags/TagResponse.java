@@ -10,6 +10,7 @@ import java.util.UUID;
 @Immutable
 public record TagResponse(
     @JsonProperty("id") UUID id,
+    @JsonProperty("generator") String generator,
     @JsonProperty("tag") String tag,
     @JsonProperty("linkType") String linkType,
     @JsonProperty("url") String url,

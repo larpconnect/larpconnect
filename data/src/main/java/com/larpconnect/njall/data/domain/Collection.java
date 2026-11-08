@@ -12,7 +12,8 @@ import org.jspecify.annotations.Nullable;
  * Immutable domain representation of a tenanted collection entity.
  *
  * @param id The unique collection UUID identifier.
- * @param ownerId The owner entity UUID.
+ * @param owner The generating actor entity UUID from the base entity.
+ * @param ownerId The semantic owner entity UUID from collections table.
  * @param name The collection name, unique per owner.
  * @param summary Optional description summary from the base entity.
  * @param totalItems Count of active items in the collection.
@@ -24,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 @Immutable
 public record Collection(
     UUID id,
+    UUID owner,
     UUID ownerId,
     String name,
     Optional<String> summary,
@@ -40,6 +42,7 @@ public record Collection(
 
   public Collection(
       UUID id,
+      UUID owner,
       UUID ownerId,
       String name,
       @Nullable String summary,
@@ -50,6 +53,7 @@ public record Collection(
       @Nullable Instant deletedOn) {
     this(
         id,
+        owner,
         ownerId,
         name,
         Optional.ofNullable(summary),

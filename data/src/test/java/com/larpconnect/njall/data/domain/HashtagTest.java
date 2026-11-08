@@ -14,11 +14,13 @@ final class HashtagTest {
   @DisplayName("Hashtag record exposes properties and isDeleted helper correctly")
   void hashtagRecord_propertiesAndHelpers() {
     var id = UUID.randomUUID();
+    var owner = UUID.randomUUID();
     var now = Instant.now();
 
     var activeTag =
         new Hashtag(
             id,
+            owner,
             "SolarPunk",
             "hashtag",
             "/api/studios/valiant/v1/tags/SolarPunk",
@@ -29,6 +31,7 @@ final class HashtagTest {
             null);
 
     assertThat(activeTag.id()).isEqualTo(id);
+    assertThat(activeTag.owner()).isEqualTo(owner);
     assertThat(activeTag.tag()).isEqualTo("SolarPunk");
     assertThat(activeTag.linkType()).isEqualTo("hashtag");
     assertThat(activeTag.url()).isEqualTo("/api/studios/valiant/v1/tags/SolarPunk");
@@ -42,6 +45,7 @@ final class HashtagTest {
     var deletedTag =
         new Hashtag(
             id,
+            owner,
             "SolarPunk",
             "hashtag",
             "/api/studios/valiant/v1/tags/SolarPunk",
@@ -51,6 +55,7 @@ final class HashtagTest {
             now,
             Optional.of(now));
 
+    assertThat(deletedTag.owner()).isEqualTo(owner);
     assertThat(deletedTag.summary()).isEmpty();
     assertThat(deletedTag.isDeleted()).isTrue();
   }

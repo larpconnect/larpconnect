@@ -14,9 +14,18 @@ Feature: User Space Studio Links REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "link_creator"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "link_creator_id"
     When an API admin sends a POST request to "/api/studios/valiant/v1/links" with body:
       """
       {
+        "generator": "/api/studios/valiant/v1/actors/{link_creator_id}",
         "linkType": "website",
         "url": "https://valiant.example.com",
         "mediaType": "text/html",
@@ -29,6 +38,7 @@ Feature: User Space Studio Links REST API
     And the JSON response contains field "url" with value "https://valiant.example.com"
     And the JSON response contains field "mediaType" with value "text/html"
     And the JSON response contains field "summary" with value "Official Studio Homepage"
+    And the JSON response contains field "generator" with value "/api/studios/valiant/v1/actors/{link_creator_id}"
     And the JSON response contains non-null field "createdOn"
     And the JSON response contains non-null field "updatedOn"
     And the JSON response does not contain field "tenantId"
@@ -45,9 +55,18 @@ Feature: User Space Studio Links REST API
       """
     Then the HTTP response status code is 201
     And the response field "studioId" is remembered as "valiant_uuid_studio_id"
+    When an API admin sends a POST request to "/api/studios/valiant_uuid_links/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "uuid_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "uuid_actor_id"
     When an API admin sends a POST request to "/api/studios/{valiant_uuid_studio_id}/v1/links" with body:
       """
       {
+        "generator": "{uuid_actor_id}",
         "linkType": "discord",
         "url": "https://discord.gg/valiant"
       }
@@ -55,6 +74,7 @@ Feature: User Space Studio Links REST API
     Then the HTTP response status code is 201
     And the JSON response contains field "linkType" with value "discord"
     And the JSON response contains field "url" with value "https://discord.gg/valiant"
+    And the JSON response contains field "generator" with value "/api/studios/{valiant_uuid_studio_id}/v1/actors/{uuid_actor_id}"
 
   Scenario: Successfully retrieve active link by ID
     Given the admin HTTP server is running with database migrations applied
@@ -66,9 +86,18 @@ Feature: User Space Studio Links REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_retrieve/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "docs_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "docs_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_retrieve/v1/links" with body:
       """
       {
+        "generator": "{docs_actor_id}",
         "linkType": "docs",
         "url": "https://docs.valiant.example.com"
       }
@@ -80,6 +109,7 @@ Feature: User Space Studio Links REST API
     And the HTTP response content-type contains "application/json"
     And the JSON response contains field "linkType" with value "docs"
     And the JSON response contains field "url" with value "https://docs.valiant.example.com"
+    And the JSON response contains field "generator" with value "/api/studios/valiant_retrieve/v1/actors/{docs_actor_id}"
     And the JSON response does not contain field "tenantId"
 
   Scenario: Successfully update link URL and summary adhering to AIP-134
@@ -92,9 +122,18 @@ Feature: User Space Studio Links REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_patch/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "wiki_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "wiki_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_patch/v1/links" with body:
       """
       {
+        "generator": "{wiki_actor_id}",
         "linkType": "wiki",
         "url": "https://old.wiki.example.com",
         "summary": "Old Wiki"
@@ -124,9 +163,18 @@ Feature: User Space Studio Links REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_delete/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "forum_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "forum_actor_id"
     When an API admin sends a POST request to "/api/studios/valiant_delete/v1/links" with body:
       """
       {
+        "generator": "{forum_actor_id}",
         "linkType": "forum",
         "url": "https://forum.valiant.example.com"
       }
@@ -157,9 +205,18 @@ Feature: User Space Studio Links REST API
       }
       """
     Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/studio_alpha/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "alpha_actor"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "alpha_actor_id"
     When an API admin sends a POST request to "/api/studios/studio_alpha/v1/links" with body:
       """
       {
+        "generator": "{alpha_actor_id}",
         "linkType": "secret",
         "url": "https://alpha.internal.example.com"
       }

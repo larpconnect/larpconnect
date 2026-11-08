@@ -39,23 +39,30 @@ final class LinkValidationAndDtoTest {
   @Test
   @DisplayName("LinkValidation validates CreateLinkRequest")
   void linkValidation_validateCreate() {
-    var emptyType = new CreateLinkRequest("", "https://example.com");
+    var gen = "019273c5-9271-7000-8000-000000000001";
+    var blankGen = new CreateLinkRequest("", "website", "https://example.com");
+    assertThat(LinkValidation.validateCreate(blankGen))
+        .contains("Generator URI or actor identifier must not be blank");
+
+    var emptyType = new CreateLinkRequest(gen, "", "https://example.com");
     assertThat(LinkValidation.validateCreate(emptyType)).contains("linkType must not be blank");
 
-    var blankType = new CreateLinkRequest("   ", "https://example.com");
+    var blankType = new CreateLinkRequest(gen, "   ", "https://example.com");
     assertThat(LinkValidation.validateCreate(blankType)).contains("linkType must not be blank");
 
-    var emptyUrl = new CreateLinkRequest("website", "");
+    var emptyUrl = new CreateLinkRequest(gen, "website", "");
     assertThat(LinkValidation.validateCreate(emptyUrl)).contains("url must be a valid URI");
 
-    var invalidUrl = new CreateLinkRequest("website", "not a uri");
+    var invalidUrl = new CreateLinkRequest(gen, "website", "not a uri");
     assertThat(LinkValidation.validateCreate(invalidUrl)).contains("url must be a valid URI");
 
-    var blankMediaType = new CreateLinkRequest("website", "https://example.com", "   ", "summary");
+    var blankMediaType =
+        new CreateLinkRequest(gen, "website", "https://example.com", "   ", "summary");
     assertThat(LinkValidation.validateCreate(blankMediaType))
         .contains("mediaType must not be blank if provided");
 
-    var valid = new CreateLinkRequest("website", "https://example.com", "text/html", "summary");
+    var valid =
+        new CreateLinkRequest(gen, "website", "https://example.com", "text/html", "summary");
     assertThat(LinkValidation.validateCreate(valid)).isEmpty();
   }
 
@@ -82,6 +89,7 @@ final class LinkValidationAndDtoTest {
     var createJson =
         """
         {
+          "generator": "019273c5-9271-7000-8000-000000000001",
           "linkType": "website",
           "url": "https://valiant.example.com",
           "mediaType": "text/html",
@@ -89,6 +97,7 @@ final class LinkValidationAndDtoTest {
         }
         """;
     var createReq = objectMapper.readValue(createJson, CreateLinkRequest.class);
+    assertThat(createReq.generator()).isEqualTo("019273c5-9271-7000-8000-000000000001");
     assertThat(createReq.linkType()).isEqualTo("website");
     assertThat(createReq.url()).isEqualTo("https://valiant.example.com");
     assertThat(createReq.mediaType()).contains("text/html");
@@ -113,6 +122,7 @@ final class LinkValidationAndDtoTest {
     var response =
         new LinkResponse(
             linkId,
+            "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
             "website",
             "https://valiant.example.com",
             "text/html",
@@ -121,6 +131,8 @@ final class LinkValidationAndDtoTest {
             now);
 
     assertThat(response.id()).isEqualTo(linkId);
+    assertThat(response.generator())
+        .isEqualTo("/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001");
     assertThat(response.linkType()).isEqualTo("website");
     assertThat(response.url()).isEqualTo("https://valiant.example.com");
     assertThat(response.mediaType()).isEqualTo("text/html");
@@ -130,6 +142,8 @@ final class LinkValidationAndDtoTest {
 
     var json = objectMapper.writeValueAsString(response);
     assertThat(json).contains(linkId.toString());
+    assertThat(json)
+        .contains("/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001");
     assertThat(json).doesNotContain("tenantId");
     assertThat(json).doesNotContain("deletedOn");
   }

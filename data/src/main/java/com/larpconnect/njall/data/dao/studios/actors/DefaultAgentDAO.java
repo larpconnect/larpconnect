@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
+import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Agent;
@@ -18,44 +19,25 @@ import org.hibernate.Transaction;
 final class DefaultAgentDAO implements AgentDAO {
 
   private static final String ENTITY_TYPE_ACTOR = "Actor";
-  private static final String ENTITY_TYPE_COLLECTION = "OrderedCollection";
   private static final String SET_TENANT_CONFIG =
       "SELECT set_config('app.tenant_id', :tenantId, true)";
 
-  private static final String CHECK_OWNER_SQL =
-      "SELECT 1 FROM njall_users.entities "
-          + "WHERE tenant_id = :tenantId AND id = :ownerId AND deleted_on IS NULL";
-
   private static final String CHECK_USERNAME_SQL =
-      "SELECT 1 FROM njall_users.actors "
-          + "WHERE tenant_id = :tenantId AND lower(preferred_username) = lower(:username)";
-
+      """
+      SELECT 1 FROM njall_users.actors
+      WHERE tenant_id = :tenantId AND lower(preferred_username) = lower(:username)
+      """;
   private static final String CHECK_USERNAME_EXCLUDE_SQL =
-      "SELECT 1 FROM njall_users.actors "
-          + "WHERE tenant_id = :tenantId AND lower(preferred_username) = lower(:username)"
-          + " AND id != :excludeId";
-
-  private static final String INSERT_BASE_COLLECTION_SQL =
-      "INSERT INTO njall_users.entities (id, tenant_id, entity_type, summary, created_on,"
-          + " updated_on) VALUES (:id, :tenantId, :entityType, NULL, :now, :now)";
-
-  private static final String INSERT_SUBTYPE_COLLECTION_SQL =
-      "INSERT INTO njall_users.collections (tenant_id, id, owner_id, name) "
-          + "VALUES (:tenantId, :id, :actorId, :name)";
-
-  private static final String QUERY_COLLECTION_ID_SQL =
-      "SELECT id FROM njall_users.collections "
-          + "WHERE tenant_id = :tenantId AND owner_id = :actorId AND name = :name";
-
+      """
+      SELECT 1 FROM njall_users.actors
+      WHERE tenant_id = :tenantId AND lower(preferred_username) = lower(:username)
+        AND id != :excludeId
+      """;
   private static final String QUERY_ENDPOINTS_SQL =
-      "SELECT name, endpoint FROM njall_users.actor_endpoints "
-          + "WHERE tenant_id = :tenantId AND actor_id = :actorId ORDER BY name ASC";
-
-  private static final String CASCADE_DELETE_COLLECTIONS_SQL =
-      "UPDATE njall_users.entities SET deleted_on = :now, updated_on = :now "
-          + "WHERE tenant_id = :tenantId AND id IN ("
-          + "SELECT id FROM njall_users.collections WHERE tenant_id = :tenantId AND owner_id ="
-          + " :actorId)";
+      """
+      SELECT name, endpoint FROM njall_users.actor_endpoints
+      WHERE tenant_id = :tenantId AND actor_id = :actorId ORDER BY name ASC
+      """;
 
   private final Provider<SessionFactory> sessionFactoryProvider;
 
@@ -79,8 +61,9 @@ final class DefaultAgentDAO implements AgentDAO {
         }
 
         var endpoints = queryEndpoints(session, tenantId, actorId);
-        var inboxId = queryCollectionId(session, tenantId, actorId, "inbox");
-        var outboxId = queryCollectionId(session, tenantId, actorId, "outbox");
+        var inboxId = AgentCollectionsHelper.queryCollectionId(session, tenantId, actorId, "inbox");
+        var outboxId =
+            AgentCollectionsHelper.queryCollectionId(session, tenantId, actorId, "outbox");
         tx.commit();
 
         return Optional.of(
@@ -120,32 +103,38 @@ final class DefaultAgentDAO implements AgentDAO {
 
   @Override
   public Agent create(
-      UUID tenantId, UUID ownerId, String preferredUsername, Optional<String> summary) {
+      UUID tenantId, Optional<UUID> owner, String preferredUsername, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        validateOwnerExists(session, tenantId, ownerId);
+        var actorId = UUID.randomUUID();
+        var effectiveOwner = owner.orElse(actorId);
+
+        if (owner.isPresent()) {
+          ActorOwnerValidator.validateActorOwner(session, tenantId, owner.get());
+        }
         validateUsernameNotTaken(session, tenantId, preferredUsername);
 
-        var actorId = UUID.randomUUID();
         var inboxId = UUID.randomUUID();
         var outboxId = UUID.randomUUID();
         var now = Instant.now();
 
-        var baseEntity = createBaseEntity(tenantId, actorId, summary, now);
+        var baseEntity = createBaseEntity(tenantId, actorId, effectiveOwner, summary, now);
         session.persist(baseEntity);
 
-        var agentEntity = createAgentEntity(tenantId, actorId, ownerId, preferredUsername);
+        var agentEntity = createAgentEntity(tenantId, actorId, preferredUsername);
         session.persist(agentEntity);
         session.flush();
 
-        provisionCollection(session, tenantId, actorId, inboxId, "inbox", now);
-        provisionCollection(session, tenantId, actorId, outboxId, "outbox", now);
+        AgentCollectionsHelper.provisionCollection(
+            session, tenantId, actorId, inboxId, "inbox", now);
+        AgentCollectionsHelper.provisionCollection(
+            session, tenantId, actorId, outboxId, "outbox", now);
 
         tx.commit();
         return createAgentDomain(
-            actorId, ownerId, preferredUsername, summary, inboxId, outboxId, now);
+            actorId, effectiveOwner, preferredUsername, summary, inboxId, outboxId, now);
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -172,8 +161,9 @@ final class DefaultAgentDAO implements AgentDAO {
             session, tenantId, actorId, baseEntity, agentEntity, preferredUsername, summary);
 
         var endpoints = queryEndpoints(session, tenantId, actorId);
-        var inboxId = queryCollectionId(session, tenantId, actorId, "inbox");
-        var outboxId = queryCollectionId(session, tenantId, actorId, "outbox");
+        var inboxId = AgentCollectionsHelper.queryCollectionId(session, tenantId, actorId, "inbox");
+        var outboxId =
+            AgentCollectionsHelper.queryCollectionId(session, tenantId, actorId, "outbox");
         tx.commit();
 
         return Optional.of(
@@ -208,7 +198,7 @@ final class DefaultAgentDAO implements AgentDAO {
         baseEntity.setUpdatedOn(now);
         session.merge(baseEntity);
 
-        cascadeDeleteCollections(session, tenantId, actorId, now);
+        AgentCollectionsHelper.cascadeDeleteCollections(session, tenantId, actorId, now);
         tx.commit();
         return true;
       } catch (Exception e) {
@@ -279,22 +269,19 @@ final class DefaultAgentDAO implements AgentDAO {
 
   @Override
   public Optional<UUID> findInboxId(UUID tenantId, UUID actorId) {
-    return findCollectionId(tenantId, actorId, "inbox");
-  }
-
-  @Override
-  public Optional<UUID> findOutboxId(UUID tenantId, UUID actorId) {
-    return findCollectionId(tenantId, actorId, "outbox");
-  }
-
-  private Optional<UUID> findCollectionId(UUID tenantId, UUID actorId, String name) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var collectionId = queryCollectionId(session, tenantId, actorId, name);
+        var entityId = createEntityId(tenantId, actorId);
+        var baseEntity = session.find(EntityBaseEntity.class, entityId);
+        if (baseEntity == null || baseEntity.getDeletedOn() != null) {
+          tx.commit();
+          return Optional.empty();
+        }
+        var inboxId = AgentCollectionsHelper.queryCollectionId(session, tenantId, actorId, "inbox");
         tx.commit();
-        return collectionId;
+        return inboxId;
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -302,20 +289,43 @@ final class DefaultAgentDAO implements AgentDAO {
     }
   }
 
-  private void validateOwnerExists(Session session, UUID tenantId, UUID ownerId) {
-    var query = session.createNativeQuery(CHECK_OWNER_SQL, Object.class);
-    query.setParameter("tenantId", tenantId).setParameter("ownerId", ownerId);
-    if (query.getResultList().isEmpty()) {
-      throw new IllegalArgumentException("Owner entity not found or deleted: " + ownerId);
+  @Override
+  public Optional<UUID> findOutboxId(UUID tenantId, UUID actorId) {
+    try (var session = sessionFactoryProvider.get().openSession()) {
+      var tx = session.beginTransaction();
+      try {
+        setTenantContext(session, tenantId);
+        var entityId = createEntityId(tenantId, actorId);
+        var baseEntity = session.find(EntityBaseEntity.class, entityId);
+        if (baseEntity == null || baseEntity.getDeletedOn() != null) {
+          tx.commit();
+          return Optional.empty();
+        }
+        var outboxId =
+            AgentCollectionsHelper.queryCollectionId(session, tenantId, actorId, "outbox");
+        tx.commit();
+        return outboxId;
+      } catch (Exception e) {
+        rollbackQuietly(tx, e);
+        throw e;
+      }
     }
   }
 
-  private void validateUsernameNotTaken(Session session, UUID tenantId, String username) {
-    var query = session.createNativeQuery(CHECK_USERNAME_SQL, Object.class);
-    query.setParameter("tenantId", tenantId).setParameter("username", username);
-    if (!query.getResultList().isEmpty()) {
-      throw new IllegalStateException("Preferred username already exists: " + username);
+  private void validateUsernameNotTaken(Session session, UUID tenantId, String preferredUsername) {
+    if (existsByPreferredUsername(session, tenantId, preferredUsername, Optional.empty())) {
+      throw new IllegalArgumentException(
+          "Preferred username '" + preferredUsername + "' is already taken in tenant " + tenantId);
     }
+  }
+
+  private boolean existsByPreferredUsername(
+      Session session, UUID tenantId, String preferredUsername, Optional<UUID> excludeActorId) {
+    var sql = excludeActorId.isPresent() ? CHECK_USERNAME_EXCLUDE_SQL : CHECK_USERNAME_SQL;
+    var query = session.createNativeQuery(sql, Object.class);
+    query.setParameter("tenantId", tenantId).setParameter("username", preferredUsername);
+    excludeActorId.ifPresent(id -> query.setParameter("excludeId", id));
+    return !query.getResultList().isEmpty();
   }
 
   private void applyUpdates(
@@ -326,66 +336,30 @@ final class DefaultAgentDAO implements AgentDAO {
       AgentEntity agentEntity,
       Optional<String> preferredUsername,
       Optional<String> summary) {
+    var now = Instant.now();
+    boolean updated = false;
+
     if (preferredUsername.isPresent()) {
-      var newUsername = preferredUsername.orElseThrow();
-      var rows =
-          session
-              .createNativeQuery(CHECK_USERNAME_EXCLUDE_SQL, Object.class)
-              .setParameter("tenantId", tenantId)
-              .setParameter("username", newUsername)
-              .setParameter("excludeId", actorId)
-              .getResultList();
-      if (!rows.isEmpty()) {
-        throw new IllegalStateException("Preferred username already taken: " + newUsername);
+      var newUsername = preferredUsername.get();
+      if (!newUsername.equalsIgnoreCase(agentEntity.getPreferredUsername())
+          && existsByPreferredUsername(session, tenantId, newUsername, Optional.of(actorId))) {
+        throw new IllegalArgumentException(
+            "Preferred username '" + newUsername + "' is already taken in tenant " + tenantId);
       }
       agentEntity.setPreferredUsername(newUsername);
       session.merge(agentEntity);
+      updated = true;
     }
+
     if (summary.isPresent()) {
-      baseEntity.setSummary(summary.orElseThrow());
+      baseEntity.setSummary(summary.get());
+      updated = true;
     }
-    baseEntity.setUpdatedOn(Instant.now());
-    session.merge(baseEntity);
-  }
 
-  private void provisionCollection(
-      Session session, UUID tenantId, UUID actorId, UUID id, String name, Instant now) {
-    session
-        .createNativeQuery(INSERT_BASE_COLLECTION_SQL, Object.class)
-        .setParameter("id", id)
-        .setParameter("tenantId", tenantId)
-        .setParameter("entityType", ENTITY_TYPE_COLLECTION)
-        .setParameter("now", now)
-        .executeUpdate();
-    session
-        .createNativeQuery(INSERT_SUBTYPE_COLLECTION_SQL, Object.class)
-        .setParameter("tenantId", tenantId)
-        .setParameter("id", id)
-        .setParameter("actorId", actorId)
-        .setParameter("name", name)
-        .executeUpdate();
-  }
-
-  private void cascadeDeleteCollections(Session session, UUID tenantId, UUID actorId, Instant now) {
-    session
-        .createNativeQuery(CASCADE_DELETE_COLLECTIONS_SQL, Object.class)
-        .setParameter("now", now)
-        .setParameter("tenantId", tenantId)
-        .setParameter("actorId", actorId)
-        .executeUpdate();
-  }
-
-  private Optional<UUID> queryCollectionId(
-      Session session, UUID tenantId, UUID actorId, String name) {
-    @SuppressWarnings("unchecked")
-    List<UUID> rows =
-        session
-            .createNativeQuery(QUERY_COLLECTION_ID_SQL, UUID.class)
-            .setParameter("tenantId", tenantId)
-            .setParameter("actorId", actorId)
-            .setParameter("name", name)
-            .getResultList();
-    return rows.isEmpty() ? Optional.empty() : Optional.of(rows.getFirst());
+    if (updated) {
+      baseEntity.setUpdatedOn(now);
+      session.merge(baseEntity);
+    }
   }
 
   private ImmutableMap<String, String> queryEndpoints(
@@ -428,14 +402,13 @@ final class DefaultAgentDAO implements AgentDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID id, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
-        tenantId, id, ENTITY_TYPE_ACTOR, summary.orElse(null), now, now, null);
+        tenantId, id, owner, ENTITY_TYPE_ACTOR, summary.orElse(null), now, now, null);
   }
 
-  private static AgentEntity createAgentEntity(
-      UUID tenantId, UUID id, UUID ownerId, String preferredUsername) {
-    return new AgentEntity(tenantId, id, ownerId, preferredUsername);
+  private static AgentEntity createAgentEntity(UUID tenantId, UUID id, String preferredUsername) {
+    return new AgentEntity(tenantId, id, preferredUsername);
   }
 
   private static AgentEndpointEntity createEndpointEntity(
@@ -445,7 +418,7 @@ final class DefaultAgentDAO implements AgentDAO {
 
   private static Agent createAgentDomain(
       UUID id,
-      UUID ownerId,
+      UUID owner,
       String preferredUsername,
       Optional<String> summary,
       UUID inboxId,
@@ -453,7 +426,7 @@ final class DefaultAgentDAO implements AgentDAO {
       Instant now) {
     return new Agent(
         id,
-        ownerId,
+        owner,
         preferredUsername,
         summary,
         inboxId,
@@ -472,7 +445,7 @@ final class DefaultAgentDAO implements AgentDAO {
       UUID outboxId) {
     return new Agent(
         agentEntity.getId(),
-        agentEntity.getOwnerId(),
+        baseEntity.getOwner(),
         agentEntity.getPreferredUsername(),
         Optional.ofNullable(baseEntity.getSummary()),
         inboxId,

@@ -2,14 +2,12 @@ package com.larpconnect.njall.api.studios.actors;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.larpconnect.njall.api.studios.collections.OrderedCollectionResponse;
+import com.larpconnect.njall.api.studios.common.CollectionResponseHelper;
+import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.actors.AgentDAO;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
 import com.larpconnect.njall.data.domain.Agent;
-import com.larpconnect.njall.data.domain.Collection;
-import com.larpconnect.njall.data.domain.ExpandedEntity;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -25,7 +23,6 @@ import org.slf4j.LoggerFactory;
 final class AgentActor extends AbstractBehavior<AgentCommand> {
 
   private static final String TYPE_ACTOR = "Actor";
-  private static final String TYPE_ORDERED_COLLECTION = "OrderedCollection";
 
   private final Logger logger = LoggerFactory.getLogger(AgentActor.class);
   private final AgentDAO agentDao;
@@ -66,12 +63,21 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
                         + "' already exists in tenant"));
         return this;
       }
+      Optional<UUID> ownerOpt = Optional.empty();
+      if (cmd.request().generator().isPresent()) {
+        var parsed =
+            GeneratorUriSupport.parseGenerator(
+                cmd.request().generator().get(), cmd.studioIdentifier(), cmd.lookup());
+        if (parsed.isEmpty()) {
+          cmd.replyTo()
+              .tell(AgentActorResponse.badRequest("Invalid generator URI or actor identifier"));
+          return this;
+        }
+        ownerOpt = parsed;
+      }
       var domain =
           agentDao.create(
-              cmd.tenantId(),
-              cmd.request().ownerId(),
-              cmd.request().preferredUsername(),
-              cmd.request().summary());
+              cmd.tenantId(), ownerOpt, cmd.request().preferredUsername(), cmd.request().summary());
       cmd.replyTo()
           .tell(AgentActorResponse.success(toActorResponse(cmd.studioIdentifier(), domain)));
     } catch (IllegalArgumentException e) {
@@ -220,7 +226,12 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
         String targetName =
             cmd.target() == AgentCommand.CollectionTarget.INBOX ? "Inbox" : "Outbox";
         resolveAndReturnCollection(
-            cmd.tenantId(), cmd.actorId(), colIdOpt, targetName, cmd.replyTo());
+            cmd.tenantId(),
+            cmd.studioIdentifier(),
+            cmd.actorId(),
+            colIdOpt,
+            targetName,
+            cmd.replyTo());
       } else {
         if (agentDao.findById(cmd.tenantId(), cmd.actorId()).isEmpty()) {
           cmd.replyTo().tell(AgentActorResponse.notFound("Actor not found: " + cmd.actorId()));
@@ -236,6 +247,7 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
 
   private void resolveAndReturnCollection(
       UUID tenantId,
+      String studioIdentifier,
       UUID actorId,
       Optional<UUID> collectionIdOpt,
       String collectionName,
@@ -262,7 +274,8 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
     var expandedItems = collectionDao.findExpandedItems(tenantId, collectionId);
     replyTo.tell(
         AgentActorResponse.collectionSuccess(
-            toExpandedResponse(collectionOpt.orElseThrow(), expandedItems)));
+            CollectionResponseHelper.toExpandedResponse(
+                studioIdentifier, collectionOpt.orElseThrow(), expandedItems)));
   }
 
   private ActorResponse toActorResponse(String studioIdentifier, Agent agent) {
@@ -271,7 +284,7 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
     return new ActorResponse(
         agent.id(),
         TYPE_ACTOR,
-        agent.ownerId(),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, agent.owner()),
         agent.preferredUsername(),
         agent.summary(),
         inboxUrl,
@@ -279,20 +292,6 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
         agent.endpoints(),
         agent.createdOn(),
         agent.updatedOn());
-  }
-
-  private OrderedCollectionResponse toExpandedResponse(
-      Collection collection, ImmutableList<ExpandedEntity> expandedItems) {
-    return new OrderedCollectionResponse(
-        collection.id(),
-        TYPE_ORDERED_COLLECTION,
-        collection.name(),
-        collection.summary(),
-        collection.ownerId(),
-        expandedItems.size(),
-        expandedItems,
-        collection.createdOn(),
-        collection.updatedOn());
   }
 
   private Optional<Set<String>> parseUpdateMask(Optional<String> updateMask) {

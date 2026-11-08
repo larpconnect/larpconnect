@@ -20,8 +20,11 @@ import org.junit.jupiter.api.Test;
 
 final class IndividualActorTest {
 
+  private static final String STUDIO_IDENTIFIER = "valiant";
+
   private final UUID tenantId = UUID.randomUUID();
   private final UUID individualId = UUID.randomUUID();
+  private final UUID ownerId = UUID.randomUUID();
   private final Instant now = Instant.now();
 
   private Behavior<IndividualCommand> createBehavior(IndividualDAO individualDao) {
@@ -29,7 +32,7 @@ final class IndividualActorTest {
   }
 
   private Individual sampleIndividual() {
-    return new Individual(individualId, "Jane Eyre", "Visiting scholar", now, now, null);
+    return new Individual(individualId, ownerId, "Jane Eyre", "Visiting scholar", now, now, null);
   }
 
   @Test
@@ -37,20 +40,27 @@ final class IndividualActorTest {
   void onCreateIndividual_valid_returnsSuccess() {
     var individualDao = mock(IndividualDAO.class);
     var domain = sampleIndividual();
-    when(individualDao.create(eq(tenantId), eq("Jane Eyre"), eq(Optional.of("Visiting scholar"))))
+    when(individualDao.create(
+            eq(tenantId), eq(ownerId), eq("Jane Eyre"), eq(Optional.of("Visiting scholar"))))
         .thenReturn(domain);
 
     var testKit = BehaviorTestKit.create(createBehavior(individualDao));
     TestInbox<IndividualActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateIndividualRequest("Jane Eyre", Optional.of("Visiting scholar"));
-    testKit.run(new IndividualCommand.CreateIndividual(tenantId, request, inbox.getRef()));
+    var request =
+        new CreateIndividualRequest(
+            ownerId.toString(), "Jane Eyre", Optional.of("Visiting scholar"));
+    testKit.run(
+        new IndividualCommand.CreateIndividual(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Success.class);
     var success = (IndividualActorResponse.Success) response;
     assertThat(success.individual().id()).isEqualTo(individualId);
     assertThat(success.individual().name()).isEqualTo("Jane Eyre");
+    assertThat(success.individual().generator())
+        .isEqualTo("/api/studios/valiant/v1/actors/" + ownerId);
   }
 
   @Test
@@ -60,8 +70,10 @@ final class IndividualActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(individualDao));
     TestInbox<IndividualActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateIndividualRequest("");
-    testKit.run(new IndividualCommand.CreateIndividual(tenantId, request, inbox.getRef()));
+    var request = new CreateIndividualRequest(ownerId.toString(), "");
+    testKit.run(
+        new IndividualCommand.CreateIndividual(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Failure.class);
@@ -72,13 +84,16 @@ final class IndividualActorTest {
   @DisplayName("onCreateIndividual returns Failure on DAO exception")
   void onCreateIndividual_daoException_returnsFailure() {
     var individualDao = mock(IndividualDAO.class);
-    when(individualDao.create(any(), any(), any())).thenThrow(new RuntimeException("DB error"));
+    when(individualDao.create(any(), any(), any(), any()))
+        .thenThrow(new RuntimeException("DB error"));
 
     var testKit = BehaviorTestKit.create(createBehavior(individualDao));
     TestInbox<IndividualActorResponse> inbox = TestInbox.create();
 
-    var request = new CreateIndividualRequest("Jane Eyre");
-    testKit.run(new IndividualCommand.CreateIndividual(tenantId, request, inbox.getRef()));
+    var request = new CreateIndividualRequest(ownerId.toString(), "Jane Eyre");
+    testKit.run(
+        new IndividualCommand.CreateIndividual(
+            tenantId, STUDIO_IDENTIFIER, request, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Failure.class);
@@ -95,7 +110,9 @@ final class IndividualActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(individualDao));
     TestInbox<IndividualActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new IndividualCommand.GetIndividual(tenantId, individualId, inbox.getRef()));
+    testKit.run(
+        new IndividualCommand.GetIndividual(
+            tenantId, STUDIO_IDENTIFIER, individualId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Success.class);
@@ -112,7 +129,9 @@ final class IndividualActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(individualDao));
     TestInbox<IndividualActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new IndividualCommand.GetIndividual(tenantId, individualId, inbox.getRef()));
+    testKit.run(
+        new IndividualCommand.GetIndividual(
+            tenantId, STUDIO_IDENTIFIER, individualId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Failure.class);
@@ -128,7 +147,9 @@ final class IndividualActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(individualDao));
     TestInbox<IndividualActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new IndividualCommand.GetIndividual(tenantId, individualId, inbox.getRef()));
+    testKit.run(
+        new IndividualCommand.GetIndividual(
+            tenantId, STUDIO_IDENTIFIER, individualId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Failure.class);
@@ -139,7 +160,8 @@ final class IndividualActorTest {
   @DisplayName("onPatchIndividual applies updates and returns Success")
   void onPatchIndividual_success() {
     var individualDao = mock(IndividualDAO.class);
-    var updated = new Individual(individualId, "Jane Rochester", "Updated bio", now, now, null);
+    var updated =
+        new Individual(individualId, ownerId, "Jane Rochester", "Updated bio", now, now, null);
     when(individualDao.patch(
             eq(tenantId),
             eq(individualId),
@@ -153,7 +175,12 @@ final class IndividualActorTest {
     var request = new UpdateIndividualRequest("Jane Rochester", "Updated bio");
     testKit.run(
         new IndividualCommand.PatchIndividual(
-            tenantId, individualId, request, Optional.of("name,summary"), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            individualId,
+            request,
+            Optional.of("name,summary"),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Success.class);
@@ -166,7 +193,8 @@ final class IndividualActorTest {
   void onPatchIndividual_withoutMask() {
     var individualDao = mock(IndividualDAO.class);
     var updated =
-        new Individual(individualId, "Jane Rochester", (String) null, now, now, (Instant) null);
+        new Individual(
+            individualId, ownerId, "Jane Rochester", (String) null, now, now, (Instant) null);
     when(individualDao.patch(
             eq(tenantId),
             eq(individualId),
@@ -180,7 +208,7 @@ final class IndividualActorTest {
     var request = new UpdateIndividualRequest("Jane Rochester", null);
     testKit.run(
         new IndividualCommand.PatchIndividual(
-            tenantId, individualId, request, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, individualId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Success.class);
@@ -196,7 +224,7 @@ final class IndividualActorTest {
     var request = new UpdateIndividualRequest("   ", null);
     testKit.run(
         new IndividualCommand.PatchIndividual(
-            tenantId, individualId, request, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, individualId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Failure.class);
@@ -215,7 +243,7 @@ final class IndividualActorTest {
     var request = new UpdateIndividualRequest("Jane Rochester", null);
     testKit.run(
         new IndividualCommand.PatchIndividual(
-            tenantId, individualId, request, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, individualId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Failure.class);
@@ -235,7 +263,7 @@ final class IndividualActorTest {
     var request = new UpdateIndividualRequest("Jane Rochester", null);
     testKit.run(
         new IndividualCommand.PatchIndividual(
-            tenantId, individualId, request, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, individualId, request, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Failure.class);
@@ -294,7 +322,7 @@ final class IndividualActorTest {
   void onPatchIndividual_maskOmitsField() {
     var individualDao = mock(IndividualDAO.class);
     var updated =
-        new Individual(individualId, "Jane Eyre", "New summary", now, now, (Instant) null);
+        new Individual(individualId, ownerId, "Jane Eyre", "New summary", now, now, (Instant) null);
     when(individualDao.patch(
             eq(tenantId), eq(individualId), eq(Optional.empty()), eq(Optional.of("New summary"))))
         .thenReturn(Optional.of(updated));
@@ -305,7 +333,12 @@ final class IndividualActorTest {
     var request = new UpdateIndividualRequest("Jane Rochester", "New summary");
     testKit.run(
         new IndividualCommand.PatchIndividual(
-            tenantId, individualId, request, Optional.of("summary"), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            individualId,
+            request,
+            Optional.of("summary"),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Success.class);
@@ -320,7 +353,9 @@ final class IndividualActorTest {
     var testKit = BehaviorTestKit.create(createBehavior(individualDao));
     TestInbox<IndividualActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new IndividualCommand.GetIndividual(tenantId, individualId, inbox.getRef()));
+    testKit.run(
+        new IndividualCommand.GetIndividual(
+            tenantId, STUDIO_IDENTIFIER, individualId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(IndividualActorResponse.Failure.class);

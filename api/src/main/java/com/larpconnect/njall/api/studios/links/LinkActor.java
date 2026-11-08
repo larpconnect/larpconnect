@@ -3,6 +3,7 @@ package com.larpconnect.njall.api.studios.links;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.LinkDAO;
 import com.larpconnect.njall.data.domain.Link;
 import java.util.Optional;
@@ -45,7 +46,20 @@ final class LinkActor extends AbstractBehavior<LinkCommand> {
         cmd.replyTo().tell(LinkActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
-      executeCreate(cmd.tenantId(), cmd.request(), cmd.replyTo());
+      var parsed =
+          GeneratorUriSupport.parseGenerator(
+              cmd.request().generator(), cmd.studioIdentifier(), cmd.lookup());
+      if (parsed.isEmpty()) {
+        cmd.replyTo()
+            .tell(LinkActorResponse.badRequest("Invalid generator URI or actor identifier"));
+        return this;
+      }
+      executeCreate(
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          parsed.orElseThrow(),
+          cmd.request(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create link", e);
     }
@@ -53,27 +67,33 @@ final class LinkActor extends AbstractBehavior<LinkCommand> {
   }
 
   private void executeCreate(
-      UUID tenantId, CreateLinkRequest request, ActorRef<LinkActorResponse> replyTo) {
+      UUID tenantId,
+      String studioIdentifier,
+      UUID owner,
+      CreateLinkRequest request,
+      ActorRef<LinkActorResponse> replyTo) {
     var mediaType = request.mediaType().filter(s -> !s.isBlank()).orElse(DEFAULT_MEDIA_TYPE);
     var domain =
-        linkDao.create(tenantId, request.linkType(), request.url(), mediaType, request.summary());
-    replyTo.tell(LinkActorResponse.success(toLinkResponse(domain)));
+        linkDao.create(
+            tenantId, owner, request.linkType(), request.url(), mediaType, request.summary());
+    replyTo.tell(LinkActorResponse.success(toLinkResponse(studioIdentifier, domain)));
   }
 
   private Behavior<LinkCommand> onGetLink(LinkCommand.GetLink cmd) {
     try {
-      executeGet(cmd.tenantId(), cmd.linkId(), cmd.replyTo());
+      executeGet(cmd.tenantId(), cmd.studioIdentifier(), cmd.linkId(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get link", e);
     }
     return this;
   }
 
-  private void executeGet(UUID tenantId, UUID linkId, ActorRef<LinkActorResponse> replyTo) {
+  private void executeGet(
+      UUID tenantId, String studioIdentifier, UUID linkId, ActorRef<LinkActorResponse> replyTo) {
     linkDao
         .findById(tenantId, linkId)
         .ifPresentOrElse(
-            link -> replyTo.tell(LinkActorResponse.success(toLinkResponse(link))),
+            link -> replyTo.tell(LinkActorResponse.success(toLinkResponse(studioIdentifier, link))),
             () -> replyTo.tell(LinkActorResponse.notFound("Link not found: " + linkId)));
   }
 
@@ -84,7 +104,13 @@ final class LinkActor extends AbstractBehavior<LinkCommand> {
         cmd.replyTo().tell(LinkActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
-      executePatch(cmd.tenantId(), cmd.linkId(), cmd.request(), cmd.updateMask(), cmd.replyTo());
+      executePatch(
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          cmd.linkId(),
+          cmd.request(),
+          cmd.updateMask(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "patch link", e);
     }
@@ -93,6 +119,7 @@ final class LinkActor extends AbstractBehavior<LinkCommand> {
 
   private void executePatch(
       UUID tenantId,
+      String studioIdentifier,
       UUID linkId,
       UpdateLinkRequest request,
       Optional<String> updateMask,
@@ -106,13 +133,15 @@ final class LinkActor extends AbstractBehavior<LinkCommand> {
     linkDao
         .patch(tenantId, linkId, linkType, url, mediaType, summary)
         .ifPresentOrElse(
-            updated -> replyTo.tell(LinkActorResponse.success(toLinkResponse(updated))),
+            updated ->
+                replyTo.tell(LinkActorResponse.success(toLinkResponse(studioIdentifier, updated))),
             () -> replyTo.tell(LinkActorResponse.notFound("Link not found: " + linkId)));
   }
 
-  private LinkResponse toLinkResponse(Link link) {
+  private LinkResponse toLinkResponse(String studioIdentifier, Link link) {
     return new LinkResponse(
         link.id(),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, link.owner()),
         link.linkType(),
         link.url(),
         link.mediaType(),
@@ -154,6 +183,10 @@ final class LinkActor extends AbstractBehavior<LinkCommand> {
 
   private void handleError(ActorRef<LinkActorResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in LinkActor", operation, error);
+    if (error instanceof IllegalArgumentException) {
+      replyTo.tell(LinkActorResponse.badRequest(error.getMessage()));
+      return;
+    }
     var message = error.getMessage();
     var reason = !Strings.isNullOrEmpty(message) ? message : "Error executing " + operation;
     replyTo.tell(LinkActorResponse.failure(reason));

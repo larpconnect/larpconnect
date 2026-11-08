@@ -24,21 +24,28 @@ final class AgentValidationAndDtoTest {
   @Test
   @DisplayName("AgentValidation validates create actor rules")
   void agentValidation_createRules() {
-    var validOwnerId = UUID.randomUUID();
-
-    var nullUsername = new CreateActorRequest(validOwnerId, null, Optional.empty());
+    var nullUsername = new CreateActorRequest(Optional.empty(), null, Optional.empty());
     assertThat(AgentValidation.validateCreate(nullUsername))
         .contains("Preferred username must not be blank");
 
-    var emptyUsername = new CreateActorRequest(validOwnerId, "", Optional.empty());
+    var emptyUsername = new CreateActorRequest(Optional.empty(), "", Optional.empty());
     assertThat(AgentValidation.validateCreate(emptyUsername))
         .contains("Preferred username must not be blank");
 
-    var blankUsername = new CreateActorRequest(validOwnerId, "   ", Optional.empty());
+    var blankUsername = new CreateActorRequest(Optional.empty(), "   ", Optional.empty());
     assertThat(AgentValidation.validateCreate(blankUsername))
         .contains("Preferred username must not be blank");
 
-    var valid = new CreateActorRequest(validOwnerId, "valkyrie_lead", Optional.of("Summary"));
+    var blankGenerator =
+        new CreateActorRequest(Optional.of("   "), "valkyrie_lead", Optional.empty());
+    assertThat(AgentValidation.validateCreate(blankGenerator))
+        .contains("Generator URI or actor identifier must not be blank");
+
+    var valid =
+        new CreateActorRequest(
+            Optional.of("018f2345-6789-7abc-def0-123456789def"),
+            "valkyrie_lead",
+            Optional.of("Summary"));
     assertThat(AgentValidation.validateCreate(valid)).isEmpty();
   }
 
@@ -122,11 +129,11 @@ final class AgentValidationAndDtoTest {
   void actorRequestAndResponse_serialization() throws Exception {
     var ownerId = UUID.randomUUID();
     var createJson =
-        "{\"ownerId\":\""
+        "{\"generator\":\""
             + ownerId
             + "\",\"preferredUsername\":\"valkyrie_lead\",\"summary\":\"Lead singer\"}";
     var createReq = objectMapper.readValue(createJson, CreateActorRequest.class);
-    assertThat(createReq.ownerId()).isEqualTo(ownerId);
+    assertThat(createReq.generator()).contains(ownerId.toString());
     assertThat(createReq.preferredUsername()).isEqualTo("valkyrie_lead");
     assertThat(createReq.summary()).contains("Lead singer");
 
@@ -136,7 +143,7 @@ final class AgentValidationAndDtoTest {
         new ActorResponse(
             actorId,
             "Actor",
-            ownerId,
+            "/api/studios/valiant/v1/actors/" + ownerId,
             "valkyrie_lead",
             Optional.of("Lead singer"),
             "/api/studios/valiant/v1/actors/" + actorId + "/inbox",
@@ -148,6 +155,7 @@ final class AgentValidationAndDtoTest {
     var resJson = objectMapper.writeValueAsString(response);
     assertThat(resJson).contains(actorId.toString());
     assertThat(resJson).contains("valkyrie_lead");
+    assertThat(resJson).contains("/api/studios/valiant/v1/actors/" + ownerId);
     assertThat(resJson).contains("sharedInbox");
     assertThat(resJson).doesNotContain("tenantId");
 
