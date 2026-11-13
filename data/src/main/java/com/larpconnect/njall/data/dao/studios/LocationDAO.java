@@ -21,12 +21,12 @@ public interface LocationDAO extends DAO<Location> {
    * Persists a new location and its base entity for the specified studio tenant.
    *
    * @param tenantId The internal tenant UUID.
-   * @param owner The generating actor entity UUID.
+   * @param generator The generating actor entity UUID.
    * @param name The human-readable location name.
    * @param summary Optional human-readable description.
    * @return The persisted Location domain record.
    */
-  Location create(UUID tenantId, UUID owner, String name, Optional<String> summary);
+  Location create(UUID tenantId, UUID generator, String name, Optional<String> summary);
 
   /**
    * Applies partial updates to an active location.

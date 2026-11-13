@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
-import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
+import com.larpconnect.njall.data.dao.common.ActorGeneratorValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Agent;
@@ -103,16 +103,16 @@ final class DefaultAgentDAO implements AgentDAO {
 
   @Override
   public Agent create(
-      UUID tenantId, Optional<UUID> owner, String preferredUsername, Optional<String> summary) {
+      UUID tenantId, Optional<UUID> generator, String preferredUsername, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
         var actorId = UUID.randomUUID();
-        var effectiveOwner = owner.orElse(actorId);
+        var effectiveGenerator = generator.orElse(actorId);
 
-        if (owner.isPresent()) {
-          ActorOwnerValidator.validateActorOwner(session, tenantId, owner.get());
+        if (generator.isPresent()) {
+          ActorGeneratorValidator.validateActorGenerator(session, tenantId, generator.get());
         }
         validateUsernameNotTaken(session, tenantId, preferredUsername);
 
@@ -120,7 +120,7 @@ final class DefaultAgentDAO implements AgentDAO {
         var outboxId = UUID.randomUUID();
         var now = Instant.now();
 
-        var baseEntity = createBaseEntity(tenantId, actorId, effectiveOwner, summary, now);
+        var baseEntity = createBaseEntity(tenantId, actorId, effectiveGenerator, summary, now);
         session.persist(baseEntity);
 
         var agentEntity = createAgentEntity(tenantId, actorId, preferredUsername);
@@ -134,7 +134,7 @@ final class DefaultAgentDAO implements AgentDAO {
 
         tx.commit();
         return createAgentDomain(
-            actorId, effectiveOwner, preferredUsername, summary, inboxId, outboxId, now);
+            actorId, effectiveGenerator, preferredUsername, summary, inboxId, outboxId, now);
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -402,9 +402,9 @@ final class DefaultAgentDAO implements AgentDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID id, UUID generator, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
-        tenantId, id, owner, ENTITY_TYPE_ACTOR, summary.orElse(null), now, now, null);
+        tenantId, id, generator, ENTITY_TYPE_ACTOR, summary.orElse(null), now, now, null);
   }
 
   private static AgentEntity createAgentEntity(UUID tenantId, UUID id, String preferredUsername) {
@@ -418,7 +418,7 @@ final class DefaultAgentDAO implements AgentDAO {
 
   private static Agent createAgentDomain(
       UUID id,
-      UUID owner,
+      UUID generator,
       String preferredUsername,
       Optional<String> summary,
       UUID inboxId,
@@ -426,7 +426,7 @@ final class DefaultAgentDAO implements AgentDAO {
       Instant now) {
     return new Agent(
         id,
-        owner,
+        generator,
         preferredUsername,
         summary,
         inboxId,
@@ -445,7 +445,7 @@ final class DefaultAgentDAO implements AgentDAO {
       UUID outboxId) {
     return new Agent(
         agentEntity.getId(),
-        baseEntity.getOwner(),
+        baseEntity.getGenerator(),
         agentEntity.getPreferredUsername(),
         Optional.ofNullable(baseEntity.getSummary()),
         inboxId,

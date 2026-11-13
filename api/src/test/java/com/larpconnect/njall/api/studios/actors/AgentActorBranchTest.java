@@ -165,7 +165,7 @@ final class AgentActorBranchTest {
     assertThat(((AgentActorResponse.Failure) inbox.receiveMessage()).status()).isEqualTo(404);
 
     when(agentDao.findInboxId(tenantId, actorId)).thenReturn(Optional.of(inboxId));
-    when(collectionDao.findById(tenantId, inboxId)).thenReturn(Optional.empty());
+    when(collectionDao.findById(tenantId, actorId, inboxId)).thenReturn(Optional.empty());
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,

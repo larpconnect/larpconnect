@@ -14,8 +14,8 @@ final class AgentCollectionsHelper {
   private static final String INSERT_BASE_COLLECTION_SQL =
       """
       INSERT INTO njall_users.entities
-        (id, tenant_id, owner, entity_type, summary, created_on, updated_on)
-      VALUES (:id, :tenantId, :owner, :entityType, NULL, :now, :now)
+        (id, tenant_id, generator, entity_type, summary, created_on, updated_on)
+      VALUES (:id, :tenantId, :generator, :entityType, NULL, :now, :now)
       """;
 
   private static final String INSERT_SUBTYPE_COLLECTION_SQL =
@@ -46,7 +46,7 @@ final class AgentCollectionsHelper {
         .createNativeQuery(INSERT_BASE_COLLECTION_SQL, Object.class)
         .setParameter("id", id)
         .setParameter("tenantId", tenantId)
-        .setParameter("owner", actorId)
+        .setParameter("generator", actorId)
         .setParameter("entityType", ENTITY_TYPE_COLLECTION)
         .setParameter("now", now)
         .executeUpdate();
@@ -71,7 +71,6 @@ final class AgentCollectionsHelper {
 
   static Optional<UUID> queryCollectionId(
       Session session, UUID tenantId, UUID actorId, String name) {
-    @SuppressWarnings("unchecked")
     List<UUID> rows =
         session
             .createNativeQuery(QUERY_COLLECTION_ID_SQL, UUID.class)

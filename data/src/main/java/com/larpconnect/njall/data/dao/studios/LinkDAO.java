@@ -21,7 +21,7 @@ public interface LinkDAO extends DAO<Link> {
    * Persists a new link and its base entity for the specified studio tenant.
    *
    * @param tenantId The internal tenant UUID.
-   * @param owner The generating actor entity UUID.
+   * @param generator The generating actor entity UUID.
    * @param linkType The semantic type of the link.
    * @param url The destination URL.
    * @param mediaType The IANA media type.
@@ -30,7 +30,7 @@ public interface LinkDAO extends DAO<Link> {
    */
   Link create(
       UUID tenantId,
-      UUID owner,
+      UUID generator,
       String linkType,
       String url,
       String mediaType,

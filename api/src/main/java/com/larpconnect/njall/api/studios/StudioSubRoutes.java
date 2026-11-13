@@ -2,7 +2,6 @@ package com.larpconnect.njall.api.studios;
 
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.studios.actors.AgentRoute;
-import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.events.EventsRoute;
 import com.larpconnect.njall.api.studios.individuals.IndividualsRoute;
 import com.larpconnect.njall.api.studios.links.LinksRoute;
@@ -23,7 +22,6 @@ final class StudioSubRoutes {
       TagsRoute tagsRoute,
       EventsRoute eventsRoute,
       IndividualsRoute individualsRoute,
-      CollectionsRoute collectionsRoute,
       AgentRoute agentRoute) {
     this(
         Directives.concat(
@@ -32,7 +30,6 @@ final class StudioSubRoutes {
             tagsRoute.route(),
             eventsRoute.route(),
             individualsRoute.route(),
-            collectionsRoute.route(),
             agentRoute.route()));
   }
 

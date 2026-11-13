@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
-import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
+import com.larpconnect.njall.data.dao.common.ActorGeneratorValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Location;
@@ -50,15 +50,15 @@ final class DefaultLocationDAO implements LocationDAO {
   }
 
   @Override
-  public Location create(UUID tenantId, UUID owner, String name, Optional<String> summary) {
+  public Location create(UUID tenantId, UUID generator, String name, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
+        ActorGeneratorValidator.validateActorGenerator(session, tenantId, generator);
         var locationId = UUID.randomUUID();
         var now = Instant.now();
-        var entity = createBaseEntity(tenantId, locationId, owner, summary, now);
+        var entity = createBaseEntity(tenantId, locationId, generator, summary, now);
         session.persist(entity);
 
         var location = createLocationEntity(tenantId, locationId, name);
@@ -152,9 +152,9 @@ final class DefaultLocationDAO implements LocationDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID id, UUID generator, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
-        tenantId, id, owner, ENTITY_TYPE_LOCATION, summary.orElse(null), now, now, null);
+        tenantId, id, generator, ENTITY_TYPE_LOCATION, summary.orElse(null), now, now, null);
   }
 
   private static LocationEntity createLocationEntity(UUID tenantId, UUID id, String name) {
@@ -164,7 +164,7 @@ final class DefaultLocationDAO implements LocationDAO {
   private static Location toLocation(EntityBaseEntity entity, LocationEntity location) {
     return new Location(
         entity.getId(),
-        entity.getOwner(),
+        entity.getGenerator(),
         location.getName(),
         entity.getSummary(),
         entity.getCreatedOn(),

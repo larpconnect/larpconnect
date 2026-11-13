@@ -141,7 +141,7 @@ final class LinkActor extends AbstractBehavior<LinkCommand> {
   private LinkResponse toLinkResponse(String studioIdentifier, Link link) {
     return new LinkResponse(
         link.id(),
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, link.owner()),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, link.generator()),
         link.linkType(),
         link.url(),
         link.mediaType(),

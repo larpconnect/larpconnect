@@ -62,7 +62,7 @@ final class DefaultIndividualDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(individualId);
-    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
+    assertThat(result.orElseThrow().generator()).isEqualTo(owner);
     assertThat(result.orElseThrow().name()).isEqualTo("Jane Eyre");
     assertThat(result.orElseThrow().summary()).contains("Scholar");
     verify(tx).commit();
@@ -159,7 +159,7 @@ final class DefaultIndividualDAOTest {
     var individual = dao.create(tenantId, owner, "Jane Eyre", Optional.of("A governess"));
 
     assertThat(individual.name()).isEqualTo("Jane Eyre");
-    assertThat(individual.owner()).isEqualTo(owner);
+    assertThat(individual.generator()).isEqualTo(owner);
     assertThat(individual.summary()).contains("A governess");
     assertThat(individual.deletedOn()).isEmpty();
     verify(session).persist(any(EntityBaseEntity.class));
@@ -182,7 +182,7 @@ final class DefaultIndividualDAOTest {
     var individual = dao.create(tenantId, owner, "Edward Rochester", Optional.empty());
 
     assertThat(individual.name()).isEqualTo("Edward Rochester");
-    assertThat(individual.owner()).isEqualTo(owner);
+    assertThat(individual.generator()).isEqualTo(owner);
     assertThat(individual.summary()).isEmpty();
     verify(session).persist(any(EntityBaseEntity.class));
     verify(session).persist(any(IndividualEntity.class));

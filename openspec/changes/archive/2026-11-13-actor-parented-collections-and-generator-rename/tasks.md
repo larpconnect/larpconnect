@@ -1,0 +1,28 @@
+## 1. Database Migration, Seed Scripts, and Data Persistence (:data)
+
+- [x] 1.1 Create Flyway migration `data/src/main/resources/db/migration/V13__rename_entities_owner_to_generator.sql` renaming `njall_users.entities.owner` to `generator`, renaming constraint `fk_entities_owner` to `fk_entities_generator`, and replacing `idx_entities_owner` with `idx_entities_generator` on `(tenant_id, generator DESC)` while retaining `njall_users.collections.owner_id`, `fk_collections_owner`, `unq_collections_owner_name`, and `idx_collections_owner`.
+- [x] 1.2 Update local PostgreSQL seed scripts (`docker/postgres/seed/02-test-studios.sql`, `03-studio-links.sql`, and `04-studio-locations.sql`) to populate `njall_users.entities.generator` instead of `owner`.
+- [x] 1.3 Rename `EntityBaseEntity.owner` to `generator` (`@Column(name = "generator", nullable = false, updatable = false)`), rename `ActorOwnerValidator` to `ActorGeneratorValidator`, update all Common Table Inheritance JPA entity constructors (`AgentEntity`, `CollectionEntity`, `EventEntity`, `HashtagEntity`, `IndividualEntity`, `LinkEntity`, `LocationEntity`), and update `AgentCollectionsHelper` and native SQL hydration queries (`EXPANDED_ITEMS_QUERY`) to reference `entities.generator`.
+- [x] 1.4 Rename `UUID owner()` to `UUID generator()` across all immutable Common Table Inheritance domain records (`Agent`, `Collection`, `Event`, `Hashtag`, `Individual`, `Link`, `Location`, and `ExpandedEntity`).
+- [x] 1.5 Update tenanted **DAO** interfaces and implementations (`AgentDAO`, `EventDAO`, `HashtagDAO`, `IndividualDAO`, `LinkDAO`, `LocationDAO`, and `CollectionDAO` / `DefaultCollectionDAO`) to rename `owner` parameters to `generator`, scope `CollectionDAO` read and mutation methods (`findById`, `findExpandedById`, `patch`, `softDelete`, `addItem`, `removeItem`) to `(tenantId, actorId, ...)` verifying that `actorId` is an active `'Actor'` **Entity** matching `collection.generator()`, and verify on `CollectionDAO.create` that `ownerId` references an active **Entity** in `tenantId`.
+- [x] 1.6 Update `:data` migration, validator, and **DAO** unit/Testcontainers tests for `V13`, `generator` provenance, and actor-scoped `CollectionDAO` operations, and verify `:data` passes all tests and static analysis (`./gradlew :data:check`).
+
+## 2. OpenAPI Contract and Actor-Parented Studio Routes (:api)
+
+- [x] 2.1 Update `api/src/main/resources/openapi.yaml` to move all tenanted **Collections** paths from `/api/studios/{studio-id}/v1/collections...` to `/api/studios/{studio-id}/v1/actors/{actor-id}/collections...` (`POST ""`, `GET/PATCH/DELETE "/{collection-id}"`, `POST "/{collection-id}:addItem"`, `POST "/{collection-id}:removeItem"`), add path parameter `actor-id`, remove `generator` from `CreateCollectionRequest`, and make `ownerId` optional on `CreateCollectionRequest` (defaulting to `{actor-id}`).
+- [x] 2.2 Remove top-level `CollectionsRoute` wiring from `StudioSubRoutes` (and any top-level route bindings if applicable) and inject `CollectionsRoute` into `AgentRoute` (`com.larpconnect.njall.api.studios.actors`) to delegate `pathPrefix("collections", ...)` beneath `/api/studios/{studio-id}/v1/actors/{actor-id}`.
+- [x] 2.3 Update `CreateCollectionRequest`, `CollectionValidation`, `CollectionCommand`, `CollectionActor`, `CollectionsRoute`, and `CollectionResponseHelper` to propagate `actorId` from the route path, default `ownerId` to `actorId` when omitted, return `404 Not Found` on missing/soft-deleted/non-**Actor** `{actor-id}` or generator mismatch, return `404 Not Found` on `GET .../collections` ("Listing collections is not supported"), and return `400 Bad Request` when an explicit `ownerId` is missing or soft-deleted.
+- [x] 2.4 Update studio **DTO** mappers and Pekko **Actor** handlers across `actors`, `collections`, `events`, `individuals`, `links`, `locations`, and `tags` in `:api` to read `.generator()` instead of `.owner()` from `:data` domain records when formatting canonical **generator** URIs.
+- [x] 2.5 Update `:api` unit, validation, `BehaviorTestKit`, and Pekko HTTP `RouteTest` suites to cover actor-parented collection routes, optional `ownerId` defaulting, explicit non-**Actor** `ownerId`, mismatched `{actor-id}` `404` handling, and legacy `/v1/collections` `404` rejection, and verify `:api` passes all tests and static checks (`./gradlew :api:check`).
+
+## 3. End-to-End Cucumber Integration Tests (:integration)
+
+- [x] 3.1 Update Cucumber feature files and step definitions in `:integration` (`user_studio_collections_api.feature` and any cross-feature collection/entity steps or SQL assertions) to target `/api/studios/{studio-id}/v1/actors/{actor-id}/collections...` and query `njall_users.entities.generator`.
+- [x] 3.2 Add Cucumber integration scenarios verifying collection creation with omitted `ownerId` (defaulting to `{actor-id}`), collection creation with explicit non-**Actor** `ownerId`, `404 Not Found` on missing/non-**Actor**/mismatched `{actor-id}`, and `404 Not Found` on legacy unparented `/api/studios/{studio-id}/v1/collections`.
+- [x] 3.3 Verify `:integration` Cucumber and ArchUnit suites pass (`./gradlew :integration:check`).
+
+## 4. OpenSpec Validation, Formatting, and Full Build Verification
+
+- [x] 4.1 Validate the OpenSpec change strictly (`openspec validate actor-parented-collections-and-generator-rename --type change --strict`).
+- [x] 4.2 Apply Spotless formatting across the repository (`./gradlew spotlessApply`).
+- [x] 4.3 Run the full verification suite (`./gradlew check build`) and confirm all unit tests, integration tests, JaCoCo coverage thresholds (85% line, 90% branch), Spotless, SpotBugs, ErrorProne, Checkstyle, and ArchUnit checks pass cleanly.

@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
  * Immutable domain representation of a tenanted hashtag entity extending links via CTI.
  *
  * @param id The unique hashtag UUID identifier.
- * @param owner The generating actor entity UUID.
+ * @param generator The generating actor entity UUID.
  * @param tag The case-preserved hashtag string.
  * @param linkType The semantic type of the underlying link (e.g. hashtag).
  * @param url The canonical destination URL.
@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 @Immutable
 public record Hashtag(
     UUID id,
-    UUID owner,
+    UUID generator,
     String tag,
     String linkType,
     String url,
@@ -36,7 +36,7 @@ public record Hashtag(
 
   public Hashtag(
       UUID id,
-      UUID owner,
+      UUID generator,
       String tag,
       String linkType,
       String url,
@@ -47,7 +47,7 @@ public record Hashtag(
       @Nullable Instant deletedOn) {
     this(
         id,
-        owner,
+        generator,
         tag,
         linkType,
         url,

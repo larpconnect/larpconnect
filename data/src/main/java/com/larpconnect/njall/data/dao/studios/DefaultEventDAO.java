@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
-import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
+import com.larpconnect.njall.data.dao.common.ActorGeneratorValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Event;
@@ -81,7 +81,7 @@ final class DefaultEventDAO implements EventDAO {
   @Override
   public Event create(
       UUID tenantId,
-      UUID owner,
+      UUID generator,
       String title,
       Optional<String> summary,
       Optional<UUID> locationId,
@@ -91,10 +91,10 @@ final class DefaultEventDAO implements EventDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
+        ActorGeneratorValidator.validateActorGenerator(session, tenantId, generator);
         var eventId = UUID.randomUUID();
         var now = Instant.now();
-        var entity = createBaseEntity(tenantId, eventId, owner, summary, now);
+        var entity = createBaseEntity(tenantId, eventId, generator, summary, now);
         session.persist(entity);
 
         var event = createEventEntity(tenantId, eventId, locationId, title, startTime, endTime);
@@ -191,9 +191,9 @@ final class DefaultEventDAO implements EventDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID id, UUID generator, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
-        tenantId, id, owner, ENTITY_TYPE_EVENT, summary.orElse(null), now, now, null);
+        tenantId, id, generator, ENTITY_TYPE_EVENT, summary.orElse(null), now, now, null);
   }
 
   private static EventEntity createEventEntity(
@@ -210,7 +210,7 @@ final class DefaultEventDAO implements EventDAO {
   private static Event toEvent(EntityBaseEntity entity, EventEntity event) {
     return new Event(
         entity.getId(),
-        entity.getOwner(),
+        entity.getGenerator(),
         event.getLocationId(),
         event.getTitle(),
         entity.getSummary(),

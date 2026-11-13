@@ -61,7 +61,7 @@ final class DefaultLinkDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(linkId);
-    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
+    assertThat(result.orElseThrow().generator()).isEqualTo(owner);
     assertThat(result.orElseThrow().linkType()).isEqualTo("website");
     assertThat(result.orElseThrow().url()).isEqualTo("https://example.com");
     assertThat(result.orElseThrow().mediaType()).isEqualTo("text/html");
@@ -163,7 +163,7 @@ final class DefaultLinkDAOTest {
             "text/html",
             Optional.of("My Discord"));
 
-    assertThat(result.owner()).isEqualTo(owner);
+    assertThat(result.generator()).isEqualTo(owner);
     assertThat(result.linkType()).isEqualTo("discord");
     assertThat(result.url()).isEqualTo("https://discord.gg/test");
     assertThat(result.mediaType()).isEqualTo("text/html");

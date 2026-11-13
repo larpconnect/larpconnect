@@ -69,7 +69,7 @@ final class DefaultAgentDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(actorId);
-    assertThat(result.orElseThrow().owner()).isEqualTo(ownerId);
+    assertThat(result.orElseThrow().generator()).isEqualTo(ownerId);
     assertThat(result.orElseThrow().preferredUsername()).isEqualTo("valkyrie");
     assertThat(result.orElseThrow().endpoints())
         .containsEntry("sharedInbox", "https://example.com/inbox");
@@ -148,7 +148,7 @@ final class DefaultAgentDAOTest {
 
     var agent = dao.create(tenantId, Optional.of(ownerId), "valkyrie", Optional.of("Summary"));
 
-    assertThat(agent.owner()).isEqualTo(ownerId);
+    assertThat(agent.generator()).isEqualTo(ownerId);
     assertThat(agent.preferredUsername()).isEqualTo("valkyrie");
     assertThat(agent.summary()).contains("Summary");
     verify(session).persist(any(EntityBaseEntity.class));
@@ -168,7 +168,7 @@ final class DefaultAgentDAOTest {
 
     var agent = dao.create(tenantId, Optional.empty(), "valkyrie", Optional.of("Summary"));
 
-    assertThat(agent.owner()).isEqualTo(agent.id());
+    assertThat(agent.generator()).isEqualTo(agent.id());
     assertThat(agent.preferredUsername()).isEqualTo("valkyrie");
     assertThat(agent.summary()).contains("Summary");
     verify(session).persist(any(EntityBaseEntity.class));

@@ -10,17 +10,15 @@ import org.jspecify.annotations.Nullable;
 /** Request payload for creating a new studio collection. */
 @Immutable
 public record CreateCollectionRequest(
-    @JsonProperty("ownerId") UUID ownerId,
-    @JsonProperty("generator") Optional<String> generator,
+    @JsonProperty("ownerId") Optional<UUID> ownerId,
     @JsonProperty("name") String name,
     @JsonProperty("summary") Optional<String> summary) {
 
   @JsonCreator
   public CreateCollectionRequest(
-      @JsonProperty("ownerId") UUID ownerId,
-      @JsonProperty("generator") @Nullable String generator,
+      @JsonProperty("ownerId") @Nullable UUID ownerId,
       @JsonProperty("name") String name,
       @JsonProperty("summary") @Nullable String summary) {
-    this(ownerId, Optional.ofNullable(generator), name, Optional.ofNullable(summary));
+    this(Optional.ofNullable(ownerId), name, Optional.ofNullable(summary));
   }
 }

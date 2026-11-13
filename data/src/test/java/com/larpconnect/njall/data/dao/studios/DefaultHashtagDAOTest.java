@@ -208,7 +208,7 @@ final class DefaultHashtagDAOTest {
             Optional.of("Aesthetic"));
 
     assertThat(result.tag()).isEqualTo("SolarPunk");
-    assertThat(result.owner()).isEqualTo(owner);
+    assertThat(result.generator()).isEqualTo(owner);
     verify(session).persist(any(EntityBaseEntity.class));
     verify(session).persist(any(LinkEntity.class));
     verify(session).persist(any(HashtagEntity.class));
@@ -365,7 +365,7 @@ final class DefaultHashtagDAOTest {
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().tag()).isEqualTo("SolarPunk");
-    assertThat(result.getFirst().owner()).isEqualTo(owner);
+    assertThat(result.getFirst().generator()).isEqualTo(owner);
     verify(tx).commit();
   }
 

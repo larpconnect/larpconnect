@@ -9,9 +9,6 @@ final class CollectionValidation {
   private CollectionValidation() {}
 
   static Optional<String> validateCreate(CreateCollectionRequest request) {
-    if (request.generator().isPresent() && request.generator().orElseThrow().isBlank()) {
-      return Optional.of("Generator URI or actor identifier must not be blank");
-    }
     if (Strings.isNullOrEmpty(request.name()) || request.name().isBlank()) {
       return Optional.of("Collection name must not be blank");
     }

@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
-import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
+import com.larpconnect.njall.data.dao.common.ActorGeneratorValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Link;
@@ -52,7 +52,7 @@ final class DefaultLinkDAO implements LinkDAO {
   @Override
   public Link create(
       UUID tenantId,
-      UUID owner,
+      UUID generator,
       String linkType,
       String url,
       String mediaType,
@@ -61,10 +61,10 @@ final class DefaultLinkDAO implements LinkDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
+        ActorGeneratorValidator.validateActorGenerator(session, tenantId, generator);
         var linkId = UUID.randomUUID();
         var now = Instant.now();
-        var entity = createBaseEntity(tenantId, linkId, owner, summary, now);
+        var entity = createBaseEntity(tenantId, linkId, generator, summary, now);
         session.persist(entity);
 
         var link = createLinkEntity(tenantId, linkId, linkType, url, mediaType);
@@ -165,9 +165,9 @@ final class DefaultLinkDAO implements LinkDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID id, UUID owner, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID id, UUID generator, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
-        tenantId, id, owner, ENTITY_TYPE_LINK, summary.orElse(null), now, now, null);
+        tenantId, id, generator, ENTITY_TYPE_LINK, summary.orElse(null), now, now, null);
   }
 
   private static LinkEntity createLinkEntity(
@@ -178,7 +178,7 @@ final class DefaultLinkDAO implements LinkDAO {
   private static Link toLink(EntityBaseEntity entity, LinkEntity link) {
     return new Link(
         entity.getId(),
-        entity.getOwner(),
+        entity.getGenerator(),
         link.getLinkType(),
         link.getUrl(),
         link.getMediaType(),

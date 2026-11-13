@@ -4,7 +4,7 @@
 SET search_path = njall_users, public;
 
 -- CTI Root Entities for Links
-INSERT INTO njall_users.entities (id, tenant_id, owner, entity_type, summary) VALUES
+INSERT INTO njall_users.entities (id, tenant_id, generator, entity_type, summary) VALUES
     ('018d0000-0000-7000-8000-000000000101', '018d0000-0000-7000-8000-000000000001', '018d0000-0000-7000-8000-000000000010', 'Link', 'Valkyrie Example Larp Official Website'),
     ('018d0000-0000-7000-8000-000000000102', '018d0000-0000-7000-8000-000000000001', '018d0000-0000-7000-8000-000000000010', 'Link', 'Valkyrie Example Community Discord Server'),
     ('018d0000-0000-7000-8000-000000000103', '018d0000-0000-7000-8000-000000000001', '018d0000-0000-7000-8000-000000000010', 'Link', 'Valkyrie Example Larp Core Rules v1'),

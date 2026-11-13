@@ -64,7 +64,7 @@ final class DefaultEventDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(eventId);
-    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
+    assertThat(result.orElseThrow().generator()).isEqualTo(owner);
     assertThat(result.orElseThrow().title()).isEqualTo("Autumn Fest");
     assertThat(result.orElseThrow().locationId()).contains(locationId);
     assertThat(result.orElseThrow().summary()).contains("Festival summary");
@@ -147,7 +147,7 @@ final class DefaultEventDAOTest {
 
     assertThat(results).hasSize(1);
     assertThat(results.get(0).title()).isEqualTo("Autumn Fest");
-    assertThat(results.get(0).owner()).isEqualTo(owner);
+    assertThat(results.get(0).generator()).isEqualTo(owner);
     verify(tx).commit();
   }
 
@@ -174,7 +174,7 @@ final class DefaultEventDAOTest {
             Optional.of(now.plusSeconds(3600)));
 
     assertThat(created.title()).isEqualTo("Spring Gathering");
-    assertThat(created.owner()).isEqualTo(owner);
+    assertThat(created.generator()).isEqualTo(owner);
     assertThat(created.summary()).contains("New gathering");
     assertThat(created.locationId()).contains(locationId);
     verify(session).persist(any(EntityBaseEntity.class));
@@ -205,7 +205,7 @@ final class DefaultEventDAOTest {
             Optional.empty());
 
     assertThat(created.title()).isEqualTo("Minimal Gathering");
-    assertThat(created.owner()).isEqualTo(owner);
+    assertThat(created.generator()).isEqualTo(owner);
     assertThat(created.summary()).isEmpty();
     assertThat(created.locationId()).isEmpty();
     verify(session).persist(any(EntityBaseEntity.class));

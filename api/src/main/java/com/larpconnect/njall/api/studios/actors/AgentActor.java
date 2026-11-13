@@ -63,21 +63,24 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
                         + "' already exists in tenant"));
         return this;
       }
-      Optional<UUID> ownerOpt = Optional.empty();
+      Optional<UUID> generatorOpt = Optional.empty();
       if (cmd.request().generator().isPresent()) {
         var parsed =
             GeneratorUriSupport.parseGenerator(
-                cmd.request().generator().get(), cmd.studioIdentifier(), cmd.lookup());
+                cmd.request().generator().orElseThrow(), cmd.studioIdentifier(), cmd.lookup());
         if (parsed.isEmpty()) {
           cmd.replyTo()
               .tell(AgentActorResponse.badRequest("Invalid generator URI or actor identifier"));
           return this;
         }
-        ownerOpt = parsed;
+        generatorOpt = parsed;
       }
       var domain =
           agentDao.create(
-              cmd.tenantId(), ownerOpt, cmd.request().preferredUsername(), cmd.request().summary());
+              cmd.tenantId(),
+              generatorOpt,
+              cmd.request().preferredUsername(),
+              cmd.request().summary());
       cmd.replyTo()
           .tell(AgentActorResponse.success(toActorResponse(cmd.studioIdentifier(), domain)));
     } catch (IllegalArgumentException e) {
@@ -264,14 +267,14 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
       return;
     }
     var collectionId = collectionIdOpt.orElseThrow();
-    var collectionOpt = collectionDao.findById(tenantId, collectionId);
+    var collectionOpt = collectionDao.findById(tenantId, actorId, collectionId);
     if (collectionOpt.isEmpty()) {
       replyTo.tell(
           AgentActorResponse.notFound(
               collectionName + " collection not found for actor: " + actorId));
       return;
     }
-    var expandedItems = collectionDao.findExpandedItems(tenantId, collectionId);
+    var expandedItems = collectionDao.findExpandedItems(tenantId, actorId, collectionId);
     replyTo.tell(
         AgentActorResponse.collectionSuccess(
             CollectionResponseHelper.toExpandedResponse(
@@ -284,7 +287,7 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
     return new ActorResponse(
         agent.id(),
         TYPE_ACTOR,
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, agent.owner()),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, agent.generator()),
         agent.preferredUsername(),
         agent.summary(),
         inboxUrl,

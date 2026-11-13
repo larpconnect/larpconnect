@@ -258,7 +258,7 @@ final class TagActor extends AbstractBehavior<TagCommand> {
   private TagResponse toTagResponse(String studioIdentifier, Hashtag tag) {
     return new TagResponse(
         tag.id(),
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, tag.owner()),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, tag.generator()),
         tag.tag(),
         tag.linkType(),
         tag.url(),
