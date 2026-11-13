@@ -32,26 +32,45 @@ Examples of things that you look for:
 
 * Are variables and methods clearly named?
 * Is `lowerCamelCase` used for variables and `UPPER_BLOCK_LETTERING` used for constants only?
+* Ternary operators, while allowed, are disfavored and need extra scrutiny.
+* Switch statements should be "new style" switch statements.
 
 #### Miscellaneous Naming Conventions
 
-* Acronyms and initialisms in names should be spelled out as if they were words. So `Dao` and not `DAO` and `Larp` not `LARP`.
+* Acronyms and initialisms in names should be spelled out as if they were words. So `Dao` and not `DAO` and `Larp` not `LARP`. See the section on camel case for more specific interpretations.
 * Single letter variables are reserved for:
   - Iterators
   - Unnamed or unused values (which may alternatively be, or start with, `_`), e.g., `Predicate<String> alwaysTrue = _ -> true;`
 * Identifiers are always named with ASCII and, unless in a special case (such as an unused value or a test method name), should always match the regex `\w+`.
 * Identifiers are **NEVER** prefixed with a type indicator such as `kValue` to indicate that a value is constant or `iValue` to indicate that it is an integer.
-* 
+* Avoid any pattern that duplicates a name adjacently in a class. For example: `FooBarFactoryFactory`, `FooProviderProvider`, `FooServiceService`. When this would happen naturally there are several ways to address it, including:
+  - Refactoring so that the structure is no longer required
+  - Wrapping objects in other patterns, e.g., creating a `ProviderFactory` instead of a `ProviderProvider`
+  - Reconsidering if the structure is actually what is being created (is it _actually_ a `ProviderProvider` or is it just a `Provider` that is producing a `Supplier`?)
+  - Reconsider whether the naming is actually required by the coding standards at all.
+- Avoid any pattern in naming that has three "descriptor" suffixes consecutively, e.g., `FooSupplierProviderFactory` or `FooProviderSupplierProvider`.  It is extremely unlikely that these patterns are actually going to be required, and the reasoning for them deserves additional scrutiny.
+- The only classes that can be prefixed with `Abstract` are `abstract`. These **must** be prefixed with `Abstract`.
+- The only classes that can be prefixed with `Default` are concrete and (usually, though there can be exceptions when dealing with standards like JPA) both package private and `final`. If there is a `Default` class then there SHOULD NOT be any other non-test implementations.
+- The `Module` suffix is reserved for Guice modules.
+- Enums are always named in with `UPPER_BLOCK_LETTERING`
+
+##### Camel Case Examples
+
+| Prose Form | UpperCamelCase | lowerCamelCase | Incorrect |
+| ---------- | -------------- | -------------- | --------- |
+| XML HTTP request | XmlHttpRequest | xmlHttpRequest | xmlHTTPRequest |
+| outer stopwatch  | OuterStopwatch | outerStopwatch | outerStopWatch |
+| system DAO | SystemDao | systemDao | SystemDAO |
 
 #### Constants
 
-Constants are defined as:
+Constants are defined as being:
 
-* Static final values
-* That are deeply immutable
-* That have no side effects
+1. Static final values
+2. That are deeply immutable
+3. That have no side effects
 
-Examples of constants and that can be named with `UPPER_BLOCK_LETTERING`:
+Examples of constants and that can therefore be named with `UPPER_BLOCK_LETTERING`:
 
 * Strings
 * Numbers
@@ -59,9 +78,33 @@ Examples of constants and that can be named with `UPPER_BLOCK_LETTERING`:
 * Protobuf objects
 * Immutable collections that contain immutable objects
 
-Examples of things that are not constants are thus must be named with `lowerCamelCase` even if they`static final`:
+Examples of things that are not constants are thus must be named with `lowerCamelCase` even if they are `static final`:
 
 * Loggers (side effects)
 * HTTP Clients (side effects)
 * Immutable collections that **contain** mutable objects (not deeply immutable)
+
+#### Strings
+
+##### Non-ASCII characters
+
+When strings contain non-ASCII characters it is **always** preferred to use the actual unicode character, e.g., `String unitAbbrev = "μs"`. If this is not possible (e.g., because it is a non-printable character) then it should use an excape and be commented, e.g., `return '\ufeff' + content; // byte order mark`.
+
+##### Blocks
+
+When blocks of text need to be used inline then always use multiline strings instead of string concatentation, for example:
+
+```java
+"""
+Multiple lines
+can be represented
+like this
+"""
+```
+
+#### Methods
+
+- Public methods should avoid `boolean` arguments. Prefer using an enum flag or two separate methods.
+
+
 

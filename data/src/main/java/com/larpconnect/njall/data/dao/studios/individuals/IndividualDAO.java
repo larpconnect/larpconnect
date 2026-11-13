@@ -22,12 +22,12 @@ public interface IndividualDAO extends DAO<Individual> {
    * Persists a new individual and its base entity for the specified studio tenant.
    *
    * @param tenantId The internal tenant UUID.
-   * @param owner The generating actor entity UUID.
+   * @param generator The generating actor entity UUID.
    * @param name The required individual name.
    * @param summary The optional base entity summary.
    * @return The newly persisted immutable Individual domain record.
    */
-  Individual create(UUID tenantId, UUID owner, String name, Optional<String> summary);
+  Individual create(UUID tenantId, UUID generator, String name, Optional<String> summary);
 
   /**
    * Applies partial updates to an active individual within the studio tenant.

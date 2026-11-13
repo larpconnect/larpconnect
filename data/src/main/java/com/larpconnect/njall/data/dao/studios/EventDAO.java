@@ -31,7 +31,7 @@ public interface EventDAO extends DAO<Event> {
    * Persists a new event and its base entity for the specified studio tenant.
    *
    * @param tenantId The internal tenant UUID.
-   * @param owner The generating actor entity UUID.
+   * @param generator The generating actor entity UUID.
    * @param title The required event title.
    * @param summary Optional description summary from the base entity.
    * @param locationId Optional location UUID identifier.
@@ -41,7 +41,7 @@ public interface EventDAO extends DAO<Event> {
    */
   Event create(
       UUID tenantId,
-      UUID owner,
+      UUID generator,
       String title,
       Optional<String> summary,
       Optional<UUID> locationId,

@@ -387,11 +387,18 @@ final class ArchitectureTest {
     return counted;
   }
 
+  /**
+   * Determines whether a bytecode type should be excluded from the 20-type-per-package limit.
+   * Excludes {@code package-info}, enums, private nested types, non-public Guice modules, and
+   * {@link JavaModifier#SYNTHETIC} classes (such as {@code javac}-generated {@code $SwitchMap}
+   * lookup tables like {@code CollectionActor$1} emitted for switches over enums in another
+   * top-level type), which are compiler bytecode artifacts rather than source classes, interfaces,
+   * or records.
+   */
   private static boolean shouldSkipFromTypeCount(JavaClass javaClass) {
-    if (javaClass.getSimpleName().equals("package-info")) {
-      return true;
-    }
-    if (javaClass.isEnum()) {
+    if (javaClass.getModifiers().contains(JavaModifier.SYNTHETIC)
+        || javaClass.getSimpleName().equals("package-info")
+        || javaClass.isEnum()) {
       return true;
     }
     if (javaClass.isNestedClass() && isPrivateNested(javaClass)) {

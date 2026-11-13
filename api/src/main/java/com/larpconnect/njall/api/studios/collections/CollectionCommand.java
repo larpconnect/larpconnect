@@ -1,7 +1,6 @@
 package com.larpconnect.njall.api.studios.collections;
 
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.StudioLookup;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -18,23 +17,16 @@ public sealed interface CollectionCommand {
   record CreateCollection(
       UUID tenantId,
       String studioIdentifier,
+      UUID actorId,
       CreateCollectionRequest request,
-      ActorRef<CollectionActorResponse> replyTo,
-      Optional<StudioLookup> lookup)
-      implements CollectionCommand {
-    public CreateCollection(
-        UUID tenantId,
-        String studioIdentifier,
-        CreateCollectionRequest request,
-        ActorRef<CollectionActorResponse> replyTo) {
-      this(tenantId, studioIdentifier, request, replyTo, Optional.empty());
-    }
-  }
+      ActorRef<CollectionActorResponse> replyTo)
+      implements CollectionCommand {}
 
   @Immutable
   record GetCollection(
       UUID tenantId,
       String studioIdentifier,
+      UUID actorId,
       UUID collectionId,
       Optional<String> form,
       ActorRef<CollectionActorResponse> replyTo)
@@ -44,6 +36,7 @@ public sealed interface CollectionCommand {
   record PatchCollection(
       UUID tenantId,
       String studioIdentifier,
+      UUID actorId,
       UUID collectionId,
       UpdateCollectionRequest request,
       Optional<String> updateMask,
@@ -52,12 +45,13 @@ public sealed interface CollectionCommand {
 
   @Immutable
   record DeleteCollection(
-      UUID tenantId, UUID collectionId, ActorRef<CollectionActorResponse> replyTo)
+      UUID tenantId, UUID actorId, UUID collectionId, ActorRef<CollectionActorResponse> replyTo)
       implements CollectionCommand {}
 
   @Immutable
   record MutateItem(
       UUID tenantId,
+      UUID actorId,
       UUID collectionId,
       ItemAction action,
       UUID refersToId,

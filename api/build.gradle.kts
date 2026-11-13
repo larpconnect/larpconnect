@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.jackson.datatype.jsr310)
     implementation(libs.jackson.datatype.jdk8)
     implementation(libs.jackson.datatype.guava)
+    implementation(libs.mug)
     implementation(libs.pekko.actor.typed)
     implementation(libs.pekko.stream)
 

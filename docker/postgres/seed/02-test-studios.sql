@@ -16,7 +16,7 @@ INSERT INTO njall_admin.studios_lookup (tenant_id, studio_id, alias) VALUES
 ON CONFLICT (tenant_id) DO NOTHING;
 
 -- Seed default self-owned studio Actors
-INSERT INTO njall_users.entities (id, tenant_id, owner, entity_type, summary) VALUES
+INSERT INTO njall_users.entities (id, tenant_id, generator, entity_type, summary) VALUES
     ('018d0000-0000-7000-8000-000000000010', '018d0000-0000-7000-8000-000000000001', '018d0000-0000-7000-8000-000000000010', 'Actor', 'Valkyrie System Studio Actor'),
     ('018d0000-0000-7000-8000-000000000020', '018d0000-0000-7000-8000-000000000002', '018d0000-0000-7000-8000-000000000020', 'Actor', 'Ironwood System Studio Actor')
 ON CONFLICT (id) DO NOTHING;

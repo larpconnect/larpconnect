@@ -3,7 +3,6 @@ package com.larpconnect.njall.data.dao.studios.collections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -31,7 +30,7 @@ final class DefaultCollectionDAOItemsTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID collectionId = UUID.randomUUID();
-  private final UUID owner = UUID.randomUUID();
+  private final UUID generator = UUID.randomUUID();
   private final Instant now = Instant.now();
 
   @BeforeEach
@@ -48,12 +47,47 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(null);
 
     var result =
-        dao.addItem(tenantId, collectionId, UUID.randomUUID(), Optional.empty(), Optional.empty());
+        dao.addItem(
+            tenantId,
+            generator,
+            collectionId,
+            UUID.randomUUID(),
+            Optional.empty(),
+            Optional.empty());
+
+    assertThat(result).isFalse();
+    verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("addItem returns false if actorId does not match collection generator")
+  void addItem_mismatchedActor_returnsFalse() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var otherActor = UUID.randomUUID();
+    mockActiveActor(otherActor);
+
+    var entityBase =
+        new EntityBaseEntity(
+            tenantId, collectionId, generator, "OrderedCollection", "Summary", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
+        .thenReturn(entityBase);
+
+    var result =
+        dao.addItem(
+            tenantId,
+            otherActor,
+            collectionId,
+            UUID.randomUUID(),
+            Optional.empty(),
+            Optional.empty());
 
     assertThat(result).isFalse();
     verify(tx).commit();
@@ -65,12 +99,14 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var refId = UUID.randomUUID();
     mockEntityBases(refId);
     mockCountQuery(refId, 1L);
 
-    var result = dao.addItem(tenantId, collectionId, refId, Optional.empty(), Optional.empty());
+    var result =
+        dao.addItem(tenantId, generator, collectionId, refId, Optional.empty(), Optional.empty());
 
     assertThat(result).isTrue();
     verify(tx).commit();
@@ -82,6 +118,7 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var refId = UUID.randomUUID();
     mockEntityBases(refId);
@@ -89,7 +126,8 @@ final class DefaultCollectionDAOItemsTest {
 
     var mutationQuery = mockShiftQuery(0);
 
-    var result = dao.addItem(tenantId, collectionId, refId, Optional.empty(), Optional.empty());
+    var result =
+        dao.addItem(tenantId, generator, collectionId, refId, Optional.empty(), Optional.empty());
 
     assertThat(result).isTrue();
     verify(mutationQuery).executeUpdate();
@@ -103,6 +141,7 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var refId = UUID.randomUUID();
     var beforeId = UUID.randomUUID();
@@ -116,7 +155,8 @@ final class DefaultCollectionDAOItemsTest {
     var mutationQuery = mockShiftQuery(2);
 
     var result =
-        dao.addItem(tenantId, collectionId, refId, Optional.of(beforeId), Optional.empty());
+        dao.addItem(
+            tenantId, generator, collectionId, refId, Optional.of(beforeId), Optional.empty());
 
     assertThat(result).isTrue();
     verify(mutationQuery).executeUpdate();
@@ -130,6 +170,7 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var refId = UUID.randomUUID();
     var beforeId = UUID.randomUUID();
@@ -140,7 +181,8 @@ final class DefaultCollectionDAOItemsTest {
     var mutationQuery = mockShiftQuery(0);
 
     var result =
-        dao.addItem(tenantId, collectionId, refId, Optional.of(beforeId), Optional.empty());
+        dao.addItem(
+            tenantId, generator, collectionId, refId, Optional.of(beforeId), Optional.empty());
 
     assertThat(result).isTrue();
     verify(mutationQuery).executeUpdate();
@@ -153,6 +195,7 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var refId = UUID.randomUUID();
     mockEntityBases(refId);
@@ -160,7 +203,8 @@ final class DefaultCollectionDAOItemsTest {
 
     var mutationQuery = mockShiftQuery(3);
 
-    var result = dao.addItem(tenantId, collectionId, refId, Optional.empty(), Optional.of(3));
+    var result =
+        dao.addItem(tenantId, generator, collectionId, refId, Optional.empty(), Optional.of(3));
 
     assertThat(result).isTrue();
     verify(mutationQuery).executeUpdate();
@@ -173,15 +217,22 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var deletedBase =
         new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, now);
+            tenantId, collectionId, generator, "OrderedCollection", "Summary", now, now, now);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(deletedBase);
 
     var result =
-        dao.addItem(tenantId, collectionId, UUID.randomUUID(), Optional.empty(), Optional.empty());
+        dao.addItem(
+            tenantId,
+            generator,
+            collectionId,
+            UUID.randomUUID(),
+            Optional.empty(),
+            Optional.empty());
 
     assertThat(result).isFalse();
     verify(tx).commit();
@@ -193,19 +244,21 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var refId = UUID.randomUUID();
     var entityBase =
         new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
+            tenantId, collectionId, generator, "OrderedCollection", "Summary", now, now, null);
     var deletedRef =
-        new EntityBaseEntity(tenantId, refId, owner, "Individual", "Scholar", now, now, now);
+        new EntityBaseEntity(tenantId, refId, generator, "Individual", "Scholar", now, now, now);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(entityBase);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, refId)))
         .thenReturn(deletedRef);
 
-    var result = dao.addItem(tenantId, collectionId, refId, Optional.empty(), Optional.empty());
+    var result =
+        dao.addItem(tenantId, generator, collectionId, refId, Optional.empty(), Optional.empty());
 
     assertThat(result).isFalse();
     verify(tx).commit();
@@ -217,110 +270,20 @@ final class DefaultCollectionDAOItemsTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var refId = UUID.randomUUID();
     var entityBase =
         new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
+            tenantId, collectionId, generator, "OrderedCollection", "Summary", now, now, null);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(entityBase);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, refId))).thenReturn(null);
 
-    var result = dao.addItem(tenantId, collectionId, refId, Optional.empty(), Optional.empty());
+    var result =
+        dao.addItem(tenantId, generator, collectionId, refId, Optional.empty(), Optional.empty());
 
     assertThat(result).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("removeItem returns false if collection does not exist")
-  void removeItem_collectionNotFound() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
-        .thenReturn(null);
-
-    var result = dao.removeItem(tenantId, collectionId, UUID.randomUUID());
-
-    assertThat(result).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("removeItem returns false if collection is soft deleted")
-  void removeItem_collectionDeleted() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var deletedBase =
-        new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, now);
-    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
-        .thenReturn(deletedBase);
-
-    var result = dao.removeItem(tenantId, collectionId, UUID.randomUUID());
-
-    assertThat(result).isFalse();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("removeItem removes item and compacts subsequent ordinals")
-  void removeItem_success() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var refId = UUID.randomUUID();
-    var entityBase =
-        new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
-    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
-        .thenReturn(entityBase);
-
-    var existingItem =
-        new CollectionItemEntity(
-            UUID.randomUUID(), tenantId, collectionId, 1, now, tenantId, refId);
-    mockExistingItem(refId, existingItem);
-
-    var mutationQuery = mock(MutationQuery.class);
-    when(session.createMutationQuery(
-            contains("UPDATE CollectionItemEntity ci SET ci.ordinal = ci.ordinal - 1")))
-        .thenReturn(mutationQuery);
-    when(mutationQuery.setParameter("tenantId", tenantId)).thenReturn(mutationQuery);
-    when(mutationQuery.setParameter("collectionId", collectionId)).thenReturn(mutationQuery);
-    when(mutationQuery.setParameter("removedOrdinal", 1)).thenReturn(mutationQuery);
-
-    var result = dao.removeItem(tenantId, collectionId, refId);
-
-    assertThat(result).isTrue();
-    verify(session).remove(existingItem);
-    verify(mutationQuery).executeUpdate();
-    verify(tx).commit();
-  }
-
-  @Test
-  @DisplayName("removeItem returns true if item not present (idempotent)")
-  void removeItem_notPresent() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    mockTenantConfigQuery();
-
-    var refId = UUID.randomUUID();
-    var entityBase =
-        new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
-    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
-        .thenReturn(entityBase);
-
-    mockItemQueryEmpty(refId);
-
-    var result = dao.removeItem(tenantId, collectionId, refId);
-
-    assertThat(result).isTrue();
     verify(tx).commit();
   }
 
@@ -329,36 +292,35 @@ final class DefaultCollectionDAOItemsTest {
   void addItem_exceptionTriggersRollback() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
-    when(session.createNativeQuery(contains("set_config"), eq(String.class)))
+    when(session.createNativeQuery(eq(DefaultCollectionDAO.SET_TENANT_CONFIG), eq(String.class)))
         .thenThrow(new RuntimeException("DB error"));
 
     assertThatThrownBy(
             () ->
                 dao.addItem(
-                    tenantId, collectionId, UUID.randomUUID(), Optional.empty(), Optional.empty()))
+                    tenantId,
+                    generator,
+                    collectionId,
+                    UUID.randomUUID(),
+                    Optional.empty(),
+                    Optional.empty()))
         .isInstanceOf(RuntimeException.class);
     verify(tx).rollback();
   }
 
-  @Test
-  @DisplayName("removeItem rolls back and rethrows on exception")
-  void removeItem_exceptionTriggersRollback() {
-    var tx = mock(Transaction.class);
-    when(session.beginTransaction()).thenReturn(tx);
-    when(session.createNativeQuery(contains("set_config"), eq(String.class)))
-        .thenThrow(new RuntimeException("DB error"));
-
-    assertThatThrownBy(() -> dao.removeItem(tenantId, collectionId, UUID.randomUUID()))
-        .isInstanceOf(RuntimeException.class);
-    verify(tx).rollback();
+  private void mockActiveActor(UUID actorId) {
+    var actorEntity =
+        new EntityBaseEntity(tenantId, actorId, actorId, "Actor", "Actor Bio", now, now, null);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, actorId)))
+        .thenReturn(actorEntity);
   }
 
   private void mockEntityBases(UUID refId) {
     var entityBase =
         new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
+            tenantId, collectionId, generator, "OrderedCollection", "Summary", now, now, null);
     var refBase =
-        new EntityBaseEntity(tenantId, refId, owner, "Individual", "Scholar", now, now, null);
+        new EntityBaseEntity(tenantId, refId, generator, "Individual", "Scholar", now, now, null);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
         .thenReturn(entityBase);
     when(session.find(EntityBaseEntity.class, new EntityId(tenantId, refId))).thenReturn(refBase);
@@ -367,8 +329,7 @@ final class DefaultCollectionDAOItemsTest {
   @SuppressWarnings("unchecked")
   private void mockCountQuery(UUID refId, long count) {
     Query<Long> countQuery = mock(Query.class);
-    when(session.createQuery(
-            contains("SELECT COUNT(ci) FROM CollectionItemEntity ci"), eq(Long.class)))
+    when(session.createQuery(eq(CollectionItemHelper.COUNT_ITEM_BY_REFERS_TO_HQL), eq(Long.class)))
         .thenReturn(countQuery);
     when(countQuery.setParameter("tenantId", tenantId)).thenReturn(countQuery);
     when(countQuery.setParameter("collectionId", collectionId)).thenReturn(countQuery);
@@ -378,8 +339,7 @@ final class DefaultCollectionDAOItemsTest {
 
   private MutationQuery mockShiftQuery(int targetOrdinal) {
     var mutationQuery = mock(MutationQuery.class);
-    when(session.createMutationQuery(
-            contains("UPDATE CollectionItemEntity ci SET ci.ordinal = ci.ordinal + 1")))
+    when(session.createMutationQuery(eq(CollectionItemHelper.SHIFT_ORDINALS_UP_HQL)))
         .thenReturn(mutationQuery);
     when(mutationQuery.setParameter("tenantId", tenantId)).thenReturn(mutationQuery);
     when(mutationQuery.setParameter("collectionId", collectionId)).thenReturn(mutationQuery);
@@ -391,7 +351,7 @@ final class DefaultCollectionDAOItemsTest {
   private void mockBeforeQuery(UUID beforeId, CollectionItemEntity item) {
     Query<CollectionItemEntity> beforeQuery = mock(Query.class);
     when(session.createQuery(
-            contains("FROM CollectionItemEntity ci"), eq(CollectionItemEntity.class)))
+            eq(CollectionItemHelper.FIND_ITEM_BY_REFERS_TO_HQL), eq(CollectionItemEntity.class)))
         .thenReturn(beforeQuery);
     when(beforeQuery.setParameter("tenantId", tenantId)).thenReturn(beforeQuery);
     when(beforeQuery.setParameter("collectionId", collectionId)).thenReturn(beforeQuery);
@@ -400,22 +360,10 @@ final class DefaultCollectionDAOItemsTest {
   }
 
   @SuppressWarnings("unchecked")
-  private void mockExistingItem(UUID refId, CollectionItemEntity item) {
-    Query<CollectionItemEntity> itemQuery = mock(Query.class);
-    when(session.createQuery(
-            contains("FROM CollectionItemEntity ci"), eq(CollectionItemEntity.class)))
-        .thenReturn(itemQuery);
-    when(itemQuery.setParameter("tenantId", tenantId)).thenReturn(itemQuery);
-    when(itemQuery.setParameter("collectionId", collectionId)).thenReturn(itemQuery);
-    when(itemQuery.setParameter("refersToId", refId)).thenReturn(itemQuery);
-    when(itemQuery.uniqueResultOptional()).thenReturn(Optional.of(item));
-  }
-
-  @SuppressWarnings("unchecked")
   private void mockItemQueryEmpty(UUID refId) {
     Query<CollectionItemEntity> itemQuery = mock(Query.class);
     when(session.createQuery(
-            contains("FROM CollectionItemEntity ci"), eq(CollectionItemEntity.class)))
+            eq(CollectionItemHelper.FIND_ITEM_BY_REFERS_TO_HQL), eq(CollectionItemEntity.class)))
         .thenReturn(itemQuery);
     when(itemQuery.setParameter("tenantId", tenantId)).thenReturn(itemQuery);
     when(itemQuery.setParameter("collectionId", collectionId)).thenReturn(itemQuery);
@@ -426,7 +374,7 @@ final class DefaultCollectionDAOItemsTest {
   @SuppressWarnings("unchecked")
   private void mockTenantConfigQuery() {
     NativeQuery<String> configQuery = mock(NativeQuery.class);
-    when(session.createNativeQuery(contains("set_config"), eq(String.class)))
+    when(session.createNativeQuery(eq(DefaultCollectionDAO.SET_TENANT_CONFIG), eq(String.class)))
         .thenReturn(configQuery);
     when(configQuery.setParameter(any(String.class), any())).thenReturn(configQuery);
     when(configQuery.getSingleResult()).thenReturn("ok");

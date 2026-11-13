@@ -60,9 +60,16 @@ rules:
   specs:
     - Use the gherkin-authoring skill
   tasks:
-    - The implementation is not complete until `./gradlew check build` passes
-    - When making changes in one module ensure that tests pass before making changes in another module
-  
+    - Group tasks into independent vertical slices by file or module boundary so that parallel workers can execute them without merge conflicts
+    - Explicitly mark any tasks that touch shared dependencies between slices (e.g., the build system) as sequential prerequisites (e.g., with `[SEQ]`)
+
+operations:
+  apply:
+    guidance:
+      - Run targeted unit tests and lints after each task slice
+      - The implementation is not complete until `./gradlew check build` passes
+
+
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 # Add your tech stack, conventions, style guides, domain knowledge, etc.

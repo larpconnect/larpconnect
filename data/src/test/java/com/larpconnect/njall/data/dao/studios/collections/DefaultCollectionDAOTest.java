@@ -3,9 +3,10 @@ package com.larpconnect.njall.data.dao.studios.collections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +21,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,7 @@ final class DefaultCollectionDAOTest {
 
   private final UUID tenantId = UUID.randomUUID();
   private final UUID collectionId = UUID.randomUUID();
-  private final UUID owner = UUID.randomUUID();
+  private final UUID generator = UUID.randomUUID();
   private final UUID ownerId = UUID.randomUUID();
   private final Instant now = Instant.now();
 
@@ -45,35 +47,56 @@ final class DefaultCollectionDAOTest {
   }
 
   @Test
-  @DisplayName("findById returns active Collection with item IDs")
+  @DisplayName("isActiveActor returns true for active Actor and false otherwise")
+  void isActiveActor_checksActorStatus() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    mockActiveActor(generator);
+
+    assertThat(dao.isActiveActor(tenantId, generator)).isTrue();
+    verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("isActiveActor returns false when actor is missing or soft deleted")
+  void isActiveActor_missingOrDeleted_returnsFalse() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, generator))).thenReturn(null);
+
+    assertThat(dao.isActiveActor(tenantId, generator)).isFalse();
+    verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("findById returns active Collection with item IDs for generating actor")
   void findById_success() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
 
     var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
+    mockEntity(collectionId, "OrderedCollection", null);
     var collection = new CollectionEntity(tenantId, collectionId, ownerId, "Cast");
-
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
     when(session.find(CollectionEntity.class, entityId)).thenReturn(collection);
 
     var itemId = UUID.randomUUID();
     @SuppressWarnings("unchecked")
     Query<UUID> itemQuery = mock(Query.class);
-    when(session.createQuery(contains("SELECT ci.refersToId"), eq(UUID.class)))
+    when(session.createQuery(eq(CollectionItemHelper.QUERY_ACTIVE_ITEM_IDS_HQL), eq(UUID.class)))
         .thenReturn(itemQuery);
     when(itemQuery.setParameter("tenantId", tenantId)).thenReturn(itemQuery);
     when(itemQuery.setParameter("collectionId", collectionId)).thenReturn(itemQuery);
     when(itemQuery.getResultList()).thenReturn(List.of(itemId));
 
-    var result = dao.findById(tenantId, collectionId);
+    var result = dao.findById(tenantId, generator, collectionId);
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(collectionId);
-    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
+    assertThat(result.orElseThrow().generator()).isEqualTo(generator);
     assertThat(result.orElseThrow().ownerId()).isEqualTo(ownerId);
     assertThat(result.orElseThrow().name()).isEqualTo("Cast");
     assertThat(result.orElseThrow().totalItems()).isEqualTo(1);
@@ -87,19 +110,52 @@ final class DefaultCollectionDAOTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
-
+    mockActiveActor(generator);
     var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, now);
-    var collection = new CollectionEntity(tenantId, collectionId, ownerId, "Cast");
+    mockEntity(collectionId, "OrderedCollection", now);
+    when(session.find(CollectionEntity.class, entityId))
+        .thenReturn(new CollectionEntity(tenantId, collectionId, ownerId, "Cast"));
 
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(CollectionEntity.class, entityId)).thenReturn(collection);
+    assertThat(dao.findById(tenantId, generator, collectionId)).isEmpty();
+    verify(tx).commit();
+  }
 
-    var result = dao.findById(tenantId, collectionId);
+  @Test
+  @DisplayName("findById returns empty when actorId does not match collection generator")
+  void findById_mismatchedActor_returnsEmpty() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var otherActor = UUID.randomUUID();
+    mockActiveActor(otherActor);
+    mockEntity(collectionId, "OrderedCollection", null);
 
-    assertThat(result).isEmpty();
+    assertThat(dao.findById(tenantId, otherActor, collectionId)).isEmpty();
+    verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("findById returns empty when generating actor is soft deleted")
+  void findById_deletedActor_returnsEmpty() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    mockEntity(generator, "Actor", now);
+
+    assertThat(dao.findById(tenantId, generator, collectionId)).isEmpty();
+    verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("findById returns empty when target entity is not an OrderedCollection")
+  void findById_wrongEntityType_returnsEmpty() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    mockActiveActor(generator);
+    mockEntity(collectionId, "Individual", null);
+
+    assertThat(dao.findById(tenantId, generator, collectionId)).isEmpty();
     verify(tx).commit();
   }
 
@@ -109,13 +165,11 @@ final class DefaultCollectionDAOTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, collectionId)))
+        .thenReturn(null);
 
-    var entityId = new EntityId(tenantId, collectionId);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(null);
-
-    var result = dao.findById(tenantId, collectionId);
-
-    assertThat(result).isEmpty();
+    assertThat(dao.findById(tenantId, generator, collectionId)).isEmpty();
     verify(tx).commit();
   }
 
@@ -125,15 +179,12 @@ final class DefaultCollectionDAOTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
+    mockEntity(collectionId, "OrderedCollection", null);
+    when(session.find(CollectionEntity.class, new EntityId(tenantId, collectionId)))
+        .thenReturn(null);
 
-    var entityId = new EntityId(tenantId, collectionId);
-    var entity =
-        new EntityBaseEntity(
-            tenantId, collectionId, owner, "OrderedCollection", "Summary", now, now, null);
-    when(session.find(EntityBaseEntity.class, entityId)).thenReturn(entity);
-    when(session.find(CollectionEntity.class, entityId)).thenReturn(null);
-
-    assertThat(dao.findById(tenantId, collectionId)).isEmpty();
+    assertThat(dao.findById(tenantId, generator, collectionId)).isEmpty();
     verify(tx).commit();
   }
 
@@ -143,27 +194,42 @@ final class DefaultCollectionDAOTest {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
+    mockEntity(collectionId, "OrderedCollection", null);
 
     @SuppressWarnings("unchecked")
     NativeQuery<Object[]> nativeQuery = mock(NativeQuery.class);
     when(session.createNativeQuery(
-            contains("FROM njall_users.collection_items ci"), eq(Object[].class)))
+            eq(CollectionItemHelper.EXPANDED_ITEMS_QUERY), eq(Object[].class)))
         .thenReturn(nativeQuery);
     when(nativeQuery.setParameter("tenantId", tenantId)).thenReturn(nativeQuery);
     when(nativeQuery.setParameter("collectionId", collectionId)).thenReturn(nativeQuery);
 
     var refId = UUID.randomUUID();
-    Object[] row = new Object[] {refId, owner, "Individual", "Lead bard", "Alice"};
+    Object[] row = new Object[] {refId, generator, "Individual", "Lead bard", "Alice"};
     when(nativeQuery.getResultList()).thenReturn(List.<Object[]>of(row));
 
-    var items = dao.findExpandedItems(tenantId, collectionId);
-
+    var items = dao.findExpandedItems(tenantId, generator, collectionId);
     assertThat(items).hasSize(1);
     assertThat(items.get(0).id()).isEqualTo(refId);
-    assertThat(items.get(0).owner()).isEqualTo(owner);
+    assertThat(items.get(0).generator()).isEqualTo(generator);
     assertThat(items.get(0).type()).isEqualTo("Individual");
     assertThat(items.get(0).name()).contains("Alice");
     assertThat(items.get(0).summary()).contains("Lead bard");
+    verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("findExpandedItems returns empty when actorId does not match collection generator")
+  void findExpandedItems_mismatchedActor_returnsEmpty() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    var otherActor = UUID.randomUUID();
+    mockActiveActor(otherActor);
+    mockEntity(collectionId, "OrderedCollection", null);
+
+    assertThat(dao.findExpandedItems(tenantId, otherActor, collectionId)).isEmpty();
     verify(tx).commit();
   }
 
@@ -176,7 +242,7 @@ final class DefaultCollectionDAOTest {
 
     @SuppressWarnings("unchecked")
     Query<Long> query = mock(Query.class);
-    when(session.createQuery(contains("SELECT COUNT(c) FROM CollectionEntity c"), eq(Long.class)))
+    when(session.createQuery(eq(DefaultCollectionDAO.EXISTS_BY_OWNER_AND_NAME_HQL), eq(Long.class)))
         .thenReturn(query);
     when(query.setParameter("tenantId", tenantId)).thenReturn(query);
     when(query.setParameter("ownerId", ownerId)).thenReturn(query);
@@ -199,7 +265,9 @@ final class DefaultCollectionDAOTest {
     var excludeId = UUID.randomUUID();
     @SuppressWarnings("unchecked")
     Query<Long> query = mock(Query.class);
-    when(session.createQuery(contains("AND c.id != :excludeId"), eq(Long.class))).thenReturn(query);
+    when(session.createQuery(
+            eq(DefaultCollectionDAO.EXISTS_BY_OWNER_AND_NAME_EXCLUDING_ID_HQL), eq(Long.class)))
+        .thenReturn(query);
     when(query.setParameter("tenantId", tenantId)).thenReturn(query);
     when(query.setParameter("ownerId", ownerId)).thenReturn(query);
     when(query.setParameter("name", "Cast")).thenReturn(query);
@@ -213,21 +281,18 @@ final class DefaultCollectionDAOTest {
   }
 
   @Test
-  @DisplayName("create persists base and collection entities")
+  @DisplayName("create persists base and collection entities for active non-Actor owner entity")
   void create_persistsEntities() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
+    mockActiveActor(generator);
+    mockEntity(ownerId, "Individual", null);
+    mockCreateUniquenessQuery(ownerId, "Cast", 0L);
 
-    var actorOwner =
-        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, null);
-    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
-        .thenReturn(actorOwner);
-
-    var collection = dao.create(tenantId, owner, ownerId, "Cast", Optional.of("Summary"));
-
+    var collection = dao.create(tenantId, generator, ownerId, "Cast", Optional.of("Summary"));
     assertThat(collection.name()).isEqualTo("Cast");
-    assertThat(collection.owner()).isEqualTo(owner);
+    assertThat(collection.generator()).isEqualTo(generator);
     assertThat(collection.ownerId()).isEqualTo(ownerId);
     assertThat(collection.summary()).contains("Summary");
     assertThat(collection.totalItems()).isEqualTo(0);
@@ -238,47 +303,105 @@ final class DefaultCollectionDAOTest {
   }
 
   @Test
-  @DisplayName("create throws when owner does not exist")
-  void create_ownerNotFound_throws() {
+  @DisplayName("create with ownerId equal to generator looks up EntityBaseEntity once")
+  void create_sameOwnerAsGenerator_looksUpEntityOnce() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
-    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner))).thenReturn(null);
+    mockActiveActor(generator);
+    mockCreateUniquenessQuery(generator, "Cast", 0L);
 
-    assertThatThrownBy(() -> dao.create(tenantId, owner, ownerId, "Cast", Optional.of("Summary")))
+    var collection = dao.create(tenantId, generator, generator, "Cast", Optional.empty());
+    assertThat(collection.generator()).isEqualTo(generator);
+    assertThat(collection.ownerId()).isEqualTo(generator);
+    verify(session, times(1)).find(EntityBaseEntity.class, new EntityId(tenantId, generator));
+    verify(tx).commit();
+  }
+
+  @Test
+  @DisplayName("create throws IllegalStateException on duplicate collection name for owner")
+  void create_duplicateName_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    mockActiveActor(generator);
+    mockEntity(ownerId, "Individual", null);
+    mockCreateUniquenessQuery(ownerId, "Cast", 1L);
+
+    assertThatThrownBy(
+            () -> dao.create(tenantId, generator, ownerId, "Cast", Optional.of("Summary")))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Collection with name 'Cast' already exists for owner");
+    verify(session, never()).persist(any());
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when generator does not exist")
+  void create_generatorNotFound_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, generator))).thenReturn(null);
+    assertThatThrownBy(
+            () -> dao.create(tenantId, generator, ownerId, "Cast", Optional.of("Summary")))
         .isInstanceOf(IllegalArgumentException.class);
     verify(tx).rollback();
   }
 
   @Test
-  @DisplayName("create throws when owner is soft deleted")
-  void create_ownerDeleted_throws() {
+  @DisplayName("create throws when generator is soft deleted")
+  void create_generatorDeleted_throws() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
-    var deletedOwner =
-        new EntityBaseEntity(tenantId, owner, owner, "Actor", "Owner Bio", now, now, now);
-    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
-        .thenReturn(deletedOwner);
-
-    assertThatThrownBy(() -> dao.create(tenantId, owner, ownerId, "Cast", Optional.of("Summary")))
+    mockEntity(generator, "Actor", now);
+    assertThatThrownBy(
+            () -> dao.create(tenantId, generator, ownerId, "Cast", Optional.of("Summary")))
         .isInstanceOf(IllegalArgumentException.class);
     verify(tx).rollback();
   }
 
   @Test
-  @DisplayName("create throws when owner is not an Actor")
-  void create_ownerNotActor_throws() {
+  @DisplayName("create throws when generator is not an Actor")
+  void create_generatorNotActor_throws() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
     mockTenantConfigQuery();
-    var nonActorOwner =
-        new EntityBaseEntity(tenantId, owner, owner, "Event", "Owner Bio", now, now, null);
-    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, owner)))
-        .thenReturn(nonActorOwner);
-
-    assertThatThrownBy(() -> dao.create(tenantId, owner, ownerId, "Cast", Optional.of("Summary")))
+    mockEntity(generator, "Event", null);
+    assertThatThrownBy(
+            () -> dao.create(tenantId, generator, ownerId, "Cast", Optional.of("Summary")))
         .isInstanceOf(IllegalArgumentException.class);
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when ownerId entity does not exist")
+  void create_ownerEntityNotFound_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    mockActiveActor(generator);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, ownerId))).thenReturn(null);
+    assertThatThrownBy(
+            () -> dao.create(tenantId, generator, ownerId, "Cast", Optional.of("Summary")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Referenced entity does not exist or has been deleted");
+    verify(tx).rollback();
+  }
+
+  @Test
+  @DisplayName("create throws when ownerId entity is soft deleted")
+  void create_ownerEntityDeleted_throws() {
+    var tx = mock(Transaction.class);
+    when(session.beginTransaction()).thenReturn(tx);
+    mockTenantConfigQuery();
+    mockActiveActor(generator);
+    mockEntity(ownerId, "Individual", now);
+    assertThatThrownBy(
+            () -> dao.create(tenantId, generator, ownerId, "Cast", Optional.of("Summary")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Referenced entity does not exist or has been deleted");
     verify(tx).rollback();
   }
 
@@ -287,10 +410,9 @@ final class DefaultCollectionDAOTest {
   void create_exceptionTriggersRollback() {
     var tx = mock(Transaction.class);
     when(session.beginTransaction()).thenReturn(tx);
-    when(session.createNativeQuery(contains("set_config"), eq(String.class)))
+    when(session.createNativeQuery(eq(DefaultCollectionDAO.SET_TENANT_CONFIG), eq(String.class)))
         .thenThrow(new RuntimeException("DB error"));
-
-    assertThatThrownBy(() -> dao.create(tenantId, owner, ownerId, "Cast", Optional.empty()))
+    assertThatThrownBy(() -> dao.create(tenantId, generator, ownerId, "Cast", Optional.empty()))
         .isInstanceOf(RuntimeException.class);
     verify(tx).rollback();
   }
@@ -302,21 +424,42 @@ final class DefaultCollectionDAOTest {
     when(session.beginTransaction()).thenReturn(tx);
     @SuppressWarnings("unchecked")
     NativeQuery<String> configQuery = mock(NativeQuery.class);
-    when(session.createNativeQuery(contains("set_config"), eq(String.class)))
+    when(session.createNativeQuery(eq(DefaultCollectionDAO.SET_TENANT_CONFIG), eq(String.class)))
         .thenReturn(configQuery);
     when(configQuery.setParameter(any(String.class), any())).thenReturn(configQuery);
     when(configQuery.getSingleResult()).thenThrow(new RuntimeException("DB error"));
-
-    assertThatThrownBy(() -> dao.findById(tenantId, collectionId))
+    assertThatThrownBy(() -> dao.findById(tenantId, generator, collectionId))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("DB error");
     verify(tx).rollback();
   }
 
+  private void mockActiveActor(UUID actorId) {
+    mockEntity(actorId, "Actor", null);
+  }
+
+  private void mockEntity(UUID entityId, String entityType, @Nullable Instant deletedOn) {
+    var entity =
+        new EntityBaseEntity(
+            tenantId, entityId, generator, entityType, "Summary", now, now, deletedOn);
+    when(session.find(EntityBaseEntity.class, new EntityId(tenantId, entityId))).thenReturn(entity);
+  }
+
+  @SuppressWarnings("unchecked")
+  private void mockCreateUniquenessQuery(UUID targetOwnerId, String name, long count) {
+    Query<Long> uniquenessQuery = mock(Query.class);
+    when(session.createQuery(eq(DefaultCollectionDAO.EXISTS_BY_OWNER_AND_NAME_HQL), eq(Long.class)))
+        .thenReturn(uniquenessQuery);
+    when(uniquenessQuery.setParameter("tenantId", tenantId)).thenReturn(uniquenessQuery);
+    when(uniquenessQuery.setParameter("ownerId", targetOwnerId)).thenReturn(uniquenessQuery);
+    when(uniquenessQuery.setParameter("name", name)).thenReturn(uniquenessQuery);
+    when(uniquenessQuery.getSingleResult()).thenReturn(count);
+  }
+
   @SuppressWarnings("unchecked")
   private void mockTenantConfigQuery() {
     NativeQuery<String> configQuery = mock(NativeQuery.class);
-    when(session.createNativeQuery(contains("set_config"), eq(String.class)))
+    when(session.createNativeQuery(eq(DefaultCollectionDAO.SET_TENANT_CONFIG), eq(String.class)))
         .thenReturn(configQuery);
     when(configQuery.setParameter(any(String.class), any())).thenReturn(configQuery);
     when(configQuery.getSingleResult()).thenReturn("ok");

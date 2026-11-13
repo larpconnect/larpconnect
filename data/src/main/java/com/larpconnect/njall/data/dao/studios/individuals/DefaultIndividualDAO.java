@@ -3,7 +3,7 @@ package com.larpconnect.njall.data.dao.studios.individuals;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
-import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
+import com.larpconnect.njall.data.dao.common.ActorGeneratorValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Individual;
@@ -49,15 +49,15 @@ final class DefaultIndividualDAO implements IndividualDAO {
   }
 
   @Override
-  public Individual create(UUID tenantId, UUID owner, String name, Optional<String> summary) {
+  public Individual create(UUID tenantId, UUID generator, String name, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
+        ActorGeneratorValidator.validateActorGenerator(session, tenantId, generator);
         var individualId = UUID.randomUUID();
         var now = Instant.now();
-        var baseEntity = createBaseEntity(tenantId, individualId, owner, summary, now);
+        var baseEntity = createBaseEntity(tenantId, individualId, generator, summary, now);
         session.persist(baseEntity);
 
         var individualEntity = createIndividualEntity(tenantId, individualId, name);
@@ -149,11 +149,11 @@ final class DefaultIndividualDAO implements IndividualDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID individualId, UUID owner, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID individualId, UUID generator, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
         tenantId,
         individualId,
-        owner,
+        generator,
         ENTITY_TYPE_INDIVIDUAL,
         summary.orElse(null),
         now,
@@ -169,7 +169,7 @@ final class DefaultIndividualDAO implements IndividualDAO {
   private Individual mapToDomain(EntityBaseEntity entity, IndividualEntity individual) {
     return new Individual(
         individual.getId(),
-        entity.getOwner(),
+        entity.getGenerator(),
         individual.getName(),
         entity.getSummary(),
         entity.getCreatedOn(),

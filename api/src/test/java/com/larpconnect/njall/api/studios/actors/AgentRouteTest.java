@@ -9,6 +9,12 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.TypeLiteral;
+import com.larpconnect.njall.api.studios.collections.CollectionActorResponse;
+import com.larpconnect.njall.api.studios.collections.CollectionCommand;
+import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.collections.OrderedCollectionResponse;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.StudioLookup;
@@ -49,7 +55,7 @@ final class AgentRouteTest {
   private final UUID tenantId = UUID.randomUUID();
   private final UUID studioId = UUID.randomUUID();
   private final UUID actorId = UUID.randomUUID();
-  private final UUID ownerId = UUID.fromString("018f2345-6789-7abc-def0-123456789def");
+  private final UUID generatorId = UUID.fromString("018f2345-6789-7abc-def0-123456789def");
   private final Instant now = Instant.now();
 
   @BeforeAll
@@ -86,7 +92,7 @@ final class AgentRouteTest {
     return new ActorResponse(
         actorId,
         "Actor",
-        "/api/studios/valiant/v1/actors/" + ownerId,
+        "/api/studios/valiant/v1/actors/" + generatorId,
         "valkyrie_lead",
         Optional.of("Lead singer"),
         "/api/studios/valiant/v1/actors/" + actorId + "/inbox",
@@ -128,9 +134,46 @@ final class AgentRouteTest {
         Props.empty());
   }
 
+  private ActorRef<CollectionCommand> createCollectionActor(CollectionActorResponse response) {
+    return system.systemActorOf(
+        Behaviors.receiveMessage(
+            msg -> {
+              switch (msg) {
+                case CollectionCommand.CreateCollection c -> c.replyTo().tell(response);
+                case CollectionCommand.GetCollection g -> g.replyTo().tell(response);
+                case CollectionCommand.PatchCollection p -> p.replyTo().tell(response);
+                case CollectionCommand.DeleteCollection d -> d.replyTo().tell(response);
+                case CollectionCommand.MutateItem m -> m.replyTo().tell(response);
+              }
+              return Behaviors.same();
+            }),
+        "testDelegateCollectionActor" + UUID.randomUUID(),
+        Props.empty());
+  }
+
+  private CollectionsRoute createCollectionsRoute(ActorRef<CollectionCommand> colActor) {
+    return Guice.createInjector(
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(new TypeLiteral<ActorRef<CollectionCommand>>() {}).toInstance(colActor);
+                bind(new TypeLiteral<ActorSystem<Void>>() {}).toInstance(system);
+                bind(ObjectMapper.class).toInstance(objectMapper);
+              }
+            })
+        .getInstance(CollectionsRoute.class);
+  }
+
   private Function<HttpRequest, CompletionStage<HttpResponse>> createHandler(
       StudioLookupCache cache, ActorRef<AgentCommand> actor) {
-    return new AgentRoute(cache, actor, system, objectMapper).route().seal().function(system);
+    var colActor =
+        createCollectionActor(
+            CollectionActorResponse.success(sampleCollectionResponse("Featured Cast")));
+    var collectionsRoute = createCollectionsRoute(colActor);
+    return new AgentRoute(cache, actor, collectionsRoute, system, objectMapper)
+        .route()
+        .seal()
+        .function(system);
   }
 
   @Test
@@ -356,12 +399,47 @@ final class AgentRouteTest {
 
     ActorRef<AgentCommand> emptyActor =
         system.systemActorOf(Behaviors.empty(), "emptyActor" + UUID.randomUUID(), Props.empty());
+    var collectionsRoute =
+        createCollectionsRoute(createCollectionActor(CollectionActorResponse.noContent()));
     var timeoutHandler =
-        new AgentRoute(cache, emptyActor, system, objectMapper, Duration.ofMillis(50))
+        new AgentRoute(
+                cache, emptyActor, collectionsRoute, system, objectMapper, Duration.ofMillis(50))
             .route()
             .seal()
             .function(system);
     assertThat(executeRequest(timeoutHandler, getReq).status())
         .isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  @DisplayName("AgentRoute delegates /actors/{actorId}/collections subroutes to CollectionsRoute")
+  void collectionsSubroutes_delegation() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+
+    var agentActor = createAgentActor(AgentActorResponse.noContent());
+    var colResponse = sampleCollectionResponse("Featured Cast");
+    var colActor = createCollectionActor(CollectionActorResponse.success(colResponse));
+    var collectionsRoute = createCollectionsRoute(colActor);
+    var handler =
+        new AgentRoute(cache, agentActor, collectionsRoute, system, objectMapper)
+            .route()
+            .seal()
+            .function(system);
+
+    var basePath = "/api/studios/valiant/v1/actors/" + actorId + "/collections";
+    var postReq =
+        HttpRequest.POST(basePath).withEntity(ContentTypes.APPLICATION_JSON, "{\"name\":\"Cast\"}");
+    assertThat(executeRequest(handler, postReq).status()).isEqualTo(StatusCodes.CREATED);
+    assertThat(executeRequest(handler, HttpRequest.GET(basePath)).status())
+        .isEqualTo(StatusCodes.NOT_FOUND);
+    assertThat(executeRequest(handler, HttpRequest.GET(basePath + "/" + colResponse.id())).status())
+        .isEqualTo(StatusCodes.OK);
+    assertThat(
+            executeRequest(
+                    handler,
+                    HttpRequest.GET("/api/studios/valiant/v1/actors/not-a-uuid/collections"))
+                .status())
+        .isEqualTo(StatusCodes.NOT_FOUND);
   }
 }

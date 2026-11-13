@@ -16,7 +16,7 @@ final class CollectionDomainTest {
   @DisplayName("Collection canonical constructor retains all fields and computes isDeleted")
   void collection_canonicalConstructor_retainsFields() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var ownerId = UUID.randomUUID();
     var itemId = UUID.randomUUID();
     var now = Instant.now();
@@ -24,7 +24,7 @@ final class CollectionDomainTest {
     var collection =
         new Collection(
             id,
-            owner,
+            generator,
             ownerId,
             "Featured Cast",
             Optional.of("Primary actors"),
@@ -35,7 +35,7 @@ final class CollectionDomainTest {
             Optional.empty());
 
     assertThat(collection.id()).isEqualTo(id);
-    assertThat(collection.owner()).isEqualTo(owner);
+    assertThat(collection.generator()).isEqualTo(generator);
     assertThat(collection.ownerId()).isEqualTo(ownerId);
     assertThat(collection.name()).isEqualTo("Featured Cast");
     assertThat(collection.summary()).contains("Primary actors");
@@ -51,16 +51,16 @@ final class CollectionDomainTest {
   @DisplayName("Collection nullable constructor wraps nulls into empty Optionals")
   void collection_nullableConstructor_wrapsNulls() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var ownerId = UUID.randomUUID();
     var now = Instant.now();
 
     var collection =
         new Collection(
-            id, owner, ownerId, "Crew", (String) null, 0, List.of(), now, now, (Instant) null);
+            id, generator, ownerId, "Crew", (String) null, 0, List.of(), now, now, (Instant) null);
 
     assertThat(collection.id()).isEqualTo(id);
-    assertThat(collection.owner()).isEqualTo(owner);
+    assertThat(collection.generator()).isEqualTo(generator);
     assertThat(collection.ownerId()).isEqualTo(ownerId);
     assertThat(collection.name()).isEqualTo("Crew");
     assertThat(collection.summary()).isEmpty();
@@ -74,15 +74,16 @@ final class CollectionDomainTest {
   @DisplayName("Collection isDeleted returns true when deletedOn is present")
   void collection_isDeleted_returnsTrueWhenDeletedOnPresent() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var ownerId = UUID.randomUUID();
     var now = Instant.now();
 
     var collection =
-        new Collection(id, owner, ownerId, "Deleted Collection", null, 0, List.of(), now, now, now);
+        new Collection(
+            id, generator, ownerId, "Deleted Collection", null, 0, List.of(), now, now, now);
 
     assertThat(collection.isDeleted()).isTrue();
-    assertThat(collection.owner()).isEqualTo(owner);
+    assertThat(collection.generator()).isEqualTo(generator);
     assertThat(collection.deletedOn()).contains(now);
   }
 
@@ -109,17 +110,18 @@ final class CollectionDomainTest {
   @DisplayName("ExpandedEntity record retains fields and handles nulls")
   void expandedEntity_retainsFields() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
 
-    var entity = new ExpandedEntity(id, owner, "Individual", "Alice", "Lead");
+    var entity = new ExpandedEntity(id, generator, "Individual", "Alice", "Lead");
     assertThat(entity.id()).isEqualTo(id);
-    assertThat(entity.owner()).isEqualTo(owner);
+    assertThat(entity.generator()).isEqualTo(generator);
     assertThat(entity.type()).isEqualTo("Individual");
     assertThat(entity.name()).contains("Alice");
     assertThat(entity.summary()).contains("Lead");
 
-    var entityWithoutNulls = new ExpandedEntity(id, owner, "Event", (String) null, (String) null);
-    assertThat(entityWithoutNulls.owner()).isEqualTo(owner);
+    var entityWithoutNulls =
+        new ExpandedEntity(id, generator, "Event", (String) null, (String) null);
+    assertThat(entityWithoutNulls.generator()).isEqualTo(generator);
     assertThat(entityWithoutNulls.name()).isEmpty();
     assertThat(entityWithoutNulls.summary()).isEmpty();
   }

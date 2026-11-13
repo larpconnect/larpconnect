@@ -14,15 +14,21 @@ final class IndividualDomainTest {
   @DisplayName("Canonical constructor retains all fields and computes isDeleted")
   void canonicalConstructor_retainsFields() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var now = Instant.now();
 
     var individual =
         new Individual(
-            id, owner, "Jane Eyre", Optional.of("Visiting scholar"), now, now, Optional.empty());
+            id,
+            generator,
+            "Jane Eyre",
+            Optional.of("Visiting scholar"),
+            now,
+            now,
+            Optional.empty());
 
     assertThat(individual.id()).isEqualTo(id);
-    assertThat(individual.owner()).isEqualTo(owner);
+    assertThat(individual.generator()).isEqualTo(generator);
     assertThat(individual.name()).isEqualTo("Jane Eyre");
     assertThat(individual.summary()).contains("Visiting scholar");
     assertThat(individual.createdOn()).isEqualTo(now);
@@ -35,14 +41,14 @@ final class IndividualDomainTest {
   @DisplayName("Nullable constructor wraps nulls into empty Optionals")
   void nullableConstructor_wrapsNulls() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var now = Instant.now();
 
     var individual =
-        new Individual(id, owner, "Edward Rochester", (String) null, now, now, (Instant) null);
+        new Individual(id, generator, "Edward Rochester", (String) null, now, now, (Instant) null);
 
     assertThat(individual.id()).isEqualTo(id);
-    assertThat(individual.owner()).isEqualTo(owner);
+    assertThat(individual.generator()).isEqualTo(generator);
     assertThat(individual.name()).isEqualTo("Edward Rochester");
     assertThat(individual.summary()).isEmpty();
     assertThat(individual.deletedOn()).isEmpty();
@@ -53,14 +59,14 @@ final class IndividualDomainTest {
   @DisplayName("Nullable constructor wraps present non-nulls into present Optionals")
   void nullableConstructor_wrapsNonNulls() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var now = Instant.now();
 
     var individual =
-        new Individual(id, owner, "Edward Rochester", "Master of Thornfield", now, now, now);
+        new Individual(id, generator, "Edward Rochester", "Master of Thornfield", now, now, now);
 
     assertThat(individual.id()).isEqualTo(id);
-    assertThat(individual.owner()).isEqualTo(owner);
+    assertThat(individual.generator()).isEqualTo(generator);
     assertThat(individual.name()).isEqualTo("Edward Rochester");
     assertThat(individual.summary()).contains("Master of Thornfield");
     assertThat(individual.deletedOn()).contains(now);
@@ -71,13 +77,13 @@ final class IndividualDomainTest {
   @DisplayName("isDeleted returns true when deletedOn is present")
   void isDeleted_returnsTrueWhenDeletedOnPresent() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var now = Instant.now();
 
-    var individual = new Individual(id, owner, "Bertha Mason", null, now, now, now);
+    var individual = new Individual(id, generator, "Bertha Mason", null, now, now, now);
 
     assertThat(individual.isDeleted()).isTrue();
-    assertThat(individual.owner()).isEqualTo(owner);
+    assertThat(individual.generator()).isEqualTo(generator);
     assertThat(individual.deletedOn()).contains(now);
   }
 }

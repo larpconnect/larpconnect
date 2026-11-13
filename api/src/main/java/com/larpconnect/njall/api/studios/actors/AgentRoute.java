@@ -5,7 +5,9 @@ import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.google.mu.util.Substring;
 import com.larpconnect.njall.api.http.RouteProvider;
+import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.common.StudioErrorResponse;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.StudioLookup;
@@ -35,6 +37,7 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
 
   private final StudioLookupCache studioLookupCache;
   private final ActorRef<AgentCommand> agentActor;
+  private final CollectionsRoute collectionsRoute;
   private final ActorSystem<Void> system;
   private final ObjectMapper objectMapper;
   private final Duration askTimeout;
@@ -43,19 +46,28 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
   AgentRoute(
       StudioLookupCache studioLookupCache,
       ActorRef<AgentCommand> agentActor,
+      CollectionsRoute collectionsRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
-    this(studioLookupCache, agentActor, system, objectMapper, Duration.ofSeconds(20));
+    this(
+        studioLookupCache,
+        agentActor,
+        collectionsRoute,
+        system,
+        objectMapper,
+        Duration.ofSeconds(20));
   }
 
   AgentRoute(
       StudioLookupCache studioLookupCache,
       ActorRef<AgentCommand> agentActor,
+      CollectionsRoute collectionsRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper,
       Duration askTimeout) {
     this.studioLookupCache = studioLookupCache;
     this.agentActor = agentActor;
+    this.collectionsRoute = collectionsRoute;
     this.system = system;
     this.objectMapper = objectMapper;
     this.askTimeout = askTimeout;
@@ -100,13 +112,13 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
 
   private Route handleActorBranch(UUID tenantId, String studioIdParam, String segment) {
     if (segment.endsWith(ADD_ENDPOINT_SUFFIX)) {
-      var idStr = segment.substring(0, segment.length() - ADD_ENDPOINT_SUFFIX.length());
+      var idStr = Substring.suffix(ADD_ENDPOINT_SUFFIX).removeFrom(segment);
       return AgentValidation.tryParseUuid(idStr)
           .map(actorId -> post(() -> handleAddEndpoint(tenantId, actorId)))
           .orElseGet(() -> completeNotFound("Actor not found: " + segment));
     }
     if (segment.endsWith(REMOVE_ENDPOINT_SUFFIX)) {
-      var idStr = segment.substring(0, segment.length() - REMOVE_ENDPOINT_SUFFIX.length());
+      var idStr = Substring.suffix(REMOVE_ENDPOINT_SUFFIX).removeFrom(segment);
       return AgentValidation.tryParseUuid(idStr)
           .map(actorId -> post(() -> handleRemoveEndpoint(tenantId, actorId)))
           .orElseGet(() -> completeNotFound("Actor not found: " + segment));
@@ -137,7 +149,10 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
             () ->
                 concat(
                     get(() -> handleGetOutbox(tenantId, studioIdParam, actorId)),
-                    post(() -> handlePostOutbox(tenantId, studioIdParam, actorId)))));
+                    post(() -> handlePostOutbox(tenantId, studioIdParam, actorId)))),
+        pathPrefix(
+            PathMatchers.separateOnSlashes("collections"),
+            () -> collectionsRoute.collectionsSubroutes(tenantId, studioIdParam, actorId)));
   }
 
   private Route handlePostActor(StudioLookup lookup, String studioIdParam) {

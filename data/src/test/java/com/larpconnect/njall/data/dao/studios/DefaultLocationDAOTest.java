@@ -62,7 +62,7 @@ final class DefaultLocationDAOTest {
 
     assertThat(result).isPresent();
     assertThat(result.orElseThrow().id()).isEqualTo(locationId);
-    assertThat(result.orElseThrow().owner()).isEqualTo(owner);
+    assertThat(result.orElseThrow().generator()).isEqualTo(owner);
     assertThat(result.orElseThrow().name()).isEqualTo("Camp Whispering Pines");
     assertThat(result.orElseThrow().summary()).contains("Main campsite");
     verify(tx).commit();
@@ -122,7 +122,7 @@ final class DefaultLocationDAOTest {
     var created = dao.create(tenantId, owner, "Pine Camp", Optional.of("New camp"));
 
     assertThat(created.name()).isEqualTo("Pine Camp");
-    assertThat(created.owner()).isEqualTo(owner);
+    assertThat(created.generator()).isEqualTo(owner);
     assertThat(created.summary()).contains("New camp");
     verify(session).persist(any(EntityBaseEntity.class));
     verify(session).persist(any(LocationEntity.class));

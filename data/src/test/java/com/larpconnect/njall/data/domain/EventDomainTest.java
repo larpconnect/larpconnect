@@ -14,7 +14,7 @@ final class EventDomainTest {
   @DisplayName("Canonical constructor retains all fields and computes isDeleted")
   void canonicalConstructor_retainsFields() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var locationId = UUID.randomUUID();
     var now = Instant.now();
     var start = now.plusSeconds(3600);
@@ -23,7 +23,7 @@ final class EventDomainTest {
     var event =
         new Event(
             id,
-            owner,
+            generator,
             Optional.of(locationId),
             "Autumn Fest",
             Optional.of("Festival summary"),
@@ -34,7 +34,7 @@ final class EventDomainTest {
             Optional.empty());
 
     assertThat(event.id()).isEqualTo(id);
-    assertThat(event.owner()).isEqualTo(owner);
+    assertThat(event.generator()).isEqualTo(generator);
     assertThat(event.locationId()).contains(locationId);
     assertThat(event.title()).isEqualTo("Autumn Fest");
     assertThat(event.summary()).contains("Festival summary");
@@ -50,13 +50,13 @@ final class EventDomainTest {
   @DisplayName("Nullable constructor wraps nulls into empty Optionals")
   void nullableConstructor_wrapsNulls() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var now = Instant.now();
 
     var event =
         new Event(
             id,
-            owner,
+            generator,
             (UUID) null,
             "Town Hall",
             (String) null,
@@ -67,7 +67,7 @@ final class EventDomainTest {
             (Instant) null);
 
     assertThat(event.id()).isEqualTo(id);
-    assertThat(event.owner()).isEqualTo(owner);
+    assertThat(event.generator()).isEqualTo(generator);
     assertThat(event.locationId()).isEmpty();
     assertThat(event.title()).isEqualTo("Town Hall");
     assertThat(event.summary()).isEmpty();
@@ -80,13 +80,13 @@ final class EventDomainTest {
   @DisplayName("isDeleted returns true when deletedOn is present")
   void isDeleted_returnsTrueWhenDeletedOnPresent() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var now = Instant.now();
 
-    var event = new Event(id, owner, null, "Past Event", null, null, null, now, now, now);
+    var event = new Event(id, generator, null, "Past Event", null, null, null, now, now, now);
 
     assertThat(event.isDeleted()).isTrue();
-    assertThat(event.owner()).isEqualTo(owner);
+    assertThat(event.generator()).isEqualTo(generator);
     assertThat(event.deletedOn()).contains(now);
   }
 }

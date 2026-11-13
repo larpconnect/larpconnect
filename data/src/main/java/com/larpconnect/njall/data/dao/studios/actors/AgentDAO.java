@@ -31,13 +31,13 @@ public interface AgentDAO {
    * Creates a new actor and provisions paired inbox and outbox collections.
    *
    * @param tenantId Studio tenant UUID.
-   * @param owner Optional generating actor entity UUID. If empty, the actor is self-owned.
+   * @param generator Optional generating actor entity UUID. If empty, the actor is self-generated.
    * @param preferredUsername Preferred username.
    * @param summary Optional description summary.
    * @return The created Agent domain record.
    */
   Agent create(
-      UUID tenantId, Optional<UUID> owner, String preferredUsername, Optional<String> summary);
+      UUID tenantId, Optional<UUID> generator, String preferredUsername, Optional<String> summary);
 
   /**
    * Applies partial updates to an actor.

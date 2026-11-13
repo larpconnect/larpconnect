@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
  * Immutable domain representation of a tenanted actor entity (Agent).
  *
  * @param id The unique actor UUID identifier.
- * @param owner The generating/owner actor entity UUID.
+ * @param generator The generating actor entity UUID.
  * @param preferredUsername The case-insensitive unique username within the tenant.
  * @param summary Optional description summary from the base entity.
  * @param inboxId The UUID of the paired inbox collection.
@@ -25,7 +25,7 @@ import org.jspecify.annotations.Nullable;
 @Immutable
 public record Agent(
     UUID id,
-    UUID owner,
+    UUID generator,
     String preferredUsername,
     Optional<String> summary,
     UUID inboxId,
@@ -42,7 +42,7 @@ public record Agent(
 
   public Agent(
       UUID id,
-      UUID owner,
+      UUID generator,
       String preferredUsername,
       @Nullable String summary,
       UUID inboxId,
@@ -53,7 +53,7 @@ public record Agent(
       @Nullable Instant deletedOn) {
     this(
         id,
-        owner,
+        generator,
         preferredUsername,
         Optional.ofNullable(summary),
         inboxId,

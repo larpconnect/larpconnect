@@ -1,8 +1,10 @@
 package com.larpconnect.njall.api.studios.collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -27,19 +29,22 @@ final class CollectionValidationAndDtoTest {
   void collectionValidation_rules() {
     var ownerId = UUID.randomUUID();
     var blankNameCreate =
-        new CreateCollectionRequest(ownerId, Optional.empty(), "   ", Optional.empty());
+        new CreateCollectionRequest(Optional.of(ownerId), "   ", Optional.empty());
     assertThat(CollectionValidation.validateCreate(blankNameCreate))
         .contains("Collection name must not be blank");
 
-    var blankGenCreate =
-        new CreateCollectionRequest(ownerId, Optional.of("   "), "Featured Cast", Optional.empty());
-    assertThat(CollectionValidation.validateCreate(blankGenCreate))
-        .contains("Generator URI or actor identifier must not be blank");
+    var nullNameCreate = new CreateCollectionRequest(ownerId, null, null);
+    assertThat(CollectionValidation.validateCreate(nullNameCreate))
+        .contains("Collection name must not be blank");
 
     var validCreate =
         new CreateCollectionRequest(
-            ownerId, Optional.empty(), "Featured Cast", Optional.of("Cast summary"));
+            Optional.of(ownerId), "Featured Cast", Optional.of("Cast summary"));
     assertThat(CollectionValidation.validateCreate(validCreate)).isEmpty();
+
+    var validOmittedOwnerCreate =
+        new CreateCollectionRequest(Optional.empty(), "Featured Cast", Optional.empty());
+    assertThat(CollectionValidation.validateCreate(validOmittedOwnerCreate)).isEmpty();
 
     var blankPatch = new UpdateCollectionRequest("   ", null);
     assertThat(CollectionValidation.validatePatch(blankPatch))
@@ -91,7 +96,7 @@ final class CollectionValidationAndDtoTest {
   }
 
   @Test
-  @DisplayName("CreateCollectionRequest serializes and deserializes correctly")
+  @DisplayName("CreateCollectionRequest serializes and deserializes with optional ownerId")
   void createCollectionRequest_serialization() throws Exception {
     var createJson =
         """
@@ -103,9 +108,31 @@ final class CollectionValidationAndDtoTest {
         """;
     var createReq = objectMapper.readValue(createJson, CreateCollectionRequest.class);
     assertThat(createReq.ownerId())
-        .isEqualTo(UUID.fromString("019273c5-9271-7000-8000-000000000001"));
+        .contains(UUID.fromString("019273c5-9271-7000-8000-000000000001"));
     assertThat(createReq.name()).isEqualTo("Featured Cast");
     assertThat(createReq.summary()).contains("Primary cast");
+
+    var omittedOwnerJson =
+        """
+        {
+          "name": "Default Owner Cast"
+        }
+        """;
+    var omittedOwnerReq = objectMapper.readValue(omittedOwnerJson, CreateCollectionRequest.class);
+    assertThat(omittedOwnerReq.ownerId()).isEmpty();
+    assertThat(omittedOwnerReq.name()).isEqualTo("Default Owner Cast");
+    assertThat(omittedOwnerReq.summary()).isEmpty();
+
+    var withGeneratorJson =
+        """
+        {
+          "generator": "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
+          "name": "Featured Cast"
+        }
+        """;
+    assertThatThrownBy(
+            () -> objectMapper.readValue(withGeneratorJson, CreateCollectionRequest.class))
+        .isInstanceOf(UnrecognizedPropertyException.class);
   }
 
   @Test

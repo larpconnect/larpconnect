@@ -7,11 +7,10 @@ Tenanted HTTP REST endpoints under `/api/studios/{studio-id}/v1/actors` for crea
 ## Requirements
 
 ### Requirement: Create Actor Entity with Provisioned Inbox and Outbox
-
 The system SHALL expose an HTTP POST endpoint at `/api/studios/{studio-id}/v1/actors` allowing authenticated clients to create an **Actor** **Entity** under a specific **Studio**. The `{studio-id}` path segment SHALL accept either a public studio UUID or an **Alias** string, resolving in-memory against `StudioLookupCache`. If `{studio-id}` is missing or soft-deleted, the system SHALL return HTTP 404 Not Found without performing database operations.
 
 Upon resolving `tenant_id`, the system SHALL validate the request payload:
-- `generator`: Optional string accepting either a bare **Actor** UUID or a canonical studio **Actor** URI (`/api/studios/{studio-id}/v1/actors/{actor-id}` matching the target `{studio-id}`) referencing an active, non-deleted **Actor** **Entity** (`entity_type = 'Actor'`) belonging to the same studio **Tenant**. When `generator` is omitted or null, the newly created **Actor** SHALL default to self-ownership (`entities.owner = actor.id`).
+- `generator`: Optional string accepting either a bare **Actor** UUID or a canonical studio **Actor** URI (`/api/studios/{studio-id}/v1/actors/{actor-id}` matching the target `{studio-id}`) referencing an active, non-deleted **Actor** **Entity** (`entity_type = 'Actor'`) belonging to the same studio **Tenant**. When `generator` is omitted or null, the newly created **Actor** SHALL default to self-generation (`entities.generator = actor.id`).
 - `preferredUsername`: Required non-blank string.
 - `summary`: Optional string.
 
@@ -20,12 +19,12 @@ If `preferredUsername` is blank or whitespace-only, the system SHALL return HTTP
 If another active or soft-deleted **Actor** in the same studio **Tenant** already has the same `preferredUsername` (compared case-insensitively via `lower(preferred_username)`), the system SHALL return HTTP 409 Conflict.
 
 If validation succeeds, the system SHALL persist the **Actor** within a single database transaction:
-1. Insert root **Entity** into `njall_users.entities` with generated UUIDv7, `tenant_id`, `owner` (resolved `generator` UUID or self `id`), `entity_type = 'Actor'`, `summary`, and timestamps.
+1. Insert root **Entity** into `njall_users.entities` with generated UUIDv7, `tenant_id`, `generator` (resolved **generator** UUID or self `id`), `entity_type = 'Actor'`, `summary`, and timestamps.
 2. Insert subtype record into `njall_users.actors` with `(tenant_id, id)` and `preferred_username`.
-3. Provision an `inbox` **Collections** entity in `njall_users.collections` (with `owner_id = actor.id`, `name = 'inbox'`, and matching `entities` record with `owner = actor.id`).
-4. Provision an `outbox` **Collections** entity in `njall_users.collections` (with `owner_id = actor.id`, `name = 'outbox'`, and matching `entities` record with `owner = actor.id`).
+3. Provision an `inbox` **Collections** entity in `njall_users.collections` (with `owner_id = actor.id`, `name = 'inbox'`, and matching `entities` record with `generator = actor.id`).
+4. Provision an `outbox` **Collections** entity in `njall_users.collections` (with `owner_id = actor.id`, `name = 'outbox'`, and matching `entities` record with `generator = actor.id`).
 
-The endpoint SHALL return HTTP 201 Created containing the public **Actor** `id`, `type = "Actor"`, `generator` formatted as `"/api/studios/{studio-id}/v1/actors/{owner-id}"`, `preferredUsername`, `summary`, canonical `inbox` URL, canonical `outbox` URL, empty `endpoints` map, `createdOn`, and `updatedOn`. The response SHALL NOT expose internal `tenant_id`.
+The endpoint SHALL return HTTP 201 Created containing the public **Actor** `id`, `type = "Actor"`, `generator` formatted as `"/api/studios/{studio-id}/v1/actors/{generator-id}"`, `preferredUsername`, `summary`, canonical `inbox` URL, canonical `outbox` URL, empty `endpoints` map, `createdOn`, and `updatedOn`. The response SHALL NOT expose internal `tenant_id`.
 
 #### Scenario: Successfully create actor with inbox and outbox
 - **GIVEN** an active studio "mystic-realms" and an active actor entity with UUID "019273c5-8f12-7000-8000-000000000001"
@@ -48,7 +47,7 @@ The endpoint SHALL return HTTP 201 Created containing the public **Actor** `id`,
   ```json
   {
     "preferredUsername": "valkyrie_self",
-    "summary": "Self-owned studio actor"
+    "summary": "Self-generated studio actor"
   }
   ```
 - **THEN** system responds with HTTP 201 Created
@@ -72,11 +71,10 @@ The endpoint SHALL return HTTP 201 Created containing the public **Actor** `id`,
 ---
 
 ### Requirement: Retrieve Actor Detail by Identifier
-
-The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/actors/{actor-id}`. If `{studio-id}` or `{actor-id}` does not exist or has `deleted_on IS NOT NULL`, the system SHALL return HTTP 404 Not Found. If active, the system SHALL return HTTP 200 OK containing the **Actor** representation, including `generator` formatted as `"/api/studios/{studio-id}/v1/actors/{owner-id}"` and active federated protocol endpoints in an `endpoints` map of name-to-URI strings. The system SHALL NOT provide a list endpoint at `/api/studios/{studio-id}/v1/actors`, returning HTTP 404 Not Found for GET requests to the collection root.
+The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/actors/{actor-id}`. If `{studio-id}` or `{actor-id}` does not exist or has `deleted_on IS NOT NULL`, the system SHALL return HTTP 404 Not Found. If active, the system SHALL return HTTP 200 OK containing the **Actor** representation, including `generator` formatted as `"/api/studios/{studio-id}/v1/actors/{generator-id}"` and active federated protocol endpoints in an `endpoints` map of name-to-URI strings. The system SHALL NOT provide a list endpoint at `/api/studios/{studio-id}/v1/actors`, returning HTTP 404 Not Found for GET requests to the collection root.
 
 #### Scenario: Successfully retrieve active actor by UUID
-- **GIVEN** an active studio "mystic-realms" and an active self-owned actor with UUID "019273c5-9b2f-763d-82d8-21d1297e55a1" having endpoint "sharedInbox" = "https://fed.example.com/inbox"
+- **GIVEN** an active studio "mystic-realms" and an active self-generated actor with UUID "019273c5-9b2f-763d-82d8-21d1297e55a1" having endpoint "sharedInbox" = "https://fed.example.com/inbox"
 - **WHEN** client sends GET to "/api/studios/mystic-realms/v1/actors/019273c5-9b2f-763d-82d8-21d1297e55a1"
 - **THEN** system responds with HTTP 200 OK
 - **AND** response body contains "id": "019273c5-9b2f-763d-82d8-21d1297e55a1"
@@ -96,10 +94,9 @@ The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/act
 ---
 
 ### Requirement: Partial Update of Actor Properties
-
 The system SHALL expose an HTTP PATCH endpoint at `/api/studios/{studio-id}/v1/actors/{actor-id}` accepting an optional `update_mask` query parameter adhering to Google AIP-134. If `{actor-id}` is missing or soft-deleted, the system SHALL return HTTP 404 Not Found.
 
-Permitted update paths SHALL be `preferredUsername` and `summary`. If `preferredUsername` is updated, the system SHALL validate non-blank characters and case-insensitive uniqueness within the **Tenant**, returning HTTP 409 Conflict if taken by another **Actor**. Modifying `generator` (`entities.owner`) SHALL NOT be supported, as entity provenance is strictly immutable. Upon successful update, the system SHALL update `updated_on` to `CURRENT_TIMESTAMP` and return HTTP 200 OK with the updated **Actor** representation including `generator`.
+Permitted update paths SHALL be `preferredUsername` and `summary`. If `preferredUsername` is updated, the system SHALL validate non-blank characters and case-insensitive uniqueness within the **Tenant**, returning HTTP 409 Conflict if taken by another **Actor**. Modifying `generator` (`entities.generator`) SHALL NOT be supported, as entity provenance is strictly immutable. Upon successful update, the system SHALL update `updated_on` to `CURRENT_TIMESTAMP` and return HTTP 200 OK with the updated **Actor** representation including `generator`.
 
 #### Scenario: Successfully update actor summary and username via update mask
 - **GIVEN** an active studio "mystic-realms" and an active actor with preferred username "valkyrie_lead"
@@ -292,3 +289,18 @@ The system SHALL enforce PostgreSQL Row-Level Security on `njall_users.actors` a
 - **GIVEN** an actor created under any studio tenant
 - **WHEN** an administrative database session executing as role "njall_admin" queries "njall_users.actors"
 - **THEN** the administrative session successfully accesses the actor across tenants
+
+---
+
+### Requirement: Subordinate Actor Collections Route Delegation
+The system SHALL delegate subordinate requests matching `/api/studios/{studio-id}/v1/actors/{actor-id}/collections` from `AgentRoute` to `CollectionsRoute` after resolving `{studio-id}` against `StudioLookupCache` and parsing `{actor-id}` as a UUID. Legacy unparented requests to `/api/studios/{studio-id}/v1/collections` SHALL NOT be routed and SHALL return HTTP 404 Not Found.
+
+#### Scenario: Subordinate collections path is routed beneath actor resource
+- **GIVEN** an active **Studio** "mystic-realms" and an active **Actor** `actorId`
+- **WHEN** a client sends an HTTP request to `/api/studios/mystic-realms/v1/actors/{actorId}/collections`
+- **THEN** `AgentRoute` resolves `tenantId` and `actorId` and delegates handling to `CollectionsRoute`
+
+#### Scenario: Legacy unparented collections path returns 404
+- **GIVEN** an active **Studio** "mystic-realms"
+- **WHEN** a client sends an HTTP POST or GET request to `/api/studios/mystic-realms/v1/collections`
+- **THEN** the system returns HTTP 404 Not Found

@@ -19,7 +19,7 @@ public final class CollectionResponseHelper {
         TYPE_ORDERED_COLLECTION,
         collection.name(),
         collection.summary(),
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, collection.owner()),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, collection.generator()),
         collection.ownerId(),
         collection.totalItems(),
         collection.itemIds(),
@@ -36,7 +36,7 @@ public final class CollectionResponseHelper {
                     new ExpandedItemResponse(
                         item.id(),
                         item.type(),
-                        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, item.owner()),
+                        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, item.generator()),
                         item.name(),
                         item.summary()))
             .collect(ImmutableList.toImmutableList());
@@ -45,7 +45,7 @@ public final class CollectionResponseHelper {
         TYPE_ORDERED_COLLECTION,
         collection.name(),
         collection.summary(),
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, collection.owner()),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, collection.generator()),
         collection.ownerId(),
         items.size(),
         items,

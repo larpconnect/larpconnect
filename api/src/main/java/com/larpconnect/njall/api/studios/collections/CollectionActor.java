@@ -4,7 +4,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.larpconnect.njall.api.studios.common.CollectionResponseHelper;
-import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
 import java.util.Optional;
 import java.util.Set;
@@ -42,29 +41,23 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
 
   private Behavior<CollectionCommand> onCreateCollection(CollectionCommand.CreateCollection cmd) {
     try {
+      if (!collectionDao.isActiveActor(cmd.tenantId(), cmd.actorId())) {
+        cmd.replyTo().tell(CollectionActorResponse.notFound("Actor not found: " + cmd.actorId()));
+        return this;
+      }
       var validationError = CollectionValidation.validateCreate(cmd.request());
       if (validationError.isPresent()) {
         cmd.replyTo().tell(CollectionActorResponse.badRequest(validationError.orElseThrow()));
         return this;
       }
-      UUID effectiveOwner;
-      if (cmd.request().generator().isPresent()
-          && !cmd.request().generator().orElseThrow().isBlank()) {
-        var parsed =
-            GeneratorUriSupport.parseGenerator(
-                cmd.request().generator().orElseThrow(), cmd.studioIdentifier(), cmd.lookup());
-        if (parsed.isEmpty()) {
-          cmd.replyTo()
-              .tell(
-                  CollectionActorResponse.badRequest("Invalid generator URI or actor identifier"));
-          return this;
-        }
-        effectiveOwner = parsed.orElseThrow();
-      } else {
-        effectiveOwner = cmd.request().ownerId();
-      }
+      var effectiveOwnerId = cmd.request().ownerId().orElse(cmd.actorId());
       executeCreate(
-          cmd.tenantId(), cmd.studioIdentifier(), effectiveOwner, cmd.request(), cmd.replyTo());
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          cmd.actorId(),
+          effectiveOwnerId,
+          cmd.request(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create collection", e);
     }
@@ -74,19 +67,13 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
   private void executeCreate(
       UUID tenantId,
       String studioIdentifier,
-      UUID effectiveOwner,
+      UUID actorId,
+      UUID effectiveOwnerId,
       CreateCollectionRequest request,
       ActorRef<CollectionActorResponse> replyTo) {
-    if (collectionDao.existsByOwnerAndName(
-        tenantId, request.ownerId(), request.name(), Optional.empty())) {
-      replyTo.tell(
-          CollectionActorResponse.conflict(
-              "Collection with name '" + request.name() + "' already exists for owner"));
-      return;
-    }
     var domain =
         collectionDao.create(
-            tenantId, effectiveOwner, request.ownerId(), request.name(), request.summary());
+            tenantId, actorId, effectiveOwnerId, request.name(), request.summary());
     replyTo.tell(
         CollectionActorResponse.success(
             CollectionResponseHelper.toCompressedResponse(studioIdentifier, domain)));
@@ -95,7 +82,12 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
   private Behavior<CollectionCommand> onGetCollection(CollectionCommand.GetCollection cmd) {
     try {
       executeGet(
-          cmd.tenantId(), cmd.studioIdentifier(), cmd.collectionId(), cmd.form(), cmd.replyTo());
+          cmd.tenantId(),
+          cmd.studioIdentifier(),
+          cmd.actorId(),
+          cmd.collectionId(),
+          cmd.form(),
+          cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get collection", e);
     }
@@ -105,10 +97,11 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
   private void executeGet(
       UUID tenantId,
       String studioIdentifier,
+      UUID actorId,
       UUID collectionId,
       Optional<String> form,
       ActorRef<CollectionActorResponse> replyTo) {
-    var collectionOpt = collectionDao.findById(tenantId, collectionId);
+    var collectionOpt = collectionDao.findById(tenantId, actorId, collectionId);
     if (collectionOpt.isEmpty()) {
       replyTo.tell(CollectionActorResponse.notFound("Collection not found: " + collectionId));
       return;
@@ -116,7 +109,7 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
     var collection = collectionOpt.orElseThrow();
     boolean isExpanded = form.filter("expanded"::equalsIgnoreCase).isPresent();
     if (isExpanded) {
-      var expandedItems = collectionDao.findExpandedItems(tenantId, collectionId);
+      var expandedItems = collectionDao.findExpandedItems(tenantId, actorId, collectionId);
       replyTo.tell(
           CollectionActorResponse.success(
               CollectionResponseHelper.toExpandedResponse(
@@ -138,6 +131,7 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
       executePatch(
           cmd.tenantId(),
           cmd.studioIdentifier(),
+          cmd.actorId(),
           cmd.collectionId(),
           cmd.request(),
           cmd.updateMask(),
@@ -151,6 +145,7 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
   private void executePatch(
       UUID tenantId,
       String studioIdentifier,
+      UUID actorId,
       UUID collectionId,
       UpdateCollectionRequest request,
       Optional<String> updateMask,
@@ -158,36 +153,19 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
     var maskFields = parseUpdateMask(updateMask);
     var name = selectField(maskFields, "name", request.name());
     var summary = selectField(maskFields, "summary", request.summary());
-    persistPatch(tenantId, studioIdentifier, collectionId, name, summary, replyTo);
+    persistPatch(tenantId, studioIdentifier, actorId, collectionId, name, summary, replyTo);
   }
 
   private void persistPatch(
       UUID tenantId,
       String studioIdentifier,
+      UUID actorId,
       UUID collectionId,
       Optional<String> name,
       Optional<String> summary,
       ActorRef<CollectionActorResponse> replyTo) {
-    if (name.isPresent()) {
-      var existingOpt = collectionDao.findById(tenantId, collectionId);
-      if (existingOpt.isEmpty()) {
-        replyTo.tell(CollectionActorResponse.notFound("Collection not found: " + collectionId));
-        return;
-      }
-      if (collectionDao.existsByOwnerAndName(
-          tenantId,
-          existingOpt.orElseThrow().ownerId(),
-          name.orElseThrow(),
-          Optional.of(collectionId))) {
-        replyTo.tell(
-            CollectionActorResponse.conflict(
-                "Collection with name '" + name.orElseThrow() + "' already exists for owner"));
-        return;
-      }
-    }
-
     collectionDao
-        .patch(tenantId, collectionId, name, summary)
+        .patch(tenantId, actorId, collectionId, name, summary)
         .ifPresentOrElse(
             updated ->
                 replyTo.tell(
@@ -200,7 +178,7 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
 
   private Behavior<CollectionCommand> onDeleteCollection(CollectionCommand.DeleteCollection cmd) {
     try {
-      executeDelete(cmd.tenantId(), cmd.collectionId(), cmd.replyTo());
+      executeDelete(cmd.tenantId(), cmd.actorId(), cmd.collectionId(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "delete collection", e);
     }
@@ -208,8 +186,8 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
   }
 
   private void executeDelete(
-      UUID tenantId, UUID collectionId, ActorRef<CollectionActorResponse> replyTo) {
-    boolean deleted = collectionDao.softDelete(tenantId, collectionId);
+      UUID tenantId, UUID actorId, UUID collectionId, ActorRef<CollectionActorResponse> replyTo) {
+    boolean deleted = collectionDao.softDelete(tenantId, actorId, collectionId);
     if (deleted) {
       replyTo.tell(CollectionActorResponse.noContent());
     } else {
@@ -219,10 +197,9 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
 
   private Behavior<CollectionCommand> onMutateItem(CollectionCommand.MutateItem cmd) {
     try {
-      if (cmd.action() == CollectionCommand.ItemAction.ADD) {
-        executeAddItem(cmd);
-      } else {
-        executeRemoveItem(cmd);
+      switch (cmd.action()) {
+        case ADD -> executeAddItem(cmd);
+        case REMOVE -> executeRemoveItem(cmd);
       }
     } catch (Exception e) {
       handleError(cmd.replyTo(), "mutate collection item", e);
@@ -233,7 +210,12 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
   private void executeAddItem(CollectionCommand.MutateItem cmd) {
     boolean added =
         collectionDao.addItem(
-            cmd.tenantId(), cmd.collectionId(), cmd.refersToId(), cmd.before(), cmd.index());
+            cmd.tenantId(),
+            cmd.actorId(),
+            cmd.collectionId(),
+            cmd.refersToId(),
+            cmd.before(),
+            cmd.index());
     if (added) {
       cmd.replyTo().tell(CollectionActorResponse.noContent());
     } else {
@@ -244,7 +226,8 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
 
   private void executeRemoveItem(CollectionCommand.MutateItem cmd) {
     boolean removed =
-        collectionDao.removeItem(cmd.tenantId(), cmd.collectionId(), cmd.refersToId());
+        collectionDao.removeItem(
+            cmd.tenantId(), cmd.actorId(), cmd.collectionId(), cmd.refersToId());
     if (removed) {
       cmd.replyTo().tell(CollectionActorResponse.noContent());
     } else {
@@ -270,6 +253,10 @@ final class CollectionActor extends AbstractBehavior<CollectionCommand> {
     logger.error("Failed to {} in CollectionActor", operation, error);
     if (error instanceof IllegalArgumentException) {
       replyTo.tell(CollectionActorResponse.badRequest(error.getMessage()));
+      return;
+    }
+    if (error instanceof IllegalStateException) {
+      replyTo.tell(CollectionActorResponse.conflict(error.getMessage()));
       return;
     }
     if (isConstraintViolation(error)) {

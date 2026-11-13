@@ -40,3 +40,10 @@ Feature: Flyway Database Migration and Bootstrap Provisioning
     And role "njall_users" has USAGE on schema "njall_users" and SELECT on table "reaction_counts"
     And materialized view "njall_users.reaction_counts" can be refreshed concurrently
 
+  Scenario: Migration V13 renames entities owner to generator while retaining collections owner_id
+    Given the bootstrap database migration has already been executed
+    Then table "njall_users.entities" has non-null column "generator" and no column "owner"
+    And table "njall_users.entities" has foreign key constraint "fk_entities_generator" and index "idx_entities_generator" and no constraint "fk_entities_owner" or index "idx_entities_owner"
+    And table "njall_users.collections" retains column "owner_id", constraint "fk_collections_owner", constraint "unq_collections_owner_name", and index "idx_collections_owner"
+
+

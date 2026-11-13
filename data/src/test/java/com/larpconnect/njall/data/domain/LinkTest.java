@@ -14,15 +14,23 @@ final class LinkTest {
   @DisplayName("Link record exposes properties and isDeleted helper correctly")
   void linkRecord_propertiesAndHelpers() {
     var id = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var generator = UUID.randomUUID();
     var now = Instant.now();
 
     var activeLink =
         new Link(
-            id, owner, "website", "https://example.com", "text/html", "Homepage", now, now, null);
+            id,
+            generator,
+            "website",
+            "https://example.com",
+            "text/html",
+            "Homepage",
+            now,
+            now,
+            null);
 
     assertThat(activeLink.id()).isEqualTo(id);
-    assertThat(activeLink.owner()).isEqualTo(owner);
+    assertThat(activeLink.generator()).isEqualTo(generator);
     assertThat(activeLink.linkType()).isEqualTo("website");
     assertThat(activeLink.url()).isEqualTo("https://example.com");
     assertThat(activeLink.mediaType()).isEqualTo("text/html");
@@ -35,7 +43,7 @@ final class LinkTest {
     var deletedLink =
         new Link(
             id,
-            owner,
+            generator,
             "website",
             "https://example.com",
             "text/html",
@@ -44,7 +52,7 @@ final class LinkTest {
             now,
             Optional.of(now));
 
-    assertThat(deletedLink.owner()).isEqualTo(owner);
+    assertThat(deletedLink.generator()).isEqualTo(generator);
     assertThat(deletedLink.summary()).isEmpty();
     assertThat(deletedLink.isDeleted()).isTrue();
   }

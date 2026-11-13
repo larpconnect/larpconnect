@@ -166,7 +166,7 @@ final class IndividualActor extends AbstractBehavior<IndividualCommand> {
   private IndividualResponse toIndividualResponse(String studioIdentifier, Individual individual) {
     return new IndividualResponse(
         individual.id(),
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, individual.owner()),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, individual.generator()),
         individual.name(),
         individual.summary(),
         individual.createdOn(),

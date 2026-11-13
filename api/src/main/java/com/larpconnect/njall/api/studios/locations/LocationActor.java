@@ -143,7 +143,7 @@ final class LocationActor extends AbstractBehavior<LocationCommand> {
   private LocationResponse toLocationResponse(String studioIdentifier, Location location) {
     return new LocationResponse(
         location.id(),
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, location.owner()),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, location.generator()),
         location.name(),
         location.summary(),
         location.createdOn(),

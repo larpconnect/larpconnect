@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
  * Immutable domain representation of a tenanted individual entity.
  *
  * @param id The unique individual UUID identifier.
- * @param owner The generating actor entity UUID.
+ * @param generator The generating actor entity UUID.
  * @param name The required human-readable name of the individual.
  * @param summary Optional description summary from the base entity.
  * @param createdOn Creation timestamp.
@@ -20,7 +20,7 @@ import org.jspecify.annotations.Nullable;
 @Immutable
 public record Individual(
     UUID id,
-    UUID owner,
+    UUID generator,
     String name,
     Optional<String> summary,
     Instant createdOn,
@@ -30,7 +30,7 @@ public record Individual(
 
   public Individual(
       UUID id,
-      UUID owner,
+      UUID generator,
       String name,
       @Nullable String summary,
       Instant createdOn,
@@ -38,7 +38,7 @@ public record Individual(
       @Nullable Instant deletedOn) {
     this(
         id,
-        owner,
+        generator,
         name,
         Optional.ofNullable(summary),
         createdOn,

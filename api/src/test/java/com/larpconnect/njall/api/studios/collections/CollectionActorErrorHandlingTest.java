@@ -3,13 +3,12 @@ package com.larpconnect.njall.api.studios.collections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
-import com.larpconnect.njall.data.domain.Collection;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
@@ -24,27 +23,12 @@ final class CollectionActorErrorHandlingTest {
   private static final String STUDIO_IDENTIFIER = "valiant";
 
   private final UUID tenantId = UUID.randomUUID();
+  private final UUID actorId = UUID.randomUUID();
   private final UUID collectionId = UUID.randomUUID();
-  private final UUID ownerId = UUID.randomUUID();
   private final UUID itemId = UUID.randomUUID();
-  private final Instant now = Instant.now();
 
   private Behavior<CollectionCommand> createBehavior(CollectionDAO collectionDao) {
     return Behaviors.setup(context -> new CollectionActor(context, collectionDao));
-  }
-
-  private Collection sampleCollection() {
-    return new Collection(
-        collectionId,
-        ownerId,
-        ownerId,
-        "Featured Cast",
-        Optional.of("Primary cast"),
-        1,
-        ImmutableList.of(itemId),
-        now,
-        now,
-        Optional.empty());
   }
 
   @Test
@@ -69,10 +53,50 @@ final class CollectionActorErrorHandlingTest {
   }
 
   @Test
+  @DisplayName("onCreateCollection returns 404 when path actorId is not active actor")
+  void onCreateCollection_inactiveOrNonActor_returnsNotFoundBeforeValidation() {
+    var collectionDao = mock(CollectionDAO.class);
+    when(collectionDao.isActiveActor(tenantId, actorId)).thenReturn(false);
+
+    var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
+    TestInbox<CollectionActorResponse> inbox = TestInbox.create();
+
+    var blankRequest = new CreateCollectionRequest(Optional.empty(), "   ", Optional.empty());
+    testKit.run(
+        new CollectionCommand.CreateCollection(
+            tenantId, STUDIO_IDENTIFIER, actorId, blankRequest, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
+    assertThat(((CollectionActorResponse.Failure) response).status()).isEqualTo(404);
+    verify(collectionDao, never()).create(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  @DisplayName("onCreateCollection returns Failure on DAO exception")
+  void onCreateCollection_exception_returnsFailure() {
+    var collectionDao = mock(CollectionDAO.class);
+    when(collectionDao.isActiveActor(tenantId, actorId))
+        .thenThrow(new RuntimeException("DB offline"));
+
+    var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
+    TestInbox<CollectionActorResponse> inbox = TestInbox.create();
+
+    var request = new CreateCollectionRequest(Optional.empty(), "Featured Cast", Optional.empty());
+    testKit.run(
+        new CollectionCommand.CreateCollection(
+            tenantId, STUDIO_IDENTIFIER, actorId, request, inbox.getRef()));
+
+    var response = inbox.receiveMessage();
+    assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
+    assertThat(((CollectionActorResponse.Failure) response).status()).isEqualTo(500);
+  }
+
+  @Test
   @DisplayName("onGetCollection returns Failure on DAO exception")
   void onGetCollection_exception_returnsFailure() {
     var collectionDao = mock(CollectionDAO.class);
-    when(collectionDao.findById(tenantId, collectionId))
+    when(collectionDao.findById(tenantId, actorId, collectionId))
         .thenThrow(new RuntimeException("DB error"));
 
     var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
@@ -80,7 +104,7 @@ final class CollectionActorErrorHandlingTest {
 
     testKit.run(
         new CollectionCommand.GetCollection(
-            tenantId, STUDIO_IDENTIFIER, collectionId, Optional.empty(), inbox.getRef()));
+            tenantId, STUDIO_IDENTIFIER, actorId, collectionId, Optional.empty(), inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -97,7 +121,13 @@ final class CollectionActorErrorHandlingTest {
     var request = new UpdateCollectionRequest("   ", null);
     testKit.run(
         new CollectionCommand.PatchCollection(
-            tenantId, STUDIO_IDENTIFIER, collectionId, request, Optional.empty(), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            actorId,
+            collectionId,
+            request,
+            Optional.empty(),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -105,32 +135,10 @@ final class CollectionActorErrorHandlingTest {
   }
 
   @Test
-  @DisplayName("onPatchCollection returns NotFound when collection missing during uniqueness check")
-  void onPatchCollection_missingCollection_returnsNotFound() {
-    var collectionDao = mock(CollectionDAO.class);
-    when(collectionDao.findById(tenantId, collectionId)).thenReturn(Optional.empty());
-
-    var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
-    TestInbox<CollectionActorResponse> inbox = TestInbox.create();
-
-    var request = new UpdateCollectionRequest("New Name", null);
-    testKit.run(
-        new CollectionCommand.PatchCollection(
-            tenantId, STUDIO_IDENTIFIER, collectionId, request, Optional.empty(), inbox.getRef()));
-
-    var response = inbox.receiveMessage();
-    assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
-    assertThat(((CollectionActorResponse.Failure) response).status()).isEqualTo(404);
-  }
-
-  @Test
   @DisplayName("onPatchCollection returns NotFound when DAO patch returns empty")
   void onPatchCollection_daoPatchEmpty_returnsNotFound() {
     var collectionDao = mock(CollectionDAO.class);
-    when(collectionDao.findById(tenantId, collectionId))
-        .thenReturn(Optional.of(sampleCollection()));
-    when(collectionDao.existsByOwnerAndName(any(), any(), any(), any())).thenReturn(false);
-    when(collectionDao.patch(any(), any(), any(), any())).thenReturn(Optional.empty());
+    when(collectionDao.patch(any(), any(), any(), any(), any())).thenReturn(Optional.empty());
 
     var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
     TestInbox<CollectionActorResponse> inbox = TestInbox.create();
@@ -138,7 +146,13 @@ final class CollectionActorErrorHandlingTest {
     var request = new UpdateCollectionRequest("New Name", null);
     testKit.run(
         new CollectionCommand.PatchCollection(
-            tenantId, STUDIO_IDENTIFIER, collectionId, request, Optional.empty(), inbox.getRef()));
+            tenantId,
+            STUDIO_IDENTIFIER,
+            actorId,
+            collectionId,
+            request,
+            Optional.empty(),
+            inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -149,12 +163,14 @@ final class CollectionActorErrorHandlingTest {
   @DisplayName("onDeleteCollection returns Failure when exception has no message")
   void onDeleteCollection_exceptionWithoutMessage_returnsFailure() {
     var collectionDao = mock(CollectionDAO.class);
-    when(collectionDao.softDelete(tenantId, collectionId)).thenThrow(new RuntimeException());
+    when(collectionDao.softDelete(tenantId, actorId, collectionId))
+        .thenThrow(new RuntimeException());
 
     var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
     TestInbox<CollectionActorResponse> inbox = TestInbox.create();
 
-    testKit.run(new CollectionCommand.DeleteCollection(tenantId, collectionId, inbox.getRef()));
+    testKit.run(
+        new CollectionCommand.DeleteCollection(tenantId, actorId, collectionId, inbox.getRef()));
 
     var response = inbox.receiveMessage();
     assertThat(response).isInstanceOf(CollectionActorResponse.Failure.class);
@@ -167,7 +183,7 @@ final class CollectionActorErrorHandlingTest {
   @DisplayName("onMutateItem returns Failure on unexpected exception")
   void onMutateItem_unexpectedException_returnsFailure() {
     var collectionDao = mock(CollectionDAO.class);
-    when(collectionDao.addItem(any(), any(), any(), any(), any()))
+    when(collectionDao.addItem(any(), any(), any(), any(), any(), any()))
         .thenThrow(new RuntimeException("Mutation failed"));
 
     var testKit = BehaviorTestKit.create(createBehavior(collectionDao));
@@ -176,6 +192,7 @@ final class CollectionActorErrorHandlingTest {
     testKit.run(
         new CollectionCommand.MutateItem(
             tenantId,
+            actorId,
             collectionId,
             CollectionCommand.ItemAction.ADD,
             itemId,

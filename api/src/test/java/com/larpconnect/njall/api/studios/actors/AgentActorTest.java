@@ -390,11 +390,12 @@ final class AgentActorTest {
     when(agentDao.findById(tenantId, actorId)).thenReturn(Optional.of(agent));
     when(agentDao.findInboxId(tenantId, actorId)).thenReturn(Optional.of(inboxId));
     when(agentDao.findOutboxId(tenantId, actorId)).thenReturn(Optional.of(outboxId));
-    when(collectionDao.findById(tenantId, inboxId))
+    when(collectionDao.findById(tenantId, actorId, inboxId))
         .thenReturn(Optional.of(sampleCollection(inboxId, "inbox")));
-    when(collectionDao.findById(tenantId, outboxId))
+    when(collectionDao.findById(tenantId, actorId, outboxId))
         .thenReturn(Optional.of(sampleCollection(outboxId, "outbox")));
-    when(collectionDao.findExpandedItems(eq(tenantId), any())).thenReturn(ImmutableList.of());
+    when(collectionDao.findExpandedItems(eq(tenantId), eq(actorId), any()))
+        .thenReturn(ImmutableList.of());
 
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();

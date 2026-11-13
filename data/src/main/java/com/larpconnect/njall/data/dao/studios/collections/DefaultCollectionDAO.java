@@ -4,13 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallUsers;
-import com.larpconnect.njall.data.dao.common.ActorOwnerValidator;
+import com.larpconnect.njall.data.dao.common.ActorGeneratorValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
 import com.larpconnect.njall.data.domain.Collection;
 import com.larpconnect.njall.data.domain.ExpandedEntity;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.Session;
@@ -20,34 +19,19 @@ import org.hibernate.Transaction;
 final class DefaultCollectionDAO implements CollectionDAO {
 
   private static final String ENTITY_TYPE_COLLECTION = "OrderedCollection";
-  private static final String SET_TENANT_CONFIG =
-      "SELECT set_config('app.tenant_id', :tenantId, true)";
-
-  private static final String EXPANDED_ITEMS_QUERY =
+  static final String SET_TENANT_CONFIG = "SELECT set_config('app.tenant_id', :tenantId, true)";
+  static final String EXISTS_BY_OWNER_AND_NAME_HQL =
       """
-      SELECT e.id, e.owner, e.entity_type, e.summary,
-             COALESCE(
-                 i.name, ev.title, loc.name, l.url, a.preferred_username, c.name
-             ) AS display_name
-      FROM njall_users.collection_items ci
-      JOIN njall_users.entities e
-        ON ci.refers_to_tenant_id = e.tenant_id AND ci.refers_to_id = e.id
-      LEFT JOIN njall_users.individuals i
-        ON e.tenant_id = i.tenant_id AND e.id = i.id
-      LEFT JOIN njall_users.events ev
-        ON e.tenant_id = ev.tenant_id AND e.id = ev.id
-      LEFT JOIN njall_users.locations loc
-        ON e.tenant_id = loc.tenant_id AND e.id = loc.id
-      LEFT JOIN njall_users.links l
-        ON e.tenant_id = l.tenant_id AND e.id = l.id
-      LEFT JOIN njall_users.actors a
-        ON e.tenant_id = a.tenant_id AND e.id = a.id
-      LEFT JOIN njall_users.collections c
-        ON e.tenant_id = c.tenant_id AND e.id = c.id
-      WHERE ci.tenant_id = :tenantId
-        AND ci.collection_id = :collectionId
-        AND e.deleted_on IS NULL
-      ORDER BY ci.ordinal ASC
+      SELECT COUNT(c) FROM CollectionEntity c, EntityBaseEntity e
+      WHERE c.tenantId = :tenantId AND c.ownerId = :ownerId AND c.name = :name
+        AND c.tenantId = e.tenantId AND c.id = e.id AND e.deletedOn IS NULL
+      """;
+  static final String EXISTS_BY_OWNER_AND_NAME_EXCLUDING_ID_HQL =
+      """
+      SELECT COUNT(c) FROM CollectionEntity c, EntityBaseEntity e
+      WHERE c.tenantId = :tenantId AND c.ownerId = :ownerId AND c.name = :name
+        AND c.tenantId = e.tenantId AND c.id = e.id AND e.deletedOn IS NULL
+        AND c.id != :excludeId
       """;
 
   private final Provider<SessionFactory> sessionFactoryProvider;
@@ -58,22 +42,14 @@ final class DefaultCollectionDAO implements CollectionDAO {
   }
 
   @Override
-  public Optional<Collection> findById(UUID tenantId, UUID collectionId) {
+  public boolean isActiveActor(UUID tenantId, UUID actorId) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = createEntityId(tenantId, collectionId);
-        var entity = session.find(EntityBaseEntity.class, entityId);
-        var collection = session.find(CollectionEntity.class, entityId);
-        if (entity == null || collection == null || entity.getDeletedOn() != null) {
-          tx.commit();
-          return Optional.empty();
-        }
-
-        var itemIds = queryActiveItemIds(session, tenantId, collectionId);
+        boolean active = ActorGeneratorValidator.isActiveActor(session, tenantId, actorId);
         tx.commit();
-        return Optional.of(mapToDomain(entity, collection, itemIds));
+        return active;
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -82,20 +58,41 @@ final class DefaultCollectionDAO implements CollectionDAO {
   }
 
   @Override
-  public ImmutableList<ExpandedEntity> findExpandedItems(UUID tenantId, UUID collectionId) {
+  public Optional<Collection> findById(UUID tenantId, UUID actorId, UUID collectionId) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        @SuppressWarnings("unchecked")
-        List<Object[]> rows =
-            session
-                .createNativeQuery(EXPANDED_ITEMS_QUERY, Object[].class)
-                .setParameter("tenantId", tenantId)
-                .setParameter("collectionId", collectionId)
-                .getResultList();
+        var scoped = loadScopedCollection(session, tenantId, actorId, collectionId);
+        if (scoped.isEmpty()) {
+          tx.commit();
+          return Optional.empty();
+        }
+        var found = scoped.orElseThrow();
+        var itemIds = CollectionItemHelper.queryActiveItemIds(session, tenantId, collectionId);
         tx.commit();
-        return mapExpandedRows(rows);
+        return Optional.of(mapToDomain(found.base(), found.collection(), itemIds));
+      } catch (Exception e) {
+        rollbackQuietly(tx, e);
+        throw e;
+      }
+    }
+  }
+
+  @Override
+  public ImmutableList<ExpandedEntity> findExpandedItems(
+      UUID tenantId, UUID actorId, UUID collectionId) {
+    try (var session = sessionFactoryProvider.get().openSession()) {
+      var tx = session.beginTransaction();
+      try {
+        setTenantContext(session, tenantId);
+        if (loadScopedBase(session, tenantId, actorId, collectionId).isEmpty()) {
+          tx.commit();
+          return ImmutableList.of();
+        }
+        var items = CollectionItemHelper.queryExpandedItems(session, tenantId, collectionId);
+        tx.commit();
+        return items;
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -110,21 +107,9 @@ final class DefaultCollectionDAO implements CollectionDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var hql =
-            "SELECT COUNT(c) FROM CollectionEntity c, EntityBaseEntity e "
-                + "WHERE c.tenantId = :tenantId AND c.ownerId = :ownerId AND c.name = :name "
-                + "AND c.tenantId = e.tenantId AND c.id = e.id AND e.deletedOn IS NULL"
-                + (excludeId.isPresent() ? " AND c.id != :excludeId" : "");
-        var query =
-            session
-                .createQuery(hql, Long.class)
-                .setParameter("tenantId", tenantId)
-                .setParameter("ownerId", ownerId)
-                .setParameter("name", name);
-        excludeId.ifPresent(id -> query.setParameter("excludeId", id));
-        long count = query.getSingleResult();
+        boolean exists = existsByOwnerAndName(session, tenantId, ownerId, name, excludeId);
         tx.commit();
-        return count > 0;
+        return exists;
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -134,15 +119,19 @@ final class DefaultCollectionDAO implements CollectionDAO {
 
   @Override
   public Collection create(
-      UUID tenantId, UUID owner, UUID ownerId, String name, Optional<String> summary) {
+      UUID tenantId, UUID generator, UUID ownerId, String name, Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        ActorOwnerValidator.validateActorOwner(session, tenantId, owner);
+        ActorGeneratorValidator.validateActorGenerator(session, tenantId, generator);
+        if (!ownerId.equals(generator)) {
+          ActorGeneratorValidator.validateActiveEntity(session, tenantId, ownerId);
+        }
+        requireUniqueOwnerName(session, tenantId, ownerId, name, Optional.empty());
         var collectionId = UUID.randomUUID();
         var now = Instant.now();
-        var baseEntity = createBaseEntity(tenantId, collectionId, owner, summary, now);
+        var baseEntity = createBaseEntity(tenantId, collectionId, generator, summary, now);
         session.persist(baseEntity);
 
         var collectionEntity = createCollectionEntity(tenantId, collectionId, ownerId, name);
@@ -160,28 +149,39 @@ final class DefaultCollectionDAO implements CollectionDAO {
 
   @Override
   public Optional<Collection> patch(
-      UUID tenantId, UUID collectionId, Optional<String> name, Optional<String> summary) {
+      UUID tenantId,
+      UUID actorId,
+      UUID collectionId,
+      Optional<String> name,
+      Optional<String> summary) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = createEntityId(tenantId, collectionId);
-        var entity = session.find(EntityBaseEntity.class, entityId);
-        var collection = session.find(CollectionEntity.class, entityId);
-        if (entity == null || collection == null || entity.getDeletedOn() != null) {
+        var scoped = loadScopedCollection(session, tenantId, actorId, collectionId);
+        if (scoped.isEmpty()) {
           tx.commit();
           return Optional.empty();
         }
+        var found = scoped.orElseThrow();
+        if (name.isPresent()) {
+          var newName = name.orElseThrow();
+          requireUniqueOwnerName(
+              session,
+              tenantId,
+              found.collection().getOwnerId(),
+              newName,
+              Optional.of(collectionId));
+          found.collection().setName(newName);
+        }
+        summary.ifPresent(found.base()::setSummary);
+        found.base().setUpdatedOn(Instant.now());
 
-        name.ifPresent(collection::setName);
-        summary.ifPresent(entity::setSummary);
-        entity.setUpdatedOn(Instant.now());
-
-        session.merge(entity);
-        session.merge(collection);
-        var itemIds = queryActiveItemIds(session, tenantId, collectionId);
+        session.merge(found.base());
+        session.merge(found.collection());
+        var itemIds = CollectionItemHelper.queryActiveItemIds(session, tenantId, collectionId);
         tx.commit();
-        return Optional.of(mapToDomain(entity, collection, itemIds));
+        return Optional.of(mapToDomain(found.base(), found.collection(), itemIds));
       } catch (Exception e) {
         rollbackQuietly(tx, e);
         throw e;
@@ -190,18 +190,17 @@ final class DefaultCollectionDAO implements CollectionDAO {
   }
 
   @Override
-  public boolean softDelete(UUID tenantId, UUID collectionId) {
+  public boolean softDelete(UUID tenantId, UUID actorId, UUID collectionId) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var entityId = createEntityId(tenantId, collectionId);
-        var entity = session.find(EntityBaseEntity.class, entityId);
-        if (entity == null || entity.getDeletedOn() != null) {
+        var baseOpt = loadScopedBase(session, tenantId, actorId, collectionId);
+        if (baseOpt.isEmpty()) {
           tx.commit();
           return false;
         }
-
+        var entity = baseOpt.orElseThrow();
         var now = Instant.now();
         entity.setDeletedOn(now);
         entity.setUpdatedOn(now);
@@ -218,6 +217,7 @@ final class DefaultCollectionDAO implements CollectionDAO {
   @Override
   public boolean addItem(
       UUID tenantId,
+      UUID actorId,
       UUID collectionId,
       UUID refersToId,
       Optional<UUID> before,
@@ -226,23 +226,27 @@ final class DefaultCollectionDAO implements CollectionDAO {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        if (!validateCollectionAndEntityExist(session, tenantId, collectionId, refersToId)) {
+        if (!validateCollectionAndEntityExist(
+            session, tenantId, actorId, collectionId, refersToId)) {
           tx.commit();
           return false;
         }
 
-        if (isItemAlreadyPresent(session, tenantId, collectionId, refersToId)) {
+        if (CollectionItemHelper.isItemAlreadyPresent(
+            session, tenantId, collectionId, refersToId)) {
           tx.commit();
           return true;
         }
 
-        int targetOrdinal = resolveTargetOrdinal(session, tenantId, collectionId, before, index);
-        shiftOrdinalsUp(session, tenantId, collectionId, targetOrdinal);
+        int targetOrdinal =
+            CollectionItemHelper.resolveTargetOrdinal(
+                session, tenantId, collectionId, before, index);
+        CollectionItemHelper.shiftOrdinalsUp(session, tenantId, collectionId, targetOrdinal);
 
         var itemId = UUID.randomUUID();
         var item =
-            createCollectionItemEntity(
-                itemId, tenantId, collectionId, targetOrdinal, Instant.now(), tenantId, refersToId);
+            CollectionItemHelper.createCollectionItemEntity(
+                itemId, tenantId, collectionId, targetOrdinal, Instant.now(), refersToId);
         session.persist(item);
         session.flush();
         tx.commit();
@@ -255,19 +259,18 @@ final class DefaultCollectionDAO implements CollectionDAO {
   }
 
   @Override
-  public boolean removeItem(UUID tenantId, UUID collectionId, UUID refersToId) {
+  public boolean removeItem(UUID tenantId, UUID actorId, UUID collectionId, UUID refersToId) {
     try (var session = sessionFactoryProvider.get().openSession()) {
       var tx = session.beginTransaction();
       try {
         setTenantContext(session, tenantId);
-        var collectionEntityId = createEntityId(tenantId, collectionId);
-        var collectionBase = session.find(EntityBaseEntity.class, collectionEntityId);
-        if (collectionBase == null || collectionBase.getDeletedOn() != null) {
+        if (loadScopedBase(session, tenantId, actorId, collectionId).isEmpty()) {
           tx.commit();
           return false;
         }
 
-        var item = findItemByRefersToId(session, tenantId, collectionId, refersToId);
+        var item =
+            CollectionItemHelper.findItemByRefersToId(session, tenantId, collectionId, refersToId);
         if (item.isEmpty()) {
           tx.commit();
           return true;
@@ -276,7 +279,7 @@ final class DefaultCollectionDAO implements CollectionDAO {
         var collectionItem = item.orElseThrow();
         int removedOrdinal = collectionItem.getOrdinal();
         session.remove(collectionItem);
-        shiftOrdinalsDown(session, tenantId, collectionId, removedOrdinal);
+        CollectionItemHelper.shiftOrdinalsDown(session, tenantId, collectionId, removedOrdinal);
         session.flush();
         tx.commit();
         return true;
@@ -288,115 +291,68 @@ final class DefaultCollectionDAO implements CollectionDAO {
   }
 
   private boolean validateCollectionAndEntityExist(
-      Session session, UUID tenantId, UUID collectionId, UUID refersToId) {
-    var collectionBase =
-        session.find(EntityBaseEntity.class, createEntityId(tenantId, collectionId));
-    if (collectionBase == null || collectionBase.getDeletedOn() != null) {
+      Session session, UUID tenantId, UUID actorId, UUID collectionId, UUID refersToId) {
+    if (loadScopedBase(session, tenantId, actorId, collectionId).isEmpty()) {
       return false;
     }
     var targetBase = session.find(EntityBaseEntity.class, createEntityId(tenantId, refersToId));
     return targetBase != null && targetBase.getDeletedOn() == null;
   }
 
-  private boolean isItemAlreadyPresent(
-      Session session, UUID tenantId, UUID collectionId, UUID refersToId) {
+  private Optional<EntityBaseEntity> loadScopedBase(
+      Session session, UUID tenantId, UUID actorId, UUID collectionId) {
+    if (!ActorGeneratorValidator.isActiveActor(session, tenantId, actorId)) {
+      return Optional.empty();
+    }
+    var entity = session.find(EntityBaseEntity.class, createEntityId(tenantId, collectionId));
+    if (entity == null
+        || entity.getDeletedOn() != null
+        || !ENTITY_TYPE_COLLECTION.equals(entity.getEntityType())
+        || !actorId.equals(entity.getGenerator())) {
+      return Optional.empty();
+    }
+    return Optional.of(entity);
+  }
+
+  private Optional<ScopedCollection> loadScopedCollection(
+      Session session, UUID tenantId, UUID actorId, UUID collectionId) {
+    var baseOpt = loadScopedBase(session, tenantId, actorId, collectionId);
+    if (baseOpt.isEmpty()) {
+      return Optional.empty();
+    }
+    var collection = session.find(CollectionEntity.class, createEntityId(tenantId, collectionId));
+    if (collection == null) {
+      return Optional.empty();
+    }
+    return Optional.of(createScopedCollection(baseOpt.orElseThrow(), collection));
+  }
+
+  private boolean existsByOwnerAndName(
+      Session session, UUID tenantId, UUID ownerId, String name, Optional<UUID> excludeId) {
     var hql =
-        "SELECT COUNT(ci) FROM CollectionItemEntity ci "
-            + "WHERE ci.tenantId = :tenantId AND ci.collectionId = :collectionId "
-            + "AND ci.refersToId = :refersToId";
-    long count =
+        excludeId.isPresent()
+            ? EXISTS_BY_OWNER_AND_NAME_EXCLUDING_ID_HQL
+            : EXISTS_BY_OWNER_AND_NAME_HQL;
+    var query =
         session
             .createQuery(hql, Long.class)
             .setParameter("tenantId", tenantId)
-            .setParameter("collectionId", collectionId)
-            .setParameter("refersToId", refersToId)
-            .getSingleResult();
-    return count > 0;
+            .setParameter("ownerId", ownerId)
+            .setParameter("name", name);
+    excludeId.ifPresent(id -> query.setParameter("excludeId", id));
+    return query.getSingleResult() > 0;
   }
 
-  private int resolveTargetOrdinal(
-      Session session,
-      UUID tenantId,
-      UUID collectionId,
-      Optional<UUID> before,
-      Optional<Integer> index) {
-    if (before.isPresent()) {
-      var beforeItem = findItemByRefersToId(session, tenantId, collectionId, before.orElseThrow());
-      return beforeItem.map(CollectionItemEntity::getOrdinal).orElse(0);
+  private void requireUniqueOwnerName(
+      Session session, UUID tenantId, UUID ownerId, String name, Optional<UUID> excludeId) {
+    if (existsByOwnerAndName(session, tenantId, ownerId, name, excludeId)) {
+      throw createDuplicateNameException(name);
     }
-    return index.map(i -> Math.max(0, i)).orElse(0);
   }
 
-  private Optional<CollectionItemEntity> findItemByRefersToId(
-      Session session, UUID tenantId, UUID collectionId, UUID refersToId) {
-    var hql =
-        "FROM CollectionItemEntity ci "
-            + "WHERE ci.tenantId = :tenantId AND ci.collectionId = :collectionId "
-            + "AND ci.refersToId = :refersToId";
-    return session
-        .createQuery(hql, CollectionItemEntity.class)
-        .setParameter("tenantId", tenantId)
-        .setParameter("collectionId", collectionId)
-        .setParameter("refersToId", refersToId)
-        .uniqueResultOptional();
-  }
-
-  private void shiftOrdinalsUp(
-      Session session, UUID tenantId, UUID collectionId, int targetOrdinal) {
-    var updateHql =
-        "UPDATE CollectionItemEntity ci SET ci.ordinal = ci.ordinal + 1 "
-            + "WHERE ci.tenantId = :tenantId AND ci.collectionId = :collectionId "
-            + "AND ci.ordinal >= :targetOrdinal";
-    session
-        .createMutationQuery(updateHql)
-        .setParameter("tenantId", tenantId)
-        .setParameter("collectionId", collectionId)
-        .setParameter("targetOrdinal", targetOrdinal)
-        .executeUpdate();
-  }
-
-  private void shiftOrdinalsDown(
-      Session session, UUID tenantId, UUID collectionId, int removedOrdinal) {
-    var updateHql =
-        "UPDATE CollectionItemEntity ci SET ci.ordinal = ci.ordinal - 1 "
-            + "WHERE ci.tenantId = :tenantId AND ci.collectionId = :collectionId "
-            + "AND ci.ordinal > :removedOrdinal";
-    session
-        .createMutationQuery(updateHql)
-        .setParameter("tenantId", tenantId)
-        .setParameter("collectionId", collectionId)
-        .setParameter("removedOrdinal", removedOrdinal)
-        .executeUpdate();
-  }
-
-  private ImmutableList<UUID> queryActiveItemIds(
-      Session session, UUID tenantId, UUID collectionId) {
-    var hql =
-        "SELECT ci.refersToId FROM CollectionItemEntity ci, EntityBaseEntity e "
-            + "WHERE ci.tenantId = :tenantId AND ci.collectionId = :collectionId "
-            + "AND ci.refersToTenantId = e.tenantId AND ci.refersToId = e.id "
-            + "AND e.deletedOn IS NULL "
-            + "ORDER BY ci.ordinal ASC";
-    List<UUID> results =
-        session
-            .createQuery(hql, UUID.class)
-            .setParameter("tenantId", tenantId)
-            .setParameter("collectionId", collectionId)
-            .getResultList();
-    return ImmutableList.copyOf(results);
-  }
-
-  private ImmutableList<ExpandedEntity> mapExpandedRows(List<Object[]> rows) {
-    return rows.stream()
-        .map(
-            row ->
-                new ExpandedEntity(
-                    (UUID) row[0],
-                    (UUID) row[1],
-                    (String) row[2],
-                    (String) row[4],
-                    (String) row[3]))
-        .collect(ImmutableList.toImmutableList());
+  private static IllegalStateException createDuplicateNameException(String name) {
+    return new IllegalStateException(
+        "Collection with name '" + name + "' already exists for owner");
   }
 
   private void setTenantContext(Session session, UUID tenantId) {
@@ -419,11 +375,11 @@ final class DefaultCollectionDAO implements CollectionDAO {
   }
 
   private static EntityBaseEntity createBaseEntity(
-      UUID tenantId, UUID collectionId, UUID owner, Optional<String> summary, Instant now) {
+      UUID tenantId, UUID collectionId, UUID generator, Optional<String> summary, Instant now) {
     return new EntityBaseEntity(
         tenantId,
         collectionId,
-        owner,
+        generator,
         ENTITY_TYPE_COLLECTION,
         summary.orElse(null),
         now,
@@ -436,23 +392,11 @@ final class DefaultCollectionDAO implements CollectionDAO {
     return new CollectionEntity(tenantId, collectionId, ownerId, name);
   }
 
-  private static CollectionItemEntity createCollectionItemEntity(
-      UUID id,
-      UUID tenantId,
-      UUID collectionId,
-      int ordinal,
-      Instant addedOn,
-      UUID refersToTenantId,
-      UUID refersToId) {
-    return new CollectionItemEntity(
-        id, tenantId, collectionId, ordinal, addedOn, refersToTenantId, refersToId);
-  }
-
   private Collection mapToDomain(
       EntityBaseEntity entity, CollectionEntity collection, ImmutableList<UUID> itemIds) {
     return new Collection(
         collection.getId(),
-        entity.getOwner(),
+        entity.getGenerator(),
         collection.getOwnerId(),
         collection.getName(),
         entity.getSummary(),
@@ -461,5 +405,29 @@ final class DefaultCollectionDAO implements CollectionDAO {
         entity.getCreatedOn(),
         entity.getUpdatedOn(),
         entity.getDeletedOn());
+  }
+
+  private static ScopedCollection createScopedCollection(
+      EntityBaseEntity base, CollectionEntity collection) {
+    return new ScopedCollection(base, collection);
+  }
+
+  private static final class ScopedCollection {
+
+    private final EntityBaseEntity base;
+    private final CollectionEntity collection;
+
+    private ScopedCollection(EntityBaseEntity base, CollectionEntity collection) {
+      this.base = base;
+      this.collection = collection;
+    }
+
+    private EntityBaseEntity base() {
+      return base;
+    }
+
+    private CollectionEntity collection() {
+      return collection;
+    }
   }
 }

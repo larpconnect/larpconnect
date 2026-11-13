@@ -188,7 +188,7 @@ final class EventActor extends AbstractBehavior<EventCommand> {
   private EventResponse toEventResponse(String studioIdentifier, Event event) {
     return new EventResponse(
         event.id(),
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, event.owner()),
+        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, event.generator()),
         event.title(),
         event.summary(),
         event.locationId(),
