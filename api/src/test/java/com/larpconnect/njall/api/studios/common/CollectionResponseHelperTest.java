@@ -3,8 +3,8 @@ package com.larpconnect.njall.api.studios.common;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.domain.Collection;
-import com.larpconnect.njall.data.domain.ExpandedEntity;
+import com.larpconnect.njall.data.domain.studios.Collection;
+import com.larpconnect.njall.data.domain.studios.ExpandedEntity;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

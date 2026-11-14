@@ -1,6 +1,6 @@
 package com.larpconnect.njall.data.dao.studios.actors;
 
-import com.larpconnect.njall.data.domain.Agent;
+import com.larpconnect.njall.data.domain.studios.Agent;
 import java.util.Optional;
 import java.util.UUID;
 

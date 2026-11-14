@@ -88,7 +88,7 @@ Examples of things that are not constants are thus must be named with `lowerCame
 
 ##### Non-ASCII characters
 
-When strings contain non-ASCII characters it is **always** preferred to use the actual unicode character, e.g., `String unitAbbrev = "μs"`. If this is not possible (e.g., because it is a non-printable character) then it should use an excape and be commented, e.g., `return '\ufeff' + content; // byte order mark`.
+When strings contain non-ASCII characters it is **always** preferred to use the actual unicode character, e.g., `String unitAbbrev = "μs"`. If this is not possible (e.g., because it is a non-printable character) then it should use an escape and be commented, e.g., `return '\ufeff' + content; // byte order mark`.
 
 ##### Blocks
 
@@ -102,9 +102,28 @@ like this
 """
 ```
 
+String concatenation should be avoided, but not for performance reasons. Rather it should be avoided because there is almost always a better solution in modern java.
+
 #### Methods
 
 - Public methods should avoid `boolean` arguments. Prefer using an enum flag or two separate methods.
 
 
+#### Database Fields and Naming
 
+- Tables are plural
+- When a name is a foreign key identifier backed by a UUID it is suffixed with `_id` (or it **is** `id`). nb this does not necessarily hold in _other layers_ of the system: the API may very well not munge its name to match the database schema.
+- Always scope a table name in the appropriate schema.
+
+#### Logging
+
+In general:
+
+- `ERROR` is for unrecoverable, system-level errors. 
+- `WARN` is for recoverable or user-level errors.
+- `INFO` is for informational pieces of data that is contextually relevant to what is happening. 
+- `DEBUG` and below are for information that we do not want continually streaming in production.
+
+### Report
+
+When done print a report to the user or invoking agent. That report should break down all readability issues identified. 

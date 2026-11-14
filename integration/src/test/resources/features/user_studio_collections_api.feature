@@ -713,3 +713,103 @@ Feature: User Space Studio Collections REST API
     And the JSON response path "orderedItems.0" has value "{item_beta_id}"
     And the JSON response path "orderedItems.1" has value "{item_delta_id}"
     And the JSON response path "orderedItems.2" has value "{item_alpha_id}"
+
+  Scenario: Retrieve expanded collection containing System, Campaign, and Game items
+    Given the admin HTTP server is running with database migrations applied
+    When an API admin sends a POST request to "/api/admin/v1/studios" with body:
+      """
+      {
+        "alias": "valiant_col_scg",
+        "name": "Valiant Systems Campaigns Games Collection Studio"
+      }
+      """
+    Then the HTTP response status code is 201
+    When an API admin sends a POST request to "/api/studios/valiant_col_scg/v1/actors" with body:
+      """
+      {
+        "preferredUsername": "scg_owner"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "scg_owner_id"
+    When an API admin sends a POST request to "/api/studios/valiant_col_scg/v1/systems" with body:
+      """
+      {
+        "generator": "{scg_owner_id}",
+        "name": "Vampire: The Masquerade",
+        "summary": "Core Vampire ruleset"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "scg_system_id"
+    When an API admin sends a POST request to "/api/studios/valiant_col_scg/v1/campaigns" with body:
+      """
+      {
+        "generator": "{scg_owner_id}",
+        "title": "Seattle By Night",
+        "summary": "Northwest chronicle",
+        "system": "{scg_system_id}"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "scg_campaign_id"
+    When an API admin sends a POST request to "/api/studios/valiant_col_scg/v1/games" with body:
+      """
+      {
+        "generator": "{scg_owner_id}",
+        "title": "Opening Elysium",
+        "summary": "Premiere session",
+        "system": "{scg_system_id}",
+        "campaign": "{scg_campaign_id}"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "scg_game_id"
+    When an API admin sends a POST request to "/api/studios/valiant_col_scg/v1/actors/{scg_owner_id}/collections" with body:
+      """
+      {
+        "name": "Tabletop Lineup"
+      }
+      """
+    Then the HTTP response status code is 201
+    And the response field "id" is remembered as "scg_col_id"
+    When an API admin sends a POST request to "/api/studios/valiant_col_scg/v1/actors/{scg_owner_id}/collections/{scg_col_id}:addItem" with body:
+      """
+      {
+        "refersToId": "{scg_game_id}"
+      }
+      """
+    Then the HTTP response status code is 204
+    When an API admin sends a POST request to "/api/studios/valiant_col_scg/v1/actors/{scg_owner_id}/collections/{scg_col_id}:addItem" with body:
+      """
+      {
+        "refersToId": "{scg_campaign_id}"
+      }
+      """
+    Then the HTTP response status code is 204
+    When an API admin sends a POST request to "/api/studios/valiant_col_scg/v1/actors/{scg_owner_id}/collections/{scg_col_id}:addItem" with body:
+      """
+      {
+        "refersToId": "{scg_system_id}"
+      }
+      """
+    Then the HTTP response status code is 204
+    When an API admin sends a GET request to "/api/studios/valiant_col_scg/v1/actors/{scg_owner_id}/collections/{scg_col_id}?form=expanded"
+    Then the HTTP response status code is 200
+    And the JSON response contains field "totalItems" with value "3"
+    And the JSON response array "orderedItems" has length 3
+    And the JSON response path "orderedItems.0.id" has value "{scg_system_id}"
+    And the JSON response path "orderedItems.0.type" has value "System"
+    And the JSON response path "orderedItems.0.name" has value "Vampire: The Masquerade"
+    And the JSON response path "orderedItems.0.summary" has value "Core Vampire ruleset"
+    And the JSON response path "orderedItems.0.generator" has value "/api/studios/valiant_col_scg/v1/actors/{scg_owner_id}"
+    And the JSON response path "orderedItems.1.id" has value "{scg_campaign_id}"
+    And the JSON response path "orderedItems.1.type" has value "Campaign"
+    And the JSON response path "orderedItems.1.name" has value "Seattle By Night"
+    And the JSON response path "orderedItems.1.summary" has value "Northwest chronicle"
+    And the JSON response path "orderedItems.1.generator" has value "/api/studios/valiant_col_scg/v1/actors/{scg_owner_id}"
+    And the JSON response path "orderedItems.2.id" has value "{scg_game_id}"
+    And the JSON response path "orderedItems.2.type" has value "Game"
+    And the JSON response path "orderedItems.2.name" has value "Opening Elysium"
+    And the JSON response path "orderedItems.2.summary" has value "Premiere session"
+    And the JSON response path "orderedItems.2.generator" has value "/api/studios/valiant_col_scg/v1/actors/{scg_owner_id}"

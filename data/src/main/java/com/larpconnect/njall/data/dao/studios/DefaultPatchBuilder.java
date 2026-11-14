@@ -1,8 +1,8 @@
 package com.larpconnect.njall.data.dao.studios;
 
-import com.larpconnect.njall.data.domain.Address;
-import com.larpconnect.njall.data.domain.AddressType;
-import com.larpconnect.njall.data.domain.GeoJsonPoint;
+import com.larpconnect.njall.data.domain.common.GeoJsonPoint;
+import com.larpconnect.njall.data.domain.studios.Address;
+import com.larpconnect.njall.data.domain.studios.AddressType;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;

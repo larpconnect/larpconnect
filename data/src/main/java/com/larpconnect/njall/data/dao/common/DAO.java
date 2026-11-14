@@ -1,7 +1,7 @@
 package com.larpconnect.njall.data.dao.common;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.domain.DatabaseObject;
+import com.larpconnect.njall.data.domain.common.DatabaseObject;
 import java.util.Optional;
 import java.util.UUID;
 

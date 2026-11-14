@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.larpconnect.njall.data.domain.ContactType;
-import com.larpconnect.njall.data.domain.RoleType;
+import com.larpconnect.njall.data.domain.admin.RoleType;
+import com.larpconnect.njall.data.domain.servers.ContactType;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

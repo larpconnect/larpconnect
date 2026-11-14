@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.studios.actors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;

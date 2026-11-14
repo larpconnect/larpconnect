@@ -1,7 +1,7 @@
 package com.larpconnect.njall.api.admin.studios;
 
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.DeletionFilter;
+import com.larpconnect.njall.data.domain.common.DeletionFilter;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;

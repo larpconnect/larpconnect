@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin.studioroles;
 
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.DefaultStudioRole;
+import com.larpconnect.njall.data.domain.admin.DefaultStudioRole;
 
 /** Response protocol emitted by the default studio role admin actor. */
 public sealed interface StudioRoleAdminResponse {

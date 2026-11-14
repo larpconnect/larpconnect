@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.studios.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

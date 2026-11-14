@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin.studios;
 
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
 
 /** Response protocol emitted by the studio admin actor. */
 public sealed interface StudioAdminResponse {

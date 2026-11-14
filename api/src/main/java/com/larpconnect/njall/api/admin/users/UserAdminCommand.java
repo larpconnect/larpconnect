@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin.users;
 
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.AdminUserStatus;
+import com.larpconnect.njall.data.domain.admin.AdminUserStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

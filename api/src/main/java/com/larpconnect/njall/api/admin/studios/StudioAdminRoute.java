@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.admin.common.AdminErrorResponse;
 import com.larpconnect.njall.api.admin.common.AdminValidation;
-import com.larpconnect.njall.data.domain.DeletionFilter;
+import com.larpconnect.njall.data.domain.common.DeletionFilter;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;

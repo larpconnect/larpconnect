@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
-import com.larpconnect.njall.data.domain.Collection;
+import com.larpconnect.njall.data.domain.studios.Collection;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;

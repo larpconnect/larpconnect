@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.domain.AdminRole;
+import com.larpconnect.njall.data.domain.admin.AdminRole;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;

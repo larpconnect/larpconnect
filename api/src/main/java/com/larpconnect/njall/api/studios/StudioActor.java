@@ -2,8 +2,8 @@ package com.larpconnect.njall.api.studios;
 
 import com.google.common.base.Strings;
 import com.larpconnect.njall.data.dao.studios.StudioDAO;
-import com.larpconnect.njall.data.domain.Studio;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
+import com.larpconnect.njall.data.domain.studios.Studio;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;
 import org.apache.pekko.actor.typed.javadsl.AbstractBehavior;

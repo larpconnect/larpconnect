@@ -8,7 +8,7 @@ import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.addresses.AddressesRoute;
 import com.larpconnect.njall.api.studios.common.StudioErrorResponse;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;

@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.larpconnect.njall.data.dao.studios.LinkDAO;
-import com.larpconnect.njall.data.domain.Link;
+import com.larpconnect.njall.data.domain.studios.Link;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

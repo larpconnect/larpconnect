@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
-import com.larpconnect.njall.data.domain.AdminRole;
+import com.larpconnect.njall.data.domain.admin.AdminRole;
 import java.util.Optional;
 import java.util.UUID;
 import org.hibernate.SessionFactory;

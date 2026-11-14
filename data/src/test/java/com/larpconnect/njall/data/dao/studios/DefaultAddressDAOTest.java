@@ -10,8 +10,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.larpconnect.njall.data.dao.common.EntityId;
-import com.larpconnect.njall.data.domain.AddressType;
-import com.larpconnect.njall.data.domain.GeoJsonPoint;
+import com.larpconnect.njall.data.domain.common.GeoJsonPoint;
+import com.larpconnect.njall.data.domain.studios.AddressType;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;

@@ -1,8 +1,8 @@
 package com.larpconnect.njall.data.dao.studios.collections;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.domain.Collection;
-import com.larpconnect.njall.data.domain.ExpandedEntity;
+import com.larpconnect.njall.data.domain.studios.Collection;
+import com.larpconnect.njall.data.domain.studios.ExpandedEntity;
 import java.util.Optional;
 import java.util.UUID;
 

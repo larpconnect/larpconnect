@@ -7,7 +7,7 @@ import com.larpconnect.njall.data.annotation.NjallUsers;
 import com.larpconnect.njall.data.dao.common.ActorGeneratorValidator;
 import com.larpconnect.njall.data.dao.common.EntityBaseEntity;
 import com.larpconnect.njall.data.dao.common.EntityId;
-import com.larpconnect.njall.data.domain.Hashtag;
+import com.larpconnect.njall.data.domain.studios.Hashtag;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;

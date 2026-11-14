@@ -1,0 +1,41 @@
+## Why
+
+**Njall** currently models general scheduled **Events** under a **Studio** **Tenant**, but lacks first-class domain models and **User plane** APIs for tabletop and live-action roleplaying rulesets (**System**), multi-session chronicles (**Campaigns**), and runnable game sessions (**Games**). Introducing **System**, **Campaigns**, and **Games** as Common Table Inheritance (CTI) **Entity** subtypes—with an `event_type` classification on `njall_users.events` and flat AIP-124 peer collections under `/api/studios/{studio-id}/v1/`—unlocks core LARP scheduling, chronicle organization, and **FeatherPub** resource linking while preserving strict Row-Level Security isolation and single-canonical-URI semantics.
+
+## What Changes
+
+- Add Flyway migration `V14__systems_campaigns_and_games.sql` in `:data`:
+  - Define PostgreSQL enum `njall_users.tevent_type` (`'EVENT_TYPE_UNSPECIFIED'`, `'GAME'`, `'WORKSHOP'`, `'CONFERENCE'`, `'MEETUP'`) and add `event_type njall_users.tevent_type NOT NULL DEFAULT 'EVENT_TYPE_UNSPECIFIED'` to `njall_users.events`.
+  - Create CTI subtype table `njall_users.systems` referencing `njall_users.entities(tenant_id, id) ON DELETE CASCADE` with `name VARCHAR NOT NULL` and case-insensitive per-tenant unique index `idx_systems_tenant_name ON (tenant_id, lower(name))`.
+  - Create CTI subtype table `njall_users.campaigns` referencing `njall_users.entities(tenant_id, id) ON DELETE CASCADE` with optional `system_id UUID NULL` referencing `njall_users.systems(tenant_id, id) ON DELETE SET NULL`, `title VARCHAR NOT NULL`, and lookup indices on `(tenant_id, title)` and `(tenant_id, system_id)`.
+  - Create 2nd-level CTI subtype table `njall_users.games` referencing `njall_users.events(tenant_id, id) ON DELETE CASCADE` (`1:1` event-to-game parity) with required `system_id UUID NOT NULL` referencing `njall_users.systems(tenant_id, id)` and optional `campaign_id UUID NULL` referencing `njall_users.campaigns(tenant_id, id) ON DELETE SET NULL`, plus Row-Level Security (`njall_users` tenant policy + `njall_admin` bypass) and table grants across all three tables.
+- Unseal `DatabaseObject` and decompose `com.larpconnect.njall.data.domain` into `common`, `admin`, `servers`, and `studios` subpackages (mirroring `DAO` decomposition under ADR-0032's 20-type package cap), introducing immutable `EventType`, **GameSystem**, `Campaign`, and `Game` domain models.
+- Decompose `EventDAO` and `EventEntity` into `com.larpconnect.njall.data.dao.studios.events` and add tenanted **DAO** subpackages `systems` (`GameSystemDAO`), `campaigns` (`CampaignDAO`), and `games` (`GameDAO`), plus **System** and **Campaigns** display-name joins in `CollectionItemHelper` for expanded **Collections** hydration.
+- Expose flat AIP-124 peer studio collections in `:api` and `openapi.yaml` (aggregating studio subroutes via a `@StudioSubRoute` Guice multibinder to stay well within Checkstyle parameter thresholds):
+  - `/api/studios/{studio-id}/v1/systems` and `/api/studios/{studio-id}/v1/systems/{system-id}` (`POST`, `GET` list, `GET` detail, AIP-134 `PATCH`, soft-delete `DELETE`, returning `409 Conflict` on case-insensitive name collisions).
+  - `/api/studios/{studio-id}/v1/campaigns` and `/api/studios/{studio-id}/v1/campaigns/{campaign-id}` (`POST`, `GET` list with optional `?systemId` filter, `GET` detail, AIP-134 `PATCH`, soft-delete `DELETE`).
+  - `/api/studios/{studio-id}/v1/games` and `/api/studios/{studio-id}/v1/games/{game-id}` (`POST`, `GET` list with optional `?systemId` and `?campaignId` filters, `GET` detail, AIP-134 `PATCH`, soft-delete `DELETE`, emitting output-only `eventType = "GAME"` and keeping `game.system` independent of `campaign.system`).
+  - Update `/api/studios/{studio-id}/v1/events` and `/api/studios/{studio-id}/v1/events/{id}` to expose `eventType` (defaulting to `EVENT_TYPE_UNSPECIFIED`), reject `eventType = "GAME"` on `POST` and `PATCH` (`400 Bad Request`), and scope queries strictly to `entity_type = 'Event'` so **Games** and non-game **Events** maintain disjoint canonical URIs.
+  - Format `system` and `campaign` references as canonical AIP-122 studio URIs (`/api/studios/{studio-id}/v1/systems/{system-id}`, `/api/studios/{studio-id}/v1/campaigns/{campaign-id}`) on output while accepting either a bare UUID or canonical studio URI on input (matching **generator** URI handling).
+
+## Capabilities
+
+### New Capabilities
+- `user-studio-systems-api`: Tenanted HTTP REST endpoints under `/api/studios/{studio-id}/v1/systems` for creating, listing, retrieving, partially updating, and soft-deleting studio **System** entities (`entity_type = 'System'`) with **Actor** **generator** provenance and case-insensitive per-tenant name uniqueness (`409 Conflict`).
+- `user-studio-campaigns-api`: Tenanted HTTP REST endpoints under `/api/studios/{studio-id}/v1/campaigns` for creating, listing (filterable by `systemId`), retrieving, partially updating, and soft-deleting studio **Campaigns** entities (`entity_type = 'Campaign'`) with optional canonical **System** resource references.
+- `user-studio-games-api`: Tenanted HTTP REST endpoints under `/api/studios/{studio-id}/v1/games` for creating, listing (filterable by `systemId` and `campaignId`), retrieving, partially updating, and soft-deleting studio **Games** entities (`entity_type = 'Game'`, `eventType = "GAME"`) with required **System** and optional **Campaigns** resource references independent of `campaign.system`.
+
+### Modified Capabilities
+- `database-migration`: Add Flyway migration `V14__systems_campaigns_and_games.sql` provisioning `njall_users.tevent_type`, `njall_users.events.event_type`, `njall_users.systems`, `njall_users.campaigns`, and `njall_users.games` with CTI foreign keys, indices, Row-Level Security policies, and grants.
+- `data-persistence`: Unseal `DatabaseObject` across `data.domain` subpackages (`common`, `admin`, `servers`, `studios`), add `EventType`, **GameSystem**, `Campaign`, and `Game` records, move `EventDAO` to `studios.events` scoped to `entity_type = 'Event'`, add `GameSystemDAO`, `CampaignDAO`, and `GameDAO`, and hydrate **System** and **Campaigns** names in expanded **Collections** queries.
+- `user-studio-events-api`: Expose `eventType` (`EVENT_TYPE_UNSPECIFIED`, `WORKSHOP`, `CONFERENCE`, `MEETUP`) defaulting to `EVENT_TYPE_UNSPECIFIED`, reject `GAME` on `/v1/events` write operations with `400 Bad Request`, and return `404 Not Found` for **Games** entity IDs on `/v1/events/{id}`.
+- `user-studio-collections-api`: Support active **System**, **Campaigns**, and **Games** entities in expanded **Collections** responses (`?form=expanded`) with hydrated `type` and display `name`.
+- `architectural-invariants`: Update package decomposition and route aggregation invariants for `com.larpconnect.njall.data.domain.*`, `com.larpconnect.njall.data.dao.studios.*`, and `@StudioSubRoute` multibinding in `com.larpconnect.njall.api.studios`.
+
+## Impact
+
+- **Glossary**: Updates `glossary/business.md` (`Games`) and `glossary/technical.md` (`GameSystem`).
+- **Database (`:data` migrations)**: Adds `data/src/main/resources/db/migration/V14__systems_campaigns_and_games.sql`.
+- **Data Module (`:data`)**: Reorganizes `com.larpconnect.njall.data.domain` into `common`, `admin`, `servers`, and `studios` subpackages; moves `EventDAO` / `DefaultEventDAO` / `EventEntity` to `com.larpconnect.njall.data.dao.studios.events`; adds `systems`, `campaigns`, and `games` DAO subpackages; updates `StudiosDaoModule` and `CollectionItemHelper`.
+- **API Module (`:api`)**: Updates `api/src/main/resources/openapi.yaml`; generalizes studio resource URI parsing/formatting in `com.larpconnect.njall.api.studios.common`; updates `StudioSubRoutes` and `StudiosModule` to use `@StudioSubRoute` multibindings; updates `events` package for `eventType`; adds `systems`, `campaigns`, and `games` packages (`Route`, Pekko **Actor**, factory, command/response protocols, validation, and **DTO** records); updates domain imports across `:api` and `:server`.
+- **Integration Module (`:integration`)**: Updates `user_studio_events_api.feature` and adds Cucumber feature files and step definitions covering `V14` migrations, `/v1/systems`, `/v1/campaigns`, `/v1/games`, cross-tenant Row-Level Security isolation, and expanded collection hydration.

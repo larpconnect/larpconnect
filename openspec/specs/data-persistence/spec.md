@@ -6,17 +6,17 @@ Provides sealed base DAO and DatabaseObject abstractions, dual role-scoped Hiber
 
 ## Requirements
 
-### Requirement: Sealed Database Object and Base DAO Abstraction
-The system SHALL provide a sealed `DatabaseObject` interface representing domain records with a UUID identifier and a sealed `DAO<T extends DatabaseObject>` interface exposing `findById(UUID id)` returning `Optional<T>` and `list()` returning `ImmutableList<T>`. The `DAO` sealed interface SHALL permit `ServerDAO`, `AdminUserDAO`, `AdminRoleDAO`, `StudioLookupDAO`, `StudioDAO`, `StudioRoleDAO`, `LinkDAO`, `LocationDAO`, and `AddressDAO`.
+### Requirement: Base Database Object and DAO Abstractions
+The system SHALL provide an unsealed `DatabaseObject` interface (`UUID id()`) in `com.larpconnect.njall.data.domain.common` and an unsealed `DAO<T extends DatabaseObject>` interface (`findById(UUID)`, `list()`) in `com.larpconnect.njall.data.dao.common` extended by all concrete **DAO** interfaces across `:data`.
 
 #### Scenario: Query database object by primary key
 - **GIVEN** a persisted entity with a known UUID identifier in the database
-- **WHEN** a client invokes `findById(UUID id)` on the **DAO**
+- **WHEN** a client invokes `findById(UUID id)` on a **DAO** supporting global lookup
 - **THEN** the system returns an `Optional` containing the populated domain record
 
 #### Scenario: Query all database objects
 - **GIVEN** one or more persisted entities present in the database
-- **WHEN** a client invokes `list()` on the **DAO**
+- **WHEN** a client invokes `list()` on a **DAO** supporting global listing
 - **THEN** the system returns an `ImmutableList` containing all corresponding domain records
 
 ### Requirement: Dual Role-Scoped Hibernate Session Factories
@@ -63,13 +63,13 @@ The system SHALL enforce via ArchUnit in the `:integration` module that no non-t
 - **THEN** zero classes inject a bare `SessionFactory` into an `@Inject` constructor, method, field, or `@Provides` method
 - **AND** all existing session factory consumers inject `Provider<SessionFactory>`
 
-### Requirement: Admin Domain Records and Sealed DatabaseObject Hierarchy
-The system SHALL expand the sealed `DatabaseObject` hierarchy to permit `Server`, `AdminUser`, `AdminRole`, and `StudioLookup`. All domain records SHALL be immutable and provide UUID primary identifiers via `id()`. `StudioLookup` SHALL expose both `tenantId()` and `studioId()`, with `id()` mapping to `studioId()`.
+### Requirement: Domain Subpackage Hierarchy and Immutable Domain Records
+The system SHALL partition `@Immutable` domain records and enums across `com.larpconnect.njall.data.domain.{common,admin,servers,studios}`, including `EventType`, `Event`, **GameSystem**, `Campaign`, and `Game` in `studios` and `AdminUser`, `AdminRole`, and `StudioLookup` (`id()` returning `studioId()`) in `admin`.
 
-#### Scenario: AdminUser implements DatabaseObject
-- **GIVEN** an `AdminUser` record instance
+#### Scenario: Domain records across subpackages implement DatabaseObject
+- **GIVEN** `AdminUser`, `StudioLookup`, `Event`, `GameSystem`, `Campaign`, and `Game` record instances
 - **WHEN** checked against `DatabaseObject`
-- **THEN** it is an instance of `DatabaseObject` and returns a non-null UUID identifier from `id()`
+- **THEN** each record is an instance of `DatabaseObject` and returns a non-null UUID from `id()`
 
 #### Scenario: StudioLookup exposes tenantId and studioId
 - **GIVEN** a `StudioLookup` record created from persistent data
@@ -272,3 +272,20 @@ The system SHALL map immutable `generator` (`@Column(name = "generator", nullabl
 - **WHEN** `AgentDAO.create(tenantId, Optional.empty(), "valkyrie_lead", Optional.of("Lead"))` is invoked
 - **THEN** the persisted **Actor** has `generator().equals(id())`
 - **AND** the provisioned `inbox` and `outbox` **Collections** each have `entities.generator = actor.id` and `collections.owner_id = actor.id`
+
+### Requirement: Tenanted System and Campaign Persistence
+The system SHALL provide `@NjallUsers` tenanted `GameSystemDAO` (`studios.systems`, `entity_type = 'System'`, ordered by `lower(name) ASC, created_on DESC`) and `CampaignDAO` (`studios.campaigns`, `entity_type = 'Campaign'`, validating active `'System'` references, masking soft-deleted systems on read, and supporting `?systemId` filtering and `PatchCampaignParams` clearing), plus `System` and `Campaign` joins in `CollectionItemHelper.EXPANDED_ITEMS_QUERY`.
+
+#### Scenario: Expanded collection query hydrates System, Campaign, and Game display names
+- **GIVEN** an active collection containing an active **System** named "VtM", an active **Campaigns** record titled "Seattle By Night", and an active **Games** record titled "Court Session 1"
+- **WHEN** `CollectionDAO.findExpandedById` executes
+- **THEN** the returned `ExpandedEntity` list contains items with `(type="System", name="VtM")`, `(type="Campaign", name="Seattle By Night")`, and `(type="Game", name="Court Session 1")`
+
+### Requirement: Tenanted Event Type Scoping and Two-Level CTI Game Persistence
+`EventDAO` (`studios.events`, public `EventEntity`) SHALL map `EventType`, scope reads/mutations to `entity_type = 'Event'`, and reject `EventType.GAME`. `GameDAO` (`studios.games`, using `CreateGameParams`/`PatchGameParams`) SHALL atomically persist `EntityBaseEntity` (`'Game'`), `EventEntity` (`EventType.GAME`), and `GameEntity`, validating active `'System'` and optional `'Campaign'`/`'Location'` independently of `campaign.systemId()`.
+
+#### Scenario: GameDAO persists 2nd-level CTI game invisible to EventDAO
+- **GIVEN** an active **Studio** **Tenant** `tenantId`, an active **Actor** `actorId`, and an active **System** `systemId`
+- **WHEN** `GameDAO.create` persists a new `Game` with `title = "Midnight Masquerade"`
+- **THEN** `GameDAO.findById(tenantId, game.id())` returns the `Game` with `eventType() == EventType.GAME` and `systemId().equals(systemId)`
+- **AND** `EventDAO.findById(tenantId, game.id())` returns `Optional.empty()` because `entity_type` is `'Game'` rather than `'Event'`

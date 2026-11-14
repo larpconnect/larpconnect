@@ -5,7 +5,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
 import com.larpconnect.njall.data.dao.studios.LinkDAO;
-import com.larpconnect.njall.data.domain.Link;
+import com.larpconnect.njall.data.domain.studios.Link;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;

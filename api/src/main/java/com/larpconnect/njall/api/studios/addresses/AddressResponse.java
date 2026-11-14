@@ -2,8 +2,8 @@ package com.larpconnect.njall.api.studios.addresses;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.AddressType;
-import com.larpconnect.njall.data.domain.GeoJsonPoint;
+import com.larpconnect.njall.data.domain.common.GeoJsonPoint;
+import com.larpconnect.njall.data.domain.studios.AddressType;
 import java.util.Optional;
 import java.util.UUID;
 

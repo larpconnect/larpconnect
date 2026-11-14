@@ -1,8 +1,8 @@
 package com.larpconnect.njall.data.dao.admin;
 
 import com.larpconnect.njall.data.dao.common.DAO;
-import com.larpconnect.njall.data.domain.AdminUser;
-import com.larpconnect.njall.data.domain.AdminUserStatus;
+import com.larpconnect.njall.data.domain.admin.AdminUser;
+import com.larpconnect.njall.data.domain.admin.AdminUserStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

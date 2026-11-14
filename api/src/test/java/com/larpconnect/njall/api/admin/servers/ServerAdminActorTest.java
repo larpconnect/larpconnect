@@ -6,10 +6,10 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.servers.ServerDAO;
-import com.larpconnect.njall.data.domain.ContactType;
-import com.larpconnect.njall.data.domain.RoleType;
-import com.larpconnect.njall.data.domain.Server;
-import com.larpconnect.njall.data.domain.ServerContact;
+import com.larpconnect.njall.data.domain.admin.RoleType;
+import com.larpconnect.njall.data.domain.servers.ContactType;
+import com.larpconnect.njall.data.domain.servers.Server;
+import com.larpconnect.njall.data.domain.servers.ServerContact;
 import java.time.Instant;
 import java.util.UUID;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;
