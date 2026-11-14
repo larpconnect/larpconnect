@@ -61,6 +61,23 @@ services:
       - 'for f in /docker-seed/*.sql; do [ -f "$$f" ] && psql -v ON_ERROR_STOP=1 -f "$$f"; done'
     restart: "no"
 
+  rabbitmq:
+    image: rabbitmq:4.3-alpine
+    container_name: larpconnect-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: njall_amqp
+      RABBITMQ_DEFAULT_PASS: njall_amqp_${NJALL_DB_SECRET}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_port_connectivity"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+
   server:
     build:
       context: .
@@ -69,6 +86,8 @@ services:
     container_name: larpconnect-server
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
@@ -86,6 +105,11 @@ services:
       LARPCONNECT_DATA_DATABASE_USERS_PASSWORD: njall_users_${NJALL_DB_SECRET}
       LARPCONNECT_SERVER_HOST: 0.0.0.0
       LARPCONNECT_SERVER_PORT: 8080
+      NJALL_QUEUE_HOST: rabbitmq
+      NJALL_QUEUE_PORT: 5672
+      NJALL_QUEUE_USERNAME: njall_amqp
+      NJALL_QUEUE_PASSWORD: njall_amqp_${NJALL_DB_SECRET}
+      NJALL_QUEUE_ENABLED: "true"
     command: ["server"]
     restart: unless-stopped
 
@@ -107,6 +131,7 @@ services:
 
 volumes:
   postgres_data:
+  rabbitmq_data:
 
 networks:
   edge:

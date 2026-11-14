@@ -7,6 +7,7 @@ import com.google.inject.Singleton;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.session.ActiveSessionFactories;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import org.apache.pekko.Done;
 import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -45,7 +46,8 @@ final class ServerBindingModule extends AbstractModule {
 
   @Provides
   @Singleton
-  ActorSystem<Void> provideActorSystem(ActiveSessionFactories activeFactories) {
+  ActorSystem<Void> provideActorSystem(
+      ActiveSessionFactories activeFactories, @Blocking Executor blockingExecutor) {
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "njall-server");
     CoordinatedShutdown.get(system)
         .addTask(
@@ -56,7 +58,8 @@ final class ServerBindingModule extends AbstractModule {
                     () -> {
                       activeFactories.closeAll();
                       return Done.done();
-                    }));
+                    },
+                    blockingExecutor));
     return system;
   }
 

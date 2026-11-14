@@ -1,6 +1,8 @@
 package com.larpconnect.njall.api.studios.actors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +18,7 @@ import com.larpconnect.njall.api.studios.collections.CollectionActorResponse;
 import com.larpconnect.njall.api.studios.collections.CollectionCommand;
 import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.collections.OrderedCollectionResponse;
+import com.larpconnect.njall.api.studios.inbox.InboxRoute;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.admin.StudioLookup;
 import java.time.Duration;
@@ -32,6 +35,7 @@ import org.apache.pekko.http.javadsl.model.ContentTypes;
 import org.apache.pekko.http.javadsl.model.HttpRequest;
 import org.apache.pekko.http.javadsl.model.HttpResponse;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
+import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.japi.function.Function;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -164,13 +168,23 @@ final class AgentRouteTest {
         .getInstance(CollectionsRoute.class);
   }
 
+  private InboxRoute createMockInboxRoute() {
+    var inboxRoute = mock(InboxRoute.class);
+    when(inboxRoute.inboxSubroutes(any(StudioLookup.class), anyString(), anyString()))
+        .thenReturn(
+            Directives.path(
+                "inbox", () -> Directives.post(() -> Directives.complete(StatusCodes.ACCEPTED))));
+    return inboxRoute;
+  }
+
   private Function<HttpRequest, CompletionStage<HttpResponse>> createHandler(
       StudioLookupCache cache, ActorRef<AgentCommand> actor) {
     var colActor =
         createCollectionActor(
             CollectionActorResponse.success(sampleCollectionResponse("Featured Cast")));
     var collectionsRoute = createCollectionsRoute(colActor);
-    return new AgentRoute(cache, actor, collectionsRoute, system, objectMapper)
+    var inboxRoute = createMockInboxRoute();
+    return new AgentRoute(cache, actor, collectionsRoute, inboxRoute, system, objectMapper)
         .route()
         .seal()
         .function(system);
@@ -291,7 +305,7 @@ final class AgentRouteTest {
   }
 
   @Test
-  @DisplayName("GET and POST /v1/actors/{id}/inbox return 200 and 201")
+  @DisplayName("GET and POST /v1/actors/{id}/inbox return 200 and 202")
   void inbox_routes() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
@@ -304,13 +318,11 @@ final class AgentRouteTest {
     var getRes = executeRequest(handler, getReq);
     assertThat(getRes.status()).isEqualTo(StatusCodes.OK);
 
-    var postActor = createAgentActor(AgentActorResponse.created());
-    var postHandler = createHandler(cache, postActor);
     var postReq =
         HttpRequest.POST("/api/studios/valiant/v1/actors/" + actorId + "/inbox")
             .withEntity(ContentTypes.APPLICATION_JSON, POST_PAYLOAD_BODY);
-    var postRes = executeRequest(postHandler, postReq);
-    assertThat(postRes.status()).isEqualTo(StatusCodes.CREATED);
+    var postRes = executeRequest(handler, postReq);
+    assertThat(postRes.status()).isEqualTo(StatusCodes.ACCEPTED);
   }
 
   @Test
@@ -354,12 +366,12 @@ final class AgentRouteTest {
   }
 
   @Test
-  @DisplayName("Route returns 404 when actor ID is invalid")
+  @DisplayName("Route returns 404 when actor ID is invalid or not found")
   void invalidActorId_returns404() throws Exception {
     var cache = mock(StudioLookupCache.class);
     when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
 
-    var actor = createAgentActor(AgentActorResponse.noContent());
+    var actor = createAgentActor(AgentActorResponse.notFound("Actor not found: not-a-valid-uuid"));
     var handler = createHandler(cache, actor);
 
     var req = HttpRequest.GET("/api/studios/valiant/v1/actors/not-a-valid-uuid");
@@ -403,7 +415,13 @@ final class AgentRouteTest {
         createCollectionsRoute(createCollectionActor(CollectionActorResponse.noContent()));
     var timeoutHandler =
         new AgentRoute(
-                cache, emptyActor, collectionsRoute, system, objectMapper, Duration.ofMillis(50))
+                cache,
+                emptyActor,
+                collectionsRoute,
+                createMockInboxRoute(),
+                system,
+                objectMapper,
+                Duration.ofMillis(50))
             .route()
             .seal()
             .function(system);
@@ -422,7 +440,8 @@ final class AgentRouteTest {
     var colActor = createCollectionActor(CollectionActorResponse.success(colResponse));
     var collectionsRoute = createCollectionsRoute(colActor);
     var handler =
-        new AgentRoute(cache, agentActor, collectionsRoute, system, objectMapper)
+        new AgentRoute(
+                cache, agentActor, collectionsRoute, createMockInboxRoute(), system, objectMapper)
             .route()
             .seal()
             .function(system);

@@ -12,7 +12,7 @@ typesafe-config = "1.4.9"
 hibernate = "7.4.15.Final"
 postgresql = "42.7.14"
 caffeine = "3.3.1"
-rabbitmq = "5.37.1"
+rabbitmq = "1.7.0"
 slf4j = "2.0.20"
 logback = "1.6.6"
 errorprone-core = "2.52.0"
@@ -67,7 +67,7 @@ hibernate-bom = { group = "org.hibernate.orm", name = "hibernate-platform", vers
 hibernate-core = { group = "org.hibernate.orm", name = "hibernate-core" }
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
-rabbitmq-amqp = { group = "com.rabbitmq", name = "amqp-client", version.ref = "rabbitmq" }
+rabbitmq-amqp = { group = "com.rabbitmq.client", name = "amqp-client", version.ref = "rabbitmq" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api" }
 slf4j-bom = { group = "org.slf4j", name = "slf4j-bom", version.ref = "slf4j" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }

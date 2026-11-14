@@ -44,8 +44,19 @@ public sealed interface AgentCommand {
 
   @Immutable
   record GetAgent(
-      UUID tenantId, String studioIdentifier, UUID actorId, ActorRef<AgentActorResponse> replyTo)
-      implements AgentCommand {}
+      UUID tenantId,
+      String studioIdentifier,
+      String actorIdentifier,
+      ActorRef<AgentActorResponse> replyTo)
+      implements AgentCommand {
+    public GetAgent(
+        UUID tenantId,
+        String studioIdentifier,
+        UUID actorId,
+        ActorRef<AgentActorResponse> replyTo) {
+      this(tenantId, studioIdentifier, actorId.toString(), replyTo);
+    }
+  }
 
   @Immutable
   record PatchAgent(
@@ -75,10 +86,21 @@ public sealed interface AgentCommand {
   record AccessCollection(
       UUID tenantId,
       String studioIdentifier,
-      UUID actorId,
+      String actorIdentifier,
       CollectionTarget target,
       CollectionAction action,
       Optional<JsonNode> payload,
       ActorRef<AgentActorResponse> replyTo)
-      implements AgentCommand {}
+      implements AgentCommand {
+    public AccessCollection(
+        UUID tenantId,
+        String studioIdentifier,
+        UUID actorId,
+        CollectionTarget target,
+        CollectionAction action,
+        Optional<JsonNode> payload,
+        ActorRef<AgentActorResponse> replyTo) {
+      this(tenantId, studioIdentifier, actorId.toString(), target, action, payload, replyTo);
+    }
+  }
 }

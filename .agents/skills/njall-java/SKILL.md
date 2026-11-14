@@ -186,6 +186,7 @@ functionality should be employed freely.
     implementation of any of the above functionality
 - `dev.cel:cel` if needed for expressions or user-entered "code" that cannot be
   (or should not be) done declaratively
+- You may treat the explicit documentation in the JDK (e.g., `java.util.concurrent`) and in established third party libraries (e.g., pekko, guava, caffeine, apache commons) as axiomatic and their interface as black boxes. Do not dig into the internal implementation details unless explicitly asked to do so.
 
 ## Antipatterns
 

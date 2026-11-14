@@ -12,6 +12,7 @@ import com.larpconnect.njall.api.studios.campaigns.CampaignsModule;
 import com.larpconnect.njall.api.studios.collections.CollectionsModule;
 import com.larpconnect.njall.api.studios.events.EventsModule;
 import com.larpconnect.njall.api.studios.games.GamesModule;
+import com.larpconnect.njall.api.studios.inbox.InboxModule;
 import com.larpconnect.njall.api.studios.individuals.IndividualsModule;
 import com.larpconnect.njall.api.studios.links.LinksModule;
 import com.larpconnect.njall.api.studios.locations.LocationsModule;
@@ -38,6 +39,7 @@ public final class StudiosModule extends AbstractModule {
     install(new IndividualsModule());
     install(new CollectionsModule());
     install(new ActorsModule());
+    install(new InboxModule());
 
     bind(StudioSubRoutes.class).in(Scopes.SINGLETON);
     bind(StudiosRoute.class).in(Scopes.SINGLETON);

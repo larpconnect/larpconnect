@@ -15,3 +15,4 @@
 | System | `glossary/business.md` | Ruleset entity with `entity_type = 'System'`. |
 | Campaigns | `glossary/business.md` | Chronicle entity with `entity_type = 'Campaign'`. |
 | Games | `glossary/business.md` | 2nd-level CTI event subtype with `entity_type = 'Game'` and `event_type = 'GAME'`. |
+| Agent | `glossary/technical.md` | Java domain record and DAO (`AgentDAO`) representing Actor entities. |

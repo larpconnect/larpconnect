@@ -23,6 +23,7 @@ import com.larpconnect.njall.data.dao.studios.campaigns.CampaignDAO;
 import com.larpconnect.njall.data.dao.studios.events.EventDAO;
 import com.larpconnect.njall.data.dao.studios.games.GameDAO;
 import com.larpconnect.njall.data.dao.studios.systems.GameSystemDAO;
+import java.time.Clock;
 import java.util.Set;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.DisplayName;
@@ -80,6 +81,7 @@ final class DaoModuleTest {
           protected void configure() {
             bind(SessionFactory.class).annotatedWith(NjallAdmin.class).toInstance(mockAdminSession);
             bind(SessionFactory.class).annotatedWith(NjallUsers.class).toInstance(mockUsersSession);
+            bind(Clock.class).toInstance(Clock.systemUTC());
           }
         };
     return Guice.createInjector(mockModule, new DaoModule());

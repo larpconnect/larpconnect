@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 final class AgentActor extends AbstractBehavior<AgentCommand> {
 
   private static final String TYPE_ACTOR = "Actor";
+  private static final Splitter UPDATE_MASK_SPLITTER =
+      Splitter.on(',').trimResults().omitEmptyStrings();
 
   private final Logger logger = LoggerFactory.getLogger(AgentActor.class);
   private final AgentDAO agentDao;
@@ -95,8 +97,7 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
 
   private Behavior<AgentCommand> onGetAgent(AgentCommand.GetAgent cmd) {
     try {
-      agentDao
-          .findById(cmd.tenantId(), cmd.actorId())
+      resolveAgent(cmd.tenantId(), cmd.actorIdentifier())
           .ifPresentOrElse(
               agent ->
                   cmd.replyTo()
@@ -105,7 +106,9 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
                               toActorResponse(cmd.studioIdentifier(), agent))),
               () ->
                   cmd.replyTo()
-                      .tell(AgentActorResponse.notFound("Actor not found: " + cmd.actorId())));
+                      .tell(
+                          AgentActorResponse.notFound(
+                              "Actor not found: " + cmd.actorIdentifier())));
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get actor", e);
     }
@@ -185,7 +188,7 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
   private Behavior<AgentCommand> onMutateEndpoint(AgentCommand.MutateEndpoint cmd) {
     try {
       if (cmd.action() == AgentCommand.EndpointAction.ADD) {
-        var req = new AddEndpointRequest(cmd.name(), cmd.endpoint().orElse(""));
+        var req = createAddEndpointRequest(cmd.name(), cmd.endpoint().orElse(""));
         var validationError = AgentValidation.validateAddEndpoint(req);
         if (validationError.isPresent()) {
           cmd.replyTo().tell(AgentActorResponse.badRequest(validationError.orElseThrow()));
@@ -200,7 +203,7 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
           cmd.replyTo().tell(AgentActorResponse.notFound("Actor not found: " + cmd.actorId()));
         }
       } else {
-        var req = new RemoveEndpointRequest(cmd.name());
+        var req = createRemoveEndpointRequest(cmd.name());
         var validationError = AgentValidation.validateRemoveEndpoint(req);
         if (validationError.isPresent()) {
           cmd.replyTo().tell(AgentActorResponse.badRequest(validationError.orElseThrow()));
@@ -221,26 +224,25 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
 
   private Behavior<AgentCommand> onAccessCollection(AgentCommand.AccessCollection cmd) {
     try {
+      var agentOpt = resolveAgent(cmd.tenantId(), cmd.actorIdentifier());
+      if (agentOpt.isEmpty()) {
+        cmd.replyTo()
+            .tell(AgentActorResponse.notFound("Actor not found: " + cmd.actorIdentifier()));
+        return this;
+      }
+      UUID actorId = agentOpt.orElseThrow().id();
+
       if (cmd.action() == AgentCommand.CollectionAction.GET) {
         Optional<UUID> colIdOpt =
             cmd.target() == AgentCommand.CollectionTarget.INBOX
-                ? agentDao.findInboxId(cmd.tenantId(), cmd.actorId())
-                : agentDao.findOutboxId(cmd.tenantId(), cmd.actorId());
+                ? agentDao.findInboxId(cmd.tenantId(), actorId)
+                : agentDao.findOutboxId(cmd.tenantId(), actorId);
         String targetName =
             cmd.target() == AgentCommand.CollectionTarget.INBOX ? "Inbox" : "Outbox";
         resolveAndReturnCollection(
-            cmd.tenantId(),
-            cmd.studioIdentifier(),
-            cmd.actorId(),
-            colIdOpt,
-            targetName,
-            cmd.replyTo());
+            cmd.tenantId(), cmd.studioIdentifier(), actorId, colIdOpt, targetName, cmd.replyTo());
       } else {
-        if (agentDao.findById(cmd.tenantId(), cmd.actorId()).isEmpty()) {
-          cmd.replyTo().tell(AgentActorResponse.notFound("Actor not found: " + cmd.actorId()));
-        } else {
-          cmd.replyTo().tell(AgentActorResponse.created());
-        }
+        cmd.replyTo().tell(AgentActorResponse.created());
       }
     } catch (Exception e) {
       handleError(cmd.replyTo(), "access collection", e);
@@ -255,11 +257,6 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
       Optional<UUID> collectionIdOpt,
       String collectionName,
       ActorRef<AgentActorResponse> replyTo) {
-    var actorOpt = agentDao.findById(tenantId, actorId);
-    if (actorOpt.isEmpty()) {
-      replyTo.tell(AgentActorResponse.notFound("Actor not found: " + actorId));
-      return;
-    }
     if (collectionIdOpt.isEmpty()) {
       replyTo.tell(
           AgentActorResponse.notFound(
@@ -298,8 +295,7 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
   }
 
   private Optional<Set<String>> parseUpdateMask(Optional<String> updateMask) {
-    return updateMask.map(
-        mask -> ImmutableSet.copyOf(Splitter.on(',').trimResults().omitEmptyStrings().split(mask)));
+    return updateMask.map(mask -> ImmutableSet.copyOf(UPDATE_MASK_SPLITTER.split(mask)));
   }
 
   private <T> Optional<T> selectField(
@@ -309,11 +305,23 @@ final class AgentActor extends AbstractBehavior<AgentCommand> {
         .orElse(requestValue);
   }
 
+  private Optional<Agent> resolveAgent(UUID tenantId, String identifier) {
+    return agentDao.findByIdentifier(tenantId, identifier);
+  }
+
   private void handleError(
       ActorRef<AgentActorResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in AgentActor", operation, error);
     var message = error.getMessage();
     var reason = !Strings.isNullOrEmpty(message) ? message : "Error executing " + operation;
     replyTo.tell(AgentActorResponse.failure(reason));
+  }
+
+  private static AddEndpointRequest createAddEndpointRequest(String name, String endpoint) {
+    return new AddEndpointRequest(name, endpoint);
+  }
+
+  private static RemoveEndpointRequest createRemoveEndpointRequest(String name) {
+    return new RemoveEndpointRequest(name);
   }
 }

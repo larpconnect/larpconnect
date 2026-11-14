@@ -34,5 +34,6 @@
 | Tenant | A studio when its data is kept separated in some manner from other studios | | | 
 | allowlist | A list of approved or permitted items | Referring to a list of allowed origins, domains, or other identifiers. Use in favor of "whitelist" | |
 | blocklist | A list of denied or disallowed items | Referring to a list of denied origins, domains, or other identifiers. Use in favor of "blacklist" | |
-| generator | The actor that created or is responsible structurally for the object | | 
-| owner | The object that parents an entity semantically, often the same as the generator, though not always | |
+| generator | The actor that created or is responsible structurally for the object | | |
+| owner | The object that parents an entity semantically, often the same as the generator, though not always | | |
+| Activity | A FeatherPub message envelope describing an action (such as Create, Update, or Delete) performed by an Actor on an Entity or target URI | Referring to federated FeatherPub activity payloads delivered to an inbox or outbox | Referring to persisted domain entities in njall_users.entities or scheduled real-world Events |

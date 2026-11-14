@@ -13,7 +13,9 @@ import com.google.common.util.concurrent.Service;
 import com.larpconnect.njall.server.http.HttpServerService;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.pekko.Done;
 import org.apache.pekko.actor.typed.ActorSystem;
@@ -32,6 +34,7 @@ final class ServerManagerServiceTest {
     var httpService = mock(HttpServerService.class);
     var events = new CopyOnWriteArrayList<String>();
     var cacheService = new TestStudioLookupCacheService(events);
+    var amqpService = new TestAmqpQueueService(events);
     var binding = mock(ServerBinding.class);
 
     when(httpService.start())
@@ -47,18 +50,47 @@ final class ServerManagerServiceTest {
               return CompletableFuture.completedFuture(Done.done());
             });
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
     try {
       service.startAsync().awaitRunning(5, TimeUnit.SECONDS);
 
       assertThat(registrar.registered.get()).isNotNull();
       assertThat(registrar.registered.get().getName()).isEqualTo("pekko-coordinated-shutdown");
-      assertThat(events).containsExactly("cache.startUp", "http.start");
+      assertThat(events).containsExactly("amqp.startUp", "cache.startUp", "http.start");
     } finally {
       service.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
       assertThat(registrar.removed.get()).isSameAs(registrar.registered.get());
       assertThat(events)
-          .containsExactly("cache.startUp", "http.start", "http.stop", "cache.shutDown");
+          .containsExactly(
+              "amqp.startUp",
+              "cache.startUp",
+              "http.start",
+              "http.stop",
+              "amqp.shutDown",
+              "cache.shutDown");
+      terminateSystem(system);
+    }
+  }
+
+  @Test
+  @DisplayName("startUp fails before starting HTTP server when AMQP queue service start fails")
+  void startUp_whenAmqpServiceStartFails_serviceEntersFailedState() {
+    var registrar = mock(ShutdownHookRegistrar.class);
+    ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-amqp-fail");
+    var httpService = mock(HttpServerService.class);
+    var cacheService = new TestStudioLookupCacheService();
+    var amqpService = TestAmqpQueueService.failingOnStart();
+
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
+    try {
+      assertThatIllegalStateException()
+          .isThrownBy(() -> service.startAsync().awaitRunning(5, TimeUnit.SECONDS));
+
+      verify(httpService, never()).start();
+      verify(registrar).removeShutdownHook(any(Thread.class));
+    } finally {
       terminateSystem(system);
     }
   }
@@ -70,13 +102,17 @@ final class ServerManagerServiceTest {
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-cache-fail");
     var httpService = mock(HttpServerService.class);
     var cacheService = TestStudioLookupCacheService.failingOnStart();
+    var amqpService = new TestAmqpQueueService();
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
     try {
       assertThatIllegalStateException()
           .isThrownBy(() -> service.startAsync().awaitRunning(5, TimeUnit.SECONDS));
 
       verify(httpService, never()).start();
+      assertThat(amqpService.state()).isEqualTo(Service.State.TERMINATED);
+      verify(registrar).removeShutdownHook(any(Thread.class));
     } finally {
       terminateSystem(system);
     }
@@ -89,14 +125,20 @@ final class ServerManagerServiceTest {
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-4");
     var httpService = mock(HttpServerService.class);
     var cacheService = new TestStudioLookupCacheService();
+    var amqpService = new TestAmqpQueueService();
 
     when(httpService.start())
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("port bound")));
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
     try {
       assertThatIllegalStateException()
           .isThrownBy(() -> service.startAsync().awaitRunning(5, TimeUnit.SECONDS));
+
+      assertThat(amqpService.state()).isEqualTo(Service.State.TERMINATED);
+      assertThat(cacheService.state()).isEqualTo(Service.State.TERMINATED);
+      verify(registrar).removeShutdownHook(any(Thread.class));
     } finally {
       terminateSystem(system);
     }
@@ -110,7 +152,14 @@ final class ServerManagerServiceTest {
     var httpService = mock(HttpServerService.class);
     var events = new CopyOnWriteArrayList<String>();
     var cacheService = new TestStudioLookupCacheService(events);
+    var amqpService = new TestAmqpQueueService(events);
     var binding = mock(ServerBinding.class);
+    var executorSubmissions = new AtomicInteger();
+    Executor countingExecutor =
+        task -> {
+          executorSubmissions.incrementAndGet();
+          task.run();
+        };
 
     when(httpService.start()).thenReturn(CompletableFuture.completedFuture(binding));
     when(httpService.stop())
@@ -120,12 +169,16 @@ final class ServerManagerServiceTest {
               return CompletableFuture.completedFuture(Done.done());
             });
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(
+            registrar, system, httpService, cacheService, amqpService, countingExecutor);
     service.startAsync().awaitRunning(5, TimeUnit.SECONDS);
     service.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
 
-    assertThat(events).containsSubsequence("http.stop", "cache.shutDown");
+    assertThat(events).containsSubsequence("http.stop", "amqp.shutDown", "cache.shutDown");
+    assertThat(executorSubmissions.get()).isEqualTo(1);
     assertThat(cacheService.state()).isEqualTo(Service.State.TERMINATED);
+    assertThat(amqpService.state()).isEqualTo(Service.State.TERMINATED);
     verify(registrar).removeShutdownHook(any(Thread.class));
     terminateSystem(system);
   }
@@ -137,18 +190,21 @@ final class ServerManagerServiceTest {
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-6");
     var httpService = mock(HttpServerService.class);
     var cacheService = new TestStudioLookupCacheService();
+    var amqpService = new TestAmqpQueueService();
     var binding = mock(ServerBinding.class);
 
     when(httpService.start()).thenReturn(CompletableFuture.completedFuture(binding));
     when(httpService.stop())
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("stop failed")));
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
     service.startAsync().awaitRunning(5, TimeUnit.SECONDS);
     service.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
 
     verify(httpService).stop();
     assertThat(cacheService.state()).isEqualTo(Service.State.TERMINATED);
+    assertThat(amqpService.state()).isEqualTo(Service.State.TERMINATED);
     verify(registrar).removeShutdownHook(any(Thread.class));
     terminateSystem(system);
   }
@@ -160,17 +216,45 @@ final class ServerManagerServiceTest {
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-cache-stop-fail");
     var httpService = mock(HttpServerService.class);
     var cacheService = TestStudioLookupCacheService.failingOnStop();
+    var amqpService = new TestAmqpQueueService();
     var binding = mock(ServerBinding.class);
 
     when(httpService.start()).thenReturn(CompletableFuture.completedFuture(binding));
     when(httpService.stop()).thenReturn(CompletableFuture.completedFuture(Done.done()));
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
     service.startAsync().awaitRunning(5, TimeUnit.SECONDS);
     service.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
 
     verify(httpService).stop();
     assertThat(cacheService.state()).isEqualTo(Service.State.FAILED);
+    assertThat(amqpService.state()).isEqualTo(Service.State.TERMINATED);
+    verify(registrar).removeShutdownHook(any(Thread.class));
+    terminateSystem(system);
+  }
+
+  @Test
+  @DisplayName("shutDown logs warning and continues when AMQP service stop fails")
+  void shutDown_whenAmqpStopFails_continuesShutdown() throws Exception {
+    var registrar = mock(ShutdownHookRegistrar.class);
+    ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-amqp-stop-fail");
+    var httpService = mock(HttpServerService.class);
+    var cacheService = new TestStudioLookupCacheService();
+    var amqpService = TestAmqpQueueService.failingOnStop();
+    var binding = mock(ServerBinding.class);
+
+    when(httpService.start()).thenReturn(CompletableFuture.completedFuture(binding));
+    when(httpService.stop()).thenReturn(CompletableFuture.completedFuture(Done.done()));
+
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
+    service.startAsync().awaitRunning(5, TimeUnit.SECONDS);
+    service.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
+
+    verify(httpService).stop();
+    assertThat(cacheService.state()).isEqualTo(Service.State.TERMINATED);
+    assertThat(amqpService.state()).isEqualTo(Service.State.FAILED);
     verify(registrar).removeShutdownHook(any(Thread.class));
     terminateSystem(system);
   }
@@ -185,17 +269,20 @@ final class ServerManagerServiceTest {
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-hook-fail");
     var httpService = mock(HttpServerService.class);
     var cacheService = new TestStudioLookupCacheService();
+    var amqpService = new TestAmqpQueueService();
     var binding = mock(ServerBinding.class);
 
     when(httpService.start()).thenReturn(CompletableFuture.completedFuture(binding));
     when(httpService.stop()).thenReturn(CompletableFuture.completedFuture(Done.done()));
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
     service.startAsync().awaitRunning(5, TimeUnit.SECONDS);
     service.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
 
     verify(httpService).stop();
     assertThat(cacheService.state()).isEqualTo(Service.State.TERMINATED);
+    assertThat(amqpService.state()).isEqualTo(Service.State.TERMINATED);
     verify(registrar).removeShutdownHook(any(Thread.class));
     terminateSystem(system);
   }
@@ -207,12 +294,14 @@ final class ServerManagerServiceTest {
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-7");
     var httpService = mock(HttpServerService.class);
     var cacheService = new TestStudioLookupCacheService();
+    var amqpService = new TestAmqpQueueService();
     var binding = mock(ServerBinding.class);
 
     when(httpService.start()).thenReturn(CompletableFuture.completedFuture(binding));
     when(httpService.stop()).thenReturn(CompletableFuture.completedFuture(Done.done()));
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
     try {
       service.startAsync().awaitRunning(5, TimeUnit.SECONDS);
       var hook = registrar.registered.get();
@@ -223,6 +312,7 @@ final class ServerManagerServiceTest {
 
       assertThat(service.state()).isEqualTo(Service.State.TERMINATED);
       assertThat(cacheService.state()).isEqualTo(Service.State.TERMINATED);
+      assertThat(amqpService.state()).isEqualTo(Service.State.TERMINATED);
     } finally {
       terminateSystem(system);
     }
@@ -235,11 +325,13 @@ final class ServerManagerServiceTest {
     ActorSystem<Void> system = ActorSystem.create(Behaviors.empty(), "test-sys-8");
     var httpService = mock(HttpServerService.class);
     var cacheService = new TestStudioLookupCacheService();
+    var amqpService = new TestAmqpQueueService();
 
     when(httpService.start())
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("forced start failure")));
 
-    var service = new DefaultServerManagerService(registrar, system, httpService, cacheService);
+    var service =
+        new DefaultServerManagerService(registrar, system, httpService, cacheService, amqpService);
     try {
       assertThatIllegalStateException()
           .isThrownBy(() -> service.startAsync().awaitRunning(5, TimeUnit.SECONDS));

@@ -5,12 +5,13 @@ import com.google.inject.util.Modules;
 import com.larpconnect.njall.api.ApiModule;
 import com.larpconnect.njall.common.CommonModule;
 import com.larpconnect.njall.data.DataModule;
+import com.larpconnect.njall.queue.QueueModule;
 import com.larpconnect.njall.server.cli.CliModule;
 import com.larpconnect.njall.server.http.HttpServerModule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
-/** Root application Guice module composing common, data, api, and server layers. */
+/** Root application Guice module composing common, data, queue, api, and server layers. */
 public final class ServerModule extends AbstractModule {
 
   private final Config config;
@@ -30,6 +31,7 @@ public final class ServerModule extends AbstractModule {
     install(Modules.requireExplicitBindingsModule());
     install(Modules.requireExactBindingAnnotationsModule());
     install(new CommonModule(config));
+    install(new QueueModule());
     install(new DataModule());
     install(new ApiModule());
     install(new HttpServerModule());

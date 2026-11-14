@@ -11,6 +11,7 @@ import com.larpconnect.njall.data.dao.studios.campaigns.CampaignsDaoModule;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionsDaoModule;
 import com.larpconnect.njall.data.dao.studios.events.EventsDaoModule;
 import com.larpconnect.njall.data.dao.studios.games.GamesDaoModule;
+import com.larpconnect.njall.data.dao.studios.inbox.InboxDaoModule;
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualsDaoModule;
 import com.larpconnect.njall.data.dao.studios.systems.SystemsDaoModule;
 
@@ -32,6 +33,7 @@ public final class StudiosDaoModule extends AbstractModule {
     install(new SystemsDaoModule());
     install(new CampaignsDaoModule());
     install(new GamesDaoModule());
+    install(new InboxDaoModule());
 
     var adminEntities =
         Multibinder.newSetBinder(

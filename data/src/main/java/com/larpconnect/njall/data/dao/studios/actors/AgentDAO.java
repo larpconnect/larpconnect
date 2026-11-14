@@ -17,6 +17,24 @@ public interface AgentDAO {
   Optional<Agent> findById(UUID tenantId, UUID actorId);
 
   /**
+   * Retrieves an actor by tenant and case-insensitive preferred username.
+   *
+   * @param tenantId Studio tenant UUID.
+   * @param preferredUsername Preferred username.
+   * @return Optional containing the actor if found and active.
+   */
+  Optional<Agent> findByPreferredUsername(UUID tenantId, String preferredUsername);
+
+  /**
+   * Retrieves an actor by tenant and identifier (UUID or case-insensitive preferred username).
+   *
+   * @param tenantId Studio tenant UUID.
+   * @param identifier Canonical UUID string or preferred username.
+   * @return Optional containing the actor if found and active.
+   */
+  Optional<Agent> findByIdentifier(UUID tenantId, String identifier);
+
+  /**
    * Checks if an actor with the given preferred username already exists in the tenant.
    *
    * @param tenantId Studio tenant UUID.

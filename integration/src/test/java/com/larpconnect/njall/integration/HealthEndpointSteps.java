@@ -103,13 +103,33 @@ public final class HealthEndpointSteps {
         });
   }
 
-  @SuppressWarnings("unchecked")
+  @Given(
+      "the AMQP 1.0 broker connection fails, is terminated, or times out during probe"
+          + " evaluation")
+  public void theAmqpBrokerConnectionFails() throws Exception {
+    startServer(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            Multibinder.newSetBinder(binder(), HealthCheck.class)
+                .addBinding()
+                .toInstance(
+                    new HealthCheck() {
+                      @Override
+                      public Result check() {
+                        return Result.unhealthy("AMQP broker unreachable");
+                      }
+                    });
+          }
+        });
+  }
+
   private void startServer(Module... extraModules) throws Exception {
     mockSessionFactory = mock(SessionFactory.class);
     when(mockSessionFactory.isClosed()).thenReturn(false);
 
     var mockSession = mock(Session.class);
-    var mockQuery = (NativeQuery<Integer>) mock(NativeQuery.class);
+    NativeQuery<Integer> mockQuery = mock();
     when(mockSessionFactory.openSession()).thenReturn(mockSession);
     when(mockSession.createNativeQuery(anyString(), eq(Integer.class))).thenReturn(mockQuery);
     when(mockQuery.setTimeout(anyInt())).thenReturn(mockQuery);

@@ -86,6 +86,14 @@ public final class DatabaseMigrationSteps {
     var injector = createInjector(createDefaultConfig());
     var migrator = injector.getInstance(DatabaseMigrator.class);
     migrator.migrate();
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
+        var s = conn.createStatement()) {
+      s.execute(
+          "ALTER TABLE njall_admin.studios_lookup DROP CONSTRAINT IF EXISTS"
+              + " check_studios_lookup_alias;"
+              + "ALTER TABLE njall_admin.studios_lookup ADD CONSTRAINT check_studios_lookup_alias"
+              + " CHECK (alias ~ '^[a-z][a-z0-9_-]*$')");
+    }
   }
 
   public static String getJdbcUrl() {
@@ -99,48 +107,31 @@ public final class DatabaseMigrationSteps {
 
   private static void provisionRoles() throws Exception {
     var sql =
-        "DO $$\n"
-            + "BEGIN\n"
-            + "  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall') THEN\n"
-            + "    CREATE ROLE njall WITH LOGIN SUPERUSER PASSWORD '"
+        "DO $$ BEGIN "
+            + "IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall') THEN "
+            + "CREATE ROLE njall WITH LOGIN SUPERUSER PASSWORD '"
             + NJALL_PASSWORD
-            + "';\n"
-            + "  ELSE\n"
-            + "    ALTER ROLE njall WITH PASSWORD '"
+            + "'; ELSE ALTER ROLE njall WITH PASSWORD '"
             + NJALL_PASSWORD
-            + "';\n"
-            + "  END IF;\n"
-            + "  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_admin')"
-            + " THEN\n"
-            + "    CREATE ROLE njall_admin WITH LOGIN PASSWORD '"
+            + "'; END IF; "
+            + "IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_admin') THEN "
+            + "CREATE ROLE njall_admin WITH LOGIN PASSWORD '"
             + NJALL_ADMIN_PASSWORD
-            + "';\n"
-            + "  ELSE\n"
-            + "    ALTER ROLE njall_admin WITH PASSWORD '"
+            + "'; ELSE ALTER ROLE njall_admin WITH PASSWORD '"
             + NJALL_ADMIN_PASSWORD
-            + "';\n"
-            + "  END IF;\n"
-            + "  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_users')"
-            + " THEN\n"
-            + "    CREATE ROLE njall_users WITH LOGIN PASSWORD '"
+            + "'; END IF; "
+            + "IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_users') THEN "
+            + "CREATE ROLE njall_users WITH LOGIN PASSWORD '"
             + NJALL_USERS_PASSWORD
-            + "';\n"
-            + "  ELSE\n"
-            + "    ALTER ROLE njall_users WITH PASSWORD '"
+            + "'; ELSE ALTER ROLE njall_users WITH PASSWORD '"
             + NJALL_USERS_PASSWORD
-            + "';\n"
-            + "  END IF;\n"
-            + "  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_system')"
-            + " THEN\n"
-            + "    CREATE ROLE njall_system WITH LOGIN PASSWORD '"
+            + "'; END IF; "
+            + "IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'njall_system') THEN "
+            + "CREATE ROLE njall_system WITH LOGIN PASSWORD '"
             + NJALL_SYSTEM_PASSWORD
-            + "';\n"
-            + "  ELSE\n"
-            + "    ALTER ROLE njall_system WITH PASSWORD '"
+            + "'; ELSE ALTER ROLE njall_system WITH PASSWORD '"
             + NJALL_SYSTEM_PASSWORD
-            + "';\n"
-            + "  END IF;\n"
-            + "END $$;\n";
+            + "'; END IF; END $$;";
     try (var conn = openConnection("postgres", "postgres");
         var stmt = conn.createStatement()) {
       stmt.execute(sql);
@@ -392,6 +383,45 @@ public final class DatabaseMigrationSteps {
     }
   }
 
+  @Then("composite foreign key {string} references {string} with ON DELETE CASCADE")
+  public void compositeForeignKeyReferencesWithCascade(String fkName, String targetTable)
+      throws Exception {
+    var parts = Splitter.on('.').splitToList(targetTable);
+    var query =
+        "SELECT c.confdeltype, cl.relname, n.nspname FROM pg_constraint c "
+            + "JOIN pg_class cl ON c.confrelid = cl.oid "
+            + "JOIN pg_namespace n ON cl.relnamespace = n.oid "
+            + "WHERE c.conname = ? AND c.contype = 'f'";
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
+        var stmt = conn.prepareStatement(query)) {
+      stmt.setString(1, fkName);
+      try (var rs = stmt.executeQuery()) {
+        assertThat(rs.next()).isTrue();
+        assertThat(rs.getString("nspname")).isEqualTo(parts.getFirst());
+        assertThat(rs.getString("relname")).isEqualTo(parts.get(1));
+        assertThat(rs.getString("confdeltype")).isEqualTo("c");
+      }
+    }
+  }
+
+  @Then("table {string} has index {string} on column {string}")
+  public void tableHasIndexOnColumn(String fullTable, String indexName, String col)
+      throws Exception {
+    var parts = Splitter.on('.').splitToList(fullTable);
+    var query =
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = ? AND tablename = ? AND indexname = ?";
+    try (var conn = openConnection("njall", NJALL_PASSWORD);
+        var stmt = conn.prepareStatement(query)) {
+      stmt.setString(1, parts.getFirst());
+      stmt.setString(2, parts.get(1));
+      stmt.setString(3, indexName);
+      try (var rs = stmt.executeQuery()) {
+        assertThat(rs.next()).isTrue();
+        assertThat(rs.getString("indexdef")).contains(col);
+      }
+    }
+  }
+
   private void assertCanSelectFromServers(String user, String pass) throws Exception {
     try (var conn = openConnection(user, pass);
         var stmt = conn.createStatement();
@@ -433,36 +463,23 @@ public final class DatabaseMigrationSteps {
             "admin_contact", adminContact));
   }
 
-  private static Injector createInjector(MigrationConfig migrationConfig) {
-    var customConfig =
-        ConfigFactory.parseMap(
-                Map.ofEntries(
-                    Map.entry(
-                        "larpconnect.data.database.migration.jdbc-url", migrationConfig.jdbcUrl()),
-                    Map.entry(
-                        "larpconnect.data.database.migration.username", migrationConfig.username()),
-                    Map.entry(
-                        "larpconnect.data.database.migration.password",
-                        migrationConfig.password().orElse("")),
-                    Map.entry(
-                        "larpconnect.data.database.admin.jdbc-url", migrationConfig.jdbcUrl()),
-                    Map.entry("larpconnect.data.database.admin.username", "njall_admin"),
-                    Map.entry("larpconnect.data.database.admin.password", NJALL_ADMIN_PASSWORD),
-                    Map.entry(
-                        "larpconnect.data.database.users.jdbc-url", migrationConfig.jdbcUrl()),
-                    Map.entry("larpconnect.data.database.users.username", "njall_users"),
-                    Map.entry("larpconnect.data.database.users.password", NJALL_USERS_PASSWORD),
-                    Map.entry(
-                        "larpconnect.server.name",
-                        migrationConfig.placeholders().get("server_name")),
-                    Map.entry(
-                        "larpconnect.server.primary-domain",
-                        migrationConfig.placeholders().get("primary_domain")),
-                    Map.entry(
-                        "larpconnect.server.admin-contact",
-                        migrationConfig.placeholders().get("admin_contact"))))
-            .withFallback(ConfigFactory.load());
-
+  private static Injector createInjector(MigrationConfig cfg) {
+    var m =
+        Map.ofEntries(
+            Map.entry("larpconnect.data.database.migration.jdbc-url", cfg.jdbcUrl()),
+            Map.entry("larpconnect.data.database.migration.username", cfg.username()),
+            Map.entry("larpconnect.data.database.migration.password", cfg.password().orElse("")),
+            Map.entry("larpconnect.data.database.admin.jdbc-url", cfg.jdbcUrl()),
+            Map.entry("larpconnect.data.database.admin.username", "njall_admin"),
+            Map.entry("larpconnect.data.database.admin.password", NJALL_ADMIN_PASSWORD),
+            Map.entry("larpconnect.data.database.users.jdbc-url", cfg.jdbcUrl()),
+            Map.entry("larpconnect.data.database.users.username", "njall_users"),
+            Map.entry("larpconnect.data.database.users.password", NJALL_USERS_PASSWORD),
+            Map.entry("larpconnect.server.name", cfg.placeholders().get("server_name")),
+            Map.entry(
+                "larpconnect.server.primary-domain", cfg.placeholders().get("primary_domain")),
+            Map.entry("larpconnect.server.admin-contact", cfg.placeholders().get("admin_contact")));
+    var customConfig = ConfigFactory.parseMap(m).withFallback(ConfigFactory.load());
     return Guice.createInjector(new ServerModule(customConfig));
   }
 }

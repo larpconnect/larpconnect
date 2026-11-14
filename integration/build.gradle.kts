@@ -10,6 +10,7 @@ dependencies {
     api(platform(project(":parent")))
 
     testImplementation(project(":common"))
+    testImplementation(project(":queue"))
     testImplementation(project(":data"))
     testImplementation(project(":api"))
     testImplementation(project(":server"))

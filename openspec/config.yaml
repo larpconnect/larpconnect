@@ -4,16 +4,31 @@ schema: intent-driven
 context: |
   Project Code Name: Njall (used for all internal name references)
   Project Published Name: LarpConnect
+
+  Njall is a SaaS platform for managing the lifecycle of larp events. Its primary consumers
+  are the organizers of these events, and the players who participate in them.
+
+  In addition to being built as a SaaS platform it is also designed to federate with
+  other tools also running Njall.
   
   Tech Stack:
-    - Java 25 LTS
-    - HAProxy
-    - Gradle (Kotlin DSL)
-    - PostgreSQL 18+
-    - RabbitMQ
-    - Memcached 
-    - SeaweedFS
-  Core Libraries:
+    - Server:
+      - Java 25 LTS
+    - Build system:
+      - Gradle (Kotlin DSL)
+    - Infrastructure:
+      - HAProxy
+      - PostgreSQL 18+
+      - RabbitMQ
+      - Memcached 
+      - SeaweedFS
+    - UI:
+      - React 19+
+      - Vite
+      - Tanstack
+      - Zustand
+      - Tanstack Router
+  Core Java Libraries:
     - SLF4J
     - Logback
     - Apache Pekko (2.0-M4+, Scala 3)
@@ -44,6 +59,7 @@ context: |
     - `api` represents the primary HTTP API
     - `common` shared libraries and utilities. Does not use Pekko.
     - `data` components that interact with the database.
+    - `queue` components that interact with the message queue.
     - `integration` the place for integration (multicomponent) testing. General tests are written
       with cucumber. Also includes ArchUnit tests.
     - `server` represents the primary application and bootstrap code.
@@ -51,7 +67,7 @@ context: |
 
 rules:
   proposal:
-    - Use the grill-me skill for all proposals that will affect java code.
+    - Use the grill-me skill for all proposals that will affect code.
     - Must use glossary skill
   design:
     - Use the c4-diagrams skill
@@ -67,7 +83,11 @@ operations:
   apply:
     guidance:
       - Run targeted unit tests and lints after each task slice
+      - The system has extremely strict quality gates. You need to fix errors 
+        incrementally as you go or else you will be overwhelmed. This means you need to
+        run the archunit tests, checkstyle, errorprone, etc as you work.
       - The implementation is not complete until `./gradlew check build` passes
+
 
 
 # Project context (optional)

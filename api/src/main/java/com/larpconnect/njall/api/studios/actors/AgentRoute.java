@@ -9,6 +9,7 @@ import com.google.mu.util.Substring;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.common.StudioErrorResponse;
+import com.larpconnect.njall.api.studios.inbox.InboxRoute;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.domain.admin.StudioLookup;
 import java.time.Duration;
@@ -38,6 +39,7 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
   private final StudioLookupCache studioLookupCache;
   private final ActorRef<AgentCommand> agentActor;
   private final CollectionsRoute collectionsRoute;
+  private final InboxRoute inboxRoute;
   private final ActorSystem<Void> system;
   private final ObjectMapper objectMapper;
   private final Duration askTimeout;
@@ -47,12 +49,14 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
       StudioLookupCache studioLookupCache,
       ActorRef<AgentCommand> agentActor,
       CollectionsRoute collectionsRoute,
+      InboxRoute inboxRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper) {
     this(
         studioLookupCache,
         agentActor,
         collectionsRoute,
+        inboxRoute,
         system,
         objectMapper,
         Duration.ofSeconds(20));
@@ -62,12 +66,14 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
       StudioLookupCache studioLookupCache,
       ActorRef<AgentCommand> agentActor,
       CollectionsRoute collectionsRoute,
+      InboxRoute inboxRoute,
       ActorSystem<Void> system,
       ObjectMapper objectMapper,
       Duration askTimeout) {
     this.studioLookupCache = studioLookupCache;
     this.agentActor = agentActor;
     this.collectionsRoute = collectionsRoute;
+    this.inboxRoute = inboxRoute;
     this.system = system;
     this.objectMapper = objectMapper;
     this.askTimeout = askTimeout;
@@ -106,53 +112,92 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
                     post(() -> handlePostActor(lookup, studioIdParam)),
                     get(() -> completeNotFound("Listing actors is not supported")))),
         pathPrefix(
-            PathMatchers.segment(),
-            segment -> handleActorBranch(lookup.tenantId(), studioIdParam, segment)));
+            PathMatchers.segment(), segment -> handleActorBranch(lookup, studioIdParam, segment)));
   }
 
-  private Route handleActorBranch(UUID tenantId, String studioIdParam, String segment) {
+  private Route handleActorBranch(StudioLookup lookup, String studioIdParam, String segment) {
     if (segment.endsWith(ADD_ENDPOINT_SUFFIX)) {
       var idStr = Substring.suffix(ADD_ENDPOINT_SUFFIX).removeFrom(segment);
       return AgentValidation.tryParseUuid(idStr)
-          .map(actorId -> post(() -> handleAddEndpoint(tenantId, actorId)))
+          .map(actorId -> post(() -> handleAddEndpoint(lookup.tenantId(), actorId)))
           .orElseGet(() -> completeNotFound("Actor not found: " + segment));
     }
     if (segment.endsWith(REMOVE_ENDPOINT_SUFFIX)) {
       var idStr = Substring.suffix(REMOVE_ENDPOINT_SUFFIX).removeFrom(segment);
       return AgentValidation.tryParseUuid(idStr)
-          .map(actorId -> post(() -> handleRemoveEndpoint(tenantId, actorId)))
+          .map(actorId -> post(() -> handleRemoveEndpoint(lookup.tenantId(), actorId)))
           .orElseGet(() -> completeNotFound("Actor not found: " + segment));
     }
-    return AgentValidation.tryParseUuid(segment)
-        .map(actorId -> buildActorSubroutes(tenantId, studioIdParam, actorId))
-        .orElseGet(() -> completeNotFound("Actor not found: " + segment));
+    return buildActorSubroutes(lookup, studioIdParam, segment);
   }
 
-  private Route buildActorSubroutes(UUID tenantId, String studioIdParam, UUID actorId) {
+  private Route buildActorSubroutes(
+      StudioLookup lookup, String studioIdParam, String actorIdentifier) {
+    var actorIdOpt = AgentValidation.tryParseUuid(actorIdentifier);
     return concat(
         pathEndOrSingleSlash(
             () ->
                 concat(
-                    get(() -> handleGetActor(tenantId, studioIdParam, actorId)),
-                    patch(() -> handlePatchActor(tenantId, studioIdParam, actorId)),
-                    delete(() -> handleDeleteActor(tenantId, actorId)))),
-        path(ADD_ENDPOINT_SUFFIX, () -> post(() -> handleAddEndpoint(tenantId, actorId))),
-        path(REMOVE_ENDPOINT_SUFFIX, () -> post(() -> handleRemoveEndpoint(tenantId, actorId))),
+                    get(() -> handleGetActor(lookup.tenantId(), studioIdParam, actorIdentifier)),
+                    actorIdOpt
+                        .map(
+                            actorId ->
+                                concat(
+                                    patch(
+                                        () ->
+                                            handlePatchActor(
+                                                lookup.tenantId(), studioIdParam, actorId)),
+                                    delete(() -> handleDeleteActor(lookup.tenantId(), actorId))))
+                        .orElseGet(() -> completeNotFound("Actor not found: " + actorIdentifier)))),
+        inboxRoute.inboxSubroutes(lookup, studioIdParam, actorIdentifier),
         path(
             "inbox",
+            () -> get(() -> handleGetInbox(lookup.tenantId(), studioIdParam, actorIdentifier))),
+        buildActorEndpointSubroutes(lookup, studioIdParam, actorIdentifier, actorIdOpt),
+        pathPrefix(
+            PathMatchers.separateOnSlashes("collections"),
             () ->
-                concat(
-                    get(() -> handleGetInbox(tenantId, studioIdParam, actorId)),
-                    post(() -> handlePostInbox(tenantId, studioIdParam, actorId)))),
+                actorIdOpt
+                    .map(
+                        actorId ->
+                            collectionsRoute.collectionsSubroutes(
+                                lookup.tenantId(), studioIdParam, actorId))
+                    .orElseGet(() -> completeNotFound("Actor not found: " + actorIdentifier))));
+  }
+
+  private Route buildActorEndpointSubroutes(
+      StudioLookup lookup,
+      String studioIdParam,
+      String actorIdentifier,
+      Optional<UUID> actorIdOpt) {
+    return concat(
+        path(
+            ADD_ENDPOINT_SUFFIX,
+            () ->
+                actorIdOpt
+                    .map(actorId -> post(() -> handleAddEndpoint(lookup.tenantId(), actorId)))
+                    .orElseGet(() -> completeNotFound("Actor not found: " + actorIdentifier))),
+        path(
+            REMOVE_ENDPOINT_SUFFIX,
+            () ->
+                actorIdOpt
+                    .map(actorId -> post(() -> handleRemoveEndpoint(lookup.tenantId(), actorId)))
+                    .orElseGet(() -> completeNotFound("Actor not found: " + actorIdentifier))),
         path(
             "outbox",
             () ->
-                concat(
-                    get(() -> handleGetOutbox(tenantId, studioIdParam, actorId)),
-                    post(() -> handlePostOutbox(tenantId, studioIdParam, actorId)))),
-        pathPrefix(
-            PathMatchers.separateOnSlashes("collections"),
-            () -> collectionsRoute.collectionsSubroutes(tenantId, studioIdParam, actorId)));
+                actorIdOpt
+                    .map(
+                        actorId ->
+                            concat(
+                                get(
+                                    () ->
+                                        handleGetOutbox(lookup.tenantId(), studioIdParam, actorId)),
+                                post(
+                                    () ->
+                                        handlePostOutbox(
+                                            lookup.tenantId(), studioIdParam, actorId))))
+                    .orElseGet(() -> completeNotFound("Actor not found: " + actorIdentifier))));
   }
 
   private Route handlePostActor(StudioLookup lookup, String studioIdParam) {
@@ -164,9 +209,9 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
                 res -> mapActorResponse(res, StatusCodes.CREATED)));
   }
 
-  private Route handleGetActor(UUID tenantId, String studioIdParam, UUID actorId) {
+  private Route handleGetActor(UUID tenantId, String studioIdParam, String actorIdentifier) {
     return onComplete(
-        () -> askGetActor(tenantId, studioIdParam, actorId),
+        () -> askGetActor(tenantId, studioIdParam, actorIdentifier),
         res -> mapActorResponse(res, StatusCodes.OK));
   }
 
@@ -206,19 +251,10 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
                 res -> mapActorResponse(res, StatusCodes.NO_CONTENT)));
   }
 
-  private Route handleGetInbox(UUID tenantId, String studioIdParam, UUID actorId) {
+  private Route handleGetInbox(UUID tenantId, String studioIdParam, String actorIdentifier) {
     return onComplete(
-        () -> askGetInbox(tenantId, studioIdParam, actorId),
+        () -> askGetInbox(tenantId, studioIdParam, actorIdentifier),
         res -> mapActorResponse(res, StatusCodes.OK));
-  }
-
-  private Route handlePostInbox(UUID tenantId, String studioIdParam, UUID actorId) {
-    return entity(
-        Jackson.unmarshaller(objectMapper, JsonNode.class),
-        payload ->
-            onComplete(
-                () -> askPostInbox(tenantId, studioIdParam, actorId, payload),
-                res -> mapActorResponse(res, StatusCodes.CREATED)));
   }
 
   private Route handleGetOutbox(UUID tenantId, String studioIdParam, UUID actorId) {
@@ -248,10 +284,10 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
   }
 
   private CompletionStage<AgentActorResponse> askGetActor(
-      UUID tenantId, String studioIdentifier, UUID actorId) {
+      UUID tenantId, String studioIdentifier, String actorIdentifier) {
     return ask(
         agentActor,
-        replyTo -> new AgentCommand.GetAgent(tenantId, studioIdentifier, actorId, replyTo),
+        replyTo -> new AgentCommand.GetAgent(tenantId, studioIdentifier, actorIdentifier, replyTo),
         askTimeout,
         system.scheduler());
   }
@@ -312,14 +348,14 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
   }
 
   private CompletionStage<AgentActorResponse> askGetInbox(
-      UUID tenantId, String studioIdentifier, UUID actorId) {
+      UUID tenantId, String studioIdentifier, String actorIdentifier) {
     return ask(
         agentActor,
         replyTo ->
             new AgentCommand.AccessCollection(
                 tenantId,
                 studioIdentifier,
-                actorId,
+                actorIdentifier,
                 AgentCommand.CollectionTarget.INBOX,
                 AgentCommand.CollectionAction.GET,
                 Optional.empty(),
@@ -336,27 +372,10 @@ public final class AgentRoute extends AllDirectives implements RouteProvider {
             new AgentCommand.AccessCollection(
                 tenantId,
                 studioIdentifier,
-                actorId,
+                actorId.toString(),
                 AgentCommand.CollectionTarget.OUTBOX,
                 AgentCommand.CollectionAction.GET,
                 Optional.empty(),
-                replyTo),
-        askTimeout,
-        system.scheduler());
-  }
-
-  private CompletionStage<AgentActorResponse> askPostInbox(
-      UUID tenantId, String studioIdentifier, UUID actorId, JsonNode payload) {
-    return ask(
-        agentActor,
-        replyTo ->
-            new AgentCommand.AccessCollection(
-                tenantId,
-                studioIdentifier,
-                actorId,
-                AgentCommand.CollectionTarget.INBOX,
-                AgentCommand.CollectionAction.POST,
-                Optional.of(payload),
                 replyTo),
         askTimeout,
         system.scheduler());

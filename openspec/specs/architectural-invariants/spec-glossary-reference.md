@@ -3,7 +3,7 @@
 | Term | Source Glossary | Context |
 | --- | --- | --- |
 | Njall | `glossary/technical.md` | Application codebase and package namespace prefix `com.larpconnect.njall`. |
-| Library module | `glossary/technical.md` | Gradle library module `:integration` hosting ArchUnit architecture tests. |
+| Library module | `glossary/technical.md` | Non-executable Gradle modules `:integration` (ArchUnit suite) and `:queue` (`com.larpconnect.njall.queue`). |
 | Module | `glossary/technical.md` | Gradle library/application modules (`:data`, `:api`, `:integration`) and Guice binding modules configuring subpackages (`StudiosModule`, `DaoModule`, etc.). |
 | User plane | `glossary/technical.md` | Studio-facing HTTP routes and Pekko actors under `com.larpconnect.njall.api.studios.*`. |
 | Actor | `glossary/technical.md` | Apache Pekko typed actor factory and message protocol types. |

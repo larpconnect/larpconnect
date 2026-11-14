@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
+import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.common.telemetry.ApiCall;
 import io.dropwizard.metrics5.health.HealthCheck;
 import org.apache.pekko.actor.typed.ActorRef;
@@ -23,7 +24,7 @@ public final class HealthAdminModule extends AbstractModule {
   @Provides
   @Singleton
   ActorRef<ApiCall<HealthCheckCommand>> provideHealthCheckActor(
-      ActorSystem<Void> system, HealthCheckActorFactory factory) {
-    return system.systemActorOf(factory.create(), "healthCheckActor", Props.empty());
+      ActorSystem<Void> system, HealthCheckActorFactory factory, @Blocking Props blockingProps) {
+    return system.systemActorOf(factory.create(), "healthCheckActor", blockingProps);
   }
 }
