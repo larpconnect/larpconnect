@@ -3,7 +3,7 @@ package com.larpconnect.njall.data.dao.studios;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
 import com.larpconnect.njall.data.dao.common.DAO;
-import com.larpconnect.njall.data.domain.Hashtag;
+import com.larpconnect.njall.data.domain.studios.Hashtag;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

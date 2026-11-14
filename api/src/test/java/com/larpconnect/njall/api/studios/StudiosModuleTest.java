@@ -17,24 +17,35 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.api.http.RouteProvider;
+import com.larpconnect.njall.api.studios.campaigns.CampaignCommand;
+import com.larpconnect.njall.api.studios.campaigns.CampaignsRoute;
+import com.larpconnect.njall.api.studios.common.StudioSubRoute;
+import com.larpconnect.njall.api.studios.games.GameCommand;
+import com.larpconnect.njall.api.studios.games.GamesRoute;
+import com.larpconnect.njall.api.studios.systems.GameSystemCommand;
+import com.larpconnect.njall.api.studios.systems.SystemsRoute;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
 import com.larpconnect.njall.data.dao.studios.AddressDAO;
-import com.larpconnect.njall.data.dao.studios.EventDAO;
 import com.larpconnect.njall.data.dao.studios.HashtagDAO;
 import com.larpconnect.njall.data.dao.studios.LinkDAO;
 import com.larpconnect.njall.data.dao.studios.LocationDAO;
 import com.larpconnect.njall.data.dao.studios.StudioDAO;
 import com.larpconnect.njall.data.dao.studios.actors.AgentDAO;
+import com.larpconnect.njall.data.dao.studios.campaigns.CampaignDAO;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
+import com.larpconnect.njall.data.dao.studios.events.EventDAO;
+import com.larpconnect.njall.data.dao.studios.games.GameDAO;
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualDAO;
-import com.larpconnect.njall.data.domain.Collection;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.dao.studios.systems.GameSystemDAO;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
+import com.larpconnect.njall.data.domain.studios.Collection;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.Props;
 import org.apache.pekko.actor.typed.javadsl.Behaviors;
@@ -138,6 +149,66 @@ final class StudiosModuleTest {
     }
   }
 
+  @Test
+  @DisplayName("StudiosModule wires Systems, Campaigns, and Games routes, subroutes, and actors")
+  void studiosModule_wiresSystemsCampaignsGamesAndSubRoutes() throws Exception {
+    ActorSystem<Void> testSystem =
+        ActorSystem.create(Behaviors.empty(), "studios-systems-campaigns-games-test");
+    try {
+      var tenantId = UUID.randomUUID();
+      var daos = mockDaos();
+      when(daos.gameSystemDao().listAll(tenantId)).thenReturn(ImmutableList.of());
+      when(daos.campaignDao().listAll(tenantId, Optional.empty())).thenReturn(ImmutableList.of());
+      when(daos.gameDao().listAll(tenantId, Optional.empty(), Optional.empty()))
+          .thenReturn(ImmutableList.of());
+
+      var injector =
+          Guice.createInjector(
+              new StudiosModule(), createTestModule(daos, activeCache(tenantId), testSystem));
+      verifySubRoutesAndActors(injector);
+
+      var handler = combinedRoute(injector).seal().function(testSystem);
+      for (var path : ImmutableList.of("systems", "campaigns", "games")) {
+        var res =
+            handler
+                .apply(HttpRequest.GET("/api/studios/valiant/v1/" + path))
+                .toCompletableFuture()
+                .get(5, TimeUnit.SECONDS);
+        assertThat(res.status()).isEqualTo(StatusCodes.OK);
+      }
+    } finally {
+      testSystem.terminate();
+      testSystem.getWhenTerminated().toCompletableFuture().get(5, TimeUnit.SECONDS);
+    }
+  }
+
+  private void verifySubRoutesAndActors(Injector injector) {
+    var subRoutes =
+        injector.getInstance(
+            Key.get(new TypeLiteral<Set<RouteProvider>>() {}, StudioSubRoute.class));
+    assertThat(subRoutes).hasSize(9);
+    assertThat(subRoutes.stream().map(Object::getClass).toList())
+        .contains(SystemsRoute.class, CampaignsRoute.class, GamesRoute.class);
+
+    assertThat(injector.getInstance(Key.get(new TypeLiteral<ActorRef<GameSystemCommand>>() {})))
+        .isSameAs(injector.getInstance(Key.get(new TypeLiteral<ActorRef<GameSystemCommand>>() {})));
+    assertThat(injector.getInstance(Key.get(new TypeLiteral<ActorRef<CampaignCommand>>() {})))
+        .isSameAs(injector.getInstance(Key.get(new TypeLiteral<ActorRef<CampaignCommand>>() {})));
+    assertThat(injector.getInstance(Key.get(new TypeLiteral<ActorRef<GameCommand>>() {})))
+        .isSameAs(injector.getInstance(Key.get(new TypeLiteral<ActorRef<GameCommand>>() {})));
+  }
+
+  private StudioLookupCache activeCache(UUID tenantId) {
+    var cache = mock(StudioLookupCache.class);
+    var now = Instant.now();
+    when(cache.findByIdOrAlias("valiant"))
+        .thenReturn(
+            Optional.of(
+                new StudioLookup(
+                    tenantId, UUID.randomUUID(), "valiant", now, now, Optional.empty())));
+    return cache;
+  }
+
   private Route combinedRoute(Injector injector) {
     var routeProviders = injector.getInstance(Key.get(new TypeLiteral<Set<RouteProvider>>() {}));
     return routeProviders.stream()
@@ -154,6 +225,9 @@ final class StudiosModuleTest {
         mock(AddressDAO.class),
         mock(HashtagDAO.class),
         mock(EventDAO.class),
+        mock(GameSystemDAO.class),
+        mock(CampaignDAO.class),
+        mock(GameDAO.class),
         mock(IndividualDAO.class),
         mock(CollectionDAO.class),
         mock(AgentDAO.class));
@@ -166,6 +240,9 @@ final class StudiosModuleTest {
       AddressDAO addressDao,
       HashtagDAO hashtagDao,
       EventDAO eventDao,
+      GameSystemDAO gameSystemDao,
+      CampaignDAO campaignDao,
+      GameDAO gameDao,
       IndividualDAO individualDao,
       CollectionDAO collectionDao,
       AgentDAO agentDao) {}
@@ -186,6 +263,9 @@ final class StudiosModuleTest {
         bind(AddressDAO.class).toInstance(daos.addressDao());
         bind(HashtagDAO.class).toInstance(daos.hashtagDao());
         bind(EventDAO.class).toInstance(daos.eventDao());
+        bind(GameSystemDAO.class).toInstance(daos.gameSystemDao());
+        bind(CampaignDAO.class).toInstance(daos.campaignDao());
+        bind(GameDAO.class).toInstance(daos.gameDao());
         bind(IndividualDAO.class).toInstance(daos.individualDao());
         bind(CollectionDAO.class).toInstance(daos.collectionDao());
         bind(AgentDAO.class).toInstance(daos.agentDao());

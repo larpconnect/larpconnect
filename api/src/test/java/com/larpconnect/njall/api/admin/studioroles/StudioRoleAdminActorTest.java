@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.admin.StudioRoleDAO;
-import com.larpconnect.njall.data.domain.DefaultStudioRole;
+import com.larpconnect.njall.data.domain.admin.DefaultStudioRole;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;

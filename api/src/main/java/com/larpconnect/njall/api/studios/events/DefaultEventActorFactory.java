@@ -1,9 +1,8 @@
 package com.larpconnect.njall.api.studios.events;
 
 import com.google.inject.Inject;
-import com.larpconnect.njall.data.dao.studios.EventDAO;
+import com.larpconnect.njall.data.dao.studios.events.EventDAO;
 import org.apache.pekko.actor.typed.Behavior;
-import org.apache.pekko.actor.typed.javadsl.Behaviors;
 
 final class DefaultEventActorFactory implements EventActorFactory {
 
@@ -16,6 +15,6 @@ final class DefaultEventActorFactory implements EventActorFactory {
 
   @Override
   public Behavior<EventCommand> create() {
-    return Behaviors.setup(context -> new EventActor(context, eventDao));
+    return EventActor.create(eventDao);
   }
 }

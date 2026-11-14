@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.admin.AdminRoleDAO;
-import com.larpconnect.njall.data.domain.AdminRole;
+import com.larpconnect.njall.data.domain.admin.AdminRole;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;

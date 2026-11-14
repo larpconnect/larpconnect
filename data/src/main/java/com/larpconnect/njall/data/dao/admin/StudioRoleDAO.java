@@ -1,7 +1,7 @@
 package com.larpconnect.njall.data.dao.admin;
 
 import com.larpconnect.njall.data.dao.common.DAO;
-import com.larpconnect.njall.data.domain.DefaultStudioRole;
+import com.larpconnect.njall.data.domain.admin.DefaultStudioRole;
 import java.util.Optional;
 import java.util.UUID;
 

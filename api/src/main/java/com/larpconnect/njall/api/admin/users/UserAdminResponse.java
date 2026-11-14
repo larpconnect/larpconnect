@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin.users;
 
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.AdminUser;
+import com.larpconnect.njall.data.domain.admin.AdminUser;
 
 /** Response protocol emitted by the user admin actor. */
 public sealed interface UserAdminResponse {

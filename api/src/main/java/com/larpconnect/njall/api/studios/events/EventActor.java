@@ -2,44 +2,57 @@ package com.larpconnect.njall.api.studios.events;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import com.larpconnect.njall.api.studios.common.GeneratorUriSupport;
-import com.larpconnect.njall.data.dao.studios.EventDAO;
-import com.larpconnect.njall.data.domain.Event;
+import com.google.errorprone.annotations.Immutable;
+import com.google.errorprone.annotations.ImmutableTypeParameter;
+import com.larpconnect.njall.api.studios.common.StudioResourceUriSupport;
+import com.larpconnect.njall.api.studios.common.UpdateMaskSupport;
+import com.larpconnect.njall.data.dao.studios.events.EventDAO;
+import com.larpconnect.njall.data.dao.studios.events.PatchEventParams;
+import com.larpconnect.njall.data.domain.studios.Event;
+import com.larpconnect.njall.data.domain.studios.EventType;
+import java.time.Instant;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.Behavior;
-import org.apache.pekko.actor.typed.javadsl.AbstractBehavior;
-import org.apache.pekko.actor.typed.javadsl.ActorContext;
-import org.apache.pekko.actor.typed.javadsl.Receive;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import org.hibernate.exception.ConstraintViolationException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Apache Pekko Typed actor executing user-space tenanted event operations. */
-final class EventActor extends AbstractBehavior<EventCommand> {
+final class EventActor {
 
   private final Logger logger = LoggerFactory.getLogger(EventActor.class);
   private final EventDAO eventDao;
 
-  EventActor(ActorContext<EventCommand> context, EventDAO eventDao) {
-    super(context);
+  private EventActor(EventDAO eventDao) {
     this.eventDao = eventDao;
   }
 
-  @Override
-  public Receive<EventCommand> createReceive() {
-    return newReceiveBuilder()
-        .onMessage(EventCommand.CreateEvent.class, this::onCreateEvent)
-        .onMessage(EventCommand.GetEvent.class, this::onGetEvent)
-        .onMessage(EventCommand.ListEvents.class, this::onListEvents)
-        .onMessage(EventCommand.PatchEvent.class, this::onPatchEvent)
-        .onMessage(EventCommand.DeleteEvent.class, this::onDeleteEvent)
-        .build();
+  static Behavior<EventCommand> create(EventDAO eventDao) {
+    return createActor(eventDao).behavior();
+  }
+
+  private static EventActor createActor(EventDAO eventDao) {
+    return new EventActor(eventDao);
+  }
+
+  private Behavior<EventCommand> behavior() {
+    return Behaviors.receiveMessage(this::onCommand);
+  }
+
+  private Behavior<EventCommand> onCommand(EventCommand command) {
+    return switch (command) {
+      case EventCommand.CreateEvent cmd -> onCreateEvent(cmd);
+      case EventCommand.GetEvent cmd -> onGetEvent(cmd);
+      case EventCommand.ListEvents cmd -> onListEvents(cmd);
+      case EventCommand.PatchEvent cmd -> onPatchEvent(cmd);
+      case EventCommand.DeleteEvent cmd -> onDeleteEvent(cmd);
+    };
   }
 
   private Behavior<EventCommand> onCreateEvent(EventCommand.CreateEvent cmd) {
@@ -47,26 +60,19 @@ final class EventActor extends AbstractBehavior<EventCommand> {
       var validationError = EventValidation.validateCreate(cmd.request());
       if (validationError.isPresent()) {
         cmd.replyTo().tell(EventActorResponse.badRequest(validationError.orElseThrow()));
-        return this;
+        return Behaviors.same();
       }
-      var parsed =
-          GeneratorUriSupport.parseGenerator(
-              cmd.request().generator(), cmd.studioIdentifier(), cmd.lookup());
-      if (parsed.isEmpty()) {
-        cmd.replyTo()
-            .tell(EventActorResponse.badRequest("Invalid generator URI or actor identifier"));
-        return this;
-      }
-      executeCreate(
-          cmd.tenantId(),
-          cmd.studioIdentifier(),
-          parsed.orElseThrow(),
-          cmd.request(),
-          cmd.replyTo());
+      var owner =
+          StudioResourceUriSupport.parseResourceUri(
+              cmd.request().generator(),
+              cmd.studioIdentifier(),
+              StudioResourceUriSupport.ACTORS_COLLECTION,
+              cmd.lookup());
+      executeCreate(cmd.tenantId(), cmd.studioIdentifier(), owner, cmd.request(), cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "create event", e);
     }
-    return this;
+    return Behaviors.same();
   }
 
   private void executeCreate(
@@ -79,6 +85,7 @@ final class EventActor extends AbstractBehavior<EventCommand> {
         eventDao.create(
             tenantId,
             owner,
+            request.eventType().orElse(EventType.EVENT_TYPE_UNSPECIFIED),
             request.title(),
             request.summary(),
             request.locationId(),
@@ -93,7 +100,7 @@ final class EventActor extends AbstractBehavior<EventCommand> {
     } catch (Exception e) {
       handleError(cmd.replyTo(), "get event", e);
     }
-    return this;
+    return Behaviors.same();
   }
 
   private void executeGet(
@@ -112,7 +119,7 @@ final class EventActor extends AbstractBehavior<EventCommand> {
     } catch (Exception e) {
       handleError(cmd.replyTo(), "list events", e);
     }
-    return this;
+    return Behaviors.same();
   }
 
   private void executeList(
@@ -126,22 +133,23 @@ final class EventActor extends AbstractBehavior<EventCommand> {
 
   private Behavior<EventCommand> onPatchEvent(EventCommand.PatchEvent cmd) {
     try {
-      var validationError = EventValidation.validatePatch(cmd.request());
+      var maskFields = UpdateMaskSupport.parseUpdateMask(cmd.updateMask());
+      var validationError = validatePatch(maskFields, cmd.request());
       if (validationError.isPresent()) {
         cmd.replyTo().tell(EventActorResponse.badRequest(validationError.orElseThrow()));
-        return this;
+        return Behaviors.same();
       }
       executePatch(
           cmd.tenantId(),
           cmd.studioIdentifier(),
           cmd.eventId(),
           cmd.request(),
-          cmd.updateMask(),
+          maskFields,
           cmd.replyTo());
     } catch (Exception e) {
       handleError(cmd.replyTo(), "patch event", e);
     }
-    return this;
+    return Behaviors.same();
   }
 
   private void executePatch(
@@ -149,17 +157,10 @@ final class EventActor extends AbstractBehavior<EventCommand> {
       String studioIdentifier,
       UUID eventId,
       UpdateEventRequest request,
-      Optional<String> updateMask,
+      Optional<ImmutableSet<String>> maskFields,
       ActorRef<EventActorResponse> replyTo) {
-    var maskFields = parseUpdateMask(updateMask);
-    var title = selectField(maskFields, "title", "title", request.title());
-    var summary = selectField(maskFields, "summary", "summary", request.summary());
-    var locationId = selectField(maskFields, "locationId", "location_id", request.locationId());
-    var startTime = selectField(maskFields, "startTime", "start_time", request.startTime());
-    var endTime = selectField(maskFields, "endTime", "end_time", request.endTime());
-
     eventDao
-        .patch(tenantId, eventId, title, summary, locationId, startTime, endTime)
+        .patch(tenantId, eventId, toPatchParams(maskFields, request))
         .ifPresentOrElse(
             updated ->
                 replyTo.tell(
@@ -173,7 +174,7 @@ final class EventActor extends AbstractBehavior<EventCommand> {
     } catch (Exception e) {
       handleError(cmd.replyTo(), "delete event", e);
     }
-    return this;
+    return Behaviors.same();
   }
 
   private void executeDelete(UUID tenantId, UUID eventId, ActorRef<EventActorResponse> replyTo) {
@@ -185,12 +186,20 @@ final class EventActor extends AbstractBehavior<EventCommand> {
     }
   }
 
-  private EventResponse toEventResponse(String studioIdentifier, Event event) {
+  private static EventResponse toEventResponse(String studioIdentifier, Event event) {
+    var generatorUri =
+        StudioResourceUriSupport.formatResourceUri(
+            studioIdentifier, StudioResourceUriSupport.ACTORS_COLLECTION, event.generator());
+    return createEventResponse(event, generatorUri);
+  }
+
+  private static EventResponse createEventResponse(Event event, String generatorUri) {
     return new EventResponse(
         event.id(),
-        GeneratorUriSupport.formatGeneratorUri(studioIdentifier, event.generator()),
+        generatorUri,
         event.title(),
         event.summary(),
+        event.eventType(),
         event.locationId(),
         event.startTime(),
         event.endTime(),
@@ -198,29 +207,83 @@ final class EventActor extends AbstractBehavior<EventCommand> {
         event.updatedOn());
   }
 
-  private Optional<Set<String>> parseUpdateMask(Optional<String> updateMask) {
-    return updateMask.map(
-        mask -> ImmutableSet.copyOf(Splitter.on(',').trimResults().omitEmptyStrings().split(mask)));
+  private static Optional<String> validatePatch(
+      Optional<ImmutableSet<String>> maskFields, UpdateEventRequest request) {
+    return validateRequiredMaskFields(maskFields, request)
+        .or(() -> EventValidation.validatePatch(request, maskFields));
   }
 
-  private <T> Optional<T> selectField(
-      Optional<Set<String>> maskFields,
-      String camelCaseField,
-      String snakeCaseField,
-      Optional<T> requestValue) {
-    if (maskFields.isPresent()) {
-      var set = maskFields.orElseThrow();
-      var matches = set.contains(camelCaseField) || set.contains(snakeCaseField);
-      return matches ? requestValue : Optional.empty();
+  private static Optional<String> validateRequiredMaskFields(
+      Optional<ImmutableSet<String>> maskFields, UpdateEventRequest request) {
+    if (UpdateMaskSupport.isFieldCleared(maskFields, request.title(), "title")) {
+      return Optional.of("Event title must not be blank");
     }
-    return requestValue;
+    if (UpdateMaskSupport.isFieldCleared(
+        maskFields, request.eventType(), "eventType", "event_type")) {
+      return Optional.of("Event eventType must not be cleared");
+    }
+    return Optional.empty();
+  }
+
+  @Immutable
+  private record MaskedField<@ImmutableTypeParameter T>(Optional<T> value, boolean cleared) {}
+
+  private static PatchEventParams toPatchParams(
+      Optional<ImmutableSet<String>> maskFields, UpdateEventRequest request) {
+    var eventType =
+        UpdateMaskSupport.selectOptionalField(
+            request.eventType(), Optional.empty(), maskFields, "eventType", "event_type");
+    var title =
+        UpdateMaskSupport.selectOptionalField(
+            request.title(), Optional.empty(), maskFields, "title");
+    var summary = resolveMaskedField(maskFields, request.summary(), "summary");
+    var locationId =
+        resolveMaskedField(maskFields, request.locationId(), "locationId", "location_id");
+    var startTime = resolveMaskedField(maskFields, request.startTime(), "startTime", "start_time");
+    var endTime = resolveMaskedField(maskFields, request.endTime(), "endTime", "end_time");
+    return createPatchParams(eventType, title, summary, locationId, startTime, endTime);
+  }
+
+  private static <T> MaskedField<T> resolveMaskedField(
+      Optional<ImmutableSet<String>> maskFields, Optional<T> requestValue, String... fieldNames) {
+    var value =
+        UpdateMaskSupport.selectOptionalField(
+            requestValue, Optional.empty(), maskFields, fieldNames);
+    var cleared = UpdateMaskSupport.isFieldCleared(maskFields, requestValue, fieldNames);
+    return createMaskedField(value, cleared);
+  }
+
+  private static <T> MaskedField<T> createMaskedField(Optional<T> value, boolean cleared) {
+    return new MaskedField<>(value, cleared);
+  }
+
+  private static PatchEventParams createPatchParams(
+      Optional<EventType> eventType,
+      Optional<String> title,
+      MaskedField<String> summary,
+      MaskedField<UUID> locationId,
+      MaskedField<Instant> startTime,
+      MaskedField<Instant> endTime) {
+    return new PatchEventParams(
+        eventType,
+        title,
+        summary.value(),
+        summary.cleared(),
+        locationId.value(),
+        locationId.cleared(),
+        startTime.value(),
+        startTime.cleared(),
+        endTime.value(),
+        endTime.cleared());
   }
 
   private void handleError(
       ActorRef<EventActorResponse> replyTo, String operation, Exception error) {
     logger.error("Failed to {} in EventActor", operation, error);
     if (error instanceof IllegalArgumentException) {
-      replyTo.tell(EventActorResponse.badRequest(error.getMessage()));
+      var message = error.getMessage();
+      var reason = !Strings.isNullOrEmpty(message) ? message : "Invalid request";
+      replyTo.tell(EventActorResponse.badRequest(reason));
       return;
     }
     if (isConstraintViolation(error)) {
@@ -232,18 +295,10 @@ final class EventActor extends AbstractBehavior<EventCommand> {
     replyTo.tell(EventActorResponse.failure(reason));
   }
 
-  private static boolean isConstraintViolation(Throwable throwable) {
+  private static boolean isConstraintViolation(@Nullable Throwable throwable) {
     var current = throwable;
     while (current != null) {
       if (current instanceof ConstraintViolationException) {
-        return true;
-      }
-      var msg = current.getMessage();
-      if (msg != null
-          && (msg.contains("violates foreign key constraint")
-              || msg.contains("violates check constraint")
-              || msg.contains("fk_events_locations")
-              || msg.contains("chk_events_time_order"))) {
         return true;
       }
       current = current.getCause();

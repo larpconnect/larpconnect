@@ -7,10 +7,14 @@ import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.annotation.NjallUsers;
 import com.larpconnect.njall.data.dao.common.DaoCommonModule;
 import com.larpconnect.njall.data.dao.studios.actors.AgentsDaoModule;
+import com.larpconnect.njall.data.dao.studios.campaigns.CampaignsDaoModule;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionsDaoModule;
+import com.larpconnect.njall.data.dao.studios.events.EventsDaoModule;
+import com.larpconnect.njall.data.dao.studios.games.GamesDaoModule;
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualsDaoModule;
+import com.larpconnect.njall.data.dao.studios.systems.SystemsDaoModule;
 
-/** Guice module configuring Studio, Location, Address, and Link DAO bindings and entities. */
+/** Guice module configuring Studio, Location, Address, Link, and child DAO subpackage bindings. */
 public final class StudiosDaoModule extends AbstractModule {
 
   @Override
@@ -21,10 +25,13 @@ public final class StudiosDaoModule extends AbstractModule {
     bind(LocationDAO.class).to(DefaultLocationDAO.class).in(Scopes.SINGLETON);
     bind(AddressDAO.class).to(DefaultAddressDAO.class).in(Scopes.SINGLETON);
     bind(HashtagDAO.class).to(DefaultHashtagDAO.class).in(Scopes.SINGLETON);
-    bind(EventDAO.class).to(DefaultEventDAO.class).in(Scopes.SINGLETON);
     install(new IndividualsDaoModule());
     install(new CollectionsDaoModule());
     install(new AgentsDaoModule());
+    install(new EventsDaoModule());
+    install(new SystemsDaoModule());
+    install(new CampaignsDaoModule());
+    install(new GamesDaoModule());
 
     var adminEntities =
         Multibinder.newSetBinder(
@@ -36,7 +43,6 @@ public final class StudiosDaoModule extends AbstractModule {
     adminEntities.addBinding().toInstance(AddressEntity.class);
     adminEntities.addBinding().toInstance(HashtagEntity.class);
     adminEntities.addBinding().toInstance(HashtagEntityMapping.class);
-    adminEntities.addBinding().toInstance(EventEntity.class);
 
     var userEntities =
         Multibinder.newSetBinder(
@@ -47,6 +53,5 @@ public final class StudiosDaoModule extends AbstractModule {
     userEntities.addBinding().toInstance(AddressEntity.class);
     userEntities.addBinding().toInstance(HashtagEntity.class);
     userEntities.addBinding().toInstance(HashtagEntityMapping.class);
-    userEntities.addBinding().toInstance(EventEntity.class);
   }
 }

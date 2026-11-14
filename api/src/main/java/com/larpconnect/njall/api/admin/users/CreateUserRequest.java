@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.AdminUserStatus;
+import com.larpconnect.njall.data.domain.admin.AdminUserStatus;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 

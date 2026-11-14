@@ -1,6 +1,6 @@
 package com.larpconnect.njall.data.dao.admin;
 
-import com.larpconnect.njall.data.domain.AdminUserStatus;
+import com.larpconnect.njall.data.domain.admin.AdminUserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.larpconnect.njall.data.dao.studios.individuals.IndividualDAO;
-import com.larpconnect.njall.data.domain.Individual;
+import com.larpconnect.njall.data.domain.studios.Individual;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

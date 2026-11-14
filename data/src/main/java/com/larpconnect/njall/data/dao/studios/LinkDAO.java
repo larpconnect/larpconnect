@@ -1,7 +1,7 @@
 package com.larpconnect.njall.data.dao.studios;
 
 import com.larpconnect.njall.data.dao.common.DAO;
-import com.larpconnect.njall.data.domain.Link;
+import com.larpconnect.njall.data.domain.studios.Link;
 import java.util.Optional;
 import java.util.UUID;
 

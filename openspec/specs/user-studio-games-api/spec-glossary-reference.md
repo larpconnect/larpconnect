@@ -1,0 +1,15 @@
+# Glossary Reference
+
+| Term | Source Glossary | Context |
+| --- | --- | --- |
+| Games | `glossary/business.md` | Specialized event subtype managed under `/api/studios/{studio-id}/v1/games`. |
+| Events | `glossary/business.md` | Parent CTI gathering entity disjoint from `/v1/games` when `entity_type = 'Event'`. |
+| System | `glossary/business.md` | Required ruleset entity referenced by every game. |
+| Campaigns | `glossary/business.md` | Optional chronicle entity referenced by a game independently of `campaign.system`. |
+| Locations | `glossary/business.md` | Optional physical venue referenced by `locationId`. |
+| Entity | `glossary/business.md` | Root Common Table Inheritance record in `njall_users.entities`. |
+| Studio | `glossary/business.md` | Tenanted organization resolved via `{studio-id}`. |
+| Alias | `glossary/business.md` | Human-readable studio slug accepted in `{studio-id}`. |
+| Actor | `glossary/business.md` | Federated studio actor identity required as entity generator. |
+| Tenant | `glossary/business.md` | Isolated studio boundary enforced via PostgreSQL Row-Level Security. |
+| generator | `glossary/business.md` | Responsible Actor recorded in `njall_users.entities.generator`. |

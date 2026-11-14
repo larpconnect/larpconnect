@@ -2,23 +2,29 @@ package com.larpconnect.njall.api.studios.events;
 
 import static org.apache.pekko.actor.typed.javadsl.AskPattern.ask;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.larpconnect.njall.api.http.RouteProvider;
 import com.larpconnect.njall.api.studios.common.StudioErrorResponse;
+import com.larpconnect.njall.api.studios.common.UpdateMaskSupport;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.http.javadsl.marshallers.jackson.Jackson;
 import org.apache.pekko.http.javadsl.model.StatusCode;
 import org.apache.pekko.http.javadsl.model.StatusCodes;
 import org.apache.pekko.http.javadsl.server.AllDirectives;
+import org.apache.pekko.http.javadsl.server.MalformedRequestContentRejection;
 import org.apache.pekko.http.javadsl.server.PathMatchers;
+import org.apache.pekko.http.javadsl.server.RejectionHandler;
 import org.apache.pekko.http.javadsl.server.Route;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +81,8 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
         .findByIdOrAlias(studioIdParam)
         .filter(this::isActive)
         .map(lookup -> buildTenantedRoutes(lookup, studioIdParam))
-        .orElseGet(() -> completeNotFound("Studio not found: " + studioIdParam));
+        .orElseGet(
+            () -> completeError(StatusCodes.NOT_FOUND, "Studio not found: " + studioIdParam));
   }
 
   private boolean isActive(StudioLookup lookup) {
@@ -83,20 +90,33 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
   }
 
   private Route buildTenantedRoutes(StudioLookup lookup, String studioIdParam) {
-    return concat(
-        pathEndOrSingleSlash(
-            () ->
-                concat(
-                    get(() -> handleListEvents(lookup.tenantId(), studioIdParam)),
-                    post(() -> handlePostEvent(lookup, studioIdParam)))),
-        pathPrefix(
-            PathMatchers.segment(),
-            eventIdParam -> handleEventBranch(lookup.tenantId(), studioIdParam, eventIdParam)));
+    return handleRejections(
+        malformedRequestRejectionHandler(),
+        () ->
+            concat(
+                pathEndOrSingleSlash(
+                    () ->
+                        concat(
+                            get(() -> handleListEvents(lookup.tenantId(), studioIdParam)),
+                            post(() -> handlePostEvent(lookup, studioIdParam)))),
+                pathPrefix(
+                    PathMatchers.segment(),
+                    eventIdParam ->
+                        handleEventBranch(lookup.tenantId(), studioIdParam, eventIdParam))));
+  }
+
+  private RejectionHandler malformedRequestRejectionHandler() {
+    return RejectionHandler.newBuilder()
+        .handle(
+            MalformedRequestContentRejection.class,
+            rejection -> completeError(StatusCodes.BAD_REQUEST, rejection.message()))
+        .build();
   }
 
   private Route handlePostEvent(StudioLookup lookup, String studioIdParam) {
-    return entity(
-        Jackson.unmarshaller(objectMapper, CreateEventRequest.class),
+    return handleJsonBody(
+        CreateEventRequest.class,
+        false,
         request ->
             onComplete(
                 () -> askCreateEvent(lookup, studioIdParam, request),
@@ -111,7 +131,7 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
   private Route handleEventBranch(UUID tenantId, String studioIdParam, String eventIdParam) {
     return EventValidation.tryParseUuid(eventIdParam)
         .map(eventId -> buildEventSubroutes(tenantId, studioIdParam, eventId))
-        .orElseGet(() -> completeNotFound("Event not found: " + eventIdParam));
+        .orElseGet(() -> completeError(StatusCodes.NOT_FOUND, "Event not found: " + eventIdParam));
   }
 
   private Route buildEventSubroutes(UUID tenantId, String studioIdParam, UUID eventId) {
@@ -133,8 +153,9 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
     return parameterOptional(
         "update_mask",
         mask ->
-            entity(
-                Jackson.unmarshaller(objectMapper, UpdateEventRequest.class),
+            handleJsonBody(
+                UpdateEventRequest.class,
+                UpdateMaskSupport.parseUpdateMask(mask).isPresent(),
                 req ->
                     onComplete(
                         () -> askPatchEvent(tenantId, studioIdParam, eventId, req, mask),
@@ -199,6 +220,52 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
         system.scheduler());
   }
 
+  private <T> Route handleJsonBody(
+      Class<T> targetType, boolean allowNullRequiredFields, Function<T, Route> onParsed) {
+    return entity(
+        Jackson.unmarshaller(objectMapper, JsonNode.class),
+        body -> decodeAndRun(body, targetType, allowNullRequiredFields, onParsed));
+  }
+
+  private <T> Route decodeAndRun(
+      JsonNode body,
+      Class<T> targetType,
+      boolean allowNullRequiredFields,
+      Function<T, Route> onParsed) {
+    var jsonError = validateJsonBody(body, allowNullRequiredFields);
+    if (jsonError.isPresent()) {
+      return completeError(StatusCodes.BAD_REQUEST, jsonError.orElseThrow());
+    }
+    try {
+      return onParsed.apply(objectMapper.treeToValue(body, targetType));
+    } catch (JsonProcessingException e) {
+      var detail = Optional.ofNullable(e.getOriginalMessage()).orElse("Malformed request payload");
+      return completeError(StatusCodes.BAD_REQUEST, "Invalid request payload: " + detail);
+    }
+  }
+
+  private static Optional<String> validateJsonBody(JsonNode body, boolean allowNullRequiredFields) {
+    if (!body.isObject()) {
+      return Optional.of("Request body must be a JSON object");
+    }
+    if (hasInvalidRequiredField(body, "eventType", allowNullRequiredFields)) {
+      return Optional.of("Event eventType must be a valid EventType string");
+    }
+    if (hasInvalidRequiredField(body, "title", allowNullRequiredFields)) {
+      return Optional.of("Event title must be a string");
+    }
+    return Optional.empty();
+  }
+
+  private static boolean hasInvalidRequiredField(
+      JsonNode body, String fieldName, boolean allowNullRequiredFields) {
+    if (!body.has(fieldName)) {
+      return false;
+    }
+    var node = body.get(fieldName);
+    return allowNullRequiredFields ? (!node.isNull() && !node.isTextual()) : !node.isTextual();
+  }
+
   private Route mapEventResponse(Try<EventActorResponse> responseTry, StatusCode successStatus) {
     if (responseTry.isFailure()) {
       return handleActorFailure("Event", responseTry.failed().get());
@@ -209,27 +276,17 @@ public final class EventsRoute extends AllDirectives implements RouteProvider {
       case EventActorResponse.Items i ->
           complete(StatusCodes.OK, i.events(), Jackson.marshaller(objectMapper));
       case EventActorResponse.Deleted _ -> complete(StatusCodes.NO_CONTENT);
-      case EventActorResponse.Failure f -> {
-        var status = StatusCodes.get(f.status());
-        yield complete(
-            status, createErrorResponse(status, f.message()), Jackson.marshaller(objectMapper));
-      }
+      case EventActorResponse.Failure f -> completeError(StatusCodes.get(f.status()), f.message());
     };
   }
 
-  private Route completeNotFound(String message) {
-    return complete(
-        StatusCodes.NOT_FOUND,
-        createErrorResponse(StatusCodes.NOT_FOUND, message),
-        Jackson.marshaller(objectMapper));
+  private Route completeError(StatusCode status, String message) {
+    return complete(status, createErrorResponse(status, message), Jackson.marshaller(objectMapper));
   }
 
   private Route handleActorFailure(String entityType, Throwable error) {
     logger.error("{} actor request failed", entityType, error);
-    return complete(
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        createErrorResponse(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error"),
-        Jackson.marshaller(objectMapper));
+    return completeError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error");
   }
 
   private StudioErrorResponse createErrorResponse(StatusCode status, String message) {

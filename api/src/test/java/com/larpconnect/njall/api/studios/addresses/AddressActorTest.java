@@ -7,9 +7,9 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.studios.AddressDAO;
-import com.larpconnect.njall.data.domain.Address;
-import com.larpconnect.njall.data.domain.AddressType;
-import com.larpconnect.njall.data.domain.GeoJsonPoint;
+import com.larpconnect.njall.data.domain.common.GeoJsonPoint;
+import com.larpconnect.njall.data.domain.studios.Address;
+import com.larpconnect.njall.data.domain.studios.AddressType;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.testkit.typed.javadsl.BehaviorTestKit;

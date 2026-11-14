@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.larpconnect.njall.api.studios.addresses.*;
 import com.larpconnect.njall.data.dao.studios.LocationDAO;
-import com.larpconnect.njall.data.domain.Location;
+import com.larpconnect.njall.data.domain.studios.Location;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

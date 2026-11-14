@@ -7,7 +7,7 @@ Tenanted HTTP REST endpoints under `/api/studios/{studio-id}/v1/events` for crea
 ## Requirements
 
 ### Requirement: Tenanted Studio Event Creation Endpoint
-The system SHALL expose an HTTP POST endpoint at `/api/studios/{studio-id}/v1/events` allowing authenticated clients to create an **Events** **Entity** under a specific **Studio**. The `{studio-id}` path segment SHALL accept either a public studio UUID or an **Alias** string, resolving in-memory against `StudioLookupCache`. If `{studio-id}` is missing or soft-deleted, the system SHALL return HTTP 404 Not Found. Upon resolving `tenant_id`, the system SHALL validate the request payload (`title` required non-blank, `generator` required string accepting either a bare **Actor** UUID or a canonical studio **Actor** URI `/api/studios/{studio-id}/v1/actors/{actor-id}` matching `{studio-id}`, optional `summary`, optional `locationId`, optional `startTime`, and optional `endTime`). The `generator` field MUST resolve to an existing, active **Actor** **Entity** (`entity_type = 'Actor'`) belonging to the same studio **Tenant**; if `generator` is missing, blank, malformed, references another studio, or does not resolve to an active **Actor** in the same **Tenant**, the system SHALL return HTTP 400 Bad Request. If `startTime` and `endTime` are both present, the system SHALL require `endTime >= startTime`. If `locationId` is provided, it MUST reference an existing **Locations** **Entity** belonging to the same studio tenant; any referential constraint violation SHALL result in HTTP 400 Bad Request. If validation succeeds, the system SHALL persist the record in `njall_users.entities` (with `generator` set to the resolved **generator** **Actor** UUID and `entity_type = 'Event'`) and `njall_users.events` using an active `@NjallUsers` session configured with `app.tenant_id = :tenantId`. The endpoint SHALL return HTTP 201 Created containing the public event `id`, `generator` formatted as `"/api/studios/{studio-id}/v1/actors/{generator-id}"`, `title`, `summary`, `locationId`, `startTime`, `endTime`, `createdOn`, and `updatedOn`. The response SHALL NOT expose the internal `tenant_id`.
+The system SHALL expose an HTTP POST endpoint at `/api/studios/{studio-id}/v1/events` allowing authenticated clients to create a non-game **Events** **Entity** under a specific **Studio**. The `{studio-id}` path segment SHALL accept either a public studio UUID or an **Alias** string, resolving in-memory against `StudioLookupCache`. If `{studio-id}` is missing or soft-deleted, the system SHALL return HTTP 404 Not Found. Upon resolving `tenant_id`, the system SHALL validate the request payload (`title` required non-blank, `generator` required string accepting either a bare **Actor** UUID or a canonical studio **Actor** URI `/api/studios/{studio-id}/v1/actors/{actor-id}` matching `{studio-id}`, optional `eventType` defaulting to `EVENT_TYPE_UNSPECIFIED` and accepting `EVENT_TYPE_UNSPECIFIED`, `WORKSHOP`, `CONFERENCE`, or `MEETUP`, optional `summary`, optional `locationId`, optional `startTime`, and optional `endTime`). If `eventType` is `"GAME"` or invalid, the system SHALL return HTTP 400 Bad Request (**Games** MUST be created via `/v1/games`). The `generator` field MUST resolve to an active `'Actor'` **Entity** in the same **Tenant**, `endTime >= startTime` MUST hold when both are present, and any `locationId` MUST reference an active **Locations** **Entity** in the same **Tenant** (`400 Bad Request` otherwise). Validated events SHALL be persisted in `njall_users.entities` (`entity_type = 'Event'`) and `njall_users.events` under `@NjallUsers` (`app.tenant_id = :tenantId`), returning HTTP 201 Created with `id`, canonical `generator` URI, `eventType`, `title`, `summary`, `locationId`, `startTime`, `endTime`, `createdOn`, and `updatedOn` without `tenant_id`.
 
 #### Scenario: Successfully create event with all fields
 - **GIVEN** an active studio exists with alias "valiant"
@@ -16,6 +16,7 @@ The system SHALL expose an HTTP POST endpoint at `/api/studios/{studio-id}/v1/ev
   ```json
   {
     "generator": "01925b6a-93be-7000-8000-000000000010",
+    "eventType": "CONFERENCE",
     "title": "Autumn Harvest Festival",
     "summary": "Annual festival and gathering",
     "locationId": "01925b6a-93be-7000-8000-000000000001",
@@ -24,7 +25,7 @@ The system SHALL expose an HTTP POST endpoint at `/api/studios/{studio-id}/v1/ev
   }
   ```
 - **THEN** the system returns HTTP 201 Created with content-type `application/json`
-- **AND** the response body contains a generated UUID `id`, `generator` equal to "/api/studios/valiant/v1/actors/01925b6a-93be-7000-8000-000000000010", `title` equal to "Autumn Harvest Festival", `summary` equal to "Annual festival and gathering", `locationId` equal to "01925b6a-93be-7000-8000-000000000001", `startTime` equal to "2026-10-25T18:00:00Z", `endTime` equal to "2026-10-27T12:00:00Z", and non-null timestamps `createdOn` and `updatedOn`
+- **AND** the response body contains a generated UUID `id`, `generator` equal to "/api/studios/valiant/v1/actors/01925b6a-93be-7000-8000-000000000010", `eventType` equal to "CONFERENCE", `title` equal to "Autumn Harvest Festival", `summary` equal to "Annual festival and gathering", `locationId` equal to "01925b6a-93be-7000-8000-000000000001", `startTime` equal to "2026-10-25T18:00:00Z", `endTime` equal to "2026-10-27T12:00:00Z", and non-null timestamps `createdOn` and `updatedOn`
 - **AND** the response body does not contain `tenantId`
 
 #### Scenario: Successfully create event with minimal fields
@@ -37,7 +38,19 @@ The system SHALL expose an HTTP POST endpoint at `/api/studios/{studio-id}/v1/ev
   }
   ```
 - **THEN** the system returns HTTP 201 Created with content-type `application/json`
-- **AND** the response body contains a generated UUID `id`, `generator` equal to "/api/studios/valiant/v1/actors/01925b6a-93be-7000-8000-000000000010", `title` equal to "Town Hall Gathering", null `locationId`, null `summary`, null `startTime`, and null `endTime`
+- **AND** the response body contains a generated UUID `id`, `generator` equal to "/api/studios/valiant/v1/actors/01925b6a-93be-7000-8000-000000000010", `eventType` equal to "EVENT_TYPE_UNSPECIFIED", `title` equal to "Town Hall Gathering", null `locationId`, null `summary`, null `startTime`, and null `endTime`
+
+#### Scenario: Creating event with GAME eventType on events endpoint returns 400
+- **GIVEN** an active studio exists with alias "valiant" and an active actor exists with UUID "01925b6a-93be-7000-8000-000000000010"
+- **WHEN** a client sends a POST request to `/api/studios/valiant/v1/events` with body:
+  ```json
+  {
+    "generator": "01925b6a-93be-7000-8000-000000000010",
+    "eventType": "GAME",
+    "title": "Misrouted Game"
+  }
+  ```
+- **THEN** the system returns HTTP 400 Bad Request with an AIP-193 structured error response
 
 #### Scenario: Creating event with missing or non-Actor generator returns 400
 - **GIVEN** an active studio exists with alias "valiant"
@@ -86,14 +99,14 @@ The system SHALL expose an HTTP POST endpoint at `/api/studios/{studio-id}/v1/ev
 - **THEN** the system returns HTTP 404 Not Found without querying the database
 
 ### Requirement: Tenanted Studio Event Collection Listing Endpoint
-The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/events` allowing clients to retrieve all active **Events** belonging to the specified **Studio**. The system SHALL resolve `{studio-id}` in-memory against `StudioLookupCache`. If `{studio-id}` is missing or soft-deleted, the system SHALL return HTTP 404 Not Found. Upon resolving `tenant_id`, the system SHALL query `EventDAO` under `app.tenant_id = :tenantId` for all events where `entities.deleted_on IS NULL`, ordered by `start_time ASC NULLS LAST, created_on DESC`. The endpoint SHALL return HTTP 200 OK containing a JSON array of active events without tenant identifiers.
+The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/events` allowing clients to retrieve all active non-game **Events** belonging to the specified **Studio**. The system SHALL resolve `{studio-id}` in-memory against `StudioLookupCache` and return HTTP 404 Not Found if missing or soft-deleted. Upon resolving `tenant_id`, the system SHALL query `EventDAO` under `app.tenant_id = :tenantId` for all events where `entities.deleted_on IS NULL` and `entities.entity_type = 'Event'`, ordered by `start_time ASC NULLS LAST, created_on DESC` (excluding **Games** where `entity_type = 'Game'`). The endpoint SHALL return HTTP 200 OK containing a JSON array of active events including `eventType` and without tenant identifiers.
 
 #### Scenario: Successfully list active events for studio
 - **GIVEN** an active studio exists with alias "valiant"
-- **AND** two active events exist for studio "valiant"
+- **AND** two active non-game events (`entity_type = 'Event'`) and one active game (`entity_type = 'Game'`) exist for studio "valiant"
 - **WHEN** a client sends a GET request to `/api/studios/valiant/v1/events`
 - **THEN** the system returns HTTP 200 OK with content-type `application/json`
-- **AND** the response body is a JSON array containing 2 event objects
+- **AND** the response body is a JSON array containing only the 2 non-game event objects
 
 #### Scenario: Soft-deleted events are excluded from collection list
 - **GIVEN** an active studio exists with alias "valiant"
@@ -108,13 +121,18 @@ The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/eve
 - **THEN** the system returns HTTP 200 OK with an empty JSON array `[]`
 
 ### Requirement: Tenanted Studio Event Detail Retrieval Endpoint
-The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/events/{id}` allowing clients to retrieve details of a specific **Events** **Entity**. The system SHALL resolve `{studio-id}` in-memory against `StudioLookupCache`. If `{studio-id}` is missing or soft-deleted, or if `{id}` is not a valid UUID string, the system SHALL return HTTP 404 Not Found. Upon resolving `tenant_id`, the system SHALL query `EventDAO` under `app.tenant_id = :tenantId`. If the event exists and is active (`deleted_on IS NULL`), the system SHALL return HTTP 200 OK with the event details. If the event does not exist, belongs to another **Tenant**, or is soft-deleted, the system SHALL return HTTP 404 Not Found.
+The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/events/{id}` allowing clients to retrieve details of a specific non-game **Events** **Entity**. The system SHALL resolve `{studio-id}` in-memory against `StudioLookupCache`. If `{studio-id}` is missing or soft-deleted, or if `{id}` is not a valid UUID string, the system SHALL return HTTP 404 Not Found. Upon resolving `tenant_id`, the system SHALL query `EventDAO` under `app.tenant_id = :tenantId`. If the entity exists, has `entity_type = 'Event'`, and is active (`deleted_on IS NULL`), the system SHALL return HTTP 200 OK with the event details including `eventType`. If the entity does not exist, is a **Games** **Entity** (`entity_type = 'Game'`), belongs to another **Tenant**, or is soft-deleted, the system SHALL return HTTP 404 Not Found.
 
 #### Scenario: Successfully retrieve active event
 - **GIVEN** an active studio "valiant" and an active event with UUID `eventId`
 - **WHEN** a client sends a GET request to `/api/studios/valiant/v1/events/{eventId}`
 - **THEN** the system returns HTTP 200 OK with content-type `application/json`
-- **AND** the response body matches the event attributes and excludes `tenantId`
+- **AND** the response body matches the event attributes including `eventType` and excludes `tenantId`
+
+#### Scenario: Retrieving game UUID via events endpoint returns 404
+- **GIVEN** an active studio "valiant" and an active game with UUID `gameId` (`entity_type = 'Game'`)
+- **WHEN** a client sends a GET request to `/api/studios/valiant/v1/events/{gameId}`
+- **THEN** the system returns HTTP 404 Not Found
 
 #### Scenario: Retrieving soft-deleted event returns 404
 - **GIVEN** an active studio "valiant" and an event whose `deleted_on` timestamp is non-null
@@ -128,19 +146,25 @@ The system SHALL expose an HTTP GET endpoint at `/api/studios/{studio-id}/v1/eve
 - **THEN** the system returns HTTP 404 Not Found due to Row-Level Security isolation
 
 ### Requirement: Tenanted Studio Event Partial Update Endpoint
-The system SHALL expose an HTTP PATCH endpoint at `/api/studios/{studio-id}/v1/events/{id}` allowing partial updates to mutable event fields (`title`, `summary`, `locationId`, `startTime`, `endTime`) conforming to Google AIP-134. If `update_mask` query parameter is provided, only specified fields SHALL be modified; otherwise, all provided fields in the payload SHALL be updated. If `title` is updated, it MUST be non-blank. If `startTime` or `endTime` are updated, the resulting effective time values MUST satisfy `endTime >= startTime` when both are present. If `locationId` is updated to a non-null value, it MUST reference a valid location within the same studio tenant. Upon successfully applying updates, the system SHALL refresh `updated_on` and return HTTP 200 OK with the updated event object. If the event does not exist, belongs to another **Tenant**, or is soft-deleted, the system SHALL return HTTP 404 Not Found.
+The system SHALL expose an HTTP PATCH endpoint at `/api/studios/{studio-id}/v1/events/{id}` allowing partial updates to mutable event fields (`eventType`, `title`, `summary`, `locationId`, `startTime`, `endTime`) conforming to Google AIP-134. If `update_mask` query parameter is provided, only specified fields SHALL be modified; otherwise, all provided fields in the payload SHALL be updated. If `eventType` is updated, it MUST be one of `EVENT_TYPE_UNSPECIFIED`, `WORKSHOP`, `CONFERENCE`, or `MEETUP` (patching `eventType` to `"GAME"` SHALL return HTTP 400 Bad Request). If `title` is updated, it MUST be non-blank. If `startTime` or `endTime` are updated, the resulting effective time values MUST satisfy `endTime >= startTime` when both are present. If `locationId` is updated to a non-null value, it MUST reference a valid location within the same studio tenant. Upon applying updates, the system SHALL refresh `updated_on` and return HTTP 200 OK with the updated event object. If the event does not exist, has `entity_type = 'Game'`, belongs to another **Tenant**, or is soft-deleted, the system SHALL return HTTP 404 Not Found.
 
 #### Scenario: Successfully update event title and time range
 - **GIVEN** an active event `eventId` under studio "valiant"
 - **WHEN** a client sends a PATCH request to `/api/studios/valiant/v1/events/{eventId}` with body:
   ```json
   {
+    "eventType": "WORKSHOP",
     "title": "Autumn Harvest Festival - Rescheduled",
     "startTime": "2026-10-26T18:00:00Z",
     "endTime": "2026-10-28T12:00:00Z"
   }
   ```
-- **THEN** the system returns HTTP 200 OK with the updated title and refreshed `updatedOn`
+- **THEN** the system returns HTTP 200 OK with `eventType` equal to "WORKSHOP", the updated title, and refreshed `updatedOn`
+
+#### Scenario: Patching event to GAME eventType returns 400
+- **GIVEN** an active event `eventId` under studio "valiant"
+- **WHEN** a client sends a PATCH request to `/api/studios/valiant/v1/events/{eventId}` with body `{"eventType": "GAME"}`
+- **THEN** the system returns HTTP 400 Bad Request with an AIP-193 structured error response
 
 #### Scenario: Patching with invalid time range returns 400
 - **GIVEN** an active event `eventId` under studio "valiant"
@@ -159,7 +183,7 @@ The system SHALL expose an HTTP PATCH endpoint at `/api/studios/{studio-id}/v1/e
 - **THEN** the system returns HTTP 404 Not Found
 
 ### Requirement: Tenanted Studio Event Soft Deletion Endpoint
-The system SHALL expose an HTTP DELETE endpoint at `/api/studios/{studio-id}/v1/events/{id}`. Upon invocation, the system SHALL set `entities.deleted_on = CURRENT_TIMESTAMP` for the matching `(tenant_id, id)` row. The row in `njall_users.events` and `njall_users.entities` SHALL NOT be physically removed. If the target event exists and is active, the system SHALL return HTTP 204 No Content. If the event does not exist or is already soft-deleted, the system SHALL return HTTP 404 Not Found.
+The system SHALL expose an HTTP DELETE endpoint at `/api/studios/{studio-id}/v1/events/{id}`. Upon invocation, the system SHALL set `entities.deleted_on = CURRENT_TIMESTAMP` for the matching active `(tenant_id, id)` row where `entity_type = 'Event'`. The row in `njall_users.events` and `njall_users.entities` SHALL NOT be physically removed. If the target event exists, has `entity_type = 'Event'`, and is active, the system SHALL return HTTP 204 No Content. If the entity does not exist, has `entity_type = 'Game'`, or is already soft-deleted, the system SHALL return HTTP 404 Not Found.
 
 #### Scenario: Successfully soft delete event
 - **GIVEN** an active event `eventId` under studio "valiant"

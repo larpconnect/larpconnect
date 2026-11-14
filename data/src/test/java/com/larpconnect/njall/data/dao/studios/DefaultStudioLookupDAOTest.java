@@ -10,7 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.larpconnect.njall.data.domain.DeletionFilter;
+import com.larpconnect.njall.data.domain.common.DeletionFilter;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;

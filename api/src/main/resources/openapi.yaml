@@ -879,7 +879,7 @@ paths:
   /api/studios/{studio-id}/v1/events:
     get:
       summary: List studio events
-      description: Returns all active events associated with the specified tenant studio.
+      description: Returns all active non-game events associated with the specified tenant studio (excludes Game entities, which are listed via /v1/games).
       parameters:
         - name: studio-id
           in: path
@@ -889,7 +889,7 @@ paths:
           description: Studio UUID or unique alias string.
       responses:
         '200':
-          description: List of active events
+          description: List of active non-game events
           content:
             application/json:
               schema:
@@ -902,7 +902,7 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
     post:
       summary: Create a studio event
-      description: Persists a new event entity for the specified tenant studio.
+      description: Persists a new non-game event entity for the specified tenant studio. Defaults eventType to EVENT_TYPE_UNSPECIFIED when omitted, and rejects requests with eventType set to GAME (use POST /v1/games instead).
       parameters:
         - name: studio-id
           in: path
@@ -933,7 +933,7 @@ paths:
   /api/studios/{studio-id}/v1/events/{id}:
     get:
       summary: Retrieve event details
-      description: Returns details of an active event under the specified tenant studio.
+      description: Returns details of an active non-game event under the specified tenant studio. Returns 404 Not Found if the ID refers to a Game entity.
       parameters:
         - name: studio-id
           in: path
@@ -961,7 +961,7 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
     patch:
       summary: Update event fields
-      description: Applies partial updates to an active studio event (Google AIP-134).
+      description: Applies partial updates to an active non-game studio event (Google AIP-134). Rejects updates attempting to set eventType to GAME with 400 Bad Request, and returns 404 Not Found for Game entities.
       parameters:
         - name: studio-id
           in: path
@@ -981,7 +981,7 @@ paths:
           required: false
           schema:
             type: string
-          description: Comma-separated list of field names to update.
+          description: Comma-separated list of field names to update (e.g., title, summary, event_type, location_id, start_time, end_time).
       requestBody:
         required: true
         content:
@@ -1003,7 +1003,7 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
     delete:
       summary: Soft-delete event
-      description: Soft-deletes a studio event by setting its deleted_on timestamp.
+      description: Soft-deletes a non-game studio event by setting its deleted_on timestamp. Returns 404 Not Found if the ID refers to a Game entity.
       parameters:
         - name: studio-id
           in: path
@@ -1021,6 +1021,482 @@ paths:
       responses:
         '204':
           description: Event soft-deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/systems:
+    get:
+      summary: List studio game systems
+      description: Returns all active game systems associated with the specified tenant studio, ordered alphabetically by name (case-insensitive).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      responses:
+        '200':
+          description: List of active game systems
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameSystem'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      summary: Create a studio game system
+      description: Persists a new GameSystem entity for the specified tenant studio. Enforces tenant-wide case-insensitive uniqueness on system names within the studio (including soft-deleted names).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameSystemRequest'
+      responses:
+        '201':
+          description: Game system created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSystem'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/systems/{system-id}:
+    get:
+      summary: Retrieve game system details
+      description: Returns details of an active game system under the specified tenant studio.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: system-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game system UUID.
+      responses:
+        '200':
+          description: Game system retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSystem'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update game system fields
+      description: Applies partial updates to an active studio game system (Google AIP-134). Enforces tenant-wide case-insensitive uniqueness on system names within the studio (including soft-deleted names).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: system-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game system UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of field names to update (e.g., name, summary).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGameSystemRequest'
+      responses:
+        '200':
+          description: Game system updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameSystem'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '409':
+          $ref: '#/components/responses/ConflictResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft-delete game system
+      description: Soft-deletes a studio game system by setting its deleted_on timestamp. Referencing campaigns remain active with system masked as null, while referencing games remain active and retain their historical system URI (new or patched associations to the soft-deleted system are rejected with 400 Bad Request).
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: system-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game system UUID.
+      responses:
+        '204':
+          description: Game system soft-deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/campaigns:
+    get:
+      summary: List studio campaigns
+      description: Returns all active campaigns associated with the specified tenant studio, optionally filtered by systemId. Campaigns referencing a soft-deleted system expose system as null.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: systemId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional GameSystem UUID or canonical studio System URI (/api/studios/{studio-id}/v1/systems/{system-id}) used to filter active campaigns.
+      responses:
+        '200':
+          description: List of active campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Campaign'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      summary: Create a studio campaign
+      description: Persists a new Campaign entity for the specified tenant studio, optionally linked to an active GameSystem.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCampaignRequest'
+      responses:
+        '201':
+          description: Campaign created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/campaigns/{campaign-id}:
+    get:
+      summary: Retrieve campaign details
+      description: Returns details of an active campaign under the specified tenant studio. A soft-deleted system reference is masked as null.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: campaign-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Campaign UUID.
+      responses:
+        '200':
+          description: Campaign retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update campaign fields
+      description: Applies partial updates to an active studio campaign (Google AIP-134). Including system in update_mask with null clears the system link.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: campaign-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Campaign UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of field names to update (e.g., title, summary, system).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCampaignRequest'
+      responses:
+        '200':
+          description: Campaign updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft-delete campaign
+      description: Soft-deletes a studio campaign by setting its deleted_on timestamp. Referencing games remain active with campaign masked as null.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: campaign-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Campaign UUID.
+      responses:
+        '204':
+          description: Campaign soft-deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/games:
+    get:
+      summary: List studio games
+      description: Returns all active games (Game CTI entities) associated with the specified tenant studio, optionally filtered by systemId and/or campaignId. Excludes non-game studio events, retains historical system URIs if the referenced system was soft-deleted, and masks soft-deleted campaign references as null.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: systemId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional GameSystem UUID or canonical studio System URI (/api/studios/{studio-id}/v1/systems/{system-id}) used to filter active games.
+        - name: campaignId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional Campaign UUID or canonical studio Campaign URI (/api/studios/{studio-id}/v1/campaigns/{campaign-id}) used to filter active games.
+      responses:
+        '200':
+          description: List of active games
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Game'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    post:
+      summary: Create a studio game
+      description: Persists a new Game CTI entity (extending Event with eventType GAME) for the specified tenant studio. Requires an active system and optionally accepts a campaign whose system need not match the game's system.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameRequest'
+      responses:
+        '201':
+          description: Game created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+
+  /api/studios/{studio-id}/v1/games/{game-id}:
+    get:
+      summary: Retrieve game details
+      description: Returns details of an active game under the specified tenant studio. Returns 404 Not Found if game-id refers to a non-game event or an inactive/non-existent entity. Historical system URIs are retained if the referenced system was soft-deleted, while soft-deleted campaign references are masked as null.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: game-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game UUID.
+      responses:
+        '200':
+          description: Game retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    patch:
+      summary: Update game fields
+      description: Applies partial updates to an active studio game (Google AIP-134). Including campaign in update_mask with null clears the campaign link; attempts to clear system to null are rejected with 400 Bad Request.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: game-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game UUID.
+        - name: update_mask
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Comma-separated list of field names to update (e.g., title, summary, system, campaign, location_id, start_time, end_time).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGameRequest'
+      responses:
+        '200':
+          description: Game updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+    delete:
+      summary: Soft-delete game
+      description: Soft-deletes a studio game by setting the deleted_on timestamp on the shared Entity record. Returns 404 Not Found if game-id refers to a non-game event or an inactive/non-existent entity.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: game-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Game UUID.
+      responses:
+        '204':
+          description: Game soft-deleted successfully
         '404':
           $ref: '#/components/responses/NotFoundResponse'
         '500':
@@ -1227,7 +1703,7 @@ paths:
               - compressed
               - expanded
             default: compressed
-          description: Output format (compressed returns item IDs only, expanded embeds full entity details).
+          description: Output format (compressed returns item IDs only; expanded embeds full entity details including type and resolved display name/title for Item, Individual, Actor, Tag, Location, Event, System, Campaign, and Game entities).
       responses:
         '200':
           description: Collection retrieved successfully
@@ -2581,12 +3057,24 @@ components:
         geom:
           $ref: '#/components/schemas/GeoJsonPoint'
 
+    EventType:
+      type: string
+      enum:
+        - EVENT_TYPE_UNSPECIFIED
+        - GAME
+        - WORKSHOP
+        - CONFERENCE
+        - MEETUP
+      description: Classification of a studio event. /v1/events defaults to EVENT_TYPE_UNSPECIFIED and rejects GAME; /v1/games always exposes GAME.
+      example: "CONFERENCE"
+
     Event:
       type: object
       required:
         - id
         - generator
         - title
+        - eventType
         - createdOn
         - updatedOn
       properties:
@@ -2602,18 +3090,28 @@ components:
           type: string
           example: "Autumn Harvest Festival"
         summary:
-          type: string
+          type:
+            - string
+            - "null"
           example: "Annual community roleplay weekend"
+        eventType:
+          $ref: '#/components/schemas/EventType'
         locationId:
-          type: string
+          type:
+            - string
+            - "null"
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789def"
         startTime:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           example: "2026-10-25T18:00:00Z"
         endTime:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           example: "2026-10-27T12:00:00Z"
         createdOn:
@@ -2639,18 +3137,30 @@ components:
           type: string
           example: "Autumn Harvest Festival"
         summary:
-          type: string
+          type:
+            - string
+            - "null"
           example: "Annual community roleplay weekend"
+        eventType:
+          allOf:
+            - $ref: '#/components/schemas/EventType'
+          description: Optional event type. Defaults to EVENT_TYPE_UNSPECIFIED when omitted; setting GAME on /v1/events returns 400 Bad Request.
         locationId:
-          type: string
+          type:
+            - string
+            - "null"
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789def"
         startTime:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           example: "2026-10-25T18:00:00Z"
         endTime:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           example: "2026-10-27T12:00:00Z"
 
@@ -2661,18 +3171,30 @@ components:
           type: string
           example: "Autumn Harvest Festival - Rescheduled"
         summary:
-          type: string
+          type:
+            - string
+            - "null"
           example: "Updated gathering summary"
+        eventType:
+          allOf:
+            - $ref: '#/components/schemas/EventType'
+          description: Optional event type update when event_type/eventType is in update_mask. Setting GAME on /v1/events returns 400 Bad Request.
         locationId:
-          type: string
+          type:
+            - string
+            - "null"
           format: uuid
           example: "018f2345-6789-7abc-def0-123456789def"
         startTime:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           example: "2026-10-26T18:00:00Z"
         endTime:
-          type: string
+          type:
+            - string
+            - "null"
           format: date-time
           example: "2026-10-28T12:00:00Z"
 
@@ -2774,6 +3296,7 @@ components:
           example: 2
         orderedItems:
           type: array
+          description: Ordered list of item UUID strings (compressed form) or expanded item objects carrying id, type (e.g., Item, Individual, Actor, Tag, Location, Event, System, Campaign, Game), generator, name, and summary (expanded form).
           items:
             anyOf:
               - type: string
@@ -2951,4 +3474,312 @@ components:
         name:
           type: string
           example: "sharedInbox"
+
+    GameSystem:
+      type: object
+      required:
+        - id
+        - generator
+        - name
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
+        name:
+          type: string
+          example: "Vampire: The Masquerade 5e"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Personal and political horror ruleset"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+
+    CreateGameSystemRequest:
+      type: object
+      required:
+        - generator
+        - name
+      properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this GameSystem.
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
+        name:
+          type: string
+          example: "Vampire: The Masquerade 5e"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Personal and political horror ruleset"
+
+    UpdateGameSystemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Vampire: The Masquerade 5e (Revised)"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Updated ruleset description"
+
+    Campaign:
+      type: object
+      required:
+        - id
+        - generator
+        - title
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
+        title:
+          type: string
+          example: "Seattle By Night"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Chronicle across the Pacific Northwest"
+        system:
+          type:
+            - string
+            - "null"
+          format: uri
+          description: Optional canonical studio System URI, or null if unassigned or soft-deleted.
+          example: "/api/studios/valiant/v1/systems/018f2345-6789-7abc-def0-123456789111"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+
+    CreateCampaignRequest:
+      type: object
+      required:
+        - generator
+        - title
+      properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Campaign.
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
+        title:
+          type: string
+          example: "Seattle By Night"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Chronicle across the Pacific Northwest"
+        system:
+          type:
+            - string
+            - "null"
+          description: Optional active studio GameSystem UUID or canonical URI (/api/studios/{studio-id}/v1/systems/{system-id}).
+          example: "/api/studios/valiant/v1/systems/018f2345-6789-7abc-def0-123456789111"
+
+    UpdateCampaignRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Seattle By Night: Season 2"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Updated chronicle synopsis"
+        system:
+          type:
+            - string
+            - "null"
+          description: Optional active studio GameSystem UUID or canonical URI; pass null with system in update_mask to clear.
+          example: "/api/studios/valiant/v1/systems/018f2345-6789-7abc-def0-123456789111"
+
+    Game:
+      type: object
+      required:
+        - id
+        - generator
+        - title
+        - eventType
+        - system
+        - createdOn
+        - updatedOn
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789abc"
+        generator:
+          type: string
+          format: uri
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
+        title:
+          type: string
+          example: "Opening Elysium"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Season premiere game session"
+        eventType:
+          allOf:
+            - $ref: '#/components/schemas/EventType'
+          description: Fixed to GAME for Game resources.
+          example: "GAME"
+        system:
+          type: string
+          format: uri
+          description: Canonical studio System URI (retained even if the referenced system is subsequently soft-deleted).
+          example: "/api/studios/valiant/v1/systems/018f2345-6789-7abc-def0-123456789111"
+        campaign:
+          type:
+            - string
+            - "null"
+          format: uri
+          description: Optional canonical studio Campaign URI, or null if standalone or if the referenced campaign was soft-deleted.
+          example: "/api/studios/valiant/v1/campaigns/018f2345-6789-7abc-def0-123456789222"
+        locationId:
+          type:
+            - string
+            - "null"
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        startTime:
+          type:
+            - string
+            - "null"
+          format: date-time
+          example: "2026-10-25T18:00:00Z"
+        endTime:
+          type:
+            - string
+            - "null"
+          format: date-time
+          example: "2026-10-27T12:00:00Z"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+        updatedOn:
+          type: string
+          format: date-time
+          example: "2026-09-29T12:00:00Z"
+
+    CreateGameRequest:
+      type: object
+      required:
+        - generator
+        - title
+        - system
+      properties:
+        generator:
+          type: string
+          description: Studio Actor UUID or canonical studio Actor URI that generated this Game.
+          example: "/api/studios/valiant/v1/actors/018f2345-6789-7abc-def0-123456789def"
+        title:
+          type: string
+          example: "Opening Elysium"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Season premiere game session"
+        system:
+          type: string
+          description: Required active studio GameSystem UUID or canonical URI (/api/studios/{studio-id}/v1/systems/{system-id}).
+          example: "/api/studios/valiant/v1/systems/018f2345-6789-7abc-def0-123456789111"
+        campaign:
+          type:
+            - string
+            - "null"
+          description: Optional active studio Campaign UUID or canonical URI (/api/studios/{studio-id}/v1/campaigns/{campaign-id}). Independent of system.
+          example: "/api/studios/valiant/v1/campaigns/018f2345-6789-7abc-def0-123456789222"
+        locationId:
+          type:
+            - string
+            - "null"
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        startTime:
+          type:
+            - string
+            - "null"
+          format: date-time
+          example: "2026-10-25T18:00:00Z"
+        endTime:
+          type:
+            - string
+            - "null"
+          format: date-time
+          example: "2026-10-27T12:00:00Z"
+
+    UpdateGameRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Opening Elysium - Chapter 2"
+        summary:
+          type:
+            - string
+            - "null"
+          example: "Updated session summary"
+        system:
+          type: string
+          description: Active studio GameSystem UUID or canonical URI. Cannot be cleared to null.
+          example: "/api/studios/valiant/v1/systems/018f2345-6789-7abc-def0-123456789111"
+        campaign:
+          type:
+            - string
+            - "null"
+          description: Optional active studio Campaign UUID or canonical URI; pass null with campaign in update_mask to clear.
+          example: "/api/studios/valiant/v1/campaigns/018f2345-6789-7abc-def0-123456789222"
+        locationId:
+          type:
+            - string
+            - "null"
+          format: uuid
+          example: "018f2345-6789-7abc-def0-123456789def"
+        startTime:
+          type:
+            - string
+            - "null"
+          format: date-time
+          example: "2026-10-26T18:00:00Z"
+        endTime:
+          type:
+            - string
+            - "null"
+          format: date-time
+          example: "2026-10-28T12:00:00Z"
 

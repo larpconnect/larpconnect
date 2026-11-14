@@ -1,12 +1,10 @@
 package com.larpconnect.njall.api.studios;
 
 import com.google.inject.Inject;
-import com.larpconnect.njall.api.studios.actors.AgentRoute;
-import com.larpconnect.njall.api.studios.events.EventsRoute;
-import com.larpconnect.njall.api.studios.individuals.IndividualsRoute;
-import com.larpconnect.njall.api.studios.links.LinksRoute;
-import com.larpconnect.njall.api.studios.locations.LocationsRoute;
-import com.larpconnect.njall.api.studios.tags.TagsRoute;
+import com.larpconnect.njall.api.http.RouteProvider;
+import com.larpconnect.njall.api.studios.common.StudioSubRoute;
+import java.util.Comparator;
+import java.util.Set;
 import org.apache.pekko.http.javadsl.server.Directives;
 import org.apache.pekko.http.javadsl.server.Route;
 
@@ -16,25 +14,20 @@ final class StudioSubRoutes {
   private final Route compositeRoute;
 
   @Inject
-  StudioSubRoutes(
-      LinksRoute linksRoute,
-      LocationsRoute locationsRoute,
-      TagsRoute tagsRoute,
-      EventsRoute eventsRoute,
-      IndividualsRoute individualsRoute,
-      AgentRoute agentRoute) {
-    this(
-        Directives.concat(
-            locationsRoute.route(),
-            linksRoute.route(),
-            tagsRoute.route(),
-            eventsRoute.route(),
-            individualsRoute.route(),
-            agentRoute.route()));
+  StudioSubRoutes(@StudioSubRoute Set<RouteProvider> routeProviders) {
+    this(composeRoutes(routeProviders));
   }
 
   StudioSubRoutes(Route compositeRoute) {
     this.compositeRoute = compositeRoute;
+  }
+
+  private static Route composeRoutes(Set<RouteProvider> routeProviders) {
+    return routeProviders.stream()
+        .sorted(Comparator.comparing(provider -> provider.getClass().getName()))
+        .map(RouteProvider::route)
+        .reduce((first, second) -> Directives.concat(first, second))
+        .orElseGet(Directives::reject);
   }
 
   /**

@@ -1,7 +1,7 @@
 package com.larpconnect.njall.data.dao.admin;
 
 import com.larpconnect.njall.data.dao.common.DAO;
-import com.larpconnect.njall.data.domain.AdminRole;
+import com.larpconnect.njall.data.domain.admin.AdminRole;
 import java.util.Optional;
 
 /** Data Access Object for administrative roles. */

@@ -17,7 +17,7 @@ import com.larpconnect.njall.api.studios.collections.CollectionCommand;
 import com.larpconnect.njall.api.studios.collections.CollectionsRoute;
 import com.larpconnect.njall.api.studios.collections.OrderedCollectionResponse;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;

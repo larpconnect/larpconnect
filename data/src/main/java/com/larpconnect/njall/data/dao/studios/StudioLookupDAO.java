@@ -2,8 +2,8 @@ package com.larpconnect.njall.data.dao.studios;
 
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.common.DAO;
-import com.larpconnect.njall.data.domain.DeletionFilter;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
+import com.larpconnect.njall.data.domain.common.DeletionFilter;
 import java.util.Optional;
 import java.util.UUID;
 

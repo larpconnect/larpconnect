@@ -9,12 +9,15 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.cache.StudioLookupCache;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
+import com.larpconnect.njall.data.domain.studios.EventType;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import org.apache.pekko.actor.typed.ActorRef;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.apache.pekko.actor.typed.Props;
@@ -78,6 +81,7 @@ final class EventsRouteTest {
         "/api/studios/valiant/v1/actors/019273c5-9271-7000-8000-000000000001",
         "Autumn Harvest Festival",
         Optional.of("Gathering"),
+        EventType.EVENT_TYPE_UNSPECIFIED,
         Optional.of(locationId),
         Optional.of(now),
         Optional.of(now.plusSeconds(3600)),
@@ -86,9 +90,15 @@ final class EventsRouteTest {
   }
 
   private ActorRef<EventCommand> createEventActor(EventActorResponse response) {
+    return createEventActor(response, cmd -> {});
+  }
+
+  private ActorRef<EventCommand> createEventActor(
+      EventActorResponse response, Consumer<EventCommand> recorder) {
     return system.systemActorOf(
         Behaviors.receiveMessage(
             msg -> {
+              recorder.accept(msg);
               switch (msg) {
                 case EventCommand.CreateEvent c -> c.replyTo().tell(response);
                 case EventCommand.GetEvent g -> g.replyTo().tell(response);
@@ -261,5 +271,136 @@ final class EventsRouteTest {
     var response = executeRequest(handler, request);
 
     assertThat(response.status()).isEqualTo(StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+
+  @Test
+  @DisplayName("POST /v1/events rejects malformed, empty, and non-object JSON bodies with 400")
+  void postMalformedOrEmptyBody_returnsAip193BadRequest() throws Exception {
+    var cache = activeCache();
+    var actor = createEventActor(EventActorResponse.success(sampleEventResponse()));
+    var handler = createHandler(cache, actor);
+
+    var malformed =
+        executeRequest(
+            handler,
+            HttpRequest.POST("/api/studios/valiant/v1/events")
+                .withEntity(ContentTypes.APPLICATION_JSON, "{not json"));
+    assertThat(malformed.status()).isEqualTo(StatusCodes.BAD_REQUEST);
+    assertThat(readBody(malformed)).contains("\"code\":400", "\"message\"");
+
+    var empty = executeRequest(handler, HttpRequest.POST("/api/studios/valiant/v1/events"));
+    assertThat(empty.status()).isEqualTo(StatusCodes.BAD_REQUEST);
+    var emptyJson = objectMapper.readTree(readBody(empty));
+    assertThat(emptyJson.get("code").asInt()).isEqualTo(400);
+    assertThat(emptyJson.get("message").asText()).isNotBlank();
+
+    var arrayBody =
+        executeRequest(
+            handler,
+            HttpRequest.POST("/api/studios/valiant/v1/events")
+                .withEntity(ContentTypes.APPLICATION_JSON, "[]"));
+    assertThat(arrayBody.status()).isEqualTo(StatusCodes.BAD_REQUEST);
+    assertThat(readBody(arrayBody)).contains("Request body must be a JSON object");
+  }
+
+  @Test
+  @DisplayName("POST and PATCH reject null/non-string eventType, unknown enum, and null title")
+  void invalidEventTypeAndNullTitle_returnsAip193BadRequest() throws Exception {
+    var cache = activeCache();
+    var actor = createEventActor(EventActorResponse.success(sampleEventResponse()));
+    var handler = createHandler(cache, actor);
+
+    for (var badBody :
+        ImmutableList.of(
+            "{\"generator\":\"" + UUID.randomUUID() + "\",\"title\":\"Fest\",\"eventType\":null}",
+            "{\"generator\":\"" + UUID.randomUUID() + "\",\"title\":\"Fest\",\"eventType\":0}",
+            "{\"generator\":\""
+                + UUID.randomUUID()
+                + "\",\"title\":\"Fest\",\"eventType\":\"UNKNOWN\"}")) {
+      var res =
+          executeRequest(
+              handler,
+              HttpRequest.POST("/api/studios/valiant/v1/events")
+                  .withEntity(ContentTypes.APPLICATION_JSON, badBody));
+      assertThat(res.status()).isEqualTo(StatusCodes.BAD_REQUEST);
+      assertThat(readBody(res)).contains("\"code\":400");
+    }
+
+    var nullTitlePatch =
+        executeRequest(
+            handler,
+            HttpRequest.PATCH("/api/studios/valiant/v1/events/" + eventId)
+                .withEntity(ContentTypes.APPLICATION_JSON, "{\"title\":null}"));
+    assertThat(nullTitlePatch.status()).isEqualTo(StatusCodes.BAD_REQUEST);
+    assertThat(readBody(nullTitlePatch)).contains("Event title must be a string");
+
+    var unmaskedNullRequiredPatch =
+        executeRequest(
+            handler,
+            HttpRequest.PATCH("/api/studios/valiant/v1/events/" + eventId + "?update_mask=summary")
+                .withEntity(
+                    ContentTypes.APPLICATION_JSON,
+                    "{\"title\":null,\"eventType\":null,\"summary\":\"Updated\"}"));
+    assertThat(unmaskedNullRequiredPatch.status()).isEqualTo(StatusCodes.OK);
+
+    var nonTextualUnderMaskPatch =
+        executeRequest(
+            handler,
+            HttpRequest.PATCH("/api/studios/valiant/v1/events/" + eventId + "?update_mask=summary")
+                .withEntity(ContentTypes.APPLICATION_JSON, "{\"title\":123,\"summary\":null}"));
+    assertThat(nonTextualUnderMaskPatch.status()).isEqualTo(StatusCodes.BAD_REQUEST);
+  }
+
+  @Test
+  @DisplayName("POST /v1/events accepts explicit CONFERENCE eventType and returns 201")
+  void createEvent_withEventType_returns201() throws Exception {
+    var cache = activeCache();
+    var captured = new AtomicReference<EventCommand>();
+    var actor = createEventActor(EventActorResponse.success(sampleEventResponse()), captured::set);
+    var handler = createHandler(cache, actor);
+
+    var body =
+        "{\"generator\":\"019273c5-9271-7000-8000-000000000001\","
+            + "\"title\":\"Annual Summit\",\"eventType\":\"CONFERENCE\"}";
+    var response =
+        executeRequest(
+            handler,
+            HttpRequest.POST("/api/studios/valiant/v1/events")
+                .withEntity(ContentTypes.APPLICATION_JSON, body));
+
+    assertThat(response.status()).isEqualTo(StatusCodes.CREATED);
+    var cmd = (EventCommand.CreateEvent) captured.get();
+    assertThat(cmd.request().eventType()).contains(EventType.CONFERENCE);
+  }
+
+  @Test
+  @DisplayName("Returns 404 when studio in cache is soft-deleted")
+  void softDeletedStudio_returns404() throws Exception {
+    var cache = mock(StudioLookupCache.class);
+    var deleted = new StudioLookup(tenantId, studioId, "valiant", now, now, Optional.of(now));
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(deleted));
+
+    var actor = createEventActor(EventActorResponse.success(sampleEventResponse()));
+    var response =
+        executeRequest(
+            createHandler(cache, actor), HttpRequest.GET("/api/studios/valiant/v1/events"));
+
+    assertThat(response.status()).isEqualTo(StatusCodes.NOT_FOUND);
+  }
+
+  private StudioLookupCache activeCache() {
+    var cache = mock(StudioLookupCache.class);
+    when(cache.findByIdOrAlias("valiant")).thenReturn(Optional.of(sampleLookup()));
+    return cache;
+  }
+
+  private String readBody(HttpResponse response) throws Exception {
+    return response
+        .entity()
+        .toStrict(1000, system)
+        .toCompletableFuture()
+        .get(5, TimeUnit.SECONDS)
+        .getData()
+        .utf8String();
   }
 }

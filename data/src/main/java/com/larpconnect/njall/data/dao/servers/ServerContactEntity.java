@@ -1,7 +1,7 @@
 package com.larpconnect.njall.data.dao.servers;
 
-import com.larpconnect.njall.data.domain.ContactType;
-import com.larpconnect.njall.data.domain.RoleType;
+import com.larpconnect.njall.data.domain.admin.RoleType;
+import com.larpconnect.njall.data.domain.servers.ContactType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

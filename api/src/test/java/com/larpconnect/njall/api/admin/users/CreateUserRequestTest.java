@@ -3,7 +3,7 @@ package com.larpconnect.njall.api.admin.users;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.domain.AdminUserStatus;
+import com.larpconnect.njall.data.domain.admin.AdminUserStatus;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

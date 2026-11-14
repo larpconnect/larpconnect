@@ -1,7 +1,7 @@
 package com.larpconnect.njall.api.studios.links;
 
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.StudioLookup;
+import com.larpconnect.njall.data.domain.admin.StudioLookup;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.pekko.actor.typed.ActorRef;

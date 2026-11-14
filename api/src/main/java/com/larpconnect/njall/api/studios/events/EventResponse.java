@@ -2,6 +2,7 @@ package com.larpconnect.njall.api.studios.events;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.errorprone.annotations.Immutable;
+import com.larpconnect.njall.data.domain.studios.EventType;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,6 +14,7 @@ public record EventResponse(
     @JsonProperty("generator") String generator,
     @JsonProperty("title") String title,
     @JsonProperty("summary") Optional<String> summary,
+    @JsonProperty("eventType") EventType eventType,
     @JsonProperty("locationId") Optional<UUID> locationId,
     @JsonProperty("startTime") Optional<Instant> startTime,
     @JsonProperty("endTime") Optional<Instant> endTime,

@@ -2,7 +2,7 @@ package com.larpconnect.njall.api.admin.roles;
 
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.Immutable;
-import com.larpconnect.njall.data.domain.AdminRole;
+import com.larpconnect.njall.data.domain.admin.AdminRole;
 
 /** Response protocol emitted by the role admin actor. */
 public sealed interface RoleAdminResponse {

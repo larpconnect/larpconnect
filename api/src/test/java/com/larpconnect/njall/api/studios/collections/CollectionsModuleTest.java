@@ -17,7 +17,7 @@ import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
-import com.larpconnect.njall.data.domain.Collection;
+import com.larpconnect.njall.data.domain.studios.Collection;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

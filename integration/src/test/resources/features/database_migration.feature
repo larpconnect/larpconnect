@@ -46,4 +46,24 @@ Feature: Flyway Database Migration and Bootstrap Provisioning
     And table "njall_users.entities" has foreign key constraint "fk_entities_generator" and index "idx_entities_generator" and no constraint "fk_entities_owner" or index "idx_entities_owner"
     And table "njall_users.collections" retains column "owner_id", constraint "fk_collections_owner", constraint "unq_collections_owner_name", and index "idx_collections_owner"
 
+  Scenario: Migration V14 provisions tevent_type enum and events event_type default
+    Given the bootstrap database migration has already been executed
+    Then PostgreSQL enum "tevent_type" exists with values "EVENT_TYPE_UNSPECIFIED", "GAME", "WORKSHOP", "CONFERENCE", and "MEETUP"
+    And table "njall_users.events" has non-null column "event_type" of type "tevent_type" with default "EVENT_TYPE_UNSPECIFIED"
+
+  Scenario: Migration V14 provisions systems, campaigns, and games tables with RLS tenant isolation
+    Given the bootstrap database migration has already been executed
+    Then table "njall_users.systems" exists and is owned by "njall"
+    And table "njall_users.campaigns" exists and is owned by "njall"
+    And table "njall_users.games" exists and is owned by "njall"
+    And table "njall_users.systems" has row level security enabled
+    And table "njall_users.campaigns" has row level security enabled
+    And table "njall_users.games" has row level security enabled
+    And row level security isolates rows in "njall_users.systems", "njall_users.campaigns", and "njall_users.games" by active tenant setting
+
+  Scenario: Migration V14 enforces case-insensitive system uniqueness and cross-tenant game FK invariants
+    Given the bootstrap database migration has already been executed
+    Then unique index "idx_systems_tenant_name" enforces tenant-wide case-insensitive uniqueness on system names within a tenant
+    And composite foreign key "fk_games_system" rejects cross-tenant system references on "njall_users.games"
+
 

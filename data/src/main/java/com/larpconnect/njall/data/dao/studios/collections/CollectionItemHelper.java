@@ -1,7 +1,8 @@
 package com.larpconnect.njall.data.dao.studios.collections;
 
 import com.google.common.collect.ImmutableList;
-import com.larpconnect.njall.data.domain.ExpandedEntity;
+import com.google.errorprone.annotations.Immutable;
+import com.larpconnect.njall.data.domain.studios.ExpandedEntity;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -9,13 +10,21 @@ import java.util.UUID;
 import org.hibernate.Session;
 
 /** Package-private helper executing collection item and expanded entity queries and mutations. */
+@Immutable
 final class CollectionItemHelper {
 
   static final String EXPANDED_ITEMS_QUERY =
       """
       SELECT e.id, e.generator, e.entity_type, e.summary,
              COALESCE(
-                 i.name, ev.title, loc.name, l.url, a.preferred_username, c.name
+                 i.name,
+                 ev.title,
+                 loc.name,
+                 l.url,
+                 a.preferred_username,
+                 c.name,
+                 sys.name,
+                 cmp.title
              ) AS display_name
       FROM njall_users.collection_items ci
       JOIN njall_users.entities e
@@ -32,6 +41,10 @@ final class CollectionItemHelper {
         ON e.tenant_id = a.tenant_id AND e.id = a.id
       LEFT JOIN njall_users.collections c
         ON e.tenant_id = c.tenant_id AND e.id = c.id
+      LEFT JOIN njall_users.systems sys
+        ON e.tenant_id = sys.tenant_id AND e.id = sys.id
+      LEFT JOIN njall_users.campaigns cmp
+        ON e.tenant_id = cmp.tenant_id AND e.id = cmp.id
       WHERE ci.tenant_id = :tenantId
         AND ci.collection_id = :collectionId
         AND e.deleted_on IS NULL
@@ -86,15 +99,13 @@ final class CollectionItemHelper {
             .setParameter("collectionId", collectionId)
             .getResultList();
     return rows.stream()
-        .map(
-            row ->
-                new ExpandedEntity(
-                    (UUID) row[0],
-                    (UUID) row[1],
-                    (String) row[2],
-                    (String) row[4],
-                    (String) row[3]))
+        .map(CollectionItemHelper::toExpandedEntity)
         .collect(ImmutableList.toImmutableList());
+  }
+
+  private static ExpandedEntity toExpandedEntity(Object[] row) {
+    return new ExpandedEntity(
+        (UUID) row[0], (UUID) row[1], (String) row[2], (String) row[4], (String) row[3]);
   }
 
   static ImmutableList<UUID> queryActiveItemIds(Session session, UUID tenantId, UUID collectionId) {

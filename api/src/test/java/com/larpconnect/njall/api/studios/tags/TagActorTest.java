@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.larpconnect.njall.data.dao.studios.HashtagDAO;
-import com.larpconnect.njall.data.domain.Hashtag;
+import com.larpconnect.njall.data.domain.studios.Hashtag;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
