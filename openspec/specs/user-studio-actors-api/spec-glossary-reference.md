@@ -11,3 +11,5 @@
 | Alias | `glossary/business.md` | Plain text identifier resolving to internal studio tenant ID. |
 | DAO | `glossary/technical.md` | Data access object abstracting entity persistence. |
 | generator | `glossary/business.md` | Immutable structural actor provenance stored in `njall_users.entities.generator`. |
+| FeatherPub | `glossary/technical.md` | Federated protocol governing Activity ingress on `POST .../inbox`. |
+| Activity | `glossary/business.md` | Validated FeatherPub action envelope accepted with `202 Accepted` on `POST .../inbox`. |

@@ -12,6 +12,7 @@ import com.google.inject.Guice;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.larpconnect.njall.data.cache.StudioLookupCacheService;
+import com.larpconnect.njall.queue.publisher.AmqpQueueService;
 import com.larpconnect.njall.server.ServerModule;
 import com.larpconnect.njall.server.http.HttpServerService;
 import com.typesafe.config.Config;
@@ -28,6 +29,7 @@ import java.net.http.HttpResponse;
 import java.sql.DriverManager;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +45,7 @@ public final class AdminManagementApiSteps {
   private final Map<String, String> rememberedIds = new HashMap<>();
   private HttpServerService serverService;
   private StudioLookupCacheService cacheService;
+  private AmqpQueueService amqpService;
   private ActorSystem<Void> system;
   private int boundPort;
   private HttpResponse<String> response;
@@ -56,51 +59,57 @@ public final class AdminManagementApiSteps {
 
   @After("@AdminApi")
   public void tearDown() {
-    stopServerService();
-    stopCacheService();
-    terminateActorSystem();
+    stopServer();
+    stopCache();
   }
 
-  private void stopServerService() {
+  private void stopServer() {
     if (serverService != null) {
       try {
         serverService.stop().toCompletableFuture().get(10, TimeUnit.SECONDS);
       } catch (Exception ignored) {
-        // Proceed with remaining teardown
+        /* teardown */
       }
     }
-  }
-
-  private void stopCacheService() {
-    if (cacheService != null
-        && cacheService.state() != State.TERMINATED
-        && cacheService.state() != State.FAILED) {
+    if (amqpService != null) {
       try {
-        cacheService.stopAsync().awaitTerminated(15, TimeUnit.SECONDS);
+        amqpService.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
       } catch (Exception ignored) {
-        // Proceed with remaining teardown
+        /* teardown */
       }
     }
   }
 
-  private void terminateActorSystem() {
+  private void stopCache() {
+    var cs = cacheService;
+    if (cs != null && cs.state() != State.TERMINATED && cs.state() != State.FAILED) {
+      try {
+        cs.stopAsync().awaitTerminated(15, TimeUnit.SECONDS);
+      } catch (Exception ignored) {
+        /* teardown */
+      }
+    }
     if (system != null) {
       try {
         system.terminate();
         system.getWhenTerminated().toCompletableFuture().get(10, TimeUnit.SECONDS);
       } catch (Exception ignored) {
-        // Proceed with remaining teardown
+        /* teardown */
       }
     }
   }
 
   @Given("the admin HTTP server is running with database migrations applied")
   public void theAdminHttpServerIsRunningWithDatabaseMigrationsApplied() throws Exception {
+    E2EFeatherpubAmqpFixture.ensureBrokerStarted();
     var config = buildIntegrationConfig(DatabaseMigrationSteps.getJdbcUrl());
     var injector = Guice.createInjector(new ServerModule(config));
 
     cacheService = injector.getInstance(StudioLookupCacheService.class);
     cacheService.startAsync().awaitRunning(STARTUP_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+
+    amqpService = injector.getInstance(AmqpQueueService.class);
+    amqpService.startAsync().awaitRunning(STARTUP_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
 
     serverService = injector.getInstance(HttpServerService.class);
     system = injector.getInstance(Key.get(new TypeLiteral<ActorSystem<Void>>() {}));
@@ -145,10 +154,12 @@ public final class AdminManagementApiSteps {
 
   @Then("the HTTP response status code is {int}")
   public void theHttpResponseStatusCodeIs(int expectedStatus) {
-    assertThat(response.statusCode())
+    var r = response != null ? response : E2EFeatherpubAmqpFixture.getLastStaticResponse();
+    response = r;
+    assertThat(r).isNotNull();
+    assertThat(r.statusCode())
         .withFailMessage(
-            "Expected status %d but was %d with body: %s",
-            expectedStatus, response.statusCode(), response.body())
+            "Expected status %d but was %d with body: %s", expectedStatus, r.statusCode(), r.body())
         .isEqualTo(expectedStatus);
   }
 
@@ -282,8 +293,13 @@ public final class AdminManagementApiSteps {
   }
 
   private void assertJsonBodyPresent() {
+    var r = response != null ? response : E2EFeatherpubAmqpFixture.getLastStaticResponse();
+    var j = rootJson != null ? rootJson : E2EFeatherpubAmqpFixture.getLastStaticJson();
+    rootJson = j;
+    response = r;
     assertThat(rootJson)
-        .withFailMessage("Expected valid JSON response body but was: %s", response.body())
+        .withFailMessage(
+            "Expected valid JSON response body but was: %s", r != null ? r.body() : "null")
         .isNotNull();
   }
 
@@ -431,29 +447,11 @@ public final class AdminManagementApiSteps {
   @Given("a studio exists in the database with alias {string} and name {string}")
   public void aStudioExistsInTheDatabaseWithAliasAndName(String alias, String name)
       throws Exception {
-    var tenantId = UUID.randomUUID();
-    var studioId = UUID.randomUUID();
-    var userSql = "INSERT INTO njall_users.studios (id, name) VALUES (?, ?)";
-    var adminSql =
-        "INSERT INTO njall_admin.studios_lookup (tenant_id, studio_id, alias, created_at,"
-            + " updated_at) VALUES (?, ?, ?, NOW(), NOW())";
-    try (var conn =
-        DriverManager.getConnection(
-            DatabaseMigrationSteps.getJdbcUrl(),
-            "njall",
-            DatabaseMigrationSteps.getPasswordFor("njall"))) {
-      try (var stmt = conn.prepareStatement(userSql)) {
-        stmt.setObject(1, tenantId);
-        stmt.setString(2, name);
-        stmt.executeUpdate();
-      }
-      try (var stmt = conn.prepareStatement(adminSql)) {
-        stmt.setObject(1, tenantId);
-        stmt.setObject(2, studioId);
-        stmt.setString(3, alias);
-        stmt.executeUpdate();
-      }
-    }
+    E2EFeatherpubAmqpFixture.provisionStudio(
+        DatabaseMigrationSteps.getJdbcUrl(),
+        DatabaseMigrationSteps.getPasswordFor("njall"),
+        alias,
+        name);
   }
 
   private static void truncateAdminTables() throws Exception {
@@ -472,24 +470,22 @@ public final class AdminManagementApiSteps {
   }
 
   private static Config buildIntegrationConfig(String jdbcUrl) {
-    var configMap =
-        Map.of(
-            "larpconnect.server.host",
-            "127.0.0.1",
-            "larpconnect.server.port",
-            0,
-            "larpconnect.data.database.admin.jdbc-url",
+    var h = E2EFeatherpubAmqpFixture.getBrokerHost();
+    var p = E2EFeatherpubAmqpFixture.getBrokerPort();
+    var cfg =
+        String.format(
+            Locale.ROOT,
+            "larpconnect.server.port=0%nlarpconnect.data.database.admin={jdbc-url:\"%s\","
+                + "username:\"njall_admin\",password:\"%s\"}%nlarpconnect.data.database.users={"
+                + "jdbc-url:\"%s\",username:\"njall_users\",password:\"%s\"}%nnjall.queue={"
+                + "enabled:true,host:\"%s\",port:%d,username:\"njall_amqp\",password:"
+                + "\"njall_amqp_secret\"}%n",
             jdbcUrl,
-            "larpconnect.data.database.admin.username",
-            "njall_admin",
-            "larpconnect.data.database.admin.password",
             DatabaseMigrationSteps.getPasswordFor("njall_admin"),
-            "larpconnect.data.database.users.jdbc-url",
             jdbcUrl,
-            "larpconnect.data.database.users.username",
-            "njall_users",
-            "larpconnect.data.database.users.password",
-            DatabaseMigrationSteps.getPasswordFor("njall_users"));
-    return ConfigFactory.parseMap(configMap).withFallback(ConfigFactory.load());
+            DatabaseMigrationSteps.getPasswordFor("njall_users"),
+            h,
+            p);
+    return ConfigFactory.parseString(cfg).withFallback(ConfigFactory.load());
   }
 }

@@ -115,3 +115,12 @@ In addition to those enforced by linting tools and in addition to those found in
 1. `record` objects are strict data carriers and do not need factory methods.
 2. Parameters are nonnull by default. Unless an object is marked that it can be null, it should be considered not null and should not be tested for nullability.
 3. Immutable objects and immutability contracts should be used whenever possible. This may involve using immutable collections from Guava and/or defensive copies, but it needs to be maintained throughout the system.
+
+Because of the strict quality control gates, continuous refinement and improvement are absolutely required. Work on fixing these issues incrementally as you go or else you will be overwhelmed. This means you need to run the archunit tests, checkstyle, errorprone, etc as you work and not just leave them to the end. 
+
+## 8. Build guidance
+
+- Avoid using gradle with the `--no-daemon` flag unless you have a specific identified problem. The daemon should be running by default in almost all circumstances.
+- You **may** sometimes need to use `--rerun-tasks` if the cache is stale, especially when dealing with nondeterminism, but this should not be your default: the default should be to run with the configuration cache and daemon in place.
+
+

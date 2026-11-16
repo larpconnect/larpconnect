@@ -22,6 +22,7 @@ import com.larpconnect.njall.api.admin.servers.ServerAdminCommand;
 import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.annotation.NjallAdmin;
 import com.larpconnect.njall.data.session.SessionFactoryFactory;
+import com.larpconnect.njall.queue.publisher.AmqpQueueService;
 import com.larpconnect.njall.server.http.HttpServerService;
 import io.dropwizard.metrics5.health.HealthCheckRegistry;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +64,7 @@ final class ServerModuleTest {
     var serverManagerService = injector.getInstance(ServerManagerService.class);
     var hookRegistrar = injector.getInstance(ShutdownHookRegistrar.class);
     var adminSessionFactory = injector.getInstance(Key.get(SessionFactory.class, NjallAdmin.class));
+    var amqpQueueService = injector.getInstance(AmqpQueueService.class);
 
     assertThat(serverManager).isSameAs(serverManagerService);
     assertThat(serverService).isInstanceOf(HttpServerService.class);
@@ -72,6 +74,7 @@ final class ServerModuleTest {
     assertThat(blockingProps).isInstanceOf(Props.class);
     assertThat(serverAdminActor).isInstanceOf(ActorRef.class);
     assertThat(adminSessionFactory).isSameAs(mockSessionFactory);
+    assertThat(amqpQueueService).isSameAs(injector.getInstance(AmqpQueueService.class));
 
     CoordinatedShutdown.get(system)
         .runAll(CoordinatedShutdown.jvmExitReason())

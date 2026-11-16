@@ -33,7 +33,7 @@ final class DefaultTracingDirective extends AllDirectives implements TracingDire
 
   private Route traceRequest(HttpRequest request, Supplier<Route> innerRouteSupplier) {
     var span = createRootSpan(request);
-    var traceContext = new TraceContext(span);
+    var traceContext = createTraceContext(span);
     var header = RawHeader.create(TRACEPARENT_HEADER, traceContext.toTraceparent());
     var tracedRequest = request.removeHeader(TRACEPARENT_HEADER).addHeader(header);
 
@@ -65,5 +65,9 @@ final class DefaultTracingDirective extends AllDirectives implements TracingDire
   private Span createRootSpan(HttpRequest request) {
     var spanName = "HTTP " + request.method().value() + " " + request.getUri().path();
     return tracer.spanBuilder(spanName).setSpanKind(SpanKind.SERVER).startSpan();
+  }
+
+  private static TraceContext createTraceContext(Span span) {
+    return new TraceContext(span);
   }
 }

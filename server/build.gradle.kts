@@ -14,6 +14,7 @@ dependencies {
     implementation(platform(project(":parent")))
 
     implementation(project(":common"))
+    implementation(project(":queue"))
     implementation(project(":data"))
     implementation(project(":api"))
     implementation(libs.picocli)

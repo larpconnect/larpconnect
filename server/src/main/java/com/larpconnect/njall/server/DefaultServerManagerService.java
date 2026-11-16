@@ -2,10 +2,15 @@ package com.larpconnect.njall.server;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.larpconnect.njall.common.annotation.Blocking;
 import com.larpconnect.njall.data.cache.StudioLookupCacheService;
+import com.larpconnect.njall.queue.publisher.AmqpQueueService;
 import com.larpconnect.njall.server.http.HttpServerService;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import org.apache.pekko.Done;
 import org.apache.pekko.actor.CoordinatedShutdown;
 import org.apache.pekko.actor.typed.ActorSystem;
 import org.jspecify.annotations.Nullable;
@@ -24,6 +29,8 @@ final class DefaultServerManagerService extends AbstractIdleService
   private final ActorSystem<Void> actorSystem;
   private final HttpServerService httpServerService;
   private final StudioLookupCacheService studioLookupCacheService;
+  private final AmqpQueueService amqpQueueService;
+  private final Executor blockingExecutor;
   private @Nullable Thread shutdownHook;
 
   @Inject
@@ -31,18 +38,73 @@ final class DefaultServerManagerService extends AbstractIdleService
       ShutdownHookRegistrar shutdownHookRegistrar,
       ActorSystem<Void> actorSystem,
       HttpServerService httpServerService,
-      StudioLookupCacheService studioLookupCacheService) {
+      StudioLookupCacheService studioLookupCacheService,
+      AmqpQueueService amqpQueueService,
+      @Blocking Executor blockingExecutor) {
     this.shutdownHookRegistrar = shutdownHookRegistrar;
     this.actorSystem = actorSystem;
     this.httpServerService = httpServerService;
     this.studioLookupCacheService = studioLookupCacheService;
+    this.amqpQueueService = amqpQueueService;
+    this.blockingExecutor = blockingExecutor;
+  }
+
+  DefaultServerManagerService(
+      ShutdownHookRegistrar shutdownHookRegistrar,
+      ActorSystem<Void> actorSystem,
+      HttpServerService httpServerService,
+      StudioLookupCacheService studioLookupCacheService,
+      AmqpQueueService amqpQueueService) {
+    this(
+        shutdownHookRegistrar,
+        actorSystem,
+        httpServerService,
+        studioLookupCacheService,
+        amqpQueueService,
+        Runnable::run);
   }
 
   @Override
   protected void startUp() throws Exception {
     initShutdownHook();
-    startStudioCacheService();
-    startHttpServer();
+    registerCoordinatedShutdownTasks();
+    try {
+      startAmqpQueueService();
+      startStudioCacheService();
+      startHttpServer();
+    } catch (Exception e) {
+      cleanupFailedStartup();
+      throw e;
+    }
+  }
+
+  private void cleanupFailedStartup() {
+    stopAmqpQueueService();
+    stopStudioCacheService();
+    unregisterShutdownHook();
+  }
+
+  private void startAmqpQueueService() {
+    amqpQueueService.startAsync().awaitRunning();
+  }
+
+  private void registerCoordinatedShutdownTasks() {
+    CoordinatedShutdown.get(actorSystem)
+        .addTask(
+            CoordinatedShutdown.PhaseServiceStop(),
+            "stop-managed-services",
+            () ->
+                CompletableFuture.supplyAsync(
+                    () -> {
+                      stopManagedServices();
+                      return Done.done();
+                    },
+                    blockingExecutor));
+  }
+
+  private void stopManagedServices() {
+    stopAmqpQueueService();
+    stopStudioCacheService();
   }
 
   private void startStudioCacheService() {
@@ -85,14 +147,25 @@ final class DefaultServerManagerService extends AbstractIdleService
   @Override
   protected void shutDown() throws Exception {
     stopHttpServer();
-    stopStudioCacheService();
     unregisterShutdownHook();
     runCoordinatedShutdown();
   }
 
+  private void stopAmqpQueueService() {
+    try {
+      if (amqpQueueService.isRunning()) {
+        amqpQueueService.stopAsync().awaitTerminated();
+      }
+    } catch (Exception e) {
+      logger.warn("Failed to cleanly stop AMQP queue service", e);
+    }
+  }
+
   private void stopStudioCacheService() {
     try {
-      studioLookupCacheService.stopAsync().awaitTerminated();
+      if (studioLookupCacheService.isRunning()) {
+        studioLookupCacheService.stopAsync().awaitTerminated();
+      }
     } catch (Exception e) {
       logger.warn("Failed to cleanly stop studio lookup cache service", e);
     }

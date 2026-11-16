@@ -1645,8 +1645,7 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
-          description: Generating Actor UUID.
+          description: Generating Actor UUID or case-insensitive preferredUsername.
       requestBody:
         required: true
         content:
@@ -1685,8 +1684,7 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
-          description: Generating Actor UUID.
+          description: Generating Actor UUID or case-insensitive preferredUsername.
         - name: collection-id
           in: path
           required: true
@@ -1730,8 +1728,7 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
-          description: Generating Actor UUID.
+          description: Generating Actor UUID or case-insensitive preferredUsername.
         - name: collection-id
           in: path
           required: true
@@ -1781,8 +1778,7 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
-          description: Generating Actor UUID.
+          description: Generating Actor UUID or case-insensitive preferredUsername.
         - name: collection-id
           in: path
           required: true
@@ -1814,8 +1810,7 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
-          description: Generating Actor UUID.
+          description: Generating Actor UUID or case-insensitive preferredUsername.
         - name: collection-id
           in: path
           required: true
@@ -1855,8 +1850,7 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
-          description: Generating Actor UUID.
+          description: Generating Actor UUID or case-insensitive preferredUsername.
         - name: collection-id
           in: path
           required: true
@@ -1913,7 +1907,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
-  /api/studios/{studio-id}/v1/actors/{id}:
+  /api/studios/{studio-id}/v1/actors/{actor-id}:
     get:
       summary: Retrieve actor details
       description: Returns details of an active actor under the specified tenant studio including federated protocol endpoints.
@@ -1924,13 +1918,12 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
       responses:
         '200':
           description: Actor retrieved successfully
@@ -1952,13 +1945,12 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
         - name: update_mask
           in: query
           required: false
@@ -1996,13 +1988,12 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
       responses:
         '204':
           description: Actor soft-deleted successfully
@@ -2011,7 +2002,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
-  /api/studios/{studio-id}/v1/actors/{id}:addEndpoint:
+  /api/studios/{studio-id}/v1/actors/{actor-id}:addEndpoint:
     post:
       summary: Add or overwrite federated endpoint
       description: Upserts a federated protocol endpoint on an active actor (AIP-136).
@@ -2022,13 +2013,12 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
       requestBody:
         required: true
         content:
@@ -2045,7 +2035,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
-  /api/studios/{studio-id}/v1/actors/{id}:removeEndpoint:
+  /api/studios/{studio-id}/v1/actors/{actor-id}:removeEndpoint:
     post:
       summary: Remove federated endpoint
       description: Removes a federated protocol endpoint from an active actor (AIP-136).
@@ -2056,13 +2046,12 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
       requestBody:
         required: true
         content:
@@ -2079,7 +2068,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
 
-  /api/studios/{studio-id}/v1/actors/{id}/inbox:
+  /api/studios/{studio-id}/v1/actors/{actor-id}/inbox:
     get:
       summary: Retrieve actor inbox collection
       description: Returns the expanded OrderedCollection representing the actor's inbox.
@@ -2090,13 +2079,12 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
       responses:
         '200':
           description: Inbox collection retrieved successfully
@@ -2109,8 +2097,8 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorResponse'
     post:
-      summary: Post payload to actor inbox
-      description: Submits a JSON object payload to the actor's inbox.
+      summary: Post FeatherPub Activity to actor inbox
+      description: Submits a validated FeatherPub Activity payload to the actor's inbox, queuing it over AMQP 1.0 for asynchronous processing.
       parameters:
         - name: studio-id
           in: path
@@ -2118,30 +2106,130 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
+        - name: Content-Digest
+          in: header
+          required: false
+          schema:
+            type: string
+            example: "sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:"
+          description: Optional Content-Digest header (RFC 9530) verifying raw body integrity using sha-256 or sha3-256.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/FeatherPubActivity'
       responses:
-        '201':
-          description: Payload accepted into inbox
+        '202':
+          description: FeatherPub Activity accepted and queued for asynchronous processing
         '400':
           $ref: '#/components/responses/BadRequestResponse'
         '404':
           $ref: '#/components/responses/NotFoundResponse'
         '500':
           $ref: '#/components/responses/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableResponse'
 
-  /api/studios/{studio-id}/v1/actors/{id}/outbox:
+  /api/studios/{studio-id}/v1/actors/{actor-id}/inbox:message:
+    post:
+      summary: Post FeatherPub Activity to actor inbox
+      description: Custom method alias for delivering a FeatherPub Activity to an actor's inbox, adhering to Google AIP-136.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: actor-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Actor UUID or case-insensitive preferredUsername.
+        - name: Content-Digest
+          in: header
+          required: false
+          schema:
+            type: string
+            example: "sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:"
+          description: Optional Content-Digest header (RFC 9530) verifying raw body integrity using sha-256 or sha3-256.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeatherPubActivity'
+      responses:
+        '202':
+          description: FeatherPub Activity accepted and queued for asynchronous processing
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableResponse'
+
+  /api/studios/{studio-id}/v1/actors/{actor-id}/inbox:batchMessage:
+    post:
+      summary: Batch post FeatherPub Activities to actor inbox
+      description: Delivers a batch of FeatherPub Activities to an actor's inbox adhering to Google AIP-233 partial success semantics.
+      parameters:
+        - name: studio-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Studio UUID or unique alias string.
+        - name: actor-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Actor UUID or case-insensitive preferredUsername.
+        - name: Content-Digest
+          in: header
+          required: false
+          schema:
+            type: string
+            example: "sha-256=:X48E9qOokqqrvdts8nOJRJN3OWDUoyWxBf7kbu9DBPE=:"
+          description: Optional Content-Digest header (RFC 9530) verifying raw body integrity using sha-256 or sha3-256.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchInboxActivitiesRequest'
+      responses:
+        '202':
+          description: At least one batch activity accepted and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchInboxActivitiesResponse'
+        '400':
+          description: All batch items failed or batch payload is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchInboxErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailableResponse'
+
+  /api/studios/{studio-id}/v1/actors/{actor-id}/outbox:
     get:
       summary: Retrieve actor outbox collection
       description: Returns the expanded OrderedCollection representing the actor's outbox.
@@ -2152,13 +2240,12 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
       responses:
         '200':
           description: Outbox collection retrieved successfully
@@ -2180,13 +2267,12 @@ paths:
           schema:
             type: string
           description: Studio UUID or unique alias string.
-        - name: id
+        - name: actor-id
           in: path
           required: true
           schema:
             type: string
-            format: uuid
-          description: Actor UUID.
+          description: Actor UUID or case-insensitive preferredUsername.
       requestBody:
         required: true
         content:
@@ -2426,6 +2512,15 @@ components:
             $ref: '#/components/schemas/AdminErrorResponse'
     ErrorResponse:
       description: Internal server error
+      headers:
+        traceparent:
+          $ref: '#/components/headers/Traceparent'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminErrorResponse'
+    ServiceUnavailableResponse:
+      description: Service unavailable (e.g. message broker outage)
       headers:
         traceparent:
           $ref: '#/components/headers/Traceparent'
@@ -3782,4 +3877,741 @@ components:
             - "null"
           format: date-time
           example: "2026-10-28T12:00:00Z"
+
+    BatchInboxActivitiesRequest:
+      type: object
+      required:
+        - requests
+      properties:
+        requests:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Array of FeatherPub Activities to deliver.
+          items:
+            $ref: '#/components/schemas/FeatherPubActivity'
+
+    BatchInboxItemError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: "Activity validation failed: missing @context"
+
+    BatchInboxActivitiesResponse:
+      type: object
+      properties:
+        failedRequests:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/BatchInboxItemError'
+          description: Map of zero-based request array index strings to error details for failed activities. Empty or omitted when all activities succeed.
+
+    BatchInboxErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - failedRequests
+      properties:
+        code:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: "All batch items failed validation or routing"
+        failedRequests:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/BatchInboxItemError'
+          description: Map of zero-based request array index strings to error details for all failed activities.
+
+    FeatherPubActivity:
+      type: object
+      description: Discriminated FeatherPub Activity envelope across the 10 supported verbs.
+      discriminator:
+        propertyName: type
+      oneOf:
+        - $ref: '#/components/schemas/CreateActivity'
+        - $ref: '#/components/schemas/UpdateActivity'
+        - $ref: '#/components/schemas/DeleteActivity'
+        - $ref: '#/components/schemas/AddActivity'
+        - $ref: '#/components/schemas/RemoveActivity'
+        - $ref: '#/components/schemas/MoveActivity'
+        - $ref: '#/components/schemas/OfferActivity'
+        - $ref: '#/components/schemas/AcceptActivity'
+        - $ref: '#/components/schemas/RejectActivity'
+        - $ref: '#/components/schemas/AnnounceActivity'
+
+    CreateActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/create-1"
+        type:
+          type: string
+          enum:
+            - Create
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+          example:
+            - "/api/studios/valiant/v1/actors/valkyrie"
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          type: object
+          description: The FeatherPub object being created.
+
+    UpdateActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/update-1"
+        type:
+          type: string
+          enum:
+            - Update
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          type: object
+          description: The FeatherPub object being updated.
+
+    DeleteActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/delete-1"
+        type:
+          type: string
+          enum:
+            - Delete
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          description: Reference URI or object representation being deleted.
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+
+    AddActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+        - target
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/add-1"
+        type:
+          type: string
+          enum:
+            - Add
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          description: Reference URI or object being added.
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+        target:
+          type: string
+          format: uri
+          description: URI of the collection target.
+
+    RemoveActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+        - target
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/remove-1"
+        type:
+          type: string
+          enum:
+            - Remove
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          description: Reference URI or object being removed.
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+        target:
+          type: string
+          format: uri
+          description: URI of the collection target.
+
+    MoveActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+        - origin
+        - target
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/move-1"
+        type:
+          type: string
+          enum:
+            - Move
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          description: Reference URI or object being moved.
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+        origin:
+          type: string
+          format: uri
+          description: URI of the origin collection.
+        target:
+          type: string
+          format: uri
+          description: URI of the destination collection.
+
+    OfferActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/offer-1"
+        type:
+          type: string
+          enum:
+            - Offer
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          description: The activity or action being offered.
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+
+    AcceptActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/accept-1"
+        type:
+          type: string
+          enum:
+            - Accept
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          description: The offer or activity being accepted.
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+
+    RejectActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/reject-1"
+        type:
+          type: string
+          enum:
+            - Reject
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          description: The offer or activity being rejected.
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
+
+    AnnounceActivity:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - actor
+        - to
+        - created
+        - object
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://larpconnect.app/schemas/featherpub"
+        id:
+          type: string
+          format: uri
+          example: "https://valiant.example/activities/announce-1"
+        type:
+          type: string
+          enum:
+            - Announce
+        actor:
+          type: string
+          format: uri
+          example: "https://valiant.example/actors/gm"
+        to:
+          type: array
+          items:
+            type: string
+        cc:
+          type: array
+          items:
+            type: string
+          default: []
+        audience:
+          type: array
+          items:
+            type: string
+          default: []
+        created:
+          type: string
+          format: date-time
+          example: "2026-11-14T10:00:00Z"
+        updated:
+          type: string
+          format: date-time
+        mixins:
+          type: array
+          items:
+            type: string
+          default: []
+        summary:
+          type: string
+        object:
+          description: The object or activity being announced.
+          oneOf:
+            - type: string
+              format: uri
+            - type: object
 

@@ -1,0 +1,130 @@
+# featherpub-inbox-api Specification
+
+## Purpose
+
+Provides tenanted **User plane** HTTP endpoints (`POST .../inbox`, `POST .../inbox:message`, and AIP-233 partial-success `POST .../inbox:batchMessage`) performing `Content-Digest` verification, union-free 10-verb **FeatherPub** **Activity** validation, pre-queue **generator**-hierarchy recipient routing, Caffeine + PostgreSQL 8-day deduplication, and AMQP 1.0 queue publication returning `202 Accepted`.
+
+## Requirements
+
+### Requirement: Single FeatherPub Activity Inbox Delivery Endpoints
+The **User plane** SHALL expose `POST /api/studios/{studio-id}/v1/actors/{actor-id}/inbox` and
+`POST .../inbox:message`, resolving `{studio-id}` by UUID or **Alias** and `{actor-id}` by UUID or
+case-insensitive `preferredUsername` (`404` if missing or soft-deleted), publishing validated
+**FeatherPub** **Activity** envelopes to AMQP 1.0 (`202 Accepted`), or returning `503 Service
+Unavailable` on broker failure without recording deduplication keys.
+
+#### Scenario: Accept valid Create activity delivered to actor inbox by UUID
+- **GIVEN** an active **Studio** `"mystic-realms"` and an active **Actor** with UUID
+  `"019273c5-9b2f-763d-82d8-21d1297e55a1"` and `preferredUsername` `"valkyrie"`
+- **WHEN** a **Client** sends POST to
+  `/api/studios/mystic-realms/v1/actors/019273c5-9b2f-763d-82d8-21d1297e55a1/inbox` with a valid
+  `Create` **Activity** addressed in `to` to
+  `"/api/studios/mystic-realms/v1/actors/019273c5-9b2f-763d-82d8-21d1297e55a1"`
+- **THEN** the system publishes one durable AMQP 1.0 message with `targetActorIds` containing
+  `"019273c5-9b2f-763d-82d8-21d1297e55a1"`
+- **AND** responds with `HTTP 202 Accepted`
+
+#### Scenario: Accept valid activity on custom inbox:message method by preferredUsername
+- **GIVEN** an active **Studio** `"mystic-realms"` and an active **Actor** with `preferredUsername`
+  `"valkyrie"`
+- **WHEN** a **Client** sends POST to
+  `/api/studios/mystic-realms/v1/actors/VALKYRIE/inbox:message` with a valid `Announce` **Activity**
+  addressed in `cc` to `"/api/studios/mystic-realms/v1/actors/valkyrie"`
+- **THEN** the system resolves `"VALKYRIE"` case-insensitively, publishes one durable AMQP 1.0
+  message for that **Actor**, and responds with `HTTP 202 Accepted`
+
+### Requirement: Discriminated FeatherPub Activity Wire Contract Validation
+The system SHALL validate inbound **FeatherPub** **Activity** payloads (`400 Bad Request` on
+violation) for union-free array fields (`@context` containing
+`"https://larpconnect.app/schemas/featherpub"`, `mixins`, `to`, `cc`, `audience`), same-host or
+subdomain `id`-to-`actor` authority, `created` within 5-minute skew and 8-day age, `updated >=
+created`, and 10-verb (`Create`, `Update`, `Delete`, `Add`, `Remove`, `Move`, `Offer`, `Accept`,
+`Reject`, `Announce`) required target/object fields.
+
+#### Scenario: Reject activity with scalar @context or authority host mismatch
+- **GIVEN** an active **Studio** `"mystic-realms"` and active **Actor** `"valkyrie"`
+- **WHEN** a **Client** posts an **Activity** where `@context` is a bare string, or where `actor`
+  is `"https://alpha.example/actors/gm"` and `id` is `"https://evil.example/activities/1"`
+- **THEN** the system returns `HTTP 400 Bad Request` without publishing to AMQP
+
+#### Scenario: Reject activity outside temporal bounds or missing verb-specific fields
+- **GIVEN** an active **Studio** `"mystic-realms"` and active **Actor** `"valkyrie"`
+- **WHEN** a **Client** posts an **Activity** with `created` 10 days in the past, `created` 1 hour
+  in the future, or a `Move` **Activity** missing `origin` or `target`
+- **THEN** the system returns `HTTP 400 Bad Request` without publishing to AMQP
+
+### Requirement: Inbound Content-Digest Integrity Verification
+When an HTTP `Content-Digest` header (`sha-256=:base64:` or `sha3-256=:base64:`) is present on an
+inbox `POST` request, the system SHALL compute the digest over the exact raw request bytes and
+return `HTTP 400 Bad Request` if the header syntax is malformed, uses an unsupported algorithm, or
+does not match the computed digest.
+
+#### Scenario: Reject inbox request with mismatched Content-Digest header
+- **GIVEN** an active **Studio** `"mystic-realms"` and active **Actor** `"valkyrie"`
+- **WHEN** a **Client** posts a valid **Activity** body with a `Content-Digest: sha3-256=:...:`
+  header whose digest does not match the raw request body bytes
+- **THEN** the system returns `HTTP 400 Bad Request` without publishing to AMQP
+
+### Requirement: Pre-Queue Generator-Hierarchy Recipient Routing
+The system SHALL extract local **Studio** candidate **Actor** URIs (UUID or `preferredUsername`)
+from `to` and `cc` on the **Activity** and any embedded `object`, retain only active recipients
+whose `njall_users.entities.generator` lineage includes `{actor-id}`, and return `400 Bad Request`
+(or a `400` `failedRequests` entry in `:batchMessage`) when zero local recipients match.
+
+#### Scenario: Route activity addressed to child and grandchild actors generated by receiving actor
+- **GIVEN** active **Studio** `"mystic-realms"` containing root **Actor** `"chronicle_gm"`, child
+  **Actor** `"npc_sheriff"` (`generator = chronicle_gm`), and grandchild **Actor** `"npc_hound"`
+  (`generator = npc_sheriff`)
+- **WHEN** a **Client** posts a valid `Create` **Activity** to
+  `/api/studios/mystic-realms/v1/actors/chronicle_gm/inbox` with `to` addressing `"npc_hound"` and
+  `cc` addressing `"npc_sheriff"`
+- **THEN** the system resolves both `"npc_sheriff"` and `"npc_hound"` as routable descendants of
+  `"chronicle_gm"`, publishes one AMQP 1.0 message listing both UUIDs in `targetActorIds`, and
+  returns `HTTP 202 Accepted`
+
+#### Scenario: Reject activity addressed only to unrelated actor outside generator subtree
+- **GIVEN** active **Studio** `"mystic-realms"` containing independent self-generated **Actor**
+  records `"actor_alpha"` and `"actor_beta"`
+- **WHEN** a **Client** posts an **Activity** to
+  `/api/studios/mystic-realms/v1/actors/actor_alpha/inbox` whose `to` and `cc` address only
+  `"actor_beta"`
+- **THEN** the system returns `HTTP 400 Bad Request` and publishes zero AMQP messages
+
+### Requirement: Durable Eight-Day Activity Deduplication Across Caffeine and PostgreSQL
+The system SHALL deduplicate `(tenant_id, target_actor_id, activity_id)` across an 8-day window via
+Caffeine L1 + PostgreSQL `njall_users.inbox_activities`, returning `202 Accepted` without publishing
+if all `targetActorIds` were already seen, or publishing unseen targets and recording their keys
+only after broker `ACCEPTED` confirmation.
+
+#### Scenario: Duplicate activity retry returns 202 Accepted without re-queuing
+- **GIVEN** **Activity** `"https://remote.example/activities/dup-1"` was already accepted and
+  recorded for **Actor** `"valkyrie"` within the past 8 days
+- **WHEN** the remote **Client** retries POSTing `"https://remote.example/activities/dup-1"` to
+  `"valkyrie"`'s inbox, including after an in-memory cache eviction or **Server** restart
+- **THEN** the system detects the existing unexpired record in PostgreSQL, skips AMQP publication,
+  and returns `HTTP 202 Accepted`
+
+### Requirement: AIP-233 Batch Inbox Delivery with Partial Failure Reporting
+The system SHALL expose `POST /api/studios/{studio-id}/v1/actors/{actor-id}/inbox:batchMessage`
+accepting `{ "requests": [ ... ] }` (1..100 items, not a **FeatherPub** `@context` object),
+evaluating items independently and returning `202 Accepted` with index-keyed `failedRequests` when
+>= 1 item succeeds or `400 Bad Request` (with `failedRequests`) when 0 items succeed or `requests`
+is empty/oversized.
+
+#### Scenario: Partial success in batch inbox delivery queues valid items and reports failed indices
+- **GIVEN** an active **Studio** `"mystic-realms"` and active **Actor** `"valkyrie"`
+- **WHEN** a **Client** sends POST to
+  `/api/studios/mystic-realms/v1/actors/valkyrie/inbox:batchMessage` with `"requests"` containing a
+  valid `Create` **Activity** at index `0`, an invalid **Activity** missing `@context` at index `1`,
+  and a valid `Delete` **Activity** at index `2`
+- **THEN** the system publishes two durable AMQP 1.0 messages (for indices `0` and `2`)
+- **AND** responds with `HTTP 202 Accepted` containing `"failedRequests"` with key `"1"` (`code:
+  400`) and omitting `"0"` and `"2"`
+
+#### Scenario: Total failure in batch inbox delivery returns 400 Bad Request with failedRequests
+- **GIVEN** an active **Studio** `"mystic-realms"` and active **Actor** `"valkyrie"`
+- **WHEN** a **Client** sends POST to
+  `/api/studios/mystic-realms/v1/actors/valkyrie/inbox:batchMessage` where every item in
+  `"requests"` fails validation or routing (or `"requests"` is empty)
+- **THEN** the system publishes zero AMQP messages and responds with `HTTP 400 Bad Request`
+  including `"failedRequests"` detailing each failed index

@@ -1,0 +1,411 @@
+package com.larpconnect.njall.integration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.Scenario;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import org.jspecify.annotations.Nullable;
+
+/** Step definitions backing FeatherPub Activity inbox ingress API scenarios. */
+public final class FeatherpubInboxApiSteps {
+
+  private static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
+
+  private final E2EFeatherpubAmqpFixture fixture = new E2EFeatherpubAmqpFixture();
+  private final Map<String, String> rememberedActors = new HashMap<>();
+  private boolean serverStarted;
+  private @Nullable String lastQueuedTargetsJson;
+
+  @Before
+  public void setUp(Scenario scenario) throws Exception {
+    if (scenario.getUri().toString().contains("featherpub_inbox_api")) {
+      var url = DatabaseMigrationSteps.getJdbcUrl();
+      var pwd = DatabaseMigrationSteps.getPasswordFor("njall");
+      DatabaseMigrationSteps.ensureStartedAndMigrated();
+      E2EFeatherpubAmqpFixture.ensureBrokerStarted();
+      E2EFeatherpubAmqpFixture.truncateTables(url, pwd);
+      E2EFeatherpubAmqpFixture.clearCapturedMessages();
+      rememberedActors.clear();
+      lastQueuedTargetsJson = null;
+      ensureServerRunning();
+    }
+  }
+
+  @After
+  public void tearDown(Scenario scenario) {
+    if (scenario.getUri().toString().contains("featherpub_inbox_api")) {
+      if (serverStarted) {
+        fixture.stopServer();
+        serverStarted = false;
+      }
+    }
+  }
+
+  private void ensureServerRunning() throws Exception {
+    if (!serverStarted) {
+      var jdbcUrl = DatabaseMigrationSteps.getJdbcUrl();
+      var adminPass = DatabaseMigrationSteps.getPasswordFor("njall_admin");
+      var usersPass = DatabaseMigrationSteps.getPasswordFor("njall_users");
+      E2EFeatherpubAmqpFixture.truncateTables(
+          jdbcUrl, DatabaseMigrationSteps.getPasswordFor("njall"));
+      fixture.startServer(jdbcUrl, adminPass, usersPass);
+      E2EFeatherpubAmqpFixture.startConsumer("njall.inbox.activities");
+      serverStarted = true;
+    }
+  }
+
+  private UUID resolveTenantId(String studioAlias) throws SQLException {
+    var url = DatabaseMigrationSteps.getJdbcUrl();
+    var pwd = DatabaseMigrationSteps.getPasswordFor("njall");
+    try (var conn = DriverManager.getConnection(url, "njall", pwd);
+        var s =
+            conn.prepareStatement(
+                "SELECT tenant_id FROM njall_admin.studios_lookup WHERE alias = ?")) {
+      s.setString(1, studioAlias);
+      try (var rs = s.executeQuery()) {
+        if (rs.next()) {
+          return (UUID) rs.getObject("tenant_id");
+        }
+      }
+    }
+    var ids = E2EFeatherpubAmqpFixture.provisionStudio(url, pwd, studioAlias, studioAlias);
+    return ids[0];
+  }
+
+  private String resolveActorId(String ref) throws SQLException {
+    if (rememberedActors.containsKey(ref)) {
+      return rememberedActors.get(ref);
+    }
+    var url = DatabaseMigrationSteps.getJdbcUrl();
+    var pwd = DatabaseMigrationSteps.getPasswordFor("njall");
+    try (var conn = DriverManager.getConnection(url, "njall", pwd);
+        var s =
+            conn.prepareStatement(
+                "SELECT id FROM njall_users.actors WHERE lower(preferred_username) = ?")) {
+      s.setString(1, ref.toLowerCase(Locale.ROOT));
+      try (var rs = s.executeQuery()) {
+        if (rs.next()) {
+          return rs.getString("id");
+        }
+      }
+    }
+    return ref;
+  }
+
+  private String resolveVariables(String in) {
+    var out = in;
+    for (var entry : rememberedActors.entrySet()) {
+      out = out.replace("{" + entry.getKey() + "}", entry.getValue());
+    }
+    return out;
+  }
+
+  @Given(
+      "an active actor exists in studio {string} with preferred username {string} and remembered"
+          + " as {string}")
+  public void activeActorExistsAndRemembered(String studio, String username, String alias)
+      throws Exception {
+    ensureServerRunning();
+    var actorId = UUID.randomUUID();
+    var tenantId = resolveTenantId(studio);
+    E2EFeatherpubAmqpFixture.provisionActor(
+        DatabaseMigrationSteps.getJdbcUrl(),
+        DatabaseMigrationSteps.getPasswordFor("njall"),
+        tenantId,
+        actorId,
+        username,
+        null,
+        studio);
+    rememberedActors.put(alias, actorId.toString());
+    rememberedActors.put(username, actorId.toString());
+    fixture.refreshCache();
+  }
+
+  @Given(
+      "an active actor exists in studio {string} with preferred username {string} generated by"
+          + " {string}")
+  public void activeActorExistsGeneratedBy(String studio, String username, String parentRef)
+      throws Exception {
+    ensureServerRunning();
+    var actorId = UUID.randomUUID();
+    var tenantId = resolveTenantId(studio);
+    var parentId = UUID.fromString(resolveActorId(parentRef));
+    E2EFeatherpubAmqpFixture.provisionActor(
+        DatabaseMigrationSteps.getJdbcUrl(),
+        DatabaseMigrationSteps.getPasswordFor("njall"),
+        tenantId,
+        actorId,
+        username,
+        parentId,
+        studio);
+    rememberedActors.put(username, actorId.toString());
+    fixture.refreshCache();
+  }
+
+  @When("a federated client sends a POST request to {string} with body:")
+  public void federatedClientSendsPost(String path, String docString) throws Exception {
+    ensureServerRunning();
+    var resolvedPath = resolveVariables(path);
+    var resolvedBody = E2EFeatherpubAmqpFixture.substituteTimestamps(resolveVariables(docString));
+    fixture.sendPost(resolvedPath, resolvedBody, Map.of("Content-Type", "application/json"));
+  }
+
+  @When(
+      "a federated client sends a POST request to {string} with header \"Content-Digest\" having"
+          + " valid {string} digest and body:")
+  public void federatedClientSendsPostWithValidDigest(String path, String alg, String docString)
+      throws Exception {
+    ensureServerRunning();
+    var resolvedPath = resolveVariables(path);
+    var resolvedBody = E2EFeatherpubAmqpFixture.substituteTimestamps(resolveVariables(docString));
+    var digestHeader = E2EFeatherpubAmqpFixture.computeContentDigestHeader(alg, resolvedBody);
+    fixture.sendPost(
+        resolvedPath,
+        resolvedBody,
+        Map.of("Content-Type", "application/json", "Content-Digest", digestHeader));
+  }
+
+  @When(
+      "a federated client sends a POST request to {string} with header \"Content-Digest\" having"
+          + " mismatched digest {string} and body:")
+  public void federatedClientSendsPostWithMismatchedDigest(
+      String path, String digestHeader, String docString) throws Exception {
+    ensureServerRunning();
+    var resolvedPath = resolveVariables(path);
+    var resolvedBody = E2EFeatherpubAmqpFixture.substituteTimestamps(resolveVariables(docString));
+    fixture.sendPost(
+        resolvedPath,
+        resolvedBody,
+        Map.of("Content-Type", "application/json", "Content-Digest", digestHeader));
+  }
+
+  @When(
+      "a federated client sends a POST request to {string} with header \"Content-Digest\" value"
+          + " {string} and body:")
+  public void federatedClientSendsPostWithDigestValue(
+      String path, String digestVal, String docString) throws Exception {
+    ensureServerRunning();
+    var resolvedPath = resolveVariables(path);
+    var resolvedBody = E2EFeatherpubAmqpFixture.substituteTimestamps(resolveVariables(docString));
+    fixture.sendPost(
+        resolvedPath,
+        resolvedBody,
+        Map.of("Content-Type", "application/json", "Content-Digest", digestVal));
+  }
+
+  @Then("the HTTP response body is empty")
+  public void httpResponseBodyIsEmpty() {
+    var resp = fixture.getLastResponse();
+    if (resp == null) {
+      resp = E2EFeatherpubAmqpFixture.getLastStaticResponse();
+    }
+    assertThat(resp).isNotNull();
+    assertThat(resp.body()).isBlank();
+  }
+
+  @Then("the activity is queued to AMQP with target actors including {string} and {string}")
+  public void activityQueuedToAmqpWithTargetActors(String actor1, String actor2) throws Exception {
+    var msg = E2EFeatherpubAmqpFixture.pollMessage(5);
+    assertThat(msg).isNotNull();
+    var body = E2EFeatherpubAmqpFixture.extractBodyString(msg);
+    var json = MAPPER.readTree(body);
+    var targets = json.path("targetActorIds").toString();
+    lastQueuedTargetsJson = targets;
+    var a1Uuid = resolveActorId(actor1);
+    var a2Uuid = resolveActorId(actor2);
+    assertThat(targets.toLowerCase(Locale.ROOT)).contains(a1Uuid.toLowerCase(Locale.ROOT));
+    assertThat(targets.toLowerCase(Locale.ROOT)).contains(a2Uuid.toLowerCase(Locale.ROOT));
+  }
+
+  @Then("the last queued AMQP envelope excludes target actor {string}")
+  public void lastQueuedEnvelopeExcludesTargetActor(String actor) throws Exception {
+    assertThat(lastQueuedTargetsJson).isNotNull();
+    var actorUuid = resolveActorId(actor);
+    assertThat(lastQueuedTargetsJson.toLowerCase(Locale.ROOT))
+        .doesNotContain(actorUuid.toLowerCase(Locale.ROOT));
+  }
+
+  @Given("an activity with id {string} was already accepted for actor {string}")
+  public void activityAlreadyAcceptedForActor(String activityId, String actorUsername)
+      throws Exception {
+    ensureServerRunning();
+    var tenantId = resolveTenantId("mystic-realms");
+    var actorId = UUID.fromString(resolveActorId(actorUsername));
+    var now = Instant.now();
+    var expires = now.plus(8, ChronoUnit.DAYS);
+    var sql =
+        "INSERT INTO njall_users.inbox_activities (tenant_id, activity_id, target_actor_id,"
+            + " received_on, expires_on) VALUES (?, ?, ?, ?, ?)";
+    E2EFeatherpubAmqpFixture.executeSql(
+        DatabaseMigrationSteps.getJdbcUrl(),
+        DatabaseMigrationSteps.getPasswordFor("njall"),
+        sql,
+        tenantId,
+        activityId,
+        actorId,
+        Timestamp.from(now),
+        Timestamp.from(expires));
+  }
+
+  @Then("zero AMQP messages are published for duplicate activity {string}")
+  public void zeroAmqpMessagesPublishedForDuplicateActivity(String activityId) throws Exception {
+    var msg = E2EFeatherpubAmqpFixture.pollMessage(1);
+    assertThat(msg).isNull();
+  }
+
+  @Then("exactly {int} AMQP messages are published for the batch")
+  public void exactlyAmqpMessagesPublishedForTheBatch(int expectedCount) throws Exception {
+    var count = 0;
+    while (E2EFeatherpubAmqpFixture.pollMessage(2) != null) {
+      count++;
+    }
+    assertThat(count).isEqualTo(expectedCount);
+  }
+
+  @Then("the JSON response contains failed request index {string} with code {int}")
+  public void jsonResponseContainsFailedRequestIndexWithCode(String index, int expectedCode) {
+    var root = fixture.getRootJson();
+    assertThat(root).isNotNull();
+    var failed = root.path("failedRequests").path(index);
+    assertThat(failed.isMissingNode()).isFalse();
+    assertThat(failed.path("code").asInt()).isEqualTo(expectedCode);
+    assertThat(failed.path("message").asText()).isNotBlank();
+  }
+
+  @Then("the JSON response does not contain failed request index {string}")
+  public void jsonResponseDoesNotContainFailedRequestIndex(String index) {
+    var root = fixture.getRootJson();
+    assertThat(root).isNotNull();
+    var failed = root.path("failedRequests").path(index);
+    assertThat(failed.isMissingNode()).isTrue();
+  }
+
+  @Then("zero AMQP messages are published for the batch")
+  public void zeroAmqpMessagesPublishedForTheBatch() throws Exception {
+    var msg = E2EFeatherpubAmqpFixture.pollMessage(1);
+    assertThat(msg).isNull();
+  }
+
+  @Given("an expired activity with id {string} exists for actor {string}")
+  public void expiredActivityExistsForActor(String activityId, String actorUsername)
+      throws Exception {
+    ensureServerRunning();
+    var tenantId = resolveTenantId("mystic-realms");
+    var actorId = UUID.fromString(resolveActorId(actorUsername));
+    var received = Instant.now().minus(9, ChronoUnit.DAYS);
+    var expired = Instant.now().minus(1, ChronoUnit.HOURS);
+    var sql =
+        "INSERT INTO njall_users.inbox_activities (tenant_id, activity_id, target_actor_id,"
+            + " received_on, expires_on) VALUES (?, ?, ?, ?, ?)";
+    E2EFeatherpubAmqpFixture.executeSql(
+        DatabaseMigrationSteps.getJdbcUrl(),
+        DatabaseMigrationSteps.getPasswordFor("njall"),
+        sql,
+        tenantId,
+        activityId,
+        actorId,
+        Timestamp.from(received),
+        Timestamp.from(expired));
+  }
+
+  @Then("the deduplication table no longer contains activity {string} for actor {string}")
+  public void deduplicationTableNoLongerContainsActivity(String activityId, String actorUsername)
+      throws Exception {
+    var exists =
+        E2EFeatherpubDataHelper.deduplicationRecordExists(
+            DatabaseMigrationSteps.getJdbcUrl(),
+            DatabaseMigrationSteps.getPasswordFor("njall"),
+            activityId,
+            resolveActorId(actorUsername));
+    assertThat(exists).isFalse();
+  }
+
+  @Then("the deduplication table contains activity {string} for actor {string}")
+  public void deduplicationTableContainsActivity(String activityId, String actorUsername)
+      throws Exception {
+    var exists =
+        E2EFeatherpubDataHelper.deduplicationRecordExists(
+            DatabaseMigrationSteps.getJdbcUrl(),
+            DatabaseMigrationSteps.getPasswordFor("njall"),
+            activityId,
+            resolveActorId(actorUsername));
+    assertThat(exists).isTrue();
+  }
+
+  @Given("{int} active descendant actors exist in studio {string} generated by {string}")
+  public void bulkDescendantActorsExist(int count, String studio, String parentRef)
+      throws Exception {
+    ensureServerRunning();
+    var tenantId = resolveTenantId(studio);
+    var parentId = UUID.fromString(resolveActorId(parentRef));
+    E2EFeatherpubDataHelper.provisionBulkActors(
+        DatabaseMigrationSteps.getJdbcUrl(),
+        DatabaseMigrationSteps.getPasswordFor("njall"),
+        tenantId,
+        parentId,
+        "bulk_npc_",
+        count);
+  }
+
+  @When(
+      "a federated client posts an activity to {string} addressing all {int} bulk actors with id"
+          + " {string}")
+  public void federatedClientPostsBulkActivity(String path, int count, String activityId)
+      throws Exception {
+    ensureServerRunning();
+    var root = MAPPER.createObjectNode();
+    root.putArray("@context").add("https://larpconnect.app/schemas/featherpub");
+    root.put("id", activityId);
+    root.put("type", "Create");
+    root.put("actor", "https://remote.example/actors/gm");
+    var toArray = root.putArray("to");
+    for (int i = 0; i < count; i++) {
+      toArray.add("/api/studios/mystic-realms/v1/actors/bulk_npc_" + i);
+    }
+    root.put("created", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString());
+    root.putObject("object")
+        .put("id", "https://remote.example/notes/bulk-note")
+        .put("type", "Note")
+        .put("content", "Multi-chunk broadcast");
+    fixture.sendPost(
+        resolveVariables(path),
+        MAPPER.writeValueAsString(root),
+        Map.of("Content-Type", "application/json"));
+  }
+
+  @Then(
+      "the AMQP envelope has {int} target actors and PostgreSQL stores {int} deduplication rows"
+          + " for {string}")
+  public void amqpEnvelopeAndPostgresStoreBulkTargets(
+      int expectedTargets, int expectedRows, String activityId) throws Exception {
+    var msg = E2EFeatherpubAmqpFixture.pollMessage(10);
+    assertThat(msg).isNotNull();
+    var json = MAPPER.readTree(E2EFeatherpubAmqpFixture.extractBodyString(msg));
+    assertThat(json.path("targetActorIds")).hasSize(expectedTargets);
+    var storedRows =
+        E2EFeatherpubDataHelper.countDeduplicationRecords(
+            DatabaseMigrationSteps.getJdbcUrl(),
+            DatabaseMigrationSteps.getPasswordFor("njall"),
+            activityId);
+    assertThat(storedRows).isEqualTo(expectedRows);
+  }
+
+  @When("the local deduplication cache is invalidated")
+  public void localDeduplicationCacheInvalidated() {
+    fixture.clearDeduplicationCache();
+  }
+}

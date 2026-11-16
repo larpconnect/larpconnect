@@ -423,11 +423,20 @@ Feature: User Space Studio Actors REST API
     When an API admin sends a POST request to "/api/studios/valiant_act_box/v1/actors/{box_actor_id}/inbox" with body:
       """
       {
+        "@context": ["https://larpconnect.app/schemas/featherpub"],
+        "id": "https://remote.example/activities/box-001",
         "type": "Create",
-        "summary": "Notification of incoming interaction"
+        "actor": "https://remote.example/actors/gm",
+        "to": ["/api/studios/valiant_act_box/v1/actors/{box_actor_id}"],
+        "created": "2026-11-14T11:00:00Z",
+        "object": {
+          "id": "https://remote.example/notes/101",
+          "type": "Note",
+          "content": "Notification of incoming interaction"
+        }
       }
       """
-    Then the HTTP response status code is 201
+    Then the HTTP response status code is 202
     When an API admin sends a POST request to "/api/studios/valiant_act_box/v1/actors/{box_actor_id}/outbox" with body:
       """
       {

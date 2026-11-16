@@ -12,6 +12,7 @@ dependencies {
     api(platform(project(":parent")))
 
     api(project(":common"))
+    api(project(":queue"))
     api(project(":data"))
     api(libs.pekko.http)
     api(libs.pekko.http.jackson)

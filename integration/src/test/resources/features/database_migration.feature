@@ -66,4 +66,12 @@ Feature: Flyway Database Migration and Bootstrap Provisioning
     Then unique index "idx_systems_tenant_name" enforces tenant-wide case-insensitive uniqueness on system names within a tenant
     And composite foreign key "fk_games_system" rejects cross-tenant system references on "njall_users.games"
 
+  Scenario: Migration V15 provisions inbox_activities table with RLS tenant isolation and composite FK
+    Given the bootstrap database migration has already been executed
+    Then table "njall_users.inbox_activities" exists and is owned by "njall"
+    And table "njall_users.inbox_activities" has row level security enabled
+    And composite foreign key "fk_inbox_activities_actors" references "njall_users.actors" with ON DELETE CASCADE
+    And table "njall_users.inbox_activities" has index "idx_inbox_activities_expires" on column "expires_on"
+
+
 

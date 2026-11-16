@@ -1,6 +1,7 @@
 package com.larpconnect.njall.integration.arch;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
@@ -61,6 +62,14 @@ final class ArchitectureTest {
           .resideInAPackage("com.larpconnect.njall..")
           .should(notDependOnAncestorPackages())
           .as("Package dependencies within com.larpconnect.njall must go down or out, never up");
+
+  @ArchTest
+  public static final ArchRule modules_must_be_free_of_cycles =
+      slices()
+          .matching("com.larpconnect.njall.(*)..")
+          .should()
+          .beFreeOfCycles()
+          .as("Top-level modules within com.larpconnect.njall must be free of cycles (strict DAG)");
 
   @ArchTest
   public static final ArchRule packages_must_not_exceed_twenty_types =

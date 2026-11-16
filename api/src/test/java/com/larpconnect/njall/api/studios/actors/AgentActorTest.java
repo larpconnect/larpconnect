@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -234,21 +236,23 @@ final class AgentActorTest {
   void onGetAgent_retrieval() {
     var agentDao = mock(AgentDAO.class);
     var collectionDao = mock(CollectionDAO.class);
-    when(agentDao.findById(tenantId, actorId)).thenReturn(Optional.of(sampleAgent()));
+    when(agentDao.findByIdentifier(tenantId, actorId.toString()))
+        .thenReturn(Optional.of(sampleAgent()));
 
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
 
     testKit.run(new AgentCommand.GetAgent(tenantId, STUDIO_IDENTIFIER, actorId, inbox.getRef()));
-    var response = inbox.receiveMessage();
-    assertThat(response).isInstanceOf(AgentActorResponse.Success.class);
+    assertThat(inbox.receiveMessage()).isInstanceOf(AgentActorResponse.Success.class);
 
     var missingId = UUID.randomUUID();
-    when(agentDao.findById(tenantId, missingId)).thenReturn(Optional.empty());
+    when(agentDao.findByIdentifier(tenantId, missingId.toString())).thenReturn(Optional.empty());
     testKit.run(new AgentCommand.GetAgent(tenantId, STUDIO_IDENTIFIER, missingId, inbox.getRef()));
     var notFoundRes = inbox.receiveMessage();
     assertThat(notFoundRes).isInstanceOf(AgentActorResponse.Failure.class);
     assertThat(((AgentActorResponse.Failure) notFoundRes).status()).isEqualTo(404);
+    verify(agentDao).findByIdentifier(tenantId, missingId.toString());
+    verify(agentDao, never()).findById(any(), any());
   }
 
   @Test
@@ -387,7 +391,7 @@ final class AgentActorTest {
     var collectionDao = mock(CollectionDAO.class);
     var agent = sampleAgent();
 
-    when(agentDao.findById(tenantId, actorId)).thenReturn(Optional.of(agent));
+    when(agentDao.findByIdentifier(tenantId, actorId.toString())).thenReturn(Optional.of(agent));
     when(agentDao.findInboxId(tenantId, actorId)).thenReturn(Optional.of(inboxId));
     when(agentDao.findOutboxId(tenantId, actorId)).thenReturn(Optional.of(outboxId));
     when(collectionDao.findById(tenantId, actorId, inboxId))
@@ -409,11 +413,9 @@ final class AgentActorTest {
             AgentCommand.CollectionAction.GET,
             Optional.empty(),
             inbox.getRef()));
-    var inboxRes = inbox.receiveMessage();
-    assertThat(inboxRes).isInstanceOf(AgentActorResponse.Success.class);
-    var cs1 =
-        (OrderedCollectionResponse) ((AgentActorResponse.Success) inboxRes).payload().orElseThrow();
-    assertThat(cs1.name()).isEqualTo("inbox");
+    var inboxRes = (AgentActorResponse.Success) inbox.receiveMessage();
+    assertThat(((OrderedCollectionResponse) inboxRes.payload().orElseThrow()).name())
+        .isEqualTo("inbox");
 
     testKit.run(
         new AgentCommand.AccessCollection(
@@ -424,12 +426,10 @@ final class AgentActorTest {
             AgentCommand.CollectionAction.GET,
             Optional.empty(),
             inbox.getRef()));
-    var outboxRes = inbox.receiveMessage();
-    assertThat(outboxRes).isInstanceOf(AgentActorResponse.Success.class);
-    var cs2 =
-        (OrderedCollectionResponse)
-            ((AgentActorResponse.Success) outboxRes).payload().orElseThrow();
-    assertThat(cs2.name()).isEqualTo("outbox");
+    var outboxRes = (AgentActorResponse.Success) inbox.receiveMessage();
+    assertThat(((OrderedCollectionResponse) outboxRes.payload().orElseThrow()).name())
+        .isEqualTo("outbox");
+    verify(agentDao, never()).findById(any(), any());
   }
 
   @Test
@@ -437,7 +437,8 @@ final class AgentActorTest {
   void inboxOutbox_posting() {
     var agentDao = mock(AgentDAO.class);
     var collectionDao = mock(CollectionDAO.class);
-    when(agentDao.findById(tenantId, actorId)).thenReturn(Optional.of(sampleAgent()));
+    when(agentDao.findByIdentifier(tenantId, actorId.toString()))
+        .thenReturn(Optional.of(sampleAgent()));
 
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
@@ -466,7 +467,7 @@ final class AgentActorTest {
     assertThat(inbox.receiveMessage()).isEqualTo(AgentActorResponse.created());
 
     var missingId = UUID.randomUUID();
-    when(agentDao.findById(tenantId, missingId)).thenReturn(Optional.empty());
+    when(agentDao.findByIdentifier(tenantId, missingId.toString())).thenReturn(Optional.empty());
     testKit.run(
         new AgentCommand.AccessCollection(
             tenantId,
@@ -480,11 +481,16 @@ final class AgentActorTest {
   }
 
   @Test
-  @DisplayName("DefaultAgentActorFactory creates behavior")
+  @DisplayName("DefaultAgentActorFactory creates behavior that handles commands")
   void factory_createsBehavior() {
     var agentDao = mock(AgentDAO.class);
     var collectionDao = mock(CollectionDAO.class);
+    when(agentDao.findByIdentifier(tenantId, "missing")).thenReturn(Optional.empty());
     var factory = new DefaultAgentActorFactory(agentDao, collectionDao);
-    assertThat(factory.create()).isNotNull();
+    var kit = BehaviorTestKit.create(factory.create());
+    TestInbox<AgentActorResponse> inbox = TestInbox.create();
+
+    kit.run(new AgentCommand.GetAgent(tenantId, STUDIO_IDENTIFIER, "missing", inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(AgentActorResponse.Failure.class);
   }
 }

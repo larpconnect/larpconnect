@@ -2,13 +2,18 @@ package com.larpconnect.njall.api.studios.actors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.larpconnect.njall.data.dao.studios.actors.AgentDAO;
 import com.larpconnect.njall.data.dao.studios.collections.CollectionDAO;
 import com.larpconnect.njall.data.domain.studios.Agent;
+import com.larpconnect.njall.data.domain.studios.Collection;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -138,7 +143,7 @@ final class AgentActorBranchTest {
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
 
-    when(agentDao.findById(tenantId, actorId)).thenReturn(Optional.empty());
+    when(agentDao.findByIdentifier(tenantId, actorId.toString())).thenReturn(Optional.empty());
     when(agentDao.findInboxId(tenantId, actorId)).thenReturn(Optional.of(inboxId));
     testKit.run(
         new AgentCommand.AccessCollection(
@@ -151,7 +156,8 @@ final class AgentActorBranchTest {
             inbox.getRef()));
     assertThat(((AgentActorResponse.Failure) inbox.receiveMessage()).status()).isEqualTo(404);
 
-    when(agentDao.findById(tenantId, actorId)).thenReturn(Optional.of(sampleAgent()));
+    when(agentDao.findByIdentifier(tenantId, actorId.toString()))
+        .thenReturn(Optional.of(sampleAgent()));
     when(agentDao.findInboxId(tenantId, actorId)).thenReturn(Optional.empty());
     testKit.run(
         new AgentCommand.AccessCollection(
@@ -194,7 +200,7 @@ final class AgentActorBranchTest {
     testKit.run(new AgentCommand.CreateAgent(tenantId, STUDIO_IDENTIFIER, req, inbox.getRef()));
     assertThat(((AgentActorResponse.Failure) inbox.receiveMessage()).status()).isEqualTo(409);
 
-    when(agentDao.findById(any(), any())).thenThrow(new RuntimeException("DB offline"));
+    when(agentDao.findByIdentifier(any(), any())).thenThrow(new RuntimeException("DB offline"));
     testKit.run(new AgentCommand.GetAgent(tenantId, STUDIO_IDENTIFIER, actorId, inbox.getRef()));
     assertThat(((AgentActorResponse.Failure) inbox.receiveMessage()).status()).isEqualTo(500);
 
@@ -208,7 +214,7 @@ final class AgentActorBranchTest {
   void unexpectedExceptions_nullMessage() {
     var agentDao = mock(AgentDAO.class);
     var collectionDao = mock(CollectionDAO.class);
-    when(agentDao.findById(any(), any())).thenThrow(new RuntimeException((String) null));
+    when(agentDao.findByIdentifier(any(), any())).thenThrow(new RuntimeException((String) null));
 
     var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
     TestInbox<AgentActorResponse> inbox = TestInbox.create();
@@ -232,5 +238,60 @@ final class AgentActorBranchTest {
     testKit.run(
         new AgentCommand.CreateAgent(tenantId, STUDIO_IDENTIFIER, invalidGenReq, inbox.getRef()));
     assertThat(((AgentActorResponse.Failure) inbox.receiveMessage()).status()).isEqualTo(400);
+  }
+
+  @Test
+  @DisplayName("resolveAgent delegates username and UUID-formatted username to findByIdentifier")
+  void resolveAgent_usernameAndUuidUsername_delegatesToFindByIdentifier() {
+    var agentDao = mock(AgentDAO.class);
+    var collectionDao = mock(CollectionDAO.class);
+    var agent = sampleAgent();
+    var uuidFormattedUsername = UUID.randomUUID().toString();
+
+    when(agentDao.findByIdentifier(tenantId, "valkyrie_lead")).thenReturn(Optional.of(agent));
+    when(agentDao.findByIdentifier(tenantId, uuidFormattedUsername)).thenReturn(Optional.of(agent));
+    when(agentDao.findInboxId(tenantId, actorId)).thenReturn(Optional.of(inboxId));
+    when(collectionDao.findById(tenantId, actorId, inboxId))
+        .thenReturn(Optional.of(sampleInboxCollection()));
+    when(collectionDao.findExpandedItems(eq(tenantId), eq(actorId), any()))
+        .thenReturn(ImmutableList.of());
+
+    var testKit = BehaviorTestKit.create(createBehavior(agentDao, collectionDao));
+    TestInbox<AgentActorResponse> inbox = TestInbox.create();
+
+    testKit.run(
+        new AgentCommand.GetAgent(tenantId, STUDIO_IDENTIFIER, "valkyrie_lead", inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(AgentActorResponse.Success.class);
+
+    testKit.run(
+        new AgentCommand.GetAgent(
+            tenantId, STUDIO_IDENTIFIER, uuidFormattedUsername, inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(AgentActorResponse.Success.class);
+
+    testKit.run(
+        new AgentCommand.AccessCollection(
+            tenantId,
+            STUDIO_IDENTIFIER,
+            "valkyrie_lead",
+            AgentCommand.CollectionTarget.INBOX,
+            AgentCommand.CollectionAction.GET,
+            Optional.empty(),
+            inbox.getRef()));
+    assertThat(inbox.receiveMessage()).isInstanceOf(AgentActorResponse.Success.class);
+    verify(agentDao, never()).findById(any(), any());
+  }
+
+  private Collection sampleInboxCollection() {
+    return new Collection(
+        inboxId,
+        actorId,
+        actorId,
+        "inbox",
+        Optional.empty(),
+        0,
+        ImmutableList.of(),
+        now,
+        now,
+        Optional.empty());
   }
 }

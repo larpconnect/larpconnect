@@ -40,3 +40,9 @@ Feature: Administrative Health Check Endpoint
     When a client sends an HTTP GET request to "/api/admin/v1/health"
     Then the health probe response status code should be 500
     And the health probe response body should be empty
+
+  Scenario: Health check fails when AMQP broker is unreachable or times out
+    Given the AMQP 1.0 broker connection fails, is terminated, or times out during probe evaluation
+    When a client sends an HTTP GET request to "/api/admin/v1/health"
+    Then the health probe response status code should be 500
+    And the health probe response body should be empty
