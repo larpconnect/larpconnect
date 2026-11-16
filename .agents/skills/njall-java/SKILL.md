@@ -64,8 +64,8 @@ Commons utilities where available. Use context7 to get the latest documentation.
   done through an interface with Guice.
 - Avoid static methods.
 - Strongly prefer static inner classes where inner classes are used.
-- Include a `package-info.java` file in every package with a public object in
-  it. This should include the `NullMarked` annotation.
+- Include a `package-info.java` file in every package with a public object in it. This should include the `NullMarked` annotation.
+    - Do NOT put it in `test` packages if it is exists or will exist in the `main` version of that same package.
 - Functional programming: Prefer `streaming` interfaces, closures, and
   functional patterns.
 - Asynchronous Processing: Virtual threads should be leveraged for I/O

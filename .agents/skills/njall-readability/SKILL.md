@@ -40,6 +40,7 @@ Examples of things that you look for:
 * Acronyms and initialisms in names should be spelled out as if they were words. So `Dao` and not `DAO` and `Larp` not `LARP`. See the section on camel case for more specific interpretations.
 * Single letter variables are reserved for:
   - Iterators
+  - Arguments in anonymous functions (e.g., `x -> process(x)`
   - Unnamed or unused values (which may alternatively be, or start with, `_`), e.g., `Predicate<String> alwaysTrue = _ -> true;`
 * Identifiers are always named with ASCII and, unless in a special case (such as an unused value or a test method name), should always match the regex `\w+`.
 * Identifiers are **NEVER** prefixed with a type indicator such as `kValue` to indicate that a value is constant or `iValue` to indicate that it is an integer.
