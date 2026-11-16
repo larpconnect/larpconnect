@@ -38,7 +38,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,8 +94,8 @@ public final class AmqpQueueSteps {
         });
   }
 
-  @Given("a configured AMQP 1.0 broker connection with host {string} and port {int}")
-  public void configuredAmqpBrokerConnection(String host, int port) {
+  @Given("a configured AMQP 1.0 broker connection")
+  public void configuredAmqpBrokerConnection() {
     E2EFeatherpubAmqpFixture.ensureBrokerStarted();
     var mappedPort = E2EFeatherpubAmqpFixture.getBrokerPort();
     queueConfig =
@@ -212,6 +211,7 @@ public final class AmqpQueueSteps {
   public void oneDurableMessageIsDeliveredToQueue(String queueName) {
     assertThat(lastDeliveredMessage).isNotNull();
     assertThat(lastDeliveredMessage.durable()).isTrue();
+    assertThat(E2EFeatherpubAmqpFixture.getCapturedMessageCount(queueName)).isEqualTo(1);
   }
 
   @Then("the delivered message has messageId {string}")
@@ -353,7 +353,7 @@ public final class AmqpQueueSteps {
     }
     try (var lockHolderExec = Executors.newVirtualThreadPerTaskExecutor()) {
       var holderFuture = lockHolderExec.submit(() -> queueService.publisher());
-      LockSupport.parkNanos(Duration.ofMillis(150).toNanos());
+      Thread.sleep(150);
       long startNanos = System.nanoTime();
       lastHealthResult = healthCheck.check();
       lastProbeElapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);

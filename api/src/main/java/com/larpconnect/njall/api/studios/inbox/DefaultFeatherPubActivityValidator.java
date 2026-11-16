@@ -216,28 +216,35 @@ final class DefaultFeatherPubActivityValidator implements FeatherPubActivityVali
 
   private Optional<String> checkCreatedUpdated(
       @Nullable JsonNode createdNode, @Nullable JsonNode updatedNode) {
-    Optional<Instant> createdOpt = Optional.empty();
-    if (createdNode != null && !createdNode.isNull()) {
-      createdOpt = parseIsoTimestamp(createdNode);
-      if (createdOpt.isEmpty()) {
-        return Optional.of("Malformed 'created' timestamp: must be an ISO-8601 UTC timestamp");
-      }
-    }
-    if (updatedNode == null || updatedNode.isNull()) {
+    return validateOptionalTimestampFormat(createdNode, "created")
+        .or(() -> validateOptionalTimestampFormat(updatedNode, "updated"))
+        .or(() -> checkTemporalOrder(createdNode, updatedNode));
+  }
+
+  private Optional<String> validateOptionalTimestampFormat(
+      @Nullable JsonNode node, String fieldName) {
+    if (node == null || node.isNull()) {
       return Optional.empty();
     }
+    return parseIsoTimestamp(node).isPresent()
+        ? Optional.empty()
+        : Optional.of("Malformed '" + fieldName + "' timestamp: must be an ISO-8601 UTC timestamp");
+  }
+
+  private Optional<String> checkTemporalOrder(
+      @Nullable JsonNode createdNode, @Nullable JsonNode updatedNode) {
+    var createdOpt = parseIsoTimestamp(createdNode);
     var updatedOpt = parseIsoTimestamp(updatedNode);
-    if (updatedOpt.isEmpty()) {
-      return Optional.of("Malformed 'updated' timestamp: must be an ISO-8601 UTC timestamp");
-    }
-    if (createdOpt.isPresent() && updatedOpt.orElseThrow().isBefore(createdOpt.orElseThrow())) {
+    if (createdOpt.isPresent()
+        && updatedOpt.isPresent()
+        && updatedOpt.orElseThrow().isBefore(createdOpt.orElseThrow())) {
       return Optional.of("Temporal coherence violation: updated timestamp cannot precede created");
     }
     return Optional.empty();
   }
 
-  private Optional<Instant> parseIsoTimestamp(JsonNode node) {
-    if (!node.isTextual() || node.asText().isBlank()) {
+  private Optional<Instant> parseIsoTimestamp(@Nullable JsonNode node) {
+    if (node == null || !node.isTextual() || node.asText().isBlank()) {
       return Optional.empty();
     }
     try {

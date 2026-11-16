@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -38,6 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -87,8 +87,8 @@ final class E2EFeatherpubAmqpFixture {
       new AtomicReference<>();
 
   private static final BlockingQueue<Message> RECEIVED_MESSAGES = new LinkedBlockingQueue<>();
-  private static final CopyOnWriteArrayList<Message> RECORDED_MESSAGES =
-      new CopyOnWriteArrayList<>();
+  private static final Map<String, CopyOnWriteArrayList<Message>> RECORDED_MESSAGES =
+      new ConcurrentHashMap<>();
 
   private final Logger logger = LoggerFactory.getLogger(E2EFeatherpubAmqpFixture.class);
   private final HttpClient httpClient =
@@ -225,10 +225,12 @@ final class E2EFeatherpubAmqpFixture {
             .queue(queueName)
             .messageHandler(
                 (ctx, msg) -> {
-                  RECEIVED_MESSAGES.add(msg);
-                  RECORDED_MESSAGES.add(msg);
-                  ctx.accept();
+                  RECORDED_MESSAGES
+                      .computeIfAbsent(queueName, ignored -> new CopyOnWriteArrayList<>())
+                      .add(msg);
                   LAST_SETTLEMENT_DISPOSITION.set("ACCEPTED");
+                  ctx.accept();
+                  RECEIVED_MESSAGES.add(msg);
                 })
             .build();
   }
@@ -272,13 +274,14 @@ final class E2EFeatherpubAmqpFixture {
     return RECEIVED_MESSAGES.poll(s, TimeUnit.SECONDS);
   }
 
-  public static int getCapturedMessageCount() {
-    return RECORDED_MESSAGES.size();
+  public static int getCapturedMessageCount(String queue) {
+    var messages = RECORDED_MESSAGES.get(queue);
+    return messages != null ? messages.size() : 0;
   }
 
-  public static @Nullable Message getCapturedMessage(int i) {
-    var snapshot = ImmutableList.copyOf(RECORDED_MESSAGES);
-    return (i >= 0 && i < snapshot.size()) ? snapshot.get(i) : null;
+  public static @Nullable Message getCapturedMessage(String queue, int i) {
+    var messages = RECORDED_MESSAGES.get(queue);
+    return (messages != null && i >= 0 && i < messages.size()) ? messages.get(i) : null;
   }
 
   public static String extractBodyString(Message m) {
@@ -293,40 +296,42 @@ final class E2EFeatherpubAmqpFixture {
     return m.hasAnnotation("traceparent") ? String.valueOf(m.annotation("traceparent")) : "";
   }
 
-  private static Message requireCapturedMessage(int idx) {
-    var m = getCapturedMessage(idx);
+  private static Message requireCapturedMessage(String queue, int idx) {
+    var m = getCapturedMessage(queue, idx);
     assertThat(m).isNotNull();
-    return m;
+    return Objects.requireNonNull(m);
   }
 
-  public static void assertMessageId(int idx, String expectedId) {
-    assertThat(requireCapturedMessage(idx).messageIdAsString()).isEqualTo(expectedId);
+  public static void assertMessageId(String queue, int idx, String expectedId) {
+    assertThat(requireCapturedMessage(queue, idx).messageIdAsString()).isEqualTo(expectedId);
   }
 
-  public static void assertDurable(int idx) {
-    assertThat(requireCapturedMessage(idx).durable()).isTrue();
+  public static void assertDurable(String queue, int idx) {
+    assertThat(requireCapturedMessage(queue, idx).durable()).isTrue();
   }
 
-  public static void assertTraceparent(int idx, String exp) {
-    assertThat(extractTraceparent(requireCapturedMessage(idx))).isEqualTo(exp);
+  public static void assertTraceparent(String queue, int idx, String exp) {
+    assertThat(extractTraceparent(requireCapturedMessage(queue, idx))).isEqualTo(exp);
   }
 
-  private static JsonNode getCapturedEnvelopeJson(int idx) throws Exception {
-    return MAPPER.readTree(extractBodyString(requireCapturedMessage(idx)));
+  private static JsonNode getCapturedEnvelopeJson(String queue, int idx) throws Exception {
+    return MAPPER.readTree(extractBodyString(requireCapturedMessage(queue, idx)));
   }
 
-  public static void assertTargetActor(int idx, String actorId) throws Exception {
-    var targets = getCapturedEnvelopeJson(idx).path("targetActorIds").toString();
+  public static void assertTargetActor(String queue, int idx, String actorId) throws Exception {
+    var targets = getCapturedEnvelopeJson(queue, idx).path("targetActorIds").toString();
     assertThat(targets.toLowerCase(Locale.ROOT)).contains(actorId.toLowerCase(Locale.ROOT));
   }
 
-  public static void assertReceivingActor(int idx, String actorId) throws Exception {
-    assertThat(getCapturedEnvelopeJson(idx).path("receivingActorId").asText())
+  public static void assertReceivingActor(String queue, int idx, String actorId) throws Exception {
+    assertThat(getCapturedEnvelopeJson(queue, idx).path("receivingActorId").asText())
         .isEqualToIgnoringCase(actorId);
   }
 
-  public static void assertPayloadField(int idx, String f, String exp) throws Exception {
-    assertThat(getCapturedEnvelopeJson(idx).path("activity").path(f).asText()).isEqualTo(exp);
+  public static void assertPayloadField(String queue, int idx, String f, String exp)
+      throws Exception {
+    assertThat(getCapturedEnvelopeJson(queue, idx).path("activity").path(f).asText())
+        .isEqualTo(exp);
   }
 
   public static String computeContentDigestHeader(String alg, String p)
@@ -439,21 +444,6 @@ final class E2EFeatherpubAmqpFixture {
 
   public static void truncateTables(String jdbcUrl, String password) throws SQLException {
     E2EFeatherpubDataHelper.truncateTables(jdbcUrl, password, CACHE_SERVICE.get());
-  }
-
-  public static boolean deduplicationRecordExists(
-      String url, String pwd, String actId, String targetId) throws SQLException {
-    return E2EFeatherpubDataHelper.deduplicationRecordExists(url, pwd, actId, targetId);
-  }
-
-  public static void expireDeduplicationRecord(String url, String pwd, String actId)
-      throws SQLException {
-    E2EFeatherpubDataHelper.expireDeduplicationRecord(url, pwd, actId);
-  }
-
-  public static boolean isDeduplicationVisibleToTenant(
-      String url, String pwd, String actId, UUID tenantId) throws SQLException {
-    return E2EFeatherpubDataHelper.isDeduplicationVisibleToTenant(url, pwd, actId, tenantId);
   }
 
   public static UUID[] provisionStudio(String url, String pwd, String alias, String name)

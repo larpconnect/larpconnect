@@ -130,11 +130,23 @@ final class E2EFeatherpubDataHelper {
   }
 
   public static boolean isDeduplicationVisibleToTenant(
-      String url, String pwd, String actId, UUID tenantId) throws SQLException {
-    var sql =
-        "SELECT COUNT(*) FROM njall_users.inbox_activities WHERE activity_id = ? AND tenant_id"
-            + " = ?";
-    return queryCount(url, pwd, sql, actId, tenantId);
+      String url, String usersPwd, String actId, UUID tenantId) throws SQLException {
+    var setTenantSql = "SELECT set_config('app.tenant_id', ?, false)";
+    var countSql = "SELECT COUNT(*) FROM njall_users.inbox_activities WHERE activity_id = ?";
+    try (var conn = DriverManager.getConnection(url, "njall_users", usersPwd);
+        var setStmt = conn.prepareStatement(setTenantSql);
+        var countStmt = conn.prepareStatement(countSql)) {
+      setStmt.setString(1, tenantId.toString());
+      try (var rs = setStmt.executeQuery()) {
+        if (!rs.next()) {
+          return false;
+        }
+      }
+      countStmt.setString(1, actId);
+      try (var rs = countStmt.executeQuery()) {
+        return rs.next() && rs.getInt(1) > 0;
+      }
+    }
   }
 
   public static UUID[] provisionStudio(

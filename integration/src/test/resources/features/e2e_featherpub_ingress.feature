@@ -983,6 +983,7 @@ Feature: End-to-End FeatherPub Activity Ingress
       """
     Then the ingress response status code should be 202
     And the published message on queue "njall.inbox.activities" at index 0 payload field "type" has value "Create"
+    And the published message on queue "njall.inbox.activities" at index 0 contains receiving actor UUID "{valkyrie_id}"
 
   Scenario: T1_AMQP_03 Server-generated traceparent header is propagated in AMQP application properties
     Given an active studio exists with alias "valhalla"
@@ -1869,6 +1870,7 @@ Feature: End-to-End FeatherPub Activity Ingress
       }
       """
     Then the ingress response status code should be 202
+    And the deduplication record for activity "https://larpconnect.org/activities/shared-cross-tenant-act-01" in tenant "valhalla" is not visible to tenant "asgard"
     When an ingress client sends a POST request to "/api/studios/asgard/v1/actors/valkyrie/inbox" with body:
       """
       {

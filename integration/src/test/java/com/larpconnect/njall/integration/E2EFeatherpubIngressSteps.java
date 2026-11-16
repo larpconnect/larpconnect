@@ -83,7 +83,7 @@ public final class E2EFeatherpubIngressSteps {
 
   @When("the deduplication record for activity {string} has expired")
   public void theDeduplicationRecordForActivityHasExpired(String activityId) throws Exception {
-    E2EFeatherpubAmqpFixture.expireDeduplicationRecord(
+    E2EFeatherpubDataHelper.expireDeduplicationRecord(
         DatabaseMigrationSteps.getJdbcUrl(),
         DatabaseMigrationSteps.getPasswordFor("njall"),
         resolveVariables(activityId));
@@ -341,23 +341,23 @@ public final class E2EFeatherpubIngressSteps {
   @Then("^exactly (\\d+) message(?:\\(s\\)|s)? should be published to queue \"([^\"]*)\"$")
   public void exactlyMessagesShouldBePublished(int expectedCount, String queue) throws Exception {
     for (int i = 0; i < expectedCount; i++) E2EFeatherpubAmqpFixture.pollMessage(5);
-    assertThat(E2EFeatherpubAmqpFixture.getCapturedMessageCount()).isEqualTo(expectedCount);
+    assertThat(E2EFeatherpubAmqpFixture.getCapturedMessageCount(queue)).isEqualTo(expectedCount);
   }
 
   @Then("zero messages should be published to queue {string}")
   public void zeroMessagesShouldBePublished(String queue) throws Exception {
     assertThat(E2EFeatherpubAmqpFixture.pollMessage(1)).isNull();
-    assertThat(E2EFeatherpubAmqpFixture.getCapturedMessageCount()).isZero();
+    assertThat(E2EFeatherpubAmqpFixture.getCapturedMessageCount(queue)).isZero();
   }
 
   @Then("the published message on queue {string} at index {int} has messageId {string}")
   public void thePublishedMessageHasMessageId(String queue, int index, String expectedId) {
-    E2EFeatherpubAmqpFixture.assertMessageId(index, resolveVariables(expectedId));
+    E2EFeatherpubAmqpFixture.assertMessageId(queue, index, resolveVariables(expectedId));
   }
 
   @Then("the published message on queue {string} at index {int} has durable flag true")
   public void thePublishedMessageHasDurableFlagTrue(String queue, int index) {
-    E2EFeatherpubAmqpFixture.assertDurable(index);
+    E2EFeatherpubAmqpFixture.assertDurable(queue, index);
   }
 
   @Then(
@@ -369,14 +369,14 @@ public final class E2EFeatherpubIngressSteps {
     assertThat(responseTraceparent)
         .matches("^00-(?!0{32})[0-9a-f]{32}-(?!0{16})[0-9a-f]{16}-[0-9a-f]{2}$")
         .isNotEqualTo(resolveVariables(untrustedTraceparent));
-    E2EFeatherpubAmqpFixture.assertTraceparent(index, responseTraceparent);
+    E2EFeatherpubAmqpFixture.assertTraceparent(queue, index, responseTraceparent);
   }
 
   @Then(
       "the published message on queue {string} at index {int} contains target actor UUID {string}")
   public void thePublishedMessageContainsTargetActor(String queue, int index, String actorRef)
       throws Exception {
-    E2EFeatherpubAmqpFixture.assertTargetActor(index, resolveActorUuid(actorRef).toString());
+    E2EFeatherpubAmqpFixture.assertTargetActor(queue, index, resolveActorUuid(actorRef).toString());
   }
 
   @Then(
@@ -384,7 +384,8 @@ public final class E2EFeatherpubIngressSteps {
           + " {string}")
   public void thePublishedMessageContainsReceivingActor(String queue, int index, String actorRef)
       throws Exception {
-    E2EFeatherpubAmqpFixture.assertReceivingActor(index, resolveActorUuid(actorRef).toString());
+    E2EFeatherpubAmqpFixture.assertReceivingActor(
+        queue, index, resolveActorUuid(actorRef).toString());
   }
 
   @Then(
@@ -392,14 +393,14 @@ public final class E2EFeatherpubIngressSteps {
           + " {string}")
   public void thePublishedMessagePayloadFieldHasValue(
       String queue, int index, String field, String expectedVal) throws Exception {
-    E2EFeatherpubAmqpFixture.assertPayloadField(index, field, resolveVariables(expectedVal));
+    E2EFeatherpubAmqpFixture.assertPayloadField(queue, index, field, resolveVariables(expectedVal));
   }
 
   @Then(
       "the published message on queue {string} at index {int} was settled with disposition"
           + " {string}")
   public void thePublishedMessageWasSettled(String queue, int index, String disposition) {
-    var msg = E2EFeatherpubAmqpFixture.getCapturedMessage(index);
+    var msg = E2EFeatherpubAmqpFixture.getCapturedMessage(queue, index);
     assertThat(msg).isNotNull();
     assertThat(fixture.getLastSettlementDisposition()).isEqualToIgnoringCase(disposition);
   }
@@ -407,7 +408,7 @@ public final class E2EFeatherpubIngressSteps {
   // --- Category F: Deduplication Persistence Assertions ---
 
   private boolean checkDeduplication(String activityId, String actorRef) throws Exception {
-    return E2EFeatherpubAmqpFixture.deduplicationRecordExists(
+    return E2EFeatherpubDataHelper.deduplicationRecordExists(
         DatabaseMigrationSteps.getJdbcUrl(),
         DatabaseMigrationSteps.getPasswordFor("njall"),
         resolveVariables(activityId),
@@ -435,12 +436,16 @@ public final class E2EFeatherpubIngressSteps {
           + " tenant {string}")
   public void deduplicationRecordNotVisibleToOtherTenant(
       String activityId, String tenant1Alias, String tenant2Alias) throws Exception {
+    var url = DatabaseMigrationSteps.getJdbcUrl();
+    var pwd = DatabaseMigrationSteps.getPasswordFor("njall_users");
+    var id = resolveVariables(activityId);
     assertThat(
-            E2EFeatherpubAmqpFixture.isDeduplicationVisibleToTenant(
-                DatabaseMigrationSteps.getJdbcUrl(),
-                DatabaseMigrationSteps.getPasswordFor("njall_users"),
-                resolveVariables(activityId),
-                resolveTenantId(tenant2Alias)))
+            E2EFeatherpubDataHelper.isDeduplicationVisibleToTenant(
+                url, pwd, id, resolveTenantId(tenant1Alias)))
+        .isTrue();
+    assertThat(
+            E2EFeatherpubDataHelper.isDeduplicationVisibleToTenant(
+                url, pwd, id, resolveTenantId(tenant2Alias)))
         .isFalse();
   }
 

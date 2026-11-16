@@ -4,7 +4,7 @@ Feature: AMQP 1.0 Queue Messaging Service and Health Probes
   So that activities are reliably and durably dispatched with trace correlation and disposition guarantees
 
   Scenario: Queue service connects over AMQP 1.0 and declares durable inbox queue
-    Given a configured AMQP 1.0 broker connection with host "localhost" and port 5672
+    Given a configured AMQP 1.0 broker connection
     When the AMQP queue service starts up
     Then the service transitions to RUNNING state
     And the durable queue "njall.inbox.activities" is declared on the broker
