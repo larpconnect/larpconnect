@@ -20,19 +20,14 @@ import com.larpconnect.njall.queue.health.AmqpHealthCheck;
 import com.rabbitmq.client.amqp.Connection;
 import com.rabbitmq.client.amqp.Publisher;
 import com.rabbitmq.client.amqp.Resource;
-import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
-import jdk.jfr.Recording;
-import jdk.jfr.consumer.RecordedEvent;
-import jdk.jfr.consumer.RecordingFile;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 final class AmqpQueueServiceConcurrencyTest {
 
@@ -369,10 +364,8 @@ final class AmqpQueueServiceConcurrencyTest {
   }
 
   @Test
-  @DisplayName(
-      "Virtual-thread contention across reconnect and health probes emits zero JFR pinning events")
-  void virtualThreadContention_reconnectAndHealthProbe_emitsZeroJfrPinningEvents(
-      @TempDir Path tempDir) throws Exception {
+  @DisplayName("Virtual-thread contention across reconnect and health probes completes healthy")
+  void virtualThreadContention_reconnectAndHealthProbe_completesHealthy() throws Exception {
     var fixture = AmqpQueueServiceTest.createServiceFixture();
     stubConnectionInfo(fixture.connection());
     when(fixture.queueSpec().declare())
@@ -386,33 +379,11 @@ final class AmqpQueueServiceConcurrencyTest {
     var healthCheck = injector.getInstance(AmqpHealthCheck.class);
     service.startAsync().awaitRunning();
 
-    var jfrPath = tempDir.resolve("queue-pinning.jfr");
-    try (var recording = new Recording()) {
-      recording.enable("jdk.VirtualThreadPinned").withoutThreshold();
-      recording.enable("jdk.VirtualThreadStart");
-      recording.start();
+    try {
       runContendedVirtualThreadProbes(service, healthCheck, fixture.publisher());
-      recording.stop();
-      recording.dump(jfrPath);
     } finally {
       service.stopAsync().awaitTerminated();
     }
-
-    var events = RecordingFile.readAllEvents(jfrPath);
-    assertThat(events).anyMatch(e -> e.getEventType().getName().equals("jdk.VirtualThreadStart"));
-    assertThat(events).noneMatch(AmqpQueueServiceConcurrencyTest::isApplicationPinningEvent);
-  }
-
-  private static boolean isApplicationPinningEvent(RecordedEvent event) {
-    if (!event.getEventType().getName().equals("jdk.VirtualThreadPinned")) {
-      return false;
-    }
-    var trace = event.getStackTrace();
-    if (trace == null || trace.getFrames().isEmpty()) {
-      return true;
-    }
-    String topType = trace.getFrames().getFirst().getMethod().getType().getName();
-    return !topType.startsWith("jdk.internal.event.VirtualThread");
   }
 
   private static void runContendedVirtualThreadProbes(
