@@ -100,7 +100,8 @@ final class QueueConfigTest {
   @DisplayName(
       "Config constructor throws IllegalStateException when enabled is true and password is empty")
   void constructor_enabledWithEmptyPassword_throwsIllegalStateException() {
-    var config = ConfigFactory.parseMap(Map.of("njall.queue.enabled", true));
+    var config =
+        ConfigFactory.parseMap(Map.of("njall.queue.enabled", true, "njall.queue.password", ""));
 
     assertThatThrownBy(() -> new QueueConfig(config))
         .isInstanceOf(IllegalStateException.class)
@@ -111,10 +112,8 @@ final class QueueConfigTest {
   @DisplayName(
       "Config constructor throws IllegalStateException when enabled is true and password is blank")
   void constructor_enabledWithBlankPassword_throwsIllegalStateException() {
-    var whitespace = Character.toString(' ').repeat(4);
     var config =
-        ConfigFactory.parseMap(
-            Map.of("njall.queue.enabled", true, "njall.queue.password", whitespace));
+        ConfigFactory.parseMap(Map.of("njall.queue.enabled", true, "njall.queue.password", "    "));
 
     assertThatThrownBy(() -> new QueueConfig(config))
         .isInstanceOf(IllegalStateException.class)
@@ -130,7 +129,7 @@ final class QueueConfigTest {
             QueueConfig.DEFAULT_HOST,
             QueueConfig.DEFAULT_PORT,
             generateUsername(),
-            String.valueOf(new char[0]),
+            "",
             QueueConfig.DEFAULT_INBOX_QUEUE_NAME);
 
     assertThat(queueConfig.enabled()).isFalse();
