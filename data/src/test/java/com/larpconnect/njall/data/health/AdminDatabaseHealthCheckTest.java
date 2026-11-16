@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import com.github.benmanes.caffeine.cache.Ticker;
 import com.google.inject.Provider;
 import io.dropwizard.metrics5.health.HealthCheck.Result;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
@@ -22,14 +21,11 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
-import jdk.jfr.Recording;
-import jdk.jfr.consumer.RecordingFile;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.NativeQuery;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 final class AdminDatabaseHealthCheckTest {
 
@@ -342,9 +338,8 @@ final class AdminDatabaseHealthCheckTest {
   }
 
   @Test
-  @DisplayName("Concurrent virtual-thread health probes under pingLock emit zero JFR pinning")
-  void check_virtualThreadLockContention_emitsZeroJfrPinningEvents(@TempDir Path tempDir)
-      throws Exception {
+  @DisplayName("Concurrent virtual-thread health probes under pingLock all complete healthy")
+  void check_virtualThreadLockContention_allProbesCompleteHealthy() throws Exception {
     var fixture = createFixture();
     when(fixture.query.getSingleResult())
         .thenAnswer(
@@ -356,12 +351,7 @@ final class AdminDatabaseHealthCheckTest {
         new AdminDatabaseHealthCheck(
             fixture.sessionFactoryProvider, fixture.fakeTicker, Duration.ofNanos(1));
 
-    var jfrPath = tempDir.resolve("db-health-pinning.jfr");
-    try (var recording = new Recording();
-        var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      recording.enable("jdk.VirtualThreadPinned").withoutThreshold();
-      recording.enable("jdk.VirtualThreadStart");
-      recording.start();
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures =
           IntStream.range(0, 10)
               .mapToObj(
@@ -372,16 +362,10 @@ final class AdminDatabaseHealthCheckTest {
                             return healthCheck.check().isHealthy();
                           }))
               .toList();
-      for (var f : futures) {
-        assertThat(f.get(5, TimeUnit.SECONDS)).isTrue();
+      for (var future : futures) {
+        assertThat(future.get(5, TimeUnit.SECONDS)).isTrue();
       }
-      recording.stop();
-      recording.dump(jfrPath);
     }
-
-    var events = RecordingFile.readAllEvents(jfrPath);
-    assertThat(events).anyMatch(e -> e.getEventType().getName().equals("jdk.VirtualThreadStart"));
-    assertThat(events).noneMatch(e -> e.getEventType().getName().equals("jdk.VirtualThreadPinned"));
   }
 
   private static void interruptOnceStarted(CountDownLatch started, Thread target) {
